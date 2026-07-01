@@ -291,7 +291,7 @@ function RendezVousPage() {
         </div>
       </div>
 
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+      <Dialog open={!!selected} onOpenChange={(o) => { if (!o) { setSelected(null); setRdvType(""); setNotes(""); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -309,28 +309,47 @@ function RendezVousPage() {
               {selected && ` — ${selected.getHours()}h00 à ${selected.getHours() + 1}h00`}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Motif ou notes (optionnel)</label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ex. Point de suivi du dossier…"
-              rows={4}
-            />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Type de rendez-vous</Label>
+              <Select value={rdvType} onValueChange={setRdvType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisissez un type…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RDV_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Motif ou notes (optionnel)</Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ex. Point de suivi du dossier…"
+                rows={4}
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSelected(null)}>
+            <Button variant="outline" onClick={() => { setSelected(null); setRdvType(""); setNotes(""); }}>
               Annuler
             </Button>
             <Button
-              disabled={bookMutation.isPending}
-              onClick={() => selected && bookMutation.mutate({ start: selected, notes })}
+              disabled={bookMutation.isPending || !rdvType}
+              onClick={() => selected && bookMutation.mutate({
+                start: selected,
+                notes: [rdvType && `Type : ${rdvType}`, notes].filter(Boolean).join("\n"),
+              })}
             >
               {bookMutation.isPending ? "Envoi…" : "Envoyer la demande"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       <Dialog open={!!replan} onOpenChange={(o) => { if (!o) { setReplan(null); setReplanDate(""); } }}>
         <DialogContent>
