@@ -335,11 +335,18 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
               <button
                 type="button"
                 onClick={async () => {
-                  const { data, error } = await supabase.storage
+                  let res = await supabase.storage
                     .from("chat-files")
                     .createSignedUrl(m.attachment_path, 3600, { download: m.attachment_name || true });
-                  if (error || !data) { toast.error("Fichier introuvable"); return; }
-                  window.open(data.signedUrl, "_blank");
+                  if (res.error || !res.data) {
+                    res = await supabase.storage.from("chat-files").createSignedUrl(m.attachment_path, 3600);
+                  }
+                  if (res.error || !res.data) {
+                    console.error("Signed URL error", res.error, "path=", m.attachment_path);
+                    toast.error(res.error?.message || "Fichier introuvable");
+                    return;
+                  }
+                  window.open(res.data.signedUrl, "_blank");
                 }}
                 className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded ${isMine ? "bg-white/10 hover:bg-white/20" : "bg-muted hover:bg-muted/70"}`}
               >
