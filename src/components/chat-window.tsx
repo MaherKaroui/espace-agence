@@ -195,17 +195,41 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
 
         <form onSubmit={submit} className="p-3 border-t flex gap-2 items-end bg-background">
           <input ref={fileInput} type="file" hidden onChange={handleFile} />
-          <Button type="button" size="icon" variant="ghost" onClick={() => fileInput.current?.click()}>
+          <Button type="button" size="icon" variant="ghost" onClick={() => fileInput.current?.click()} disabled={recording}>
             <Paperclip className="h-5 w-5" />
           </Button>
-          <Input
-            value={text}
-            onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
-            placeholder="Écrire un message…"
-            className="flex-1"
-          />
-          <Button type="submit" size="icon" disabled={!text.trim() || send.isPending}><Send className="h-4 w-4" /></Button>
+          {recording ? (
+            <>
+              <div className="flex-1 flex items-center gap-2 px-3 h-9 rounded-md border bg-red-500/10 text-red-600 text-sm">
+                <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                Enregistrement… {String(Math.floor(recordSecs / 60)).padStart(2, "0")}:{String(recordSecs % 60).padStart(2, "0")}
+              </div>
+              <Button type="button" size="icon" variant="ghost" onClick={() => stopRecording(true)} title="Annuler">
+                <X className="h-4 w-4" />
+              </Button>
+              <Button type="button" size="icon" onClick={() => stopRecording(false)} title="Envoyer le vocal">
+                <Send className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Input
+                value={text}
+                onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
+                placeholder="Écrire un message…"
+                className="flex-1"
+              />
+              {text.trim() ? (
+                <Button type="submit" size="icon" disabled={send.isPending}><Send className="h-4 w-4" /></Button>
+              ) : (
+                <Button type="button" size="icon" variant="ghost" onClick={startRecording} title="Message vocal">
+                  <Mic className="h-5 w-5" />
+                </Button>
+              )}
+            </>
+          )}
         </form>
+
       </Card>
     </div>
   );
