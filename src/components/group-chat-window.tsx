@@ -229,9 +229,11 @@ export function GroupChatWindow({
               <Input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Écrire un message…"
+                onPaste={handlePaste}
+                placeholder="Écrire un message… (Ctrl+V pour coller une image)"
                 className="flex-1"
               />
+
               {text.trim() ? (
                 <Button type="submit" size="icon" disabled={send.isPending}><Send className="h-4 w-4" /></Button>
               ) : (
