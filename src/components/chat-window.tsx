@@ -112,6 +112,47 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   const broadcastTyping = () => {
     supabase.channel(`chat-${clientId}`).send({ type: "broadcast", event: "typing", payload: { userId: user!.id } });
   };
+  const startRecording = async () => {
+    if (recording) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
+      const mime = mimes.find((m) => (window as any).MediaRecorder?.isTypeSupported?.(m)) || "";
+      const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      recordChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) recordChunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const type = mr.mimeType || "audio/webm";
+        const blob = new Blob(recordChunksRef.current, { type });
+        const ext = type.includes("mp4") ? "m4a" : type.includes("ogg") ? "ogg" : "webm";
+        const file = new File([blob], `vocal-${Date.now()}.${ext}`, { type });
+        send.mutate({ content: "", file });
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+      setRecordSecs(0);
+      recordTimerRef.current = setInterval(() => setRecordSecs((s) => s + 1), 1000);
+    } catch (e: any) {
+      toast.error("Impossible d'accéder au micro : " + (e?.message ?? "permission refusée"));
+    }
+  };
+
+  const stopRecording = (cancel = false) => {
+    const mr = mediaRecorderRef.current;
+    if (!mr) return;
+    if (cancel) mr.ondataavailable = null as any;
+    if (cancel) mr.onstop = () => mr.stream.getTracks().forEach((t) => t.stop());
+    try { mr.stop(); } catch {}
+    if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
+    setRecording(false);
+    setRecordSecs(0);
+    mediaRecorderRef.current = null;
+  };
+
+  useEffect(() => () => { if (recordTimerRef.current) clearInterval(recordTimerRef.current); }, []);
+
 
   const filtered = useMemo(() => {
     if (!search.trim()) return messages;
