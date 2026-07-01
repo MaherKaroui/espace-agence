@@ -1,59 +1,50 @@
-## Objectif
+## Alerte mot interdit — bannière + son en temps réel
 
-Ajouter une messagerie de **groupe** (ex : 3 personnes qui discutent ensemble) avec **sous-groupes en arborescence illimitée**. Clients et admins peuvent créer des groupes et y ajouter des membres.
+Quand un message contient un mot bloqué (déjà détecté par `sanitize_message_content` et journalisé via `audit_logs` avec `action = 'message.flagged'`), les admins connectés voient immédiatement une bannière rouge en haut de l'écran et un son d'alerte est joué.
 
-## 1. Base de données (migration)
+### 1. Base de données
+Aucune migration nécessaire — le trigger `on_message_insert_security` insère déjà une ligne dans `audit_logs` avec :
+- `action = 'message.flagged'`
+- `severity = 'warning'`
+- `metadata` = `{ reasons: [...], client_id: ... }`
 
-**Table `conversations`**
-- `titre` (text)
-- `parent_id` (uuid, FK conversations, nullable) → arborescence libre
-- `created_by` (uuid)
-- timestamps
+On activera simplement la **réplication temps réel** sur `audit_logs` (via la migration si pas déjà fait) pour permettre l'écoute côté client.
 
-**Table `conversation_members`** (PK composite conversation_id + user_id)
-- `role` (`owner` | `member`)
-- `added_at`
+### 2. Composant global `AdminFlaggedAlert`
+Nouveau fichier `src/components/admin-flagged-alert.tsx` :
+- Monté dans le layout admin (une seule fois, pour tous les admins connectés)
+- S'abonne au canal Realtime `audit_logs` filtré sur `action=eq.message.flagged`
+- Sur nouvel événement :
+  - Joue un son d'alerte court (`/alert.mp3` généré ou son système via WebAudio API — bip synthétisé, pas de fichier externe)
+  - Affiche une **bannière fixe rouge** en haut de la page avec :
+    - Icône d'alerte
+    - Nom du client concerné (résolu depuis `profiles`)
+    - Mots-clés détectés (`reasons`)
+    - Bouton « Voir la conversation » → `/admin/messages/:client_id`
+    - Bouton « Fermer »
+  - Empile plusieurs alertes si détections multiples (max 5 visibles, les autres en compteur)
 
-**Table `group_messages`**
-- `conversation_id` (FK conversations)
-- `sender_id` (uuid)
-- `content` (text nullable)
-- `attachment_path`, `attachment_name`, `attachment_mime`
-- `created_at`, `edited_at`, `deleted_at`, `deleted_by`
+### 3. Intégration
+- Ajouter `<AdminFlaggedAlert />` dans `src/routes/_authenticated/admin.tsx` (layout admin) — visible uniquement pour rôles `admin`
+- Vérifier le rôle via `has_role` avant d'activer l'abonnement (évite de le monter pour non-admins)
 
-**Fonction security-definer** `is_conversation_member(_user_id, _conv_id)` pour éviter la récursion RLS.
+### 4. Son
+Utiliser l'**API WebAudio** pour générer un bip d'alerte (deux tonalités successives 880Hz → 660Hz, 200ms chacune) — pas de fichier binaire à héberger, fonctionne offline. Le son ne se joue qu'après une première interaction utilisateur avec la page (contrainte navigateur).
 
-**RLS**
-- conversations : SELECT si membre ou admin/direction ; INSERT libre pour tout authentifié ; UPDATE/DELETE si owner ou admin
-- conversation_members : SELECT si membre de la conversation ; INSERT si owner de la conv ou admin ; DELETE idem
-- group_messages : SELECT/INSERT si membre ; UPDATE/DELETE (soft) réservé à l'auteur ou admin
+### 5. Détails techniques
+```text
+Client message → trigger on_message_insert_security
+  → sanitize (masque + flag)
+  → INSERT audit_logs (action=message.flagged)
+     ↓ Realtime broadcast
+AdminFlaggedAlert (abonné) → bannière + WebAudio bip
+```
 
-**Notifications** : trigger sur `group_messages` INSERT → notifie tous les membres sauf l'expéditeur (type `message`, lien `/messages/groupes/:id`).
+- Filtre Realtime : `postgres_changes` INSERT sur `public.audit_logs` où `action = 'message.flagged'`
+- Les bannières auto-disparaissent après 30s si non fermées manuellement
+- État local uniquement (rechargement de page = bannières réinitialisées, l'historique reste dans `/admin/audit`)
 
-## 2. Interface (nouveau segment `/messages/groupes`)
-
-- **`src/routes/_authenticated/messages.groupes.index.tsx`** : liste arborescente des conversations dont je suis membre (avec repli pour les sous-groupes), bouton **« Nouveau groupe »**.
-- **`src/routes/_authenticated/messages.groupes.$id.tsx`** : chat du groupe (réutilise le composant `chat-window` refactoré ou une variante `group-chat-window`) + panneau membres à droite + bouton **« Créer un sous-groupe »** (pré-remplit `parent_id`).
-- **Dialogue création** : titre, sélection multiple des clients/staff via recherche sur `profiles`, membres pré-cochés = créateur.
-- **Panneau membres** : ajouter/retirer un membre (owner + admin seulement).
-- Lien **« Groupes »** ajouté dans la navigation `app-shell`.
-
-## 3. Réutilisation
-
-- Le composant `chat-window.tsx` actuel est fortement lié à `client_id`. Je créerai `group-chat-window.tsx` (copie allégée : messages, upload, vocal, édition/suppression admin) plutôt que de le rendre polymorphe — plus sûr et n'impacte pas la messagerie client↔agence existante.
-
-## 4. Fichiers touchés
-
-- Migration : `conversations`, `conversation_members`, `group_messages`, RLS, fonction, trigger notif
-- `src/routes/_authenticated/messages.groupes.index.tsx` (nouveau)
-- `src/routes/_authenticated/messages.groupes.$id.tsx` (nouveau)
-- `src/components/group-chat-window.tsx` (nouveau, adapté de `chat-window`)
-- `src/components/group-create-dialog.tsx` (nouveau)
-- `src/components/app-shell.tsx` (lien nav)
-- `src/integrations/supabase/types.ts` (régénéré automatiquement)
-
-## 5. Hors périmètre
-
-- Appel audio/vidéo de groupe
-- Réactions emoji / fils de réponse
-- Recherche full-text dans les conversations
+### Hors périmètre
+- Pas d'email
+- Pas de notification dans la cloche (l'événement reste consultable dans `/admin/audit`)
+- Pas de modification du filtrage/masquage existant
