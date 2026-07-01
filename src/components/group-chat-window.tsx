@@ -312,7 +312,7 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
       <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
         {!isMine && <div className="text-xs font-medium text-muted-foreground mb-1">{senderName}</div>}
         {m.attachment_path && (
-          <div className="mb-2">
+          <div className="mb-2 space-y-1">
             {isImg && url ? (
               <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={m.attachment_name} className="rounded-lg max-h-64" /></a>
             ) : isVideo && url ? (
@@ -323,6 +323,17 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
               <a href={url || "#"} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg p-2 ${isMine ? "bg-white/10" : "bg-muted"}`}>
                 {isPdf ? <FileText className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}
                 <span className="text-xs truncate">{m.attachment_name}</span>
+              </a>
+            )}
+            {url && (
+              <a
+                href={url}
+                download={m.attachment_name || true}
+                target="_blank"
+                rel="noreferrer"
+                className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded ${isMine ? "bg-white/10 hover:bg-white/20" : "bg-muted hover:bg-muted/70"}`}
+              >
+                <Download className="h-3 w-3" /> Télécharger
               </a>
             )}
           </div>
