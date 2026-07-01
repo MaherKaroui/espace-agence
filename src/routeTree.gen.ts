@@ -13,6 +13,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedPreferencesRouteImport } from './routes/_authenticated/preferences'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -47,6 +48,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPreferencesRoute =
+  AuthenticatedPreferencesRouteImport.update({
+    id: '/preferences',
+    path: '/preferences',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedNotificationsRoute =
   AuthenticatedNotificationsRouteImport.update({
     id: '/notifications',
@@ -134,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/preferences': typeof AuthenticatedPreferencesRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
@@ -153,6 +161,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
+  '/preferences': typeof AuthenticatedPreferencesRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
@@ -174,6 +183,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/preferences': typeof AuthenticatedPreferencesRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/messages'
     | '/notifications'
+    | '/preferences'
     | '/admin/audit'
     | '/admin/direction'
     | '/admin/dossiers'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/messages'
     | '/notifications'
+    | '/preferences'
     | '/admin/audit'
     | '/admin/direction'
     | '/admin/dossiers'
@@ -234,6 +246,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/messages'
     | '/_authenticated/notifications'
+    | '/_authenticated/preferences'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/direction'
     | '/_authenticated/admin/dossiers'
@@ -283,6 +296,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/preferences': {
+      id: '/_authenticated/preferences'
+      path: '/preferences'
+      fullPath: '/preferences'
+      preLoaderRoute: typeof AuthenticatedPreferencesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/notifications': {
       id: '/_authenticated/notifications'
@@ -389,6 +409,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedPreferencesRoute: typeof AuthenticatedPreferencesRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminDirectionRoute: typeof AuthenticatedAdminDirectionRoute
   AuthenticatedAdminDossiersRoute: typeof AuthenticatedAdminDossiersRoute
@@ -406,6 +427,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedPreferencesRoute: AuthenticatedPreferencesRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminDirectionRoute: AuthenticatedAdminDirectionRoute,
   AuthenticatedAdminDossiersRoute: AuthenticatedAdminDossiersRoute,
