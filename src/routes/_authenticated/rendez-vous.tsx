@@ -58,7 +58,22 @@ function RendezVousPage() {
         .select("id, starts_at, ends_at, client_id, status")
         .gte("starts_at", weekStart.toISOString())
         .lt("starts_at", weekEnd.toISOString())
-        .neq("status", "annule");
+        .not("status", "in", "(annule,refuse)");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: mine = [] } = useQuery({
+    queryKey: ["rendez_vous-mine", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rendez_vous")
+        .select("id, starts_at, ends_at, status, notes")
+        .eq("client_id", user!.id)
+        .gte("starts_at", new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString())
+        .order("starts_at", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
@@ -80,19 +95,20 @@ function RendezVousPage() {
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
         notes: notes || null,
-        status: "confirme",
+        status: "en_attente",
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Rendez-vous confirmé");
+      toast.success("Demande envoyée — en attente de validation par l'agence");
       qc.invalidateQueries({ queryKey: ["rendez_vous"] });
+      qc.invalidateQueries({ queryKey: ["rendez_vous-mine"] });
       setSelected(null);
       setNotes("");
     },
     onError: (e: any) => {
       const msg = e?.message?.includes("rendez_vous_slot_unique")
-        ? "Ce créneau vient d'être réservé, choisissez-en un autre."
+        ? "Ce créneau vient d'être demandé, choisissez-en un autre."
         : e?.message ?? "Erreur";
       toast.error(msg);
     },
