@@ -38,6 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/admin", label: "Vue agence", icon: LayoutDashboard },
     { to: "/admin/dossiers", label: "Dossiers de mes pôles", icon: FolderOpen },
     { to: "/admin/messages", label: "Messagerie agence", icon: MessageSquare },
+    { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
   ];
   // Réservé Direction / Admin
   const directionNav = [

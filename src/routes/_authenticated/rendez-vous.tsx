@@ -58,7 +58,22 @@ function RendezVousPage() {
         .select("id, starts_at, ends_at, client_id, status")
         .gte("starts_at", weekStart.toISOString())
         .lt("starts_at", weekEnd.toISOString())
-        .neq("status", "annule");
+        .not("status", "in", "(annule,refuse)");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: mine = [] } = useQuery({
+    queryKey: ["rendez_vous-mine", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rendez_vous")
+        .select("id, starts_at, ends_at, status, notes")
+        .eq("client_id", user!.id)
+        .gte("starts_at", new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString())
+        .order("starts_at", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
@@ -80,19 +95,20 @@ function RendezVousPage() {
         starts_at: start.toISOString(),
         ends_at: end.toISOString(),
         notes: notes || null,
-        status: "confirme",
+        status: "en_attente",
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Rendez-vous confirmé");
+      toast.success("Demande envoyée — en attente de validation par l'agence");
       qc.invalidateQueries({ queryKey: ["rendez_vous"] });
+      qc.invalidateQueries({ queryKey: ["rendez_vous-mine"] });
       setSelected(null);
       setNotes("");
     },
     onError: (e: any) => {
       const msg = e?.message?.includes("rendez_vous_slot_unique")
-        ? "Ce créneau vient d'être réservé, choisissez-en un autre."
+        ? "Ce créneau vient d'être demandé, choisissez-en un autre."
         : e?.message ?? "Erreur";
       toast.error(msg);
     },
@@ -103,11 +119,40 @@ function RendezVousPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl">Prendre rendez-vous</h1>
+        <h1 className="font-display text-3xl">Demander un rendez-vous</h1>
         <p className="text-muted-foreground mt-1">
-          Créneaux disponibles du lundi au vendredi, de 9h à 18h. Cliquez sur un créneau libre pour réserver.
+          Créneaux du lundi au vendredi, 9h–18h. Sélectionnez un créneau libre : votre demande sera envoyée à l'agence pour validation.
         </p>
       </div>
+
+      {mine.length > 0 && (
+        <div className="rounded-lg border bg-card p-4">
+          <h2 className="font-medium mb-2">Mes demandes récentes</h2>
+          <ul className="divide-y">
+            {mine.map((r) => (
+              <li key={r.id} className="py-2 flex items-center justify-between text-sm">
+                <span>
+                  {new Date(r.starts_at).toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "long" })}
+                  {" — "}
+                  {new Date(r.starts_at).getHours()}h00
+                </span>
+                <span className={
+                  "text-xs px-2 py-0.5 rounded-full " +
+                  (r.status === "confirme" ? "bg-emerald-500/15 text-emerald-600" :
+                   r.status === "refuse" ? "bg-red-500/15 text-red-600" :
+                   r.status === "annule" ? "bg-muted text-muted-foreground" :
+                   "bg-amber-500/15 text-amber-600")
+                }>
+                  {r.status === "en_attente" ? "En attente"
+                    : r.status === "confirme" ? "Accepté"
+                    : r.status === "refuse" ? "Refusé"
+                    : r.status === "annule" ? "Annulé" : r.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex items-center justify-between rounded-lg border bg-card p-3">
         <Button variant="outline" size="sm" onClick={() => setWeekStart((w) => addDays(w, -7))}>
@@ -178,7 +223,7 @@ function RendezVousPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarCheck className="h-5 w-5 text-gold" />
-              Confirmer le rendez-vous
+              Demander ce créneau
             </DialogTitle>
             <DialogDescription>
               {selected &&
@@ -208,7 +253,7 @@ function RendezVousPage() {
               disabled={bookMutation.isPending}
               onClick={() => selected && bookMutation.mutate({ start: selected, notes })}
             >
-              {bookMutation.isPending ? "Réservation…" : "Confirmer"}
+              {bookMutation.isPending ? "Envoi…" : "Envoyer la demande"}
             </Button>
           </DialogFooter>
         </DialogContent>
