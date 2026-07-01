@@ -77,7 +77,7 @@ function RequiredRow({
     if (!doc) return;
     const { data, error } = await supabase.storage
       .from("documents")
-      .createSignedUrl(doc.storage_path, 60);
+      .createSignedUrl(doc.storage_path, 60, { download: doc.nom });
     if (error) return toast.error(error.message);
     await supabase.rpc("log_document_download", { _document_id: doc.id });
     window.open(data.signedUrl, "_blank");
