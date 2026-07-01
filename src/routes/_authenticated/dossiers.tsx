@@ -100,6 +100,15 @@ function DossiersPage() {
                 <Input id="titre" name="titre" required maxLength={120} />
               </div>
               <div>
+                <Label>Pôle</Label>
+                <Select name="pole_id" required>
+                  <SelectTrigger><SelectValue placeholder="Choisir un pôle…" /></SelectTrigger>
+                  <SelectContent>
+                    {poles.map((p) => <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label>Catégorie</Label>
                 <Select name="categorie" required>
                   <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
