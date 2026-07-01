@@ -59,15 +59,15 @@ function SecurityPage() {
         <ToggleRow label="Masquer les numéros de téléphone dans les messages" checked={form.mask_phones} onChange={(v) => update({ mask_phones: v })} />
         <ToggleRow label="Masquer les adresses e-mail dans les messages" checked={form.mask_emails} onChange={(v) => update({ mask_emails: v })} />
         <ToggleRow label="Filtrer les mots-clés interdits (WhatsApp, Telegram…)" checked={form.filter_keywords} onChange={(v) => update({ filter_keywords: v })} />
-        <div>
-          <label className="text-sm font-medium">Mots-clés interdits (un par ligne)</label>
-          <Textarea
-            rows={6}
-            className="mt-1 font-mono text-xs"
-            value={(form.blocked_keywords ?? []).join("\n")}
-            onChange={(e) => update({ blocked_keywords: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Mots-clés interdits</label>
+          <KeywordEditor
+            keywords={form.blocked_keywords ?? []}
+            onChange={(kws) => update({ blocked_keywords: kws })}
           />
+          <p className="text-xs text-muted-foreground">Ajoutez un mot-clé et validez avec Entrée. Cliquez sur × pour retirer.</p>
         </div>
+
       </Card>
 
       <Card className="p-6 space-y-5">
