@@ -47,6 +47,9 @@ export const REQUIRED_DOCUMENTS: Record<string, RequiredDoc[]> = {
     { key: "bpf", label: "Dernier BPF", match: ["bpf"] },
     { key: "cv", label: "CV formateurs", match: ["cv", "curriculum"] },
     { key: "programme", label: "Programmes de formation", match: ["programme"] },
+    { key: "factures", label: "Factures", match: ["facture"] },
+    { key: "bail", label: "Bail commercial", match: ["bail"] },
+    { key: "diplome", label: "Diplôme(s) du dirigeant", match: ["diplome", "diplôme", "diploma"] },
   ],
   bpf: [
     { key: "kbis", label: "KBIS", match: ["kbis"] },
