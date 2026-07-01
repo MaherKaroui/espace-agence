@@ -113,9 +113,18 @@ function DossierDetail() {
 
   return (
     <div className="space-y-6">
-      <button onClick={() => nav({ to: "/dossiers" })} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-        <ArrowLeft className="h-4 w-4" /> Retour aux dossiers
-      </button>
+      <div className="flex items-center justify-between gap-2">
+        <button onClick={() => nav({ to: "/dossiers" })} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+          <ArrowLeft className="h-4 w-4" /> Retour aux dossiers
+        </button>
+        {isAdmin && dossier.client_id && (
+          <RelanceButton
+            clientId={dossier.client_id}
+            dossierId={dossier.id}
+            dossierTitre={dossier.titre}
+          />
+        )}
+      </div>
 
       <Card className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
