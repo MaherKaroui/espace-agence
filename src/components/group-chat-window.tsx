@@ -271,10 +271,10 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
       .then(({ data }) => { if (data) setUrl(data.signedUrl); });
   }, [m.attachment_path, m.attachment_name, isDeleted]);
 
-  const isImg = m.attachment_mime?.startsWith("image/");
-  const isPdf = m.attachment_mime === "application/pdf";
-  const isVideo = m.attachment_mime?.startsWith("video/");
   const nameLower = (m.attachment_name ?? "").toLowerCase();
+  const isImg = m.attachment_mime?.startsWith("image/") || /\.(jpe?g|png|gif|webp|avif|bmp|svg)$/.test(nameLower);
+  const isPdf = m.attachment_mime === "application/pdf" || nameLower.endsWith(".pdf");
+  const isVideo = m.attachment_mime?.startsWith("video/") || /\.(mp4|webm|mov|mkv)$/.test(nameLower);
   const isAudio =
     m.attachment_mime?.startsWith("audio/") ||
     nameLower.startsWith("vocal-") ||
