@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { categorieLabel } from "@/lib/labels";
+import { NextActionCard } from "@/components/next-action-card";
 import { FolderOpen, FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -31,12 +32,42 @@ function Dashboard() {
     },
   });
 
+  const dossierIds = dossiers.map((d) => d.id);
+
+  const { data: allDocs = [] } = useQuery({
+    queryKey: ["dashboard-docs", user?.id, dossierIds.join(",")],
+    enabled: !isAdmin && dossierIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("id,nom,detected_type,statut,commentaire,dossier_id")
+        .in("dossier_id", dossierIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: allTaches = [] } = useQuery({
+    queryKey: ["dashboard-taches", user?.id, dossierIds.join(",")],
+    enabled: !isAdmin && dossierIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("taches")
+        .select("id,titre,statut,cote_client,verrouillee,dossier_id")
+        .in("dossier_id", dossierIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const stats = {
     total: dossiers.length,
     enAttente: dossiers.filter((d) => ["en_attente", "documents_manquants", "a_completer"].includes(d.statut)).length,
     valides: dossiers.filter((d) => ["valide", "termine"].includes(d.statut)).length,
     enCours: dossiers.filter((d) => ["en_cours_etude", "en_cours_traitement"].includes(d.statut)).length,
   };
+
+  const activeDossiers = dossiers.filter((d) => !["termine", "annule"].includes(d.statut));
 
   return (
     <div className="space-y-8">
@@ -45,12 +76,35 @@ function Dashboard() {
         <p className="text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
       </div>
 
+      {!isAdmin && activeDossiers.length > 0 && (
+        <div>
+          <h2 className="font-display text-xl mb-3">Vos prochaines actions</h2>
+          <div className="grid gap-2">
+            {activeDossiers.slice(0, 4).map((d) => (
+              <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block">
+                <div className="grid grid-cols-[1fr_auto] items-center gap-3">
+                  <NextActionCard
+                    categorie={d.categorie}
+                    documents={allDocs.filter((doc) => doc.dossier_id === d.id) as any}
+                    taches={allTaches.filter((t) => t.dossier_id === d.id) as any}
+                    dossierStatut={d.statut}
+                    compact
+                  />
+                  <span className="text-xs text-muted-foreground truncate max-w-[180px]">{d.titre}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={FolderOpen} label="Dossiers" value={stats.total} />
         <StatCard icon={Clock} label="En attente" value={stats.enAttente} tone="warning" />
         <StatCard icon={FileText} label="En cours" value={stats.enCours} tone="info" />
         <StatCard icon={CheckCircle2} label="Validés" value={stats.valides} tone="success" />
       </div>
+
 
       <div>
         <div className="flex items-center justify-between mb-3">
