@@ -56,6 +56,10 @@ function RendezVousPage() {
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [selected, setSelected] = useState<Date | null>(null);
   const [notes, setNotes] = useState("");
+  type MineRdv = { id: string; starts_at: string; ends_at: string; status: string; notes: string | null };
+  const [replan, setReplan] = useState<MineRdv | null>(null);
+  const [replanDate, setReplanDate] = useState("");
+
 
   const weekEnd = useMemo(() => addDays(weekStart, 5), [weekStart]);
 
