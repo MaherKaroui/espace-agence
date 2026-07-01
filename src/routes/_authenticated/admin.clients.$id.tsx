@@ -41,10 +41,11 @@ function ClientDetail() {
       <Card className="p-6">
         <h1 className="font-display text-2xl">{profile?.prenom} {profile?.nom}</h1>
         <p className="text-muted-foreground">{profile?.email}</p>
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-2">
           <Link to="/admin/messages/$clientId" params={{ clientId: id }}>
             <Button variant="outline"><MessageSquare className="h-4 w-4 mr-2" /> Ouvrir la conversation</Button>
           </Link>
+          <RelanceButton clientId={id} clientEmail={profile?.email} />
         </div>
       </Card>
 
