@@ -27,7 +27,25 @@ type Session = {
   ended_at: string | null;
   duration_seconds: number | null;
   user_agent: string | null;
+  ip: string | null;
+  city: string | null;
+  region: string | null;
+  country: string | null;
+  country_code: string | null;
+  latitude: number | null;
+  longitude: number | null;
 };
+
+function flagEmoji(code: string | null | undefined): string {
+  if (!code || code.length !== 2) return "";
+  const cc = code.toUpperCase();
+  return String.fromCodePoint(...[...cc].map((c) => 127397 + c.charCodeAt(0)));
+}
+
+function locationLabel(s: Session): string {
+  const parts = [s.city, s.region, s.country].filter((x): x is string => !!x && x.trim() !== "");
+  return parts.join(", ");
+}
 
 type Profile = { id: string; nom: string | null; prenom: string | null; email: string };
 
@@ -111,6 +129,9 @@ function AdminSessions() {
           const name = u.profile
             ? `${u.profile.prenom ?? ""} ${u.profile.nom ?? ""}`.trim() || u.profile.email
             : u.user_id.slice(0, 8);
+          const lastGeo = u.sessions.find((s) => s.city || s.country);
+          const lastLoc = lastGeo ? locationLabel(lastGeo) : "";
+          const lastFlag = lastGeo ? flagEmoji(lastGeo.country_code) : "";
           return (
             <details key={u.user_id} className="group">
               <summary className="flex items-center gap-4 p-4 cursor-pointer hover:bg-muted/30 list-none">
@@ -118,6 +139,12 @@ function AdminSessions() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium truncate">{name}</span>
                     {u.open && <Badge className="bg-success/15 text-success border-success/30">En ligne</Badge>}
+                    {lastLoc && (
+                      <Badge variant="outline" className="text-xs">
+                        {lastFlag && <span className="mr-1">{lastFlag}</span>}
+                        {lastLoc}
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
                     {u.profile?.email} · {u.sessions.length} session{u.sessions.length > 1 ? "s" : ""} · dernière {formatDistanceToNow(new Date(u.last), { addSuffix: true, locale: fr })}
@@ -129,22 +156,42 @@ function AdminSessions() {
                 </div>
               </summary>
               <div className="bg-muted/20 divide-y">
-                {u.sessions.slice(0, 20).map((s) => (
-                  <div key={s.id} className="px-6 py-2 text-xs flex items-center gap-4">
-                    <span className="tabular-nums">{format(new Date(s.started_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span>
-                    <span className="text-muted-foreground">→</span>
-                    <span className="tabular-nums">
-                      {s.ended_at ? format(new Date(s.ended_at), "HH:mm", { locale: fr }) : <span className="text-success">en cours</span>}
-                    </span>
-                    <span className="ml-auto tabular-nums">{formatDuration(durationSecondsOf(s))}</span>
-                  </div>
-                ))}
+                {u.sessions.slice(0, 20).map((s) => {
+                  const loc = locationLabel(s);
+                  const flag = flagEmoji(s.country_code);
+                  const mapUrl = s.latitude != null && s.longitude != null
+                    ? `https://www.openstreetmap.org/?mlat=${s.latitude}&mlon=${s.longitude}#map=10/${s.latitude}/${s.longitude}`
+                    : null;
+                  return (
+                    <div key={s.id} className="px-6 py-2 text-xs flex items-center gap-4 flex-wrap">
+                      <span className="tabular-nums">{format(new Date(s.started_at), "dd/MM/yyyy HH:mm", { locale: fr })}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="tabular-nums">
+                        {s.ended_at ? format(new Date(s.ended_at), "HH:mm", { locale: fr }) : <span className="text-success">en cours</span>}
+                      </span>
+                      {(loc || s.ip) && (
+                        <span className="text-muted-foreground truncate">
+                          {flag && <span className="mr-1">{flag}</span>}
+                          {loc || "?"}
+                          {s.ip && <span className="ml-1 opacity-60">· {s.ip}</span>}
+                          {mapUrl && (
+                            <a href={mapUrl} target="_blank" rel="noreferrer" className="ml-2 underline hover:text-foreground">
+                              carte
+                            </a>
+                          )}
+                        </span>
+                      )}
+                      <span className="ml-auto tabular-nums">{formatDuration(durationSecondsOf(s))}</span>
+                    </div>
+                  );
+                })}
                 {u.sessions.length > 20 && (
                   <div className="px-6 py-2 text-xs text-muted-foreground">… {u.sessions.length - 20} sessions plus anciennes</div>
                 )}
               </div>
             </details>
           );
+
         })}
       </Card>
     </div>

@@ -18,9 +18,37 @@ export function SessionTracker() {
     let cancelled = false;
 
     const start = async () => {
+      // Géolocalisation approximative via IP (best-effort, sans permission navigateur)
+      let geo: {
+        ip?: string; city?: string; region?: string; country?: string;
+        country_code?: string; latitude?: number; longitude?: number;
+      } = {};
+      try {
+        const r = await fetch("https://ipwho.is/", { signal: AbortSignal.timeout(4000) });
+        if (r.ok) {
+          const j = await r.json();
+          if (j?.success !== false) {
+            geo = {
+              ip: j.ip, city: j.city, region: j.region,
+              country: j.country, country_code: j.country_code,
+              latitude: j.latitude, longitude: j.longitude,
+            };
+          }
+        }
+      } catch {
+        // pas grave, la session sera enregistrée sans géo
+      }
+
       const { data, error } = await supabase.rpc("session_start", {
         _user_agent: navigator.userAgent.slice(0, 300),
-      });
+        _ip: geo.ip ?? null,
+        _city: geo.city ?? null,
+        _region: geo.region ?? null,
+        _country: geo.country ?? null,
+        _country_code: geo.country_code ?? null,
+        _latitude: geo.latitude ?? null,
+        _longitude: geo.longitude ?? null,
+      } as any);
       if (cancelled || error || !data) return;
       sessionIdRef.current = data as string;
 
