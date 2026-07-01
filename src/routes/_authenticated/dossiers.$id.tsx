@@ -56,6 +56,16 @@ function DossierDetail() {
     },
   });
 
+  const { data: taches = [] } = useQuery({
+    queryKey: ["taches", id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("taches").select("id,titre,statut,cote_client,verrouillee").eq("dossier_id", id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+
   const classify = useServerFn(classifyDocument);
 
   const upload = useMutation({
@@ -215,9 +225,19 @@ function DossierDetail() {
         </div>
       </Card>
 
+      {!isAdmin && (
+        <NextActionCard
+          categorie={dossier.categorie}
+          documents={documents as any}
+          taches={taches as any}
+          dossierStatut={dossier.statut}
+        />
+      )}
+
       <TasksPanel dossierId={id} />
 
       <RequiredDocuments dossierId={id} categorie={dossier.categorie} documents={documents as any} />
+
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
