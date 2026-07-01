@@ -30,6 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ];
   const adminNav = [
     { to: "/admin", label: "Admin — Dashboard", icon: LayoutDashboard },
+    { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
     { to: "/admin/clients", label: "Clients", icon: Users },
     { to: "/admin/dossiers", label: "Tous les dossiers", icon: FolderOpen },
     { to: "/admin/messages", label: "Messagerie agence", icon: MessageSquare },
