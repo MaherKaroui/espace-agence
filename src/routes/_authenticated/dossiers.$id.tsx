@@ -293,6 +293,12 @@ function DossierDetail() {
           </div>
         )}
       </Card>
+
+      <DossierTimeline
+        dossier={dossier as any}
+        documents={documents as any}
+        taches={taches as any}
+      />
     </div>
   );
 }
