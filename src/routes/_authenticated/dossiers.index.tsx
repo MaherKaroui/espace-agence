@@ -17,7 +17,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, categorieLabel } from "@/lib/labels";
 import { Plus } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/dossiers")({
+export const Route = createFileRoute("/_authenticated/dossiers/")({
   head: () => ({ meta: [{ title: "Mes dossiers" }] }),
   component: DossiersPage,
 });

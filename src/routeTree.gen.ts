@@ -20,11 +20,11 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
-import { Route as AuthenticatedAdminMessagesRouteImport } from './routes/_authenticated/admin.messages'
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
 import { Route as AuthenticatedAdminDirectionRouteImport } from './routes/_authenticated/admin.direction'
-import { Route as AuthenticatedAdminClientsRouteImport } from './routes/_authenticated/admin.clients'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
+import { Route as AuthenticatedAdminMessagesIndexRouteImport } from './routes/_authenticated/admin.messages.index'
+import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin.clients.index'
 import { Route as AuthenticatedAdminMessagesClientIdRouteImport } from './routes/_authenticated/admin.messages.$clientId'
 import { Route as AuthenticatedAdminClientsIdRouteImport } from './routes/_authenticated/admin.clients.$id'
 
@@ -84,12 +84,6 @@ const AuthenticatedAdminSecurityRoute =
     path: '/admin/security',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminMessagesRoute =
-  AuthenticatedAdminMessagesRouteImport.update({
-    id: '/admin/messages',
-    path: '/admin/messages',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdminDossiersRoute =
   AuthenticatedAdminDossiersRouteImport.update({
     id: '/admin/dossiers',
@@ -102,28 +96,34 @@ const AuthenticatedAdminDirectionRoute =
     path: '/admin/direction',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminClientsRoute =
-  AuthenticatedAdminClientsRouteImport.update({
-    id: '/admin/clients',
-    path: '/admin/clients',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
   id: '/admin/audit',
   path: '/admin/audit',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminMessagesIndexRoute =
+  AuthenticatedAdminMessagesIndexRouteImport.update({
+    id: '/admin/messages/',
+    path: '/admin/messages/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminClientsIndexRoute =
+  AuthenticatedAdminClientsIndexRouteImport.update({
+    id: '/admin/clients/',
+    path: '/admin/clients/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminMessagesClientIdRoute =
   AuthenticatedAdminMessagesClientIdRouteImport.update({
-    id: '/$clientId',
-    path: '/$clientId',
-    getParentRoute: () => AuthenticatedAdminMessagesRoute,
+    id: '/admin/messages/$clientId',
+    path: '/admin/messages/$clientId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminClientsIdRoute =
   AuthenticatedAdminClientsIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedAdminClientsRoute,
+    id: '/admin/clients/$id',
+    path: '/admin/clients/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -135,15 +135,15 @@ export interface FileRoutesByFullPath {
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
-  '/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
-  '/admin/messages': typeof AuthenticatedAdminMessagesRouteWithChildren
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
+  '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
+  '/admin/messages/': typeof AuthenticatedAdminMessagesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -154,15 +154,15 @@ export interface FileRoutesByTo {
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
-  '/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
-  '/admin/messages': typeof AuthenticatedAdminMessagesRouteWithChildren
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
+  '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
+  '/admin/messages': typeof AuthenticatedAdminMessagesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -175,15 +175,15 @@ export interface FileRoutesById {
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
-  '/_authenticated/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
   '/_authenticated/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
-  '/_authenticated/admin/messages': typeof AuthenticatedAdminMessagesRouteWithChildren
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/_authenticated/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
+  '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
+  '/_authenticated/admin/messages/': typeof AuthenticatedAdminMessagesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -196,15 +196,15 @@ export interface FileRouteTypes {
     | '/messages'
     | '/notifications'
     | '/admin/audit'
-    | '/admin/clients'
     | '/admin/direction'
     | '/admin/dossiers'
-    | '/admin/messages'
     | '/admin/security'
     | '/dossiers/$id'
     | '/admin/'
     | '/admin/clients/$id'
     | '/admin/messages/$clientId'
+    | '/admin/clients/'
+    | '/admin/messages/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -215,15 +215,15 @@ export interface FileRouteTypes {
     | '/messages'
     | '/notifications'
     | '/admin/audit'
-    | '/admin/clients'
     | '/admin/direction'
     | '/admin/dossiers'
-    | '/admin/messages'
     | '/admin/security'
     | '/dossiers/$id'
     | '/admin'
     | '/admin/clients/$id'
     | '/admin/messages/$clientId'
+    | '/admin/clients'
+    | '/admin/messages'
   id:
     | '__root__'
     | '/'
@@ -235,15 +235,15 @@ export interface FileRouteTypes {
     | '/_authenticated/messages'
     | '/_authenticated/notifications'
     | '/_authenticated/admin/audit'
-    | '/_authenticated/admin/clients'
     | '/_authenticated/admin/direction'
     | '/_authenticated/admin/dossiers'
-    | '/_authenticated/admin/messages'
     | '/_authenticated/admin/security'
     | '/_authenticated/dossiers/$id'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/clients/$id'
     | '/_authenticated/admin/messages/$clientId'
+    | '/_authenticated/admin/clients/'
+    | '/_authenticated/admin/messages/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -332,13 +332,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSecurityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/messages': {
-      id: '/_authenticated/admin/messages'
-      path: '/admin/messages'
-      fullPath: '/admin/messages'
-      preLoaderRoute: typeof AuthenticatedAdminMessagesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/admin/dossiers': {
       id: '/_authenticated/admin/dossiers'
       path: '/admin/dossiers'
@@ -353,13 +346,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDirectionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/clients': {
-      id: '/_authenticated/admin/clients'
-      path: '/admin/clients'
-      fullPath: '/admin/clients'
-      preLoaderRoute: typeof AuthenticatedAdminClientsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/admin/audit': {
       id: '/_authenticated/admin/audit'
       path: '/admin/audit'
@@ -367,19 +353,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/messages/': {
+      id: '/_authenticated/admin/messages/'
+      path: '/admin/messages'
+      fullPath: '/admin/messages/'
+      preLoaderRoute: typeof AuthenticatedAdminMessagesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/clients/': {
+      id: '/_authenticated/admin/clients/'
+      path: '/admin/clients'
+      fullPath: '/admin/clients/'
+      preLoaderRoute: typeof AuthenticatedAdminClientsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/messages/$clientId': {
       id: '/_authenticated/admin/messages/$clientId'
-      path: '/$clientId'
+      path: '/admin/messages/$clientId'
       fullPath: '/admin/messages/$clientId'
       preLoaderRoute: typeof AuthenticatedAdminMessagesClientIdRouteImport
-      parentRoute: typeof AuthenticatedAdminMessagesRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/clients/$id': {
       id: '/_authenticated/admin/clients/$id'
-      path: '/$id'
+      path: '/admin/clients/$id'
       fullPath: '/admin/clients/$id'
       preLoaderRoute: typeof AuthenticatedAdminClientsIdRouteImport
-      parentRoute: typeof AuthenticatedAdminClientsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -397,47 +397,20 @@ const AuthenticatedDossiersRouteWithChildren =
     AuthenticatedDossiersRouteChildren,
   )
 
-interface AuthenticatedAdminClientsRouteChildren {
-  AuthenticatedAdminClientsIdRoute: typeof AuthenticatedAdminClientsIdRoute
-}
-
-const AuthenticatedAdminClientsRouteChildren: AuthenticatedAdminClientsRouteChildren =
-  {
-    AuthenticatedAdminClientsIdRoute: AuthenticatedAdminClientsIdRoute,
-  }
-
-const AuthenticatedAdminClientsRouteWithChildren =
-  AuthenticatedAdminClientsRoute._addFileChildren(
-    AuthenticatedAdminClientsRouteChildren,
-  )
-
-interface AuthenticatedAdminMessagesRouteChildren {
-  AuthenticatedAdminMessagesClientIdRoute: typeof AuthenticatedAdminMessagesClientIdRoute
-}
-
-const AuthenticatedAdminMessagesRouteChildren: AuthenticatedAdminMessagesRouteChildren =
-  {
-    AuthenticatedAdminMessagesClientIdRoute:
-      AuthenticatedAdminMessagesClientIdRoute,
-  }
-
-const AuthenticatedAdminMessagesRouteWithChildren =
-  AuthenticatedAdminMessagesRoute._addFileChildren(
-    AuthenticatedAdminMessagesRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDossiersRoute: typeof AuthenticatedDossiersRouteWithChildren
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
-  AuthenticatedAdminClientsRoute: typeof AuthenticatedAdminClientsRouteWithChildren
   AuthenticatedAdminDirectionRoute: typeof AuthenticatedAdminDirectionRoute
   AuthenticatedAdminDossiersRoute: typeof AuthenticatedAdminDossiersRoute
-  AuthenticatedAdminMessagesRoute: typeof AuthenticatedAdminMessagesRouteWithChildren
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminClientsIdRoute: typeof AuthenticatedAdminClientsIdRoute
+  AuthenticatedAdminMessagesClientIdRoute: typeof AuthenticatedAdminMessagesClientIdRoute
+  AuthenticatedAdminClientsIndexRoute: typeof AuthenticatedAdminClientsIndexRoute
+  AuthenticatedAdminMessagesIndexRoute: typeof AuthenticatedAdminMessagesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -446,12 +419,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
-  AuthenticatedAdminClientsRoute: AuthenticatedAdminClientsRouteWithChildren,
   AuthenticatedAdminDirectionRoute: AuthenticatedAdminDirectionRoute,
   AuthenticatedAdminDossiersRoute: AuthenticatedAdminDossiersRoute,
-  AuthenticatedAdminMessagesRoute: AuthenticatedAdminMessagesRouteWithChildren,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminClientsIdRoute: AuthenticatedAdminClientsIdRoute,
+  AuthenticatedAdminMessagesClientIdRoute:
+    AuthenticatedAdminMessagesClientIdRoute,
+  AuthenticatedAdminClientsIndexRoute: AuthenticatedAdminClientsIndexRoute,
+  AuthenticatedAdminMessagesIndexRoute: AuthenticatedAdminMessagesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
