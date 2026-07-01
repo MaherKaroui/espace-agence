@@ -1,12 +1,19 @@
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
-import { ArrowLeft, MessageSquare } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock } from "lucide-react";
 import { RelanceButton } from "@/components/relance-button";
+import { formatDistanceToNow, format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/admin/clients/$id")({
   head: () => ({ meta: [{ title: "Client — Admin" }] }),
@@ -14,7 +21,8 @@ export const Route = createFileRoute("/_authenticated/admin/clients/$id")({
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw redirect({ to: "/auth" });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.user.id);
-    if (!roles?.some((r) => r.role === "admin")) throw redirect({ to: "/dashboard" });
+    const staff = roles?.some((r) => ["admin", "direction", "manager", "consultant"].includes(r.role));
+    if (!staff) throw redirect({ to: "/dashboard" });
   },
   component: ClientDetail,
 });
@@ -22,15 +30,121 @@ export const Route = createFileRoute("/_authenticated/admin/clients/$id")({
 function ClientDetail() {
   const { id } = Route.useParams();
   const nav = useNavigate();
+  const { user } = useAuth();
+  const qc = useQueryClient();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", id],
     queryFn: async () => (await supabase.from("profiles").select("*").eq("id", id).maybeSingle()).data,
   });
+
   const { data: dossiers = [] } = useQuery({
     queryKey: ["dossiers-client", id],
-    queryFn: async () => (await supabase.from("dossiers").select("*").eq("client_id", id).order("updated_at", { ascending: false })).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("dossiers").select("*").eq("client_id", id).order("updated_at", { ascending: false })).data ?? [],
   });
+
+  const { data: docsCount = 0 } = useQuery({
+    queryKey: ["docs-count-client", id],
+    queryFn: async () => {
+      const dossierIds = (dossiers ?? []).map((d: any) => d.id);
+      if (dossierIds.length === 0) return 0;
+      const { count } = await supabase
+        .from("documents")
+        .select("id", { count: "exact", head: true })
+        .in("dossier_id", dossierIds);
+      return count ?? 0;
+    },
+    enabled: dossiers.length > 0,
+  });
+
+  const { data: lastMsg } = useQuery({
+    queryKey: ["last-msg-client", id],
+    queryFn: async () =>
+      (await supabase
+        .from("messages")
+        .select("created_at,from_agence")
+        .eq("client_id", id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()).data,
+  });
+
+  const { data: notes = [] } = useQuery({
+    queryKey: ["client-notes", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("client_notes")
+        .select("id, contenu, author_id, created_at")
+        .eq("client_id", id)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const authorIds = Array.from(new Set(notes.map((n: any) => n.author_id).filter(Boolean)));
+  const { data: authors = [] } = useQuery({
+    queryKey: ["client-notes-authors", id, authorIds.join(",")],
+    queryFn: async () => {
+      if (authorIds.length === 0) return [];
+      const { data } = await supabase.from("profiles").select("id,prenom,nom").in("id", authorIds);
+      return data ?? [];
+    },
+    enabled: authorIds.length > 0,
+  });
+  const authorLabel = (uid: string) => {
+    const a = authors.find((p: any) => p.id === uid);
+    return a ? `${a.prenom} ${a.nom}`.trim() || "Membre agence" : "Membre agence";
+  };
+
+  const [telephone, setTelephone] = useState<string | null>(null);
+  const [entreprise, setEntreprise] = useState<string | null>(null);
+
+  const updateProfile = useMutation({
+    mutationFn: async (patch: { telephone?: string | null; entreprise?: string | null }) => {
+      const { error } = await supabase.from("profiles").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Fiche mise à jour");
+      qc.invalidateQueries({ queryKey: ["profile", id] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const [newNote, setNewNote] = useState("");
+  const addNote = useMutation({
+    mutationFn: async (contenu: string) => {
+      const { error } = await supabase
+        .from("client_notes")
+        .insert({ client_id: id, author_id: user!.id, contenu });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Note ajoutée");
+      setNewNote("");
+      qc.invalidateQueries({ queryKey: ["client-notes", id] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const delNote = useMutation({
+    mutationFn: async (noteId: string) => {
+      const { error } = await supabase.from("client_notes").delete().eq("id", noteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Note supprimée");
+      qc.invalidateQueries({ queryKey: ["client-notes", id] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const nbActifs = dossiers.filter((d: any) => !["termine", "annule"].includes(d.statut)).length;
+  const nbTermines = dossiers.filter((d: any) => d.statut === "termine").length;
+
+  const currentTel = telephone ?? (profile as any)?.telephone ?? "";
+  const currentEnt = entreprise ?? (profile as any)?.entreprise ?? "";
 
   return (
     <div className="space-y-6">
@@ -39,14 +153,127 @@ function ClientDetail() {
       </button>
 
       <Card className="p-6">
-        <h1 className="font-display text-2xl">{profile?.prenom} {profile?.nom}</h1>
-        <p className="text-muted-foreground">{profile?.email}</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link to="/admin/messages/$clientId" params={{ clientId: id }}>
-            <Button variant="outline"><MessageSquare className="h-4 w-4 mr-2" /> Ouvrir la conversation</Button>
-          </Link>
-          <RelanceButton clientId={id} clientEmail={profile?.email} />
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="font-display text-2xl">{profile?.prenom} {profile?.nom}</h1>
+            <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2"><Mail className="h-4 w-4" /> {profile?.email}</div>
+              {(profile as any)?.telephone && (
+                <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> {(profile as any).telephone}</div>
+              )}
+              {(profile as any)?.entreprise && (
+                <div className="flex items-center gap-2"><Building2 className="h-4 w-4" /> {(profile as any).entreprise}</div>
+              )}
+              {profile?.created_at && (
+                <div className="text-xs">Inscrit {formatDistanceToNow(new Date(profile.created_at), { addSuffix: true, locale: fr })}</div>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/admin/messages/$clientId" params={{ clientId: id }}>
+              <Button variant="outline"><MessageSquare className="h-4 w-4 mr-2" /> Ouvrir la conversation</Button>
+            </Link>
+            <RelanceButton clientId={id} clientEmail={profile?.email} />
+          </div>
         </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+          <Kpi icon={FolderOpen} label="Dossiers" value={String(dossiers.length)} tone="bg-primary/10 text-primary" />
+          <Kpi icon={Clock} label="Actifs" value={String(nbActifs)} tone="bg-info/15 text-info" />
+          <Kpi icon={CheckCircle2} label="Terminés" value={String(nbTermines)} tone="bg-success/15 text-success" />
+          <Kpi
+            icon={MessageSquare}
+            label="Dernier message"
+            value={
+              lastMsg
+                ? `${lastMsg.from_agence ? "Agence" : "Client"} · ${formatDistanceToNow(new Date(lastMsg.created_at), { addSuffix: true, locale: fr })}`
+                : "—"
+            }
+            tone="bg-muted text-muted-foreground"
+            small
+          />
+        </div>
+
+        <div className="mt-6 pt-6 border-t grid gap-3 md:grid-cols-2">
+          <div>
+            <label className="text-xs text-muted-foreground">Téléphone</label>
+            <Input
+              placeholder="+33 …"
+              value={currentTel}
+              onChange={(e) => setTelephone(e.target.value)}
+              onBlur={(e) => {
+                const v = e.target.value.trim() || null;
+                if (v !== ((profile as any)?.telephone ?? null)) updateProfile.mutate({ telephone: v });
+              }}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Entreprise</label>
+            <Input
+              placeholder="Nom de l'organisme"
+              value={currentEnt}
+              onChange={(e) => setEntreprise(e.target.value)}
+              onBlur={(e) => {
+                const v = e.target.value.trim() || null;
+                if (v !== ((profile as any)?.entreprise ?? null)) updateProfile.mutate({ entreprise: v });
+              }}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground/70 mt-1">Docs déposés : {docsCount}</p>
+      </Card>
+
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-3">
+          <StickyNote className="h-5 w-5 text-warning" />
+          <h2 className="font-display text-xl">Notes internes agence</h2>
+          <span className="text-xs text-muted-foreground">— non visibles par le client</span>
+        </div>
+        <div className="space-y-2 mb-4">
+          <Textarea
+            rows={3}
+            placeholder="Ajouter une note interne (contexte, historique, prochaines démarches…)"
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+          />
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={() => newNote.trim() && addNote.mutate(newNote.trim())}
+              disabled={addNote.isPending || !newNote.trim()}
+            >
+              {addNote.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Ajouter la note
+            </Button>
+          </div>
+        </div>
+        {notes.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Aucune note pour l'instant.</p>
+        ) : (
+          <ul className="divide-y">
+            {notes.map((n: any) => (
+              <li key={n.id} className="py-3 flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm whitespace-pre-wrap">{n.contenu}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {authorLabel(n.author_id)} · {format(new Date(n.created_at), "d MMM yyyy 'à' HH'h'mm", { locale: fr })}
+                  </p>
+                </div>
+                {n.author_id === user?.id && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => delNote.mutate(n.id)}
+                    disabled={delNote.isPending}
+                    aria-label="Supprimer la note"
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <div>
@@ -55,7 +282,7 @@ function ClientDetail() {
           <Card className="p-8 text-center text-muted-foreground">Aucun dossier.</Card>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            {dossiers.map((d) => (
+            {dossiers.map((d: any) => (
               <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}>
                 <Card className="p-4 hover:border-primary/40 transition">
                   <div className="flex items-center justify-between mb-1">
@@ -63,12 +290,43 @@ function ClientDetail() {
                     <StatusBadge statut={d.statut} />
                   </div>
                   <div className="font-medium">{d.titre}</div>
-                  <div className="text-xs text-muted-foreground mt-1">Avancement : {d.avancement}%</div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                    <span>Avancement : {d.avancement}%</span>
+                    {d.updated_at && (
+                      <span>{formatDistanceToNow(new Date(d.updated_at), { addSuffix: true, locale: fr })}</span>
+                    )}
+                  </div>
                 </Card>
               </Link>
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function Kpi({
+  icon: Icon,
+  label,
+  value,
+  tone,
+  small,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  tone: string;
+  small?: boolean;
+}) {
+  return (
+    <div className="rounded-lg border p-3 flex items-start gap-3">
+      <div className={`h-8 w-8 rounded-md flex items-center justify-center shrink-0 ${tone}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-xs text-muted-foreground">{label}</div>
+        <div className={small ? "text-xs font-medium truncate" : "text-lg font-semibold"}>{value}</div>
       </div>
     </div>
   );
