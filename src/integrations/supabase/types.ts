@@ -918,6 +918,7 @@ export type Database = {
         | "email_verifie"
         | "rappel"
         | "action_requise"
+        | "rdv"
       pole_role: "manager" | "consultant"
       tache_statut:
         | "a_faire"
@@ -1087,6 +1088,7 @@ export const Constants = {
         "email_verifie",
         "rappel",
         "action_requise",
+        "rdv",
       ],
       pole_role: ["manager", "consultant"],
       tache_statut: [
