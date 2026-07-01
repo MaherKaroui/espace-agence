@@ -130,6 +130,7 @@ function RendezVousPage() {
       qc.invalidateQueries({ queryKey: ["rendez_vous"] });
       qc.invalidateQueries({ queryKey: ["rendez_vous-mine"] });
       setSelected(null);
+      setRdvType("");
       setNotes("");
     },
     onError: (e: any) => {
