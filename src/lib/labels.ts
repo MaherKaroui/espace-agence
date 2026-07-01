@@ -83,8 +83,12 @@ export const REQUIRED_DOCUMENTS: Record<string, RequiredDoc[]> = {
 export const requiredDocsFor = (categorie: string): RequiredDoc[] =>
   REQUIRED_DOCUMENTS[categorie] ?? [];
 
-export const docMatches = (fileName: string, req: RequiredDoc): boolean => {
-  const n = fileName.toLowerCase();
+export const docMatches = (
+  doc: { nom: string; detected_type?: string | null },
+  req: RequiredDoc,
+): boolean => {
+  if (doc.detected_type && req.key === doc.detected_type) return true;
+  const n = doc.nom.toLowerCase();
   return req.match.some((kw) => n.includes(kw.toLowerCase()));
 };
 

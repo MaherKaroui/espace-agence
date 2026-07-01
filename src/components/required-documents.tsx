@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle2, Circle } from "lucide-react";
 import { requiredDocsFor, docMatches, categorieLabel } from "@/lib/labels";
 
-type Doc = { nom: string };
+type Doc = { nom: string; detected_type?: string | null };
 
 interface Props {
   categorie: string;
@@ -15,7 +15,7 @@ export function RequiredDocuments({ categorie, documents }: Props) {
 
   const items = requis.map((r) => ({
     ...r,
-    provided: documents.some((d) => docMatches(d.nom, r)),
+    provided: documents.some((d) => docMatches(d, r)),
   }));
 
   const done = items.filter((i) => i.provided).length;

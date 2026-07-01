@@ -57,6 +57,9 @@ export type Database = {
         Row: {
           commentaire: string | null
           created_at: string
+          detected_at: string | null
+          detected_type: string | null
+          detection_confidence: number | null
           dossier_id: string
           duration_seconds: number | null
           from_agence: boolean
@@ -72,6 +75,9 @@ export type Database = {
         Insert: {
           commentaire?: string | null
           created_at?: string
+          detected_at?: string | null
+          detected_type?: string | null
+          detection_confidence?: number | null
           dossier_id: string
           duration_seconds?: number | null
           from_agence?: boolean
@@ -87,6 +93,9 @@ export type Database = {
         Update: {
           commentaire?: string | null
           created_at?: string
+          detected_at?: string | null
+          detected_type?: string | null
+          detection_confidence?: number | null
           dossier_id?: string
           duration_seconds?: number | null
           from_agence?: boolean
