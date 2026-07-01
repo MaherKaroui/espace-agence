@@ -16,8 +16,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRendezVousRouteImport } from './routes/_authenticated/rendez-vous'
 import { Route as AuthenticatedPreferencesRouteImport } from './routes/_authenticated/preferences'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
-import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
 import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
@@ -71,16 +71,17 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMessagesIndexRoute =
+  AuthenticatedMessagesIndexRouteImport.update({
+    id: '/messages/',
+    path: '/messages/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDossiersIndexRoute =
   AuthenticatedDossiersIndexRouteImport.update({
     id: '/dossiers/',
@@ -134,9 +135,9 @@ const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
 } as any)
 const AuthenticatedMessagesGroupesIndexRoute =
   AuthenticatedMessagesGroupesIndexRouteImport.update({
-    id: '/groupes/',
-    path: '/groupes/',
-    getParentRoute: () => AuthenticatedMessagesRoute,
+    id: '/messages/groupes/',
+    path: '/messages/groupes/',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminMessagesIndexRoute =
   AuthenticatedAdminMessagesIndexRouteImport.update({
@@ -158,9 +159,9 @@ const LovableEmailQueueProcessRoute =
   } as any)
 const AuthenticatedMessagesGroupesIdRoute =
   AuthenticatedMessagesGroupesIdRouteImport.update({
-    id: '/groupes/$id',
-    path: '/groupes/$id',
-    getParentRoute: () => AuthenticatedMessagesRoute,
+    id: '/messages/groupes/$id',
+    path: '/messages/groupes/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminMessagesClientIdRoute =
   AuthenticatedAdminMessagesClientIdRouteImport.update({
@@ -180,7 +181,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
   '/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -193,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/dossiers/': typeof AuthenticatedDossiersIndexRoute
+  '/messages/': typeof AuthenticatedMessagesIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
@@ -206,7 +207,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
   '/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -219,6 +219,7 @@ export interface FileRoutesByTo {
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/dossiers': typeof AuthenticatedDossiersIndexRoute
+  '/messages': typeof AuthenticatedMessagesIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
@@ -234,7 +235,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/preferences': typeof AuthenticatedPreferencesRoute
   '/_authenticated/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -247,6 +247,7 @@ export interface FileRoutesById {
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/dossiers/': typeof AuthenticatedDossiersIndexRoute
+  '/_authenticated/messages/': typeof AuthenticatedMessagesIndexRoute
   '/_authenticated/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/_authenticated/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/_authenticated/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
@@ -262,7 +263,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/dashboard'
-    | '/messages'
     | '/notifications'
     | '/preferences'
     | '/rendez-vous'
@@ -275,6 +275,7 @@ export interface FileRouteTypes {
     | '/dossiers/$id'
     | '/admin/'
     | '/dossiers/'
+    | '/messages/'
     | '/admin/clients/$id'
     | '/admin/messages/$clientId'
     | '/messages/groupes/$id'
@@ -288,7 +289,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/dashboard'
-    | '/messages'
     | '/notifications'
     | '/preferences'
     | '/rendez-vous'
@@ -301,6 +301,7 @@ export interface FileRouteTypes {
     | '/dossiers/$id'
     | '/admin'
     | '/dossiers'
+    | '/messages'
     | '/admin/clients/$id'
     | '/admin/messages/$clientId'
     | '/messages/groupes/$id'
@@ -315,7 +316,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/dashboard'
-    | '/_authenticated/messages'
     | '/_authenticated/notifications'
     | '/_authenticated/preferences'
     | '/_authenticated/rendez-vous'
@@ -328,6 +328,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dossiers/$id'
     | '/_authenticated/admin/'
     | '/_authenticated/dossiers/'
+    | '/_authenticated/messages/'
     | '/_authenticated/admin/clients/$id'
     | '/_authenticated/admin/messages/$clientId'
     | '/_authenticated/messages/groupes/$id'
@@ -396,18 +397,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/messages': {
-      id: '/_authenticated/messages'
-      path: '/messages'
-      fullPath: '/messages'
-      preLoaderRoute: typeof AuthenticatedMessagesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/messages/': {
+      id: '/_authenticated/messages/'
+      path: '/messages'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof AuthenticatedMessagesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dossiers/': {
@@ -475,10 +476,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/messages/groupes/': {
       id: '/_authenticated/messages/groupes/'
-      path: '/groupes'
+      path: '/messages/groupes'
       fullPath: '/messages/groupes/'
       preLoaderRoute: typeof AuthenticatedMessagesGroupesIndexRouteImport
-      parentRoute: typeof AuthenticatedMessagesRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/messages/': {
       id: '/_authenticated/admin/messages/'
@@ -503,10 +504,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/messages/groupes/$id': {
       id: '/_authenticated/messages/groupes/$id'
-      path: '/groupes/$id'
+      path: '/messages/groupes/$id'
       fullPath: '/messages/groupes/$id'
       preLoaderRoute: typeof AuthenticatedMessagesGroupesIdRouteImport
-      parentRoute: typeof AuthenticatedMessagesRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/messages/$clientId': {
       id: '/_authenticated/admin/messages/$clientId'
@@ -525,25 +526,8 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedMessagesRouteChildren {
-  AuthenticatedMessagesGroupesIdRoute: typeof AuthenticatedMessagesGroupesIdRoute
-  AuthenticatedMessagesGroupesIndexRoute: typeof AuthenticatedMessagesGroupesIndexRoute
-}
-
-const AuthenticatedMessagesRouteChildren: AuthenticatedMessagesRouteChildren = {
-  AuthenticatedMessagesGroupesIdRoute: AuthenticatedMessagesGroupesIdRoute,
-  AuthenticatedMessagesGroupesIndexRoute:
-    AuthenticatedMessagesGroupesIndexRoute,
-}
-
-const AuthenticatedMessagesRouteWithChildren =
-  AuthenticatedMessagesRoute._addFileChildren(
-    AuthenticatedMessagesRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRouteWithChildren
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPreferencesRoute: typeof AuthenticatedPreferencesRoute
   AuthenticatedRendezVousRoute: typeof AuthenticatedRendezVousRoute
@@ -556,15 +540,17 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedDossiersIndexRoute: typeof AuthenticatedDossiersIndexRoute
+  AuthenticatedMessagesIndexRoute: typeof AuthenticatedMessagesIndexRoute
   AuthenticatedAdminClientsIdRoute: typeof AuthenticatedAdminClientsIdRoute
   AuthenticatedAdminMessagesClientIdRoute: typeof AuthenticatedAdminMessagesClientIdRoute
+  AuthenticatedMessagesGroupesIdRoute: typeof AuthenticatedMessagesGroupesIdRoute
   AuthenticatedAdminClientsIndexRoute: typeof AuthenticatedAdminClientsIndexRoute
   AuthenticatedAdminMessagesIndexRoute: typeof AuthenticatedAdminMessagesIndexRoute
+  AuthenticatedMessagesGroupesIndexRoute: typeof AuthenticatedMessagesGroupesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedMessagesRoute: AuthenticatedMessagesRouteWithChildren,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPreferencesRoute: AuthenticatedPreferencesRoute,
   AuthenticatedRendezVousRoute: AuthenticatedRendezVousRoute,
@@ -577,11 +563,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedDossiersIndexRoute: AuthenticatedDossiersIndexRoute,
+  AuthenticatedMessagesIndexRoute: AuthenticatedMessagesIndexRoute,
   AuthenticatedAdminClientsIdRoute: AuthenticatedAdminClientsIdRoute,
   AuthenticatedAdminMessagesClientIdRoute:
     AuthenticatedAdminMessagesClientIdRoute,
+  AuthenticatedMessagesGroupesIdRoute: AuthenticatedMessagesGroupesIdRoute,
   AuthenticatedAdminClientsIndexRoute: AuthenticatedAdminClientsIndexRoute,
   AuthenticatedAdminMessagesIndexRoute: AuthenticatedAdminMessagesIndexRoute,
+  AuthenticatedMessagesGroupesIndexRoute:
+    AuthenticatedMessagesGroupesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
