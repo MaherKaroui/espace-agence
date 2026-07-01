@@ -36,15 +36,21 @@ function AdminRdv() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("rendez_vous")
-        .select("id, client_id, starts_at, ends_at, status, notes, profiles:profiles!rendez_vous_client_id_fkey(nom,prenom,email)")
+        .select("id, client_id, starts_at, ends_at, status, notes")
         .order("starts_at", { ascending: true });
-      if (error) {
-        // fallback sans join si la FK n'existe pas nommément
-        const alt = await supabase.from("rendez_vous").select("*").order("starts_at", { ascending: true });
-        if (alt.error) throw alt.error;
-        return alt.data as Rdv[];
+      if (error) throw error;
+      const list = (data ?? []) as Rdv[];
+      const ids = Array.from(new Set(list.map((r) => r.client_id)));
+      if (ids.length) {
+        const { data: profs } = await supabase
+          .from("profiles").select("id, nom, prenom, email").in("id", ids);
+        const m = new Map((profs ?? []).map((p) => [p.id, p]));
+        for (const r of list) {
+          const p = m.get(r.client_id);
+          if (p) r.profiles = { nom: p.nom, prenom: p.prenom, email: p.email };
+        }
       }
-      return data as Rdv[];
+      return list;
     },
   });
 
