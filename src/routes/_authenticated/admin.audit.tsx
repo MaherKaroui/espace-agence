@@ -134,10 +134,24 @@ function Row({ log, who }: { log: any; who: string }) {
 
         {(isEdit || isDel) && (prev || next) && (
           <div className="mt-2 space-y-2">
+            {isEdit && (prev || next) && (
+              <div className="text-sm bg-muted/40 border rounded p-2">
+                <span className="font-medium">Modification : </span>
+                <span className="line-through text-destructive">« {prev || "(vide)"} »</span>
+                <span className="mx-2">→</span>
+                <span className="text-success-foreground">« {next || "(vide)"} »</span>
+              </div>
+            )}
+            {isDel && (
+              <div className="text-sm bg-muted/40 border rounded p-2">
+                <span className="font-medium">Message supprimé : </span>
+                <span className="line-through text-destructive">« {prev || "(vide)"} »</span>
+              </div>
+            )}
             {prev !== undefined && prev !== null && (
               <div>
                 <div className="text-xs font-medium text-muted-foreground mb-1">
-                  {isDel ? "Message supprimé" : "Contenu avant modification"}
+                  {isDel ? "Contenu supprimé (détail)" : "Contenu avant modification"}
                 </div>
                 <div className="text-sm bg-destructive/5 border border-destructive/20 rounded p-2 whitespace-pre-wrap break-words">
                   {prev || <span className="italic text-muted-foreground">(vide)</span>}
