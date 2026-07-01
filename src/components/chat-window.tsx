@@ -422,10 +422,16 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
         ) : (
           m.content && <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
         )}
-        <div className={`text-[10px] mt-1 flex items-center gap-1 ${isMine ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"}`}>
+        <div className={`text-[10px] mt-1 flex items-center gap-1 flex-wrap ${isMine ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"}`}>
           {format(new Date(m.created_at), "HH:mm", { locale: fr })}
           {m.edited_at && <span title={`Modifié le ${format(new Date(m.edited_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}`}>· modifié</span>}
-          {isMine && (m.read_at ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />)}
+          {isMine && (m.read_at ? (
+            <span className="inline-flex items-center gap-1" title={`Vu le ${format(new Date(m.read_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}`}>
+              <CheckCheck className="h-3 w-3" /> Vu · {format(new Date(m.read_at), "dd/MM HH:mm", { locale: fr })}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1"><Check className="h-3 w-3" /> Envoyé</span>
+          ))}
         </div>
       </div>
       {canEdit && !editing && (
