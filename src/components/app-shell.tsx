@@ -9,6 +9,7 @@ import { useRole } from "@/hooks/use-role";
 import { useProfile } from "@/hooks/use-profile";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { NotificationsRealtime } from "@/components/notifications-realtime";
+import { SessionTracker } from "@/components/session-tracker";
 import { cn } from "@/lib/utils";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -44,11 +45,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const directionNav = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
     { to: "/admin/clients", label: "Clients", icon: Users },
+    { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
   ];
 
   const signOut = async () => {
+    // Ferme toutes les sessions ouvertes de l'utilisateur avant de perdre le token
+    if (user) {
+      const now = new Date().toISOString();
+      await supabase
+        .from("user_sessions")
+        .update({ ended_at: now, last_seen_at: now })
+        .eq("user_id", user.id)
+        .is("ended_at", null);
+    }
     await qc.cancelQueries();
     qc.clear();
     await supabase.auth.signOut();
@@ -105,6 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <NotificationsRealtime />
+      <SessionTracker />
 
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <div className="p-6 flex items-center gap-3">

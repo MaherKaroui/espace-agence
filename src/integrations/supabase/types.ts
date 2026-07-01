@@ -781,11 +781,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          last_seen_at: string
+          started_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          last_seen_at?: string
+          started_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          last_seen_at?: string
+          started_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      close_stale_sessions: { Args: never; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -847,6 +881,9 @@ export type Database = {
           sanitized: string
         }[]
       }
+      session_end: { Args: { _session_id: string }; Returns: undefined }
+      session_heartbeat: { Args: { _session_id: string }; Returns: undefined }
+      session_start: { Args: { _user_agent?: string }; Returns: string }
     }
     Enums: {
       app_role: "client" | "admin" | "direction" | "manager" | "consultant"
