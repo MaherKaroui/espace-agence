@@ -256,12 +256,41 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
             )}
           </div>
         )}
-        {m.content && <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>}
+        {editing ? (
+          <div className="space-y-2">
+            <Textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              className="text-sm text-foreground bg-background min-h-[80px]"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="ghost" onClick={() => { setDraft(m.content ?? ""); setEditing(false); }}>
+                <X className="h-3.5 w-3.5 mr-1" /> Annuler
+              </Button>
+              <Button size="sm" onClick={saveEdit}>Enregistrer</Button>
+            </div>
+          </div>
+        ) : (
+          m.content && <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
+        )}
         <div className={`text-[10px] mt-1 flex items-center gap-1 ${isMine ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"}`}>
           {format(new Date(m.created_at), "HH:mm", { locale: fr })}
+          {m.edited_at && <span title={`Modifié le ${format(new Date(m.edited_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}`}>· modifié</span>}
           {isMine && (m.read_at ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />)}
         </div>
       </div>
+      {canEdit && !editing && (
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition"
+          onClick={() => setEditing(true)}
+          title="Modifier"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </Button>
+      )}
       {isAdmin && isMine && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
