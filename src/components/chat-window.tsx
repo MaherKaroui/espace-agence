@@ -377,7 +377,7 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
                 <span className="text-xs truncate">{m.attachment_name}</span>
               </a>
             )}
-            {url && !isAudio && (
+            {url && !isAudio && !isMine && (
               <a
                 href={url}
                 download={m.attachment_name || true}
