@@ -102,11 +102,48 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
     send.mutate({ content: text.trim() });
   };
 
+  const sendFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+    const initialText = text.trim();
+    setText("");
+    for (let i = 0; i < files.length; i++) {
+      try {
+        await send.mutateAsync({ content: i === 0 ? initialText : "", file: files[i] });
+      } catch {
+        // toast déjà émis par onError
+        break;
+      }
+    }
+    if (files.length > 1) toast.success(`${files.length} fichiers envoyés`);
+  };
+
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    send.mutate({ content: text.trim(), file: f });
+    const list = e.target.files;
+    if (!list || list.length === 0) return;
+    sendFiles(Array.from(list));
     e.target.value = "";
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const pasted: File[] = [];
+    for (const it of Array.from(items)) {
+      if (it.kind === "file") {
+        const f = it.getAsFile();
+        if (f) {
+          const ext = f.type.split("/")[1] || "png";
+          const named = f.name && f.name !== "image.png"
+            ? f
+            : new File([f], `image-${Date.now()}.${ext}`, { type: f.type });
+          pasted.push(named);
+        }
+      }
+    }
+    if (pasted.length > 0) {
+      e.preventDefault();
+      sendFiles(pasted);
+    }
   };
 
   const broadcastTyping = () => {
@@ -194,7 +231,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
         </div>
 
         <form onSubmit={submit} className="p-3 border-t flex gap-2 items-end bg-background">
-          <input ref={fileInput} type="file" hidden onChange={handleFile} />
+          <input ref={fileInput} type="file" hidden multiple onChange={handleFile} />
           <Button type="button" size="icon" variant="ghost" onClick={() => fileInput.current?.click()} disabled={recording}>
             <Paperclip className="h-5 w-5" />
           </Button>
@@ -216,9 +253,11 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
               <Input
                 value={text}
                 onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
-                placeholder="Écrire un message…"
+                onPaste={handlePaste}
+                placeholder="Écrire un message… (Ctrl+V pour coller une image)"
                 className="flex-1"
               />
+
               {text.trim() ? (
                 <Button type="submit" size="icon" disabled={send.isPending}><Send className="h-4 w-4" /></Button>
               ) : (
