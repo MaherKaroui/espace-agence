@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { createChatFileSignedUrl, downloadChatFileAttachment } from "@/lib/chat-attachments";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -265,10 +266,17 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
 
   useEffect(() => {
     if (!m.attachment_path || isDeleted) return;
-    supabase.storage
-      .from("chat-files")
-      .createSignedUrl(m.attachment_path, 3600, { download: m.attachment_name || true })
-      .then(({ data }) => { if (data) setUrl(data.signedUrl); });
+    let active = true;
+    setUrl(null);
+
+    createChatFileSignedUrl(m.attachment_path)
+      .then((signedUrl) => { if (active) setUrl(signedUrl); })
+      .catch((error) => {
+        console.error("Signed URL error", error, "path=", m.attachment_path);
+        if (active) setUrl(null);
+      });
+
+    return () => { active = false; };
   }, [m.attachment_path, m.attachment_name, isDeleted]);
 
   const nameLower = (m.attachment_name ?? "").toLowerCase();
@@ -335,18 +343,12 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
               <button
                 type="button"
                 onClick={async () => {
-                  let res = await supabase.storage
-                    .from("chat-files")
-                    .createSignedUrl(m.attachment_path, 3600, { download: m.attachment_name || true });
-                  if (res.error || !res.data) {
-                    res = await supabase.storage.from("chat-files").createSignedUrl(m.attachment_path, 3600);
+                  try {
+                    await downloadChatFileAttachment(m.attachment_path, m.attachment_name);
+                  } catch (error: any) {
+                    console.error("Download error", error, "path=", m.attachment_path);
+                    toast.error(error?.message || "Fichier introuvable");
                   }
-                  if (res.error || !res.data) {
-                    console.error("Signed URL error", res.error, "path=", m.attachment_path);
-                    toast.error(res.error?.message || "Fichier introuvable");
-                    return;
-                  }
-                  window.open(res.data.signedUrl, "_blank");
                 }}
                 className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded ${isMine ? "bg-white/10 hover:bg-white/20" : "bg-muted hover:bg-muted/70"}`}
               >
