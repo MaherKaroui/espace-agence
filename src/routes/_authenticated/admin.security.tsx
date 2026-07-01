@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Plus, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/security")({
   head: () => ({ meta: [{ title: "Sécurité — Paramètres" }] }),
