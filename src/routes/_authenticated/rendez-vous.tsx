@@ -140,8 +140,8 @@ function RendezVousPage() {
           })}
 
           {HOURS.map((h) => (
-            <>
-              <div key={`h-${h}`} className="border-r border-b p-2 text-xs text-muted-foreground">
+            <Fragment key={`row-${h}`}>
+              <div className="border-r border-b p-2 text-xs text-muted-foreground">
                 {String(h).padStart(2, "0")}h – {String(h + 1).padStart(2, "0")}h
               </div>
               {DAY_LABELS.map((_, dayIdx) => {
@@ -168,7 +168,7 @@ function RendezVousPage() {
                   </button>
                 );
               })}
-            </>
+            </Fragment>
           ))}
         </div>
       </div>
