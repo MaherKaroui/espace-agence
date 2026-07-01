@@ -107,3 +107,47 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
     </div>
   );
 }
+
+function KeywordEditor({ keywords, onChange }: { keywords: string[]; onChange: (kws: string[]) => void }) {
+  const [draft, setDraft] = useState("");
+  const add = () => {
+    const v = draft.trim();
+    if (!v) return;
+    if (keywords.some((k) => k.toLowerCase() === v.toLowerCase())) {
+      toast.info("Ce mot-clé existe déjà");
+      setDraft("");
+      return;
+    }
+    onChange([...keywords, v]);
+    setDraft("");
+  };
+  const remove = (kw: string) => onChange(keywords.filter((k) => k !== kw));
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <Input
+          value={draft}
+          placeholder="Ex : whatsapp"
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); add(); }
+          }}
+        />
+        <Button type="button" onClick={add} variant="secondary"><Plus className="h-4 w-4" /> Ajouter</Button>
+      </div>
+      <div className="flex flex-wrap gap-2 min-h-8">
+        {keywords.length === 0 ? (
+          <span className="text-xs text-muted-foreground italic">Aucun mot-clé pour le moment.</span>
+        ) : keywords.map((kw) => (
+          <span key={kw} className="inline-flex items-center gap-1 rounded-full border bg-muted/50 px-3 py-1 text-xs">
+            {kw}
+            <button type="button" onClick={() => remove(kw)} className="hover:text-destructive" aria-label={`Retirer ${kw}`}>
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
