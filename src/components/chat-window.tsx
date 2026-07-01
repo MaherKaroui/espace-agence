@@ -231,7 +231,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
         </div>
 
         <form onSubmit={submit} className="p-3 border-t flex gap-2 items-end bg-background">
-          <input ref={fileInput} type="file" hidden onChange={handleFile} />
+          <input ref={fileInput} type="file" hidden multiple onChange={handleFile} />
           <Button type="button" size="icon" variant="ghost" onClick={() => fileInput.current?.click()} disabled={recording}>
             <Paperclip className="h-5 w-5" />
           </Button>
@@ -253,9 +253,11 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
               <Input
                 value={text}
                 onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
-                placeholder="Écrire un message…"
+                onPaste={handlePaste}
+                placeholder="Écrire un message… (Ctrl+V pour coller une image)"
                 className="flex-1"
               />
+
               {text.trim() ? (
                 <Button type="submit" size="icon" disabled={send.isPending}><Send className="h-4 w-4" /></Button>
               ) : (
