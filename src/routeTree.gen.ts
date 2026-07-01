@@ -27,6 +27,7 @@ import { Route as AuthenticatedAdminRendezVousRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
 import { Route as AuthenticatedAdminDirectionRouteImport } from './routes/_authenticated/admin.direction'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
+import { Route as AuthenticatedMessagesGroupesIndexRouteImport } from './routes/_authenticated/messages.groupes.index'
 import { Route as AuthenticatedAdminMessagesIndexRouteImport } from './routes/_authenticated/admin.messages.index'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin.clients.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -130,6 +131,12 @@ const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
   path: '/admin/audit',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMessagesGroupesIndexRoute =
+  AuthenticatedMessagesGroupesIndexRouteImport.update({
+    id: '/groupes/',
+    path: '/groupes/',
+    getParentRoute: () => AuthenticatedMessagesRoute,
+  } as any)
 const AuthenticatedAdminMessagesIndexRoute =
   AuthenticatedAdminMessagesIndexRouteImport.update({
     id: '/admin/messages/',
@@ -166,7 +173,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/messages': typeof AuthenticatedMessagesRoute
+  '/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
   '/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -184,13 +191,14 @@ export interface FileRoutesByFullPath {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
   '/admin/messages/': typeof AuthenticatedAdminMessagesIndexRoute
+  '/messages/groupes/': typeof AuthenticatedMessagesGroupesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/messages': typeof AuthenticatedMessagesRoute
+  '/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
   '/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -208,6 +216,7 @@ export interface FileRoutesByTo {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
   '/admin/messages': typeof AuthenticatedAdminMessagesIndexRoute
+  '/messages/groupes': typeof AuthenticatedMessagesGroupesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -216,7 +225,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/messages': typeof AuthenticatedMessagesRoute
+  '/_authenticated/messages': typeof AuthenticatedMessagesRouteWithChildren
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/preferences': typeof AuthenticatedPreferencesRoute
   '/_authenticated/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -234,6 +243,7 @@ export interface FileRoutesById {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
   '/_authenticated/admin/messages/': typeof AuthenticatedAdminMessagesIndexRoute
+  '/_authenticated/messages/groupes/': typeof AuthenticatedMessagesGroupesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/admin/clients/'
     | '/admin/messages/'
+    | '/messages/groupes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/admin/clients'
     | '/admin/messages'
+    | '/messages/groupes'
   id:
     | '__root__'
     | '/'
@@ -309,6 +321,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/_authenticated/admin/clients/'
     | '/_authenticated/admin/messages/'
+    | '/_authenticated/messages/groupes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -447,6 +460,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/messages/groupes/': {
+      id: '/_authenticated/messages/groupes/'
+      path: '/groupes'
+      fullPath: '/messages/groupes/'
+      preLoaderRoute: typeof AuthenticatedMessagesGroupesIndexRouteImport
+      parentRoute: typeof AuthenticatedMessagesRoute
+    }
     '/_authenticated/admin/messages/': {
       id: '/_authenticated/admin/messages/'
       path: '/admin/messages'
@@ -485,9 +505,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedMessagesRouteChildren {
+  AuthenticatedMessagesGroupesIndexRoute: typeof AuthenticatedMessagesGroupesIndexRoute
+}
+
+const AuthenticatedMessagesRouteChildren: AuthenticatedMessagesRouteChildren = {
+  AuthenticatedMessagesGroupesIndexRoute:
+    AuthenticatedMessagesGroupesIndexRoute,
+}
+
+const AuthenticatedMessagesRouteWithChildren =
+  AuthenticatedMessagesRoute._addFileChildren(
+    AuthenticatedMessagesRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
+  AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRouteWithChildren
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPreferencesRoute: typeof AuthenticatedPreferencesRoute
   AuthenticatedRendezVousRoute: typeof AuthenticatedRendezVousRoute
@@ -508,7 +542,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
+  AuthenticatedMessagesRoute: AuthenticatedMessagesRouteWithChildren,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPreferencesRoute: AuthenticatedPreferencesRoute,
   AuthenticatedRendezVousRoute: AuthenticatedRendezVousRoute,
