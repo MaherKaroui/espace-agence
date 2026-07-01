@@ -119,6 +119,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background">
       <NotificationsRealtime />
       <SessionTracker />
+      <AdminFlaggedAlert />
+
 
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <div className="p-6 flex items-center gap-3">
