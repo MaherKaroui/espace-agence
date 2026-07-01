@@ -310,7 +310,7 @@ export function GroupChatWindow({
   );
 }
 
-function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boolean; isAdmin: boolean; senderName: string }) {
+function GroupBubble({ m, isMine, isAdmin, senderName, reads, memberNames, memberCount }: { m: any; isMine: boolean; isAdmin: boolean; senderName: string; reads: { user_id: string; read_at: string }[]; memberNames: Record<string, string>; memberCount: number }) {
   const qc = useQueryClient();
   const [url, setUrl] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
