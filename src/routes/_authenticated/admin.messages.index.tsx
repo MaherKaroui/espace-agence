@@ -26,11 +26,14 @@ function AdminMessages() {
       const { data: msgs } = await supabase.from("messages").select("client_id, content, created_at, from_agence, read_at").order("created_at", { ascending: false });
       const map = new Map<string, any>();
       (msgs ?? []).forEach((m) => { if (!map.has(m.client_id)) map.set(m.client_id, m); });
-      return (profiles ?? []).map((p) => ({ ...p, last: map.get(p.id) })).sort((a, b) => {
-        const at = a.last?.created_at ?? "";
-        const bt = b.last?.created_at ?? "";
-        return bt.localeCompare(at);
-      });
+      return (profiles ?? [])
+        .map((p) => ({ ...p, last: map.get(p.id) }))
+        .filter((t) => !!t.last)
+        .sort((a, b) => {
+          const at = a.last?.created_at ?? "";
+          const bt = b.last?.created_at ?? "";
+          return bt.localeCompare(at);
+        });
     },
   });
 
