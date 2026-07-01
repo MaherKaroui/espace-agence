@@ -6,11 +6,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, CalendarCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarCheck, CalendarCog } from "lucide-react";
+
+function toLocalInput(iso: string) {
+  const d = new Date(iso);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 
 export const Route = createFileRoute("/_authenticated/rendez-vous")({
   component: RendezVousPage,
@@ -47,6 +56,10 @@ function RendezVousPage() {
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [selected, setSelected] = useState<Date | null>(null);
   const [notes, setNotes] = useState("");
+  type MineRdv = { id: string; starts_at: string; ends_at: string; status: string; notes: string | null };
+  const [replan, setReplan] = useState<MineRdv | null>(null);
+  const [replanDate, setReplanDate] = useState("");
+
 
   const weekEnd = useMemo(() => addDays(weekStart, 5), [weekStart]);
 
@@ -114,7 +127,35 @@ function RendezVousPage() {
     },
   });
 
+  const replanMutation = useMutation({
+    mutationFn: async ({ rdv, when }: { rdv: MineRdv; when: string }) => {
+      const start = new Date(when);
+      if (isNaN(start.getTime())) throw new Error("Date invalide");
+      const durMs = Math.max(60 * 60 * 1000, new Date(rdv.ends_at).getTime() - new Date(rdv.starts_at).getTime());
+      const end = new Date(start.getTime() + durMs);
+      const { error } = await supabase
+        .from("rendez_vous")
+        .update({ starts_at: start.toISOString(), ends_at: end.toISOString(), status: "en_attente" })
+        .eq("id", rdv.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Nouveau créneau envoyé — en attente de validation");
+      qc.invalidateQueries({ queryKey: ["rendez_vous"] });
+      qc.invalidateQueries({ queryKey: ["rendez_vous-mine"] });
+      setReplan(null);
+      setReplanDate("");
+    },
+    onError: (e: any) => {
+      const msg = e?.message?.includes("rendez_vous_slot_unique")
+        ? "Ce créneau est déjà pris, choisissez-en un autre."
+        : e?.message ?? "Erreur";
+      toast.error(msg);
+    },
+  });
+
   const now = new Date();
+
 
   return (
     <div className="space-y-6">
@@ -129,27 +170,42 @@ function RendezVousPage() {
         <div className="rounded-lg border bg-card p-4">
           <h2 className="font-medium mb-2">Mes demandes récentes</h2>
           <ul className="divide-y">
-            {mine.map((r) => (
-              <li key={r.id} className="py-2 flex items-center justify-between text-sm">
-                <span>
-                  {new Date(r.starts_at).toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "long" })}
-                  {" — "}
-                  {new Date(r.starts_at).getHours()}h00
-                </span>
-                <span className={
-                  "text-xs px-2 py-0.5 rounded-full " +
-                  (r.status === "confirme" ? "bg-emerald-500/15 text-emerald-600" :
-                   r.status === "refuse" ? "bg-red-500/15 text-red-600" :
-                   r.status === "annule" ? "bg-muted text-muted-foreground" :
-                   "bg-amber-500/15 text-amber-600")
-                }>
-                  {r.status === "en_attente" ? "En attente"
-                    : r.status === "confirme" ? "Accepté"
-                    : r.status === "refuse" ? "Refusé"
-                    : r.status === "annule" ? "Annulé" : r.status}
-                </span>
-              </li>
-            ))}
+            {mine.map((r) => {
+              const canReplan = (r.status === "en_attente" || r.status === "confirme") && new Date(r.starts_at) > new Date();
+              return (
+                <li key={r.id} className="py-2 flex items-center justify-between gap-3 text-sm">
+                  <span>
+                    {new Date(r.starts_at).toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "long" })}
+                    {" — "}
+                    {new Date(r.starts_at).getHours()}h00
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={
+                      "text-xs px-2 py-0.5 rounded-full " +
+                      (r.status === "confirme" ? "bg-emerald-500/15 text-emerald-600" :
+                       r.status === "refuse" ? "bg-red-500/15 text-red-600" :
+                       r.status === "annule" ? "bg-muted text-muted-foreground" :
+                       "bg-amber-500/15 text-amber-600")
+                    }>
+                      {r.status === "en_attente" ? "En attente"
+                        : r.status === "confirme" ? "Accepté"
+                        : r.status === "refuse" ? "Refusé"
+                        : r.status === "annule" ? "Annulé" : r.status}
+                    </span>
+                    {canReplan && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => { setReplan(r); setReplanDate(toLocalInput(r.starts_at)); }}
+                      >
+                        <CalendarCog className="h-4 w-4 mr-1" /> Replanifier
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+
           </ul>
         </div>
       )}
@@ -258,6 +314,35 @@ function RendezVousPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!replan} onOpenChange={(o) => { if (!o) { setReplan(null); setReplanDate(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarCog className="h-5 w-5 text-gold" />
+              Replanifier le rendez-vous
+            </DialogTitle>
+            <DialogDescription>
+              {replan && <>Créneau actuel : {new Date(replan.starts_at).toLocaleString("fr-FR", { weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" })}</>}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="replan-date">Nouveau créneau</Label>
+            <Input id="replan-date" type="datetime-local" value={replanDate} onChange={(e) => setReplanDate(e.target.value)} />
+            <p className="text-xs text-muted-foreground">La demande sera envoyée à l'agence pour validation.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setReplan(null); setReplanDate(""); }}>Annuler</Button>
+            <Button
+              disabled={!replanDate || replanMutation.isPending}
+              onClick={() => replan && replanDate && replanMutation.mutate({ rdv: replan, when: replanDate })}
+            >
+              {replanMutation.isPending ? "Envoi…" : "Envoyer la demande"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
