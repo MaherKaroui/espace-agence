@@ -17,7 +17,8 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const { isStaff, isDirectionOrAdmin } = useRole();
+  const { isStaff, isDirectionOrAdmin, isAdmin, isDirection, isManager, isConsultant } = useRole();
+  const roleLabel = isAdmin ? "Admin" : isDirection ? "Direction" : isManager ? "Manager" : isConsultant ? "Consultant" : "Client";
   const { data: profile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
@@ -133,7 +134,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="p-3 border-t border-sidebar-border">
           <div className="px-3 py-2">
             <div className="text-sm font-medium truncate">{displayName}</div>
-            <div className="text-xs text-sidebar-foreground/50 truncate">{isStaff ? "Membre agence" : "Client"}</div>
+            <div className="text-xs text-sidebar-foreground/50 truncate">{roleLabel}</div>
           </div>
           <button onClick={signOut} className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent">
             <LogOut className="h-4 w-4" /> Déconnexion
