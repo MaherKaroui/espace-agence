@@ -1047,6 +1047,10 @@ export type Database = {
             }
             Returns: string
           }
+      shares_conversation: {
+        Args: { _a: string; _b: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "client" | "admin" | "direction" | "manager" | "consultant"
