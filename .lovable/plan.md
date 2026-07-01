@@ -1,39 +1,59 @@
 ## Objectif
 
-Enrichir la catégorie **Qualiopi** avec 3 nouveaux documents requis, un champ **site web** sur la fiche du dossier, et permettre de **télécharger** ou **remplacer** chaque document requis directement depuis la liste.
+Ajouter une messagerie de **groupe** (ex : 3 personnes qui discutent ensemble) avec **sous-groupes en arborescence illimitée**. Clients et admins peuvent créer des groupes et y ajouter des membres.
 
-## 1. Documents requis Qualiopi (`src/lib/labels.ts`)
+## 1. Base de données (migration)
 
-Ajouter à la liste `qualiopi` :
-- `factures` — « Factures » (match : `facture`)
-- `bail` — « Bail commercial » (match : `bail`)
-- `diplome` — « Diplôme(s) du dirigeant » (match : `diplome`, `diplôme`, `diploma`)
+**Table `conversations`**
+- `titre` (text)
+- `parent_id` (uuid, FK conversations, nullable) → arborescence libre
+- `created_by` (uuid)
+- timestamps
 
-## 2. Champ site web sur le dossier
+**Table `conversation_members`** (PK composite conversation_id + user_id)
+- `role` (`owner` | `member`)
+- `added_at`
 
-- Migration DB : ajouter `site_web TEXT` (nullable) à la table `dossiers`.
-- Sur `dossiers.$id.tsx` (fiche dossier), afficher un champ URL éditable « Site web » (avec lien cliquable en lecture) — modifiable par le client propriétaire et l'admin, sauvegarde via mutation Supabase.
+**Table `group_messages`**
+- `conversation_id` (FK conversations)
+- `sender_id` (uuid)
+- `content` (text nullable)
+- `attachment_path`, `attachment_name`, `attachment_mime`
+- `created_at`, `edited_at`, `deleted_at`, `deleted_by`
 
-## 3. Refonte du composant `RequiredDocuments`
+**Fonction security-definer** `is_conversation_member(_user_id, _conv_id)` pour éviter la récursion RLS.
 
-Pour chaque ligne :
-- Si le document est **fourni** : afficher son nom + bouton **Télécharger** (icône `Download`) + bouton **Remplacer** (icône `Upload`) qui ouvre un file-picker et écrase le fichier existant.
-- Si **manquant** : afficher bouton **Déposer** qui ouvre un file-picker, upload dans le bucket `documents` avec `detected_type = key` pour matching direct.
+**RLS**
+- conversations : SELECT si membre ou admin/direction ; INSERT libre pour tout authentifié ; UPDATE/DELETE si owner ou admin
+- conversation_members : SELECT si membre de la conversation ; INSERT si owner de la conv ou admin ; DELETE idem
+- group_messages : SELECT/INSERT si membre ; UPDATE/DELETE (soft) réservé à l'auteur ou admin
 
-Techniquement :
-- Passer les documents complets (`id`, `storage_path`, `nom`) au composant, pas juste `{nom, detected_type}`.
-- Le composant reçoit aussi `dossierId` et un callback `onChanged` pour rafraîchir la liste après upload/remplacement.
-- Téléchargement : `supabase.storage.from('documents').createSignedUrl(storage_path, 60)` → `window.open`.
-- Remplacer : supprime l'ancien fichier + son enregistrement `documents`, puis upload le nouveau avec le même `detected_type`.
-- Déposer (manquant) : upload standard avec `detected_type = requiredDoc.key`.
+**Notifications** : trigger sur `group_messages` INSERT → notifie tous les membres sauf l'expéditeur (type `message`, lien `/messages/groupes/:id`).
 
-## 4. Sécurité
+## 2. Interface (nouveau segment `/messages/groupes`)
 
-Les policies RLS existantes sur `documents` et `dossiers` couvrent déjà les cas (propriétaire + staff). Aucune modification RLS nécessaire ; l'ajout de `site_web` sur `dossiers` hérite des policies actuelles.
+- **`src/routes/_authenticated/messages.groupes.index.tsx`** : liste arborescente des conversations dont je suis membre (avec repli pour les sous-groupes), bouton **« Nouveau groupe »**.
+- **`src/routes/_authenticated/messages.groupes.$id.tsx`** : chat du groupe (réutilise le composant `chat-window` refactoré ou une variante `group-chat-window`) + panneau membres à droite + bouton **« Créer un sous-groupe »** (pré-remplit `parent_id`).
+- **Dialogue création** : titre, sélection multiple des clients/staff via recherche sur `profiles`, membres pré-cochés = créateur.
+- **Panneau membres** : ajouter/retirer un membre (owner + admin seulement).
+- Lien **« Groupes »** ajouté dans la navigation `app-shell`.
 
-## Fichiers touchés
+## 3. Réutilisation
 
-- `src/lib/labels.ts` — 3 lignes ajoutées à `qualiopi`
-- `supabase/migrations/*_dossier_site_web.sql` — `ALTER TABLE dossiers ADD COLUMN site_web`
-- `src/components/required-documents.tsx` — refonte avec boutons d'action
-- `src/routes/_authenticated/dossiers.$id.tsx` — champ site web + passage des props enrichies à `RequiredDocuments`
+- Le composant `chat-window.tsx` actuel est fortement lié à `client_id`. Je créerai `group-chat-window.tsx` (copie allégée : messages, upload, vocal, édition/suppression admin) plutôt que de le rendre polymorphe — plus sûr et n'impacte pas la messagerie client↔agence existante.
+
+## 4. Fichiers touchés
+
+- Migration : `conversations`, `conversation_members`, `group_messages`, RLS, fonction, trigger notif
+- `src/routes/_authenticated/messages.groupes.index.tsx` (nouveau)
+- `src/routes/_authenticated/messages.groupes.$id.tsx` (nouveau)
+- `src/components/group-chat-window.tsx` (nouveau, adapté de `chat-window`)
+- `src/components/group-create-dialog.tsx` (nouveau)
+- `src/components/app-shell.tsx` (lien nav)
+- `src/integrations/supabase/types.ts` (régénéré automatiquement)
+
+## 5. Hors périmètre
+
+- Appel audio/vidéo de groupe
+- Réactions emoji / fils de réponse
+- Recherche full-text dans les conversations
