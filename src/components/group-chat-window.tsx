@@ -236,16 +236,16 @@ export function GroupChatWindow({
   }, [messages, search]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
-      <Card className="flex flex-col flex-1 overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b">
-          <div>
-            <div className="font-display text-lg">{title}</div>
+    <div className="flex flex-col h-[calc(100vh-8rem)] min-h-0">
+      <Card className="flex flex-col flex-1 overflow-hidden min-h-0">
+        <div className="flex items-center justify-between gap-2 p-3 sm:p-4 border-b">
+          <div className="min-w-0 flex-1">
+            <div className="font-display text-base sm:text-lg truncate">{title}</div>
             <div className="text-xs text-muted-foreground">Discussion de groupe</div>
           </div>
-          <div className="relative">
+          <div className="relative shrink-0">
             <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground" />
-            <Input className="pl-8 h-9 w-48" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input className="pl-8 h-9 w-32 sm:w-48" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </div>
 
@@ -284,7 +284,7 @@ export function GroupChatWindow({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onPaste={handlePaste}
-                placeholder="Écrire un message… (Ctrl+V pour coller une image)"
+                placeholder="Écrire un message…"
                 className="flex-1"
               />
 
