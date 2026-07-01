@@ -314,6 +314,35 @@ function RendezVousPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!replan} onOpenChange={(o) => { if (!o) { setReplan(null); setReplanDate(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarCog className="h-5 w-5 text-gold" />
+              Replanifier le rendez-vous
+            </DialogTitle>
+            <DialogDescription>
+              {replan && <>Créneau actuel : {new Date(replan.starts_at).toLocaleString("fr-FR", { weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" })}</>}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="replan-date">Nouveau créneau</Label>
+            <Input id="replan-date" type="datetime-local" value={replanDate} onChange={(e) => setReplanDate(e.target.value)} />
+            <p className="text-xs text-muted-foreground">La demande sera envoyée à l'agence pour validation.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setReplan(null); setReplanDate(""); }}>Annuler</Button>
+            <Button
+              disabled={!replanDate || replanMutation.isPending}
+              onClick={() => replan && replanDate && replanMutation.mutate({ rdv: replan, when: replanDate })}
+            >
+              {replanMutation.isPending ? "Envoi…" : "Envoyer la demande"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
