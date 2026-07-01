@@ -128,6 +128,7 @@ export type Database = {
           description: string | null
           id: string
           pole_id: string
+          site_web: string | null
           statut: Database["public"]["Enums"]["dossier_statut"]
           titre: string
           updated_at: string
@@ -141,6 +142,7 @@ export type Database = {
           description?: string | null
           id?: string
           pole_id: string
+          site_web?: string | null
           statut?: Database["public"]["Enums"]["dossier_statut"]
           titre: string
           updated_at?: string
@@ -154,6 +156,7 @@ export type Database = {
           description?: string | null
           id?: string
           pole_id?: string
+          site_web?: string | null
           statut?: Database["public"]["Enums"]["dossier_statut"]
           titre?: string
           updated_at?: string
