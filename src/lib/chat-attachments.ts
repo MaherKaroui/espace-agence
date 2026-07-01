@@ -24,13 +24,16 @@ const getSafeFilename = (name: string | null | undefined, path: string) => {
   return (name || fallback).replace(/[\\/:*?"<>|]+/g, "_");
 };
 
-export const createChatFileSignedUrl = async (path: string) => {
+export const createChatFileSignedUrl = async (
+  path: string,
+  options?: { download?: string | boolean },
+) => {
   let lastError: unknown = null;
 
   for (const candidate of getPathCandidates(path)) {
     const { data, error } = await supabase.storage
       .from("chat-files")
-      .createSignedUrl(candidate, 3600);
+      .createSignedUrl(candidate, 3600, options as { download?: string | boolean } | undefined);
 
     if (data?.signedUrl) return data.signedUrl;
     lastError = error;
@@ -40,34 +43,17 @@ export const createChatFileSignedUrl = async (path: string) => {
 };
 
 export const downloadChatFileAttachment = async (path: string, name?: string | null) => {
-  const signedUrl = await createChatFileSignedUrl(path);
   const filename = getSafeFilename(name, path);
+  // Signed URL with forced Content-Disposition: attachment — the browser
+  // handles the download natively, no pre-fetch of the full blob, so the
+  // click feels instant.
+  const signedUrl = await createChatFileSignedUrl(path, { download: filename });
 
-  try {
-    const response = await fetch(signedUrl);
-    if (!response.ok) throw new Error("Fichier introuvable");
-
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = blobUrl;
-    anchor.download = filename;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
-  } catch (error) {
-    if (error instanceof Error && error.message === "Fichier introuvable") {
-      throw error;
-    }
-
-    const anchor = document.createElement("a");
-    anchor.href = signedUrl;
-    anchor.download = filename;
-    anchor.target = "_blank";
-    anchor.rel = "noreferrer";
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-  }
+  const anchor = document.createElement("a");
+  anchor.href = signedUrl;
+  anchor.download = filename;
+  anchor.rel = "noreferrer";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
 };
