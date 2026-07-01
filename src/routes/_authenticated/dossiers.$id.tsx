@@ -246,7 +246,8 @@ function DossierDetail() {
           <div>
             <input ref={fileInput} type="file" multiple hidden onChange={handleUpload} />
             <Button onClick={() => fileInput.current?.click()} disabled={upload.isPending}>
-              <Upload className="h-4 w-4 mr-2" /> Déposer un document
+              {upload.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+              {upload.isPending ? "Envoi en cours…" : "Déposer un document"}
             </Button>
           </div>
         </div>
