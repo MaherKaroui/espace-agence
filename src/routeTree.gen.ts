@@ -15,8 +15,8 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
-import { Route as AuthenticatedDossiersRouteImport } from './routes/_authenticated/dossiers'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
@@ -58,25 +58,26 @@ const AuthenticatedMessagesRoute = AuthenticatedMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedDossiersRoute = AuthenticatedDossiersRouteImport.update({
-  id: '/dossiers',
-  path: '/dossiers',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDossiersIndexRoute =
+  AuthenticatedDossiersIndexRouteImport.update({
+    id: '/dossiers/',
+    path: '/dossiers/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDossiersIdRoute = AuthenticatedDossiersIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedDossiersRoute,
+  id: '/dossiers/$id',
+  path: '/dossiers/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminSecurityRoute =
   AuthenticatedAdminSecurityRouteImport.update({
@@ -131,7 +132,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/dossiers': typeof AuthenticatedDossiersRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -140,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/dossiers/': typeof AuthenticatedDossiersIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
@@ -150,7 +151,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/dossiers': typeof AuthenticatedDossiersRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -159,6 +159,7 @@ export interface FileRoutesByTo {
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/dossiers': typeof AuthenticatedDossiersIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
@@ -171,7 +172,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/dossiers': typeof AuthenticatedDossiersRouteWithChildren
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -180,6 +180,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/dossiers/': typeof AuthenticatedDossiersIndexRoute
   '/_authenticated/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/_authenticated/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
@@ -192,7 +193,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/dashboard'
-    | '/dossiers'
     | '/messages'
     | '/notifications'
     | '/admin/audit'
@@ -201,6 +201,7 @@ export interface FileRouteTypes {
     | '/admin/security'
     | '/dossiers/$id'
     | '/admin/'
+    | '/dossiers/'
     | '/admin/clients/$id'
     | '/admin/messages/$clientId'
     | '/admin/clients/'
@@ -211,7 +212,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/dashboard'
-    | '/dossiers'
     | '/messages'
     | '/notifications'
     | '/admin/audit'
@@ -220,6 +220,7 @@ export interface FileRouteTypes {
     | '/admin/security'
     | '/dossiers/$id'
     | '/admin'
+    | '/dossiers'
     | '/admin/clients/$id'
     | '/admin/messages/$clientId'
     | '/admin/clients'
@@ -231,7 +232,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_authenticated/dashboard'
-    | '/_authenticated/dossiers'
     | '/_authenticated/messages'
     | '/_authenticated/notifications'
     | '/_authenticated/admin/audit'
@@ -240,6 +240,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/security'
     | '/_authenticated/dossiers/$id'
     | '/_authenticated/admin/'
+    | '/_authenticated/dossiers/'
     | '/_authenticated/admin/clients/$id'
     | '/_authenticated/admin/messages/$clientId'
     | '/_authenticated/admin/clients/'
@@ -297,18 +298,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessagesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/dossiers': {
-      id: '/_authenticated/dossiers'
-      path: '/dossiers'
-      fullPath: '/dossiers'
-      preLoaderRoute: typeof AuthenticatedDossiersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dossiers/': {
+      id: '/_authenticated/dossiers/'
+      path: '/dossiers'
+      fullPath: '/dossiers/'
+      preLoaderRoute: typeof AuthenticatedDossiersIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/': {
@@ -320,10 +321,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/dossiers/$id': {
       id: '/_authenticated/dossiers/$id'
-      path: '/$id'
+      path: '/dossiers/$id'
       fullPath: '/dossiers/$id'
       preLoaderRoute: typeof AuthenticatedDossiersIdRouteImport
-      parentRoute: typeof AuthenticatedDossiersRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/security': {
       id: '/_authenticated/admin/security'
@@ -384,29 +385,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedDossiersRouteChildren {
-  AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRoute
-}
-
-const AuthenticatedDossiersRouteChildren: AuthenticatedDossiersRouteChildren = {
-  AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRoute,
-}
-
-const AuthenticatedDossiersRouteWithChildren =
-  AuthenticatedDossiersRoute._addFileChildren(
-    AuthenticatedDossiersRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedDossiersRoute: typeof AuthenticatedDossiersRouteWithChildren
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminDirectionRoute: typeof AuthenticatedAdminDirectionRoute
   AuthenticatedAdminDossiersRoute: typeof AuthenticatedAdminDossiersRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
+  AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedDossiersIndexRoute: typeof AuthenticatedDossiersIndexRoute
   AuthenticatedAdminClientsIdRoute: typeof AuthenticatedAdminClientsIdRoute
   AuthenticatedAdminMessagesClientIdRoute: typeof AuthenticatedAdminMessagesClientIdRoute
   AuthenticatedAdminClientsIndexRoute: typeof AuthenticatedAdminClientsIndexRoute
@@ -415,14 +404,15 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedDossiersRoute: AuthenticatedDossiersRouteWithChildren,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminDirectionRoute: AuthenticatedAdminDirectionRoute,
   AuthenticatedAdminDossiersRoute: AuthenticatedAdminDossiersRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
+  AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedDossiersIndexRoute: AuthenticatedDossiersIndexRoute,
   AuthenticatedAdminClientsIdRoute: AuthenticatedAdminClientsIdRoute,
   AuthenticatedAdminMessagesClientIdRoute:
     AuthenticatedAdminMessagesClientIdRoute,
@@ -442,3 +432,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
