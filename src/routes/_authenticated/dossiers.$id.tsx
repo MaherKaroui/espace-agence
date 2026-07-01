@@ -55,12 +55,14 @@ function DossierDetail() {
     },
   });
 
+  const classify = useServerFn(classifyDocument);
+
   const upload = useMutation({
     mutationFn: async (file: File) => {
       const path = `${id}/${crypto.randomUUID()}-${file.name}`;
       const { error: upErr } = await supabase.storage.from("documents").upload(path, file);
       if (upErr) throw upErr;
-      const { error } = await supabase.from("documents").insert({
+      const { data: inserted, error } = await supabase.from("documents").insert({
         dossier_id: id,
         uploader_id: user!.id,
         nom: file.name,
@@ -68,11 +70,17 @@ function DossierDetail() {
         taille: file.size,
         mime_type: file.type,
         from_agence: isAdmin,
-      });
+      }).select("id").single();
       if (error) throw error;
+      // Classification IA en arrière-plan (n'échoue pas l'upload)
+      if (inserted?.id) {
+        classify({ data: { documentId: inserted.id } })
+          .then(() => qc.invalidateQueries({ queryKey: ["documents", id] }))
+          .catch((e) => console.warn("Classification échouée", e));
+      }
     },
     onSuccess: () => {
-      toast.success("Document ajouté");
+      toast.success("Document ajouté — analyse en cours…");
       qc.invalidateQueries({ queryKey: ["documents", id] });
     },
     onError: (e: any) => toast.error(e.message),
