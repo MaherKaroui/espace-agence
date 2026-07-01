@@ -71,7 +71,12 @@ export function GroupChatWindow({
       let attachment_name: string | null = null;
       let attachment_mime: string | null = null;
       if (file) {
-        const path = `${user!.id}/${crypto.randomUUID()}-${file.name}`;
+        const safeName = file.name
+          .normalize("NFKD")
+          .replace(/[^\w.\-]+/g, "_")
+          .replace(/_+/g, "_")
+          .replace(/^_|_$/g, "");
+        const path = `${user!.id}/${crypto.randomUUID()}-${safeName || "fichier"}`;
         const { error } = await supabase.storage.from("chat-files").upload(path, file);
         if (error) throw error;
         attachment_path = path; attachment_name = file.name; attachment_mime = file.type;
