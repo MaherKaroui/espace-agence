@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RelanceButton } from "@/components/relance-button";
 
 export const Route = createFileRoute("/_authenticated/admin/clients/$id")({
   head: () => ({ meta: [{ title: "Client — Admin" }] }),
