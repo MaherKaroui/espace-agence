@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, STATUTS } from "@/lib/labels";
 import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon } from "lucide-react";
+import { TasksPanel } from "@/components/tasks-panel";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -163,6 +164,8 @@ function DossierDetail() {
           </div>
         )}
       </Card>
+
+      <TasksPanel dossierId={id} />
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
