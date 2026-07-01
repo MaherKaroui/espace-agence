@@ -127,7 +127,35 @@ function RendezVousPage() {
     },
   });
 
+  const replanMutation = useMutation({
+    mutationFn: async ({ rdv, when }: { rdv: MineRdv; when: string }) => {
+      const start = new Date(when);
+      if (isNaN(start.getTime())) throw new Error("Date invalide");
+      const durMs = Math.max(60 * 60 * 1000, new Date(rdv.ends_at).getTime() - new Date(rdv.starts_at).getTime());
+      const end = new Date(start.getTime() + durMs);
+      const { error } = await supabase
+        .from("rendez_vous")
+        .update({ starts_at: start.toISOString(), ends_at: end.toISOString(), status: "en_attente" })
+        .eq("id", rdv.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Nouveau créneau envoyé — en attente de validation");
+      qc.invalidateQueries({ queryKey: ["rendez_vous"] });
+      qc.invalidateQueries({ queryKey: ["rendez_vous-mine"] });
+      setReplan(null);
+      setReplanDate("");
+    },
+    onError: (e: any) => {
+      const msg = e?.message?.includes("rendez_vous_slot_unique")
+        ? "Ce créneau est déjà pris, choisissez-en un autre."
+        : e?.message ?? "Erreur";
+      toast.error(msg);
+    },
+  });
+
   const now = new Date();
+
 
   return (
     <div className="space-y-6">
