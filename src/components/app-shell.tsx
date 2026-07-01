@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isStaff, isDirectionOrAdmin } = useRole();
   const { data: profile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,12 +28,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/messages", label: "Messagerie", icon: MessageSquare },
     { to: "/notifications", label: "Notifications", icon: Bell },
   ];
-  const adminNav = [
-    { to: "/admin", label: "Admin — Dashboard", icon: LayoutDashboard },
+  // Staff (Manager/Consultant/Direction/Admin) — RLS filtre par pôle
+  const staffNav = [
+    { to: "/admin", label: "Vue agence", icon: LayoutDashboard },
+    { to: "/admin/dossiers", label: "Dossiers de mes pôles", icon: FolderOpen },
+    { to: "/admin/messages", label: "Messagerie agence", icon: MessageSquare },
+  ];
+  // Réservé Direction / Admin
+  const directionNav = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
     { to: "/admin/clients", label: "Clients", icon: Users },
-    { to: "/admin/dossiers", label: "Tous les dossiers", icon: FolderOpen },
-    { to: "/admin/messages", label: "Messagerie agence", icon: MessageSquare },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
   ];
