@@ -253,7 +253,11 @@ function DossierDetail() {
         </div>
 
         {documents.length === 0 ? (
-          <div className="text-center py-12 text-sm text-muted-foreground">Aucun document pour l'instant.</div>
+          <div className="text-center py-12">
+            <FileText className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+            <p className="text-sm text-muted-foreground">Aucun document pour l'instant.</p>
+            <p className="text-xs text-muted-foreground/80 mt-1">Cliquez sur « Déposer un document » pour commencer.</p>
+          </div>
         ) : (
           <div className="divide-y">
             {documents.map((d) => {
