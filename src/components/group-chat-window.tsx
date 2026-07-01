@@ -260,10 +260,11 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
 
   useEffect(() => {
     if (!m.attachment_path || isDeleted) return;
-    supabase.storage.from("chat-files").createSignedUrl(m.attachment_path, 3600).then(({ data }) => {
-      if (data) setUrl(data.signedUrl);
-    });
-  }, [m.attachment_path, isDeleted]);
+    supabase.storage
+      .from("chat-files")
+      .createSignedUrl(m.attachment_path, 3600, { download: m.attachment_name || true })
+      .then(({ data }) => { if (data) setUrl(data.signedUrl); });
+  }, [m.attachment_path, m.attachment_name, isDeleted]);
 
   const isImg = m.attachment_mime?.startsWith("image/");
   const isPdf = m.attachment_mime === "application/pdf";
