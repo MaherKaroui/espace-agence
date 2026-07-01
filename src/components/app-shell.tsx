@@ -1,14 +1,16 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, LogOut, Menu, X, ShieldCheck, TrendingUp,
+  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { useProfile } from "@/hooks/use-profile";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { NotificationsRealtime } from "@/components/notifications-realtime";
 import { cn } from "@/lib/utils";
+
 import { useQueryClient } from "@tanstack/react-query";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -27,7 +29,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/dossiers", label: "Mes dossiers", icon: FolderOpen },
     { to: "/messages", label: "Messagerie", icon: MessageSquare },
     { to: "/notifications", label: "Notifications", icon: Bell },
+    { to: "/preferences", label: "Préférences", icon: Settings },
   ];
+
   // Staff (Manager/Consultant/Direction/Admin) — RLS filtre par pôle
   const staffNav = [
     { to: "/admin", label: "Vue agence", icon: LayoutDashboard },
@@ -98,7 +102,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Sidebar desktop */}
+      <NotificationsRealtime />
+
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <div className="p-6 flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-gold flex items-center justify-center">

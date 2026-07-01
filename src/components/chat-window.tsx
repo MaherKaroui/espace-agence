@@ -7,9 +7,14 @@ import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Paperclip, Send, Search, Check, CheckCheck, FileText, Image as ImageIcon } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Paperclip, Send, Search, Check, CheckCheck, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
   const { user } = useAuth();
@@ -127,8 +132,9 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
             <div className="text-center text-sm text-muted-foreground py-12">Aucun message. Envoyez le premier !</div>
           )}
           {filtered.map((m) => (
-            <MessageBubble key={m.id} m={m} isMine={m.sender_id === user?.id} />
+            <MessageBubble key={m.id} m={m} isMine={m.sender_id === user?.id} isAdmin={isAdmin} />
           ))}
+
           {otherTyping && (
             <div className="flex gap-1 px-2">
               <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" />
@@ -157,25 +163,74 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   );
 }
 
-function MessageBubble({ m, isMine }: { m: any; isMine: boolean }) {
+function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmin: boolean }) {
+  const qc = useQueryClient();
   const [url, setUrl] = useState<string | null>(null);
+  const isDeleted = !!m.deleted_at;
+
   useEffect(() => {
-    if (!m.attachment_path) return;
+    if (!m.attachment_path || isDeleted) return;
     supabase.storage.from("chat-files").createSignedUrl(m.attachment_path, 3600).then(({ data }) => {
       if (data) setUrl(data.signedUrl);
     });
-  }, [m.attachment_path]);
+  }, [m.attachment_path, isDeleted]);
 
   const isImg = m.attachment_mime?.startsWith("image/");
   const isPdf = m.attachment_mime === "application/pdf";
+  const isVideo = m.attachment_mime?.startsWith("video/");
+
+  const softDelete = async () => {
+    const { error } = await supabase
+      .from("messages")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", m.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Message supprimé");
+    qc.invalidateQueries({ queryKey: ["messages", m.client_id] });
+  };
+
+  if (isDeleted) {
+    return (
+      <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+        <div className="max-w-[75%] rounded-2xl px-4 py-2 border border-dashed bg-muted/30 text-muted-foreground italic text-sm">
+          Message supprimé par la direction le {format(new Date(m.deleted_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+    <div className={`group flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}>
+      {isAdmin && !isMine && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="icon" variant="ghost" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition">
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer ce message ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Le contenu sera purgé définitivement et remplacé par un marqueur.
+                La suppression est journalisée de manière inaltérable (auteur, date, empreinte du contenu).
+                Cette action affaiblit la valeur probatoire du chat — à réserver aux cas justifiés.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={softDelete}>Supprimer définitivement</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
       <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
         {m.attachment_path && (
           <div className="mb-2">
             {isImg && url ? (
               <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={m.attachment_name} className="rounded-lg max-h-64" /></a>
+            ) : isVideo && url ? (
+              <video src={url} controls className="rounded-lg max-h-72 w-full" preload="metadata" />
             ) : (
               <a href={url || "#"} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg p-2 ${isMine ? "bg-white/10" : "bg-muted"}`}>
                 {isPdf ? <FileText className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}
@@ -190,6 +245,27 @@ function MessageBubble({ m, isMine }: { m: any; isMine: boolean }) {
           {isMine && (m.read_at ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />)}
         </div>
       </div>
+      {isAdmin && isMine && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="icon" variant="ghost" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition">
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer ce message ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Suppression définitive. La suppression est journalisée (auteur, date, empreinte SHA-256 du contenu).
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction onClick={softDelete}>Supprimer définitivement</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }
