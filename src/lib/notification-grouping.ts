@@ -1,5 +1,8 @@
-// Regroupe les notifications non lues par (type, link) pour éviter le bruit.
-// Les notifications lues restent individuelles (historique).
+// Regroupe les notifications par (type, link, jour) afin de collapser
+// les doublons visuels (mêmes messages, mêmes RDV, etc.). Les groupes
+// non lus restent flagged unread tant qu'au moins une notif est non lue.
+
+import { statutLabel, STATUTS } from "@/lib/labels";
 
 export type NotifRow = {
   id: string;
@@ -14,6 +17,7 @@ export type NotifRow = {
 export type NotifGroup = {
   key: string;
   ids: string[];
+  unreadIds: string[];
   type: string;
   link: string | null;
   titre: string;
@@ -35,50 +39,51 @@ const GROUP_TITLES: Record<string, (n: number) => string> = {
   rapport_quotidien: (n) => `${n} rapports quotidiens`,
 };
 
-export function groupNotifications(rows: NotifRow[]): NotifGroup[] {
-  const unread: Record<string, NotifRow[]> = {};
-  const out: NotifGroup[] = [];
+// Remplace les enums techniques (en_attente, documents_manquants…) par leur libellé FR.
+const STATUT_REGEX = new RegExp(
+  `\\b(${STATUTS.map((s) => s.value).join("|")})\\b`,
+  "g",
+);
+function humanize(text: string | null): string | null {
+  if (!text) return text;
+  return text.replace(STATUT_REGEX, (m) => statutLabel(m));
+}
 
+function dayKey(iso: string): string {
+  return iso.slice(0, 10); // YYYY-MM-DD
+}
+
+export function groupNotifications(rows: NotifRow[]): NotifGroup[] {
+  const buckets: Record<string, NotifRow[]> = {};
   for (const n of rows) {
-    if (n.read_at) {
-      out.push({
-        key: n.id,
-        ids: [n.id],
-        type: n.type,
-        link: n.link,
-        titre: n.titre,
-        message: n.message,
-        count: 1,
-        latest_at: n.created_at,
-        unread: false,
-      });
-    } else {
-      const k = `${n.type}|${n.link ?? ""}`;
-      (unread[k] ||= []).push(n);
-    }
+    const k = `${n.type}|${n.link ?? ""}|${dayKey(n.created_at)}`;
+    (buckets[k] ||= []).push(n);
   }
 
-  const groups: NotifGroup[] = Object.entries(unread).map(([k, arr]) => {
-    const latest = arr[0]; // rows are ordered desc by created_at
+  const groups: NotifGroup[] = Object.entries(buckets).map(([k, arr]) => {
+    // Latest first (rows already desc, but be defensive)
+    arr.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    const latest = arr[0];
     const count = arr.length;
+    const unreadIds = arr.filter((r) => !r.read_at).map((r) => r.id);
+    const anyUnread = unreadIds.length > 0;
     const titre =
       count > 1 && GROUP_TITLES[latest.type]
         ? GROUP_TITLES[latest.type](count)
-        : latest.titre;
+        : humanize(latest.titre) ?? latest.titre;
     return {
       key: k,
       ids: arr.map((r) => r.id),
+      unreadIds,
       type: latest.type,
       link: latest.link,
       titre,
-      message: count > 1 ? latest.message : latest.message,
+      message: humanize(latest.message),
       count,
       latest_at: latest.created_at,
-      unread: true,
+      unread: anyUnread,
     };
   });
 
-  return [...groups, ...out].sort((a, b) =>
-    a.latest_at < b.latest_at ? 1 : -1,
-  );
+  return groups.sort((a, b) => (a.latest_at < b.latest_at ? 1 : -1));
 }
