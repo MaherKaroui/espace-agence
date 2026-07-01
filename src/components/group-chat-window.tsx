@@ -326,7 +326,7 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
                 <span className="text-xs truncate">{m.attachment_name}</span>
               </a>
             )}
-            {url && !isAudio && (
+            {url && !isAudio && !isMine && (
               <a
                 href={url}
                 download={m.attachment_name || true}
