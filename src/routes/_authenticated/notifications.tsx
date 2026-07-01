@@ -61,7 +61,7 @@ function NotifPage() {
           {groups.map((g) => (
             <Link
               key={g.key} to={g.link || "/dashboard"}
-              onClick={() => g.unread && markGroup(g.ids)}
+              onClick={() => g.unread && markGroup(g.unreadIds)}
               className={`block p-4 hover:bg-muted/30 ${g.unread ? "bg-accent/30" : ""}`}
             >
               <div className="flex items-start gap-3">
