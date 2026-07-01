@@ -132,8 +132,9 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
             <div className="text-center text-sm text-muted-foreground py-12">Aucun message. Envoyez le premier !</div>
           )}
           {filtered.map((m) => (
-            <MessageBubble key={m.id} m={m} isMine={m.sender_id === user?.id} />
+            <MessageBubble key={m.id} m={m} isMine={m.sender_id === user?.id} isAdmin={isAdmin} />
           ))}
+
           {otherTyping && (
             <div className="flex gap-1 px-2">
               <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" />
