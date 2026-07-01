@@ -14,7 +14,8 @@ export const Route = createFileRoute("/_authenticated/admin/dossiers")({
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw redirect({ to: "/auth" });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.user.id);
-    if (!roles?.some((r) => r.role === "admin")) throw redirect({ to: "/dashboard" });
+    const ok = roles?.some((r) => ["admin","direction","manager","consultant"].includes(r.role));
+    if (!ok) throw redirect({ to: "/dashboard" });
   },
   component: AdminDossiers,
 });
