@@ -29,7 +29,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/dossiers", label: "Mes dossiers", icon: FolderOpen },
     { to: "/messages", label: "Messagerie", icon: MessageSquare },
     { to: "/notifications", label: "Notifications", icon: Bell },
+    { to: "/preferences", label: "Préférences", icon: Settings },
   ];
+
   // Staff (Manager/Consultant/Direction/Admin) — RLS filtre par pôle
   const staffNav = [
     { to: "/admin", label: "Vue agence", icon: LayoutDashboard },
