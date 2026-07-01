@@ -13,8 +13,10 @@ import { StatusBadge } from "@/components/status-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, STATUTS } from "@/lib/labels";
-import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film } from "lucide-react";
 import { TasksPanel } from "@/components/tasks-panel";
+import { VideoPlayer, isVideoMime } from "@/components/video-player";
+
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
