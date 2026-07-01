@@ -292,10 +292,10 @@ function DossierDetail() {
                       size="sm"
                       variant="ghost"
                       aria-label="Supprimer"
-                      disabled={del.isPending && del.variables?.id === d.id}
+                      disabled={del.isPending && (del.variables as any)?.id === d.id}
                       onClick={() => del.mutate(d)}
                     >
-                      {del.isPending && del.variables?.id === d.id ? (
+                      {del.isPending && (del.variables as any)?.id === d.id ? (
                         <Loader2 className="h-4 w-4 animate-spin text-destructive" />
                       ) : (
                         <Trash2 className="h-4 w-4 text-destructive" />
