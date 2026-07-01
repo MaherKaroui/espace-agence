@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, LogOut, Menu, X, ShieldCheck,
+  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, LogOut, Menu, X, ShieldCheck, TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,6 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   ];
   const adminNav = [
     { to: "/admin", label: "Admin — Dashboard", icon: LayoutDashboard },
+    { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
     { to: "/admin/clients", label: "Clients", icon: Users },
     { to: "/admin/dossiers", label: "Tous les dossiers", icon: FolderOpen },
     { to: "/admin/messages", label: "Messagerie agence", icon: MessageSquare },

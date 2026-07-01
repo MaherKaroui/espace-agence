@@ -320,6 +320,60 @@ export type Database = {
         }
         Relationships: []
       }
+      rapports_quotidiens: {
+        Row: {
+          alertes_securite_24h: number
+          avancement_moyen: number
+          created_at: string
+          date_rapport: string
+          details: Json
+          dossiers_actifs: number
+          dossiers_en_attente_client: number
+          dossiers_nouveaux: number
+          dossiers_termines: number
+          id: string
+          messages_24h: number
+          repartition_pole: Json
+          repartition_statut: Json
+          taches_en_retard: number
+          taches_terminees_24h: number
+        }
+        Insert: {
+          alertes_securite_24h?: number
+          avancement_moyen?: number
+          created_at?: string
+          date_rapport: string
+          details?: Json
+          dossiers_actifs?: number
+          dossiers_en_attente_client?: number
+          dossiers_nouveaux?: number
+          dossiers_termines?: number
+          id?: string
+          messages_24h?: number
+          repartition_pole?: Json
+          repartition_statut?: Json
+          taches_en_retard?: number
+          taches_terminees_24h?: number
+        }
+        Update: {
+          alertes_securite_24h?: number
+          avancement_moyen?: number
+          created_at?: string
+          date_rapport?: string
+          details?: Json
+          dossiers_actifs?: number
+          dossiers_en_attente_client?: number
+          dossiers_nouveaux?: number
+          dossiers_termines?: number
+          id?: string
+          messages_24h?: number
+          repartition_pole?: Json
+          repartition_statut?: Json
+          taches_en_retard?: number
+          taches_terminees_24h?: number
+        }
+        Relationships: []
+      }
       security_settings: {
         Row: {
           blocked_keywords: string[]
@@ -490,6 +544,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generer_rapport_quotidien: { Args: { _date?: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
