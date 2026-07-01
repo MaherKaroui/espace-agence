@@ -223,7 +223,7 @@ function RendezVousPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarCheck className="h-5 w-5 text-gold" />
-              Confirmer le rendez-vous
+              Demander ce créneau
             </DialogTitle>
             <DialogDescription>
               {selected &&
