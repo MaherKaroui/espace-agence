@@ -11,7 +11,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Paperclip, Send, Search, Check, CheckCheck, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic, Square } from "lucide-react";
+import { Paperclip, Send, Search, Check, CheckCheck, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic, Square, Download } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -284,10 +284,10 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
 
   useEffect(() => {
     if (!m.attachment_path || isDeleted) return;
-    supabase.storage.from("chat-files").createSignedUrl(m.attachment_path, 3600).then(({ data }) => {
+    supabase.storage.from("chat-files").createSignedUrl(m.attachment_path, 3600, { download: m.attachment_name || true }).then(({ data }) => {
       if (data) setUrl(data.signedUrl);
     });
-  }, [m.attachment_path, isDeleted]);
+  }, [m.attachment_path, m.attachment_name, isDeleted]);
 
   const isImg = m.attachment_mime?.startsWith("image/");
   const isPdf = m.attachment_mime === "application/pdf";
@@ -358,7 +358,7 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
       )}
       <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
         {m.attachment_path && (
-          <div className="mb-2">
+          <div className="mb-2 space-y-1">
             {isImg && url ? (
               <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={m.attachment_name} className="rounded-lg max-h-64" /></a>
             ) : isVideo && url ? (
@@ -370,6 +370,17 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
               <a href={url || "#"} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg p-2 ${isMine ? "bg-white/10" : "bg-muted"}`}>
                 {isPdf ? <FileText className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}
                 <span className="text-xs truncate">{m.attachment_name}</span>
+              </a>
+            )}
+            {url && !isAudio && (
+              <a
+                href={url}
+                download={m.attachment_name || true}
+                target="_blank"
+                rel="noreferrer"
+                className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded ${isMine ? "bg-white/10 hover:bg-white/20" : "bg-muted hover:bg-muted/70"}`}
+              >
+                <Download className="h-3 w-3" /> Télécharger
               </a>
             )}
           </div>
