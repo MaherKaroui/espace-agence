@@ -207,7 +207,7 @@ export function GroupChatWindow({
         </div>
 
         <form onSubmit={submit} className="p-3 border-t flex gap-2 items-end bg-background">
-          <input ref={fileInput} type="file" hidden onChange={handleFile} />
+          <input ref={fileInput} type="file" hidden multiple onChange={handleFile} />
           <Button type="button" size="icon" variant="ghost" onClick={() => fileInput.current?.click()} disabled={recording}>
             <Paperclip className="h-5 w-5" />
           </Button>
