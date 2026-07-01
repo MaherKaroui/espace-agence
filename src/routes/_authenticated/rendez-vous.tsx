@@ -253,7 +253,7 @@ function RendezVousPage() {
               disabled={bookMutation.isPending}
               onClick={() => selected && bookMutation.mutate({ start: selected, notes })}
             >
-              {bookMutation.isPending ? "Réservation…" : "Confirmer"}
+              {bookMutation.isPending ? "Envoi…" : "Envoyer la demande"}
             </Button>
           </DialogFooter>
         </DialogContent>
