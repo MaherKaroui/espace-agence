@@ -18,12 +18,11 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, CalendarCheck, CalendarCog } from "lucide-react";
 
 const RDV_TYPES = [
-  "Certification",
-  "Cession de parts",
-  "CFA",
+  "Certification (30 min)",
+  "Cession de parts (30 min)",
+  "CFA (30 min)",
   "Consultation client (1h — 100€, payante)",
-  "Création d'entreprise",
-  "Autre",
+  "Création d'entreprise (30 min)",
 ] as const;
 
 function toLocalInput(iso: string) {
