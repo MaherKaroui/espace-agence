@@ -170,27 +170,42 @@ function RendezVousPage() {
         <div className="rounded-lg border bg-card p-4">
           <h2 className="font-medium mb-2">Mes demandes récentes</h2>
           <ul className="divide-y">
-            {mine.map((r) => (
-              <li key={r.id} className="py-2 flex items-center justify-between text-sm">
-                <span>
-                  {new Date(r.starts_at).toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "long" })}
-                  {" — "}
-                  {new Date(r.starts_at).getHours()}h00
-                </span>
-                <span className={
-                  "text-xs px-2 py-0.5 rounded-full " +
-                  (r.status === "confirme" ? "bg-emerald-500/15 text-emerald-600" :
-                   r.status === "refuse" ? "bg-red-500/15 text-red-600" :
-                   r.status === "annule" ? "bg-muted text-muted-foreground" :
-                   "bg-amber-500/15 text-amber-600")
-                }>
-                  {r.status === "en_attente" ? "En attente"
-                    : r.status === "confirme" ? "Accepté"
-                    : r.status === "refuse" ? "Refusé"
-                    : r.status === "annule" ? "Annulé" : r.status}
-                </span>
-              </li>
-            ))}
+            {mine.map((r) => {
+              const canReplan = (r.status === "en_attente" || r.status === "confirme") && new Date(r.starts_at) > new Date();
+              return (
+                <li key={r.id} className="py-2 flex items-center justify-between gap-3 text-sm">
+                  <span>
+                    {new Date(r.starts_at).toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "long" })}
+                    {" — "}
+                    {new Date(r.starts_at).getHours()}h00
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={
+                      "text-xs px-2 py-0.5 rounded-full " +
+                      (r.status === "confirme" ? "bg-emerald-500/15 text-emerald-600" :
+                       r.status === "refuse" ? "bg-red-500/15 text-red-600" :
+                       r.status === "annule" ? "bg-muted text-muted-foreground" :
+                       "bg-amber-500/15 text-amber-600")
+                    }>
+                      {r.status === "en_attente" ? "En attente"
+                        : r.status === "confirme" ? "Accepté"
+                        : r.status === "refuse" ? "Refusé"
+                        : r.status === "annule" ? "Annulé" : r.status}
+                    </span>
+                    {canReplan && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => { setReplan(r); setReplanDate(toLocalInput(r.starts_at)); }}
+                      >
+                        <CalendarCog className="h-4 w-4 mr-1" /> Replanifier
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+
           </ul>
         </div>
       )}
