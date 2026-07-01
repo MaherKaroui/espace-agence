@@ -16,6 +16,7 @@ import { Paperclip, Send, Search, Check, CheckCheck, FileText, Image as ImageIco
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
 
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
