@@ -27,6 +27,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const nav = [
     { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
     { to: "/dossiers", label: "Mes dossiers", icon: FolderOpen },
+    { to: "/rendez-vous", label: "Prendre rendez-vous", icon: CalendarDays },
     { to: "/messages", label: "Messagerie", icon: MessageSquare },
     { to: "/notifications", label: "Notifications", icon: Bell },
     { to: "/preferences", label: "Préférences", icon: Settings },
