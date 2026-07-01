@@ -27,6 +27,12 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   const [search, setSearch] = useState("");
   const [typing, setTyping] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recordSecs, setRecordSecs] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordChunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
 
   const { data: messages = [] } = useQuery({
     queryKey: ["messages", clientId],
