@@ -252,7 +252,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
                 value={text}
                 onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
                 onPaste={handlePaste}
-                placeholder="Écrire un message… (Ctrl+V pour coller une image)"
+                placeholder="Écrire un message…"
                 className="flex-1"
               />
 
