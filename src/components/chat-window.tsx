@@ -11,7 +11,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Paperclip, Send, Search, Check, CheckCheck, FileText, Image as ImageIcon, Trash2, Pencil, X } from "lucide-react";
+import { Paperclip, Send, Search, Check, CheckCheck, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic, Square } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -27,6 +27,12 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   const [search, setSearch] = useState("");
   const [typing, setTyping] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recordSecs, setRecordSecs] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordChunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
 
   const { data: messages = [] } = useQuery({
     queryKey: ["messages", clientId],
@@ -106,6 +112,47 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   const broadcastTyping = () => {
     supabase.channel(`chat-${clientId}`).send({ type: "broadcast", event: "typing", payload: { userId: user!.id } });
   };
+  const startRecording = async () => {
+    if (recording) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimes = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
+      const mime = mimes.find((m) => (window as any).MediaRecorder?.isTypeSupported?.(m)) || "";
+      const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      recordChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) recordChunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const type = mr.mimeType || "audio/webm";
+        const blob = new Blob(recordChunksRef.current, { type });
+        const ext = type.includes("mp4") ? "m4a" : type.includes("ogg") ? "ogg" : "webm";
+        const file = new File([blob], `vocal-${Date.now()}.${ext}`, { type });
+        send.mutate({ content: "", file });
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+      setRecordSecs(0);
+      recordTimerRef.current = setInterval(() => setRecordSecs((s) => s + 1), 1000);
+    } catch (e: any) {
+      toast.error("Impossible d'accéder au micro : " + (e?.message ?? "permission refusée"));
+    }
+  };
+
+  const stopRecording = (cancel = false) => {
+    const mr = mediaRecorderRef.current;
+    if (!mr) return;
+    if (cancel) mr.ondataavailable = null as any;
+    if (cancel) mr.onstop = () => mr.stream.getTracks().forEach((t) => t.stop());
+    try { mr.stop(); } catch {}
+    if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
+    setRecording(false);
+    setRecordSecs(0);
+    mediaRecorderRef.current = null;
+  };
+
+  useEffect(() => () => { if (recordTimerRef.current) clearInterval(recordTimerRef.current); }, []);
+
 
   const filtered = useMemo(() => {
     if (!search.trim()) return messages;
@@ -148,17 +195,41 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
 
         <form onSubmit={submit} className="p-3 border-t flex gap-2 items-end bg-background">
           <input ref={fileInput} type="file" hidden onChange={handleFile} />
-          <Button type="button" size="icon" variant="ghost" onClick={() => fileInput.current?.click()}>
+          <Button type="button" size="icon" variant="ghost" onClick={() => fileInput.current?.click()} disabled={recording}>
             <Paperclip className="h-5 w-5" />
           </Button>
-          <Input
-            value={text}
-            onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
-            placeholder="Écrire un message…"
-            className="flex-1"
-          />
-          <Button type="submit" size="icon" disabled={!text.trim() || send.isPending}><Send className="h-4 w-4" /></Button>
+          {recording ? (
+            <>
+              <div className="flex-1 flex items-center gap-2 px-3 h-9 rounded-md border bg-red-500/10 text-red-600 text-sm">
+                <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                Enregistrement… {String(Math.floor(recordSecs / 60)).padStart(2, "0")}:{String(recordSecs % 60).padStart(2, "0")}
+              </div>
+              <Button type="button" size="icon" variant="ghost" onClick={() => stopRecording(true)} title="Annuler">
+                <X className="h-4 w-4" />
+              </Button>
+              <Button type="button" size="icon" onClick={() => stopRecording(false)} title="Envoyer le vocal">
+                <Send className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Input
+                value={text}
+                onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
+                placeholder="Écrire un message…"
+                className="flex-1"
+              />
+              {text.trim() ? (
+                <Button type="submit" size="icon" disabled={send.isPending}><Send className="h-4 w-4" /></Button>
+              ) : (
+                <Button type="button" size="icon" variant="ghost" onClick={startRecording} title="Message vocal">
+                  <Mic className="h-5 w-5" />
+                </Button>
+              )}
+            </>
+          )}
         </form>
+
       </Card>
     </div>
   );
@@ -182,6 +253,7 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
   const isImg = m.attachment_mime?.startsWith("image/");
   const isPdf = m.attachment_mime === "application/pdf";
   const isVideo = m.attachment_mime?.startsWith("video/");
+  const isAudio = m.attachment_mime?.startsWith("audio/");
 
   const softDelete = async () => {
     const { error } = await supabase
@@ -248,6 +320,9 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
               <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={m.attachment_name} className="rounded-lg max-h-64" /></a>
             ) : isVideo && url ? (
               <video src={url} controls className="rounded-lg max-h-72 w-full" preload="metadata" />
+            ) : isAudio && url ? (
+              <audio src={url} controls className="w-64 max-w-full" preload="metadata" />
+
             ) : (
               <a href={url || "#"} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg p-2 ${isMine ? "bg-white/10" : "bg-muted"}`}>
                 {isPdf ? <FileText className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}
