@@ -63,7 +63,7 @@ function SecurityPage() {
           <label className="text-sm font-medium">Mots-clés interdits</label>
           <KeywordEditor
             keywords={form.blocked_keywords ?? []}
-            onChange={(kws) => update({ blocked_keywords: kws })}
+            onChange={(kws: string[]) => update({ blocked_keywords: kws })}
           />
           <p className="text-xs text-muted-foreground">Ajoutez un mot-clé et validez avec Entrée. Cliquez sur × pour retirer.</p>
         </div>
