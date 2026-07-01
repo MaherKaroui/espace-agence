@@ -18,11 +18,19 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, CalendarCheck, CalendarCog } from "lucide-react";
 
 const RDV_TYPES = [
-  "Certification (30 min)",
-  "Cession de parts (30 min)",
-  "CFA (30 min)",
-  "Consultation client (1h — 100€, payante)",
-  "Création d'entreprise (30 min)",
+  "Certification (30m)",
+  "Cession de parts (30m)",
+  "CFA (30m)",
+  "Consultation Client 1:00 (100€) Payante (1h)",
+  "Création d'entreprise (30m)",
+  "Création de centre de formation (1h)",
+  "Gérer son centre (2h)",
+  "Procédure contradictoire (30m)",
+  "Procédure Edof (30m)",
+  "Qualiopi (30m)",
+  "Rendez-vous client (45m)",
+  "Suivis client (30m)",
+  "Suivis partenaire (30m)",
 ] as const;
 
 function toLocalInput(iso: string) {
