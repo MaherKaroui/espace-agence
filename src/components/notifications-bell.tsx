@@ -79,7 +79,7 @@ export function NotificationsBell() {
           {groups.slice(0, 20).map((g) => (
             <Link
               key={g.key} to={g.link || "/dashboard"}
-              onClick={() => g.unread && markGroup(g.ids)}
+              onClick={() => g.unread && markGroup(g.unreadIds)}
               className={`block px-4 py-3 border-b hover:bg-muted/50 ${g.unread ? "bg-accent/40" : ""}`}
             >
               <div className="flex items-start justify-between gap-2">
