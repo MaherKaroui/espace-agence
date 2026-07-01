@@ -187,13 +187,26 @@ function DossierDetail() {
           <div className="divide-y">
             {documents.map((d) => {
               const isImg = d.mime_type?.startsWith("image/");
+              const isVid = isVideoMime(d.mime_type);
               return (
                 <div key={d.id} className="py-3 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                    {isImg ? <ImageIcon className="h-5 w-5 text-muted-foreground" /> : <FileText className="h-5 w-5 text-muted-foreground" />}
-                  </div>
+                  {isVid ? (
+                    <VideoPlayer
+                      documentId={d.id}
+                      storagePath={d.storage_path}
+                      fileName={d.nom}
+                      thumbnailPath={d.thumbnail_path}
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                      {isImg ? <ImageIcon className="h-5 w-5 text-muted-foreground" /> : <FileText className="h-5 w-5 text-muted-foreground" />}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{d.nom}</div>
+                    <div className="text-sm font-medium truncate flex items-center gap-1">
+                      {isVid && <Film className="h-3.5 w-3.5 text-muted-foreground" />}
+                      {d.nom}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {d.from_agence ? "Envoyé par l'agence" : "Déposé par le client"} · {formatDistanceToNow(new Date(d.created_at), { addSuffix: true, locale: fr })}
                     </div>
@@ -205,6 +218,7 @@ function DossierDetail() {
                 </div>
               );
             })}
+
           </div>
         )}
       </Card>
