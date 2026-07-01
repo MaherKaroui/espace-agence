@@ -16,6 +16,7 @@ import {
 import { Paperclip, Send, Search, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic, Download } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
 
 export function GroupChatWindow({
   conversationId,
@@ -248,24 +249,16 @@ export function GroupChatWindow({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/20">
-          {filtered.length === 0 && (
-            <div className="text-center text-sm text-muted-foreground py-12">Aucun message. Envoyez le premier !</div>
-          )}
-          {filtered.map((m) => (
-            <GroupBubble
-              key={m.id}
-              m={m}
-              isMine={m.sender_id === user?.id}
-              isAdmin={isAdmin}
-              senderName={memberNames[m.sender_id] ?? "—"}
-              reads={readsByMessage.get(m.id) ?? []}
-              memberNames={memberNames}
-              memberCount={memberCount}
-            />
-          ))}
-          <div ref={bottomRef} />
-        </div>
+        <SwipeableList
+          filtered={filtered}
+          user={user}
+          isAdmin={isAdmin}
+          memberNames={memberNames}
+          memberCount={memberCount}
+          readsByMessage={readsByMessage}
+          bottomRef={bottomRef}
+        />
+
 
         <form onSubmit={submit} className="p-3 border-t flex gap-2 items-end bg-background">
           <input ref={fileInput} type="file" hidden multiple onChange={handleFile} />
@@ -306,6 +299,84 @@ export function GroupChatWindow({
           )}
         </form>
       </Card>
+    </div>
+  );
+}
+
+function SwipeableList({
+  filtered,
+  user,
+  isAdmin,
+  memberNames,
+  memberCount,
+  readsByMessage,
+  bottomRef,
+}: {
+  filtered: any[];
+  user: any;
+  isAdmin: boolean;
+  memberNames: Record<string, string>;
+  memberCount: number;
+  readsByMessage: Map<string, { user_id: string; read_at: string }[]>;
+  bottomRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const { dragX, dragging, max, containerProps } = useSwipeReveal(120);
+  const shift = { transform: `translateX(-${dragX}px)`, transition: dragging ? "none" : "transform 0.25s ease" };
+
+  return (
+    <div
+      className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 bg-muted/20 select-none"
+      {...containerProps}
+    >
+      {filtered.length === 0 && (
+        <div className="text-center text-sm text-muted-foreground py-12">Aucun message. Envoyez le premier !</div>
+      )}
+      {filtered.map((m) => {
+        const isMine = m.sender_id === user?.id;
+        const reads = readsByMessage.get(m.id) ?? [];
+        const others = reads.filter((r) => r.user_id !== m.sender_id);
+        const totalOthers = Math.max(0, memberCount - 1);
+        let info: React.ReactNode = null;
+        if (isMine) {
+          if (others.length === 0) {
+            info = <span>✓ Envoyé</span>;
+          } else {
+            const list = others
+              .map((r) => `${memberNames[r.user_id] ?? "—"} — ${format(new Date(r.read_at), "dd/MM HH:mm", { locale: fr })}`)
+              .join("\n");
+            info = (
+              <div className="space-y-0.5">
+                <div>✓✓ Vu par {others.length}/{totalOthers}</div>
+                <div className="text-[10px] whitespace-pre-line opacity-80">{list}</div>
+              </div>
+            );
+          }
+        } else {
+          info = <span>Reçu · {format(new Date(m.created_at), "dd/MM HH:mm", { locale: fr })}</span>;
+        }
+        return (
+          <div key={m.id} className="relative">
+            <div style={shift}>
+              <GroupBubble
+                m={m}
+                isMine={isMine}
+                isAdmin={isAdmin}
+                senderName={memberNames[m.sender_id] ?? "—"}
+                reads={reads}
+                memberNames={memberNames}
+                memberCount={memberCount}
+              />
+            </div>
+            <div
+              className="absolute top-0 h-full flex items-center text-[11px] text-muted-foreground pl-2 pointer-events-none"
+              style={{ right: `-${max}px`, width: `${max}px`, ...shift, opacity: Math.min(1, dragX / (max * 0.5)) }}
+            >
+              {info}
+            </div>
+          </div>
+        );
+      })}
+      <div ref={bottomRef} />
     </div>
   );
 }
