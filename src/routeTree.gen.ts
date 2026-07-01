@@ -21,6 +21,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
+import { Route as AuthenticatedAdminSessionsRouteImport } from './routes/_authenticated/admin.sessions'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
 import { Route as AuthenticatedAdminRendezVousRouteImport } from './routes/_authenticated/admin.rendez-vous'
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
@@ -94,6 +95,12 @@ const AuthenticatedDossiersIdRoute = AuthenticatedDossiersIdRouteImport.update({
   path: '/dossiers/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminSessionsRoute =
+  AuthenticatedAdminSessionsRouteImport.update({
+    id: '/admin/sessions',
+    path: '/admin/sessions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminSecurityRoute =
   AuthenticatedAdminSecurityRouteImport.update({
     id: '/admin/security',
@@ -168,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
+  '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/dossiers/': typeof AuthenticatedDossiersIndexRoute
@@ -191,6 +199,7 @@ export interface FileRoutesByTo {
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
+  '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/dossiers': typeof AuthenticatedDossiersIndexRoute
@@ -216,6 +225,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/_authenticated/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
+  '/_authenticated/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/dossiers/': typeof AuthenticatedDossiersIndexRoute
@@ -241,6 +251,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers'
     | '/admin/rendez-vous'
     | '/admin/security'
+    | '/admin/sessions'
     | '/dossiers/$id'
     | '/admin/'
     | '/dossiers/'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers'
     | '/admin/rendez-vous'
     | '/admin/security'
+    | '/admin/sessions'
     | '/dossiers/$id'
     | '/admin'
     | '/dossiers'
@@ -288,6 +300,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/dossiers'
     | '/_authenticated/admin/rendez-vous'
     | '/_authenticated/admin/security'
+    | '/_authenticated/admin/sessions'
     | '/_authenticated/dossiers/$id'
     | '/_authenticated/admin/'
     | '/_authenticated/dossiers/'
@@ -392,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDossiersIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/sessions': {
+      id: '/_authenticated/admin/sessions'
+      path: '/admin/sessions'
+      fullPath: '/admin/sessions'
+      preLoaderRoute: typeof AuthenticatedAdminSessionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/security': {
       id: '/_authenticated/admin/security'
       path: '/admin/security'
@@ -476,6 +496,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDossiersRoute: typeof AuthenticatedAdminDossiersRoute
   AuthenticatedAdminRendezVousRoute: typeof AuthenticatedAdminRendezVousRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
+  AuthenticatedAdminSessionsRoute: typeof AuthenticatedAdminSessionsRoute
   AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedDossiersIndexRoute: typeof AuthenticatedDossiersIndexRoute
@@ -496,6 +517,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminDossiersRoute: AuthenticatedAdminDossiersRoute,
   AuthenticatedAdminRendezVousRoute: AuthenticatedAdminRendezVousRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
+  AuthenticatedAdminSessionsRoute: AuthenticatedAdminSessionsRoute,
   AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedDossiersIndexRoute: AuthenticatedDossiersIndexRoute,
