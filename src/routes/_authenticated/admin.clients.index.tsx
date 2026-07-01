@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, User } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/clients")({
+export const Route = createFileRoute("/_authenticated/admin/clients/")({
   head: () => ({ meta: [{ title: "Clients — Admin" }] }),
   beforeLoad: async () => {
     const { data: user } = await supabase.auth.getUser();

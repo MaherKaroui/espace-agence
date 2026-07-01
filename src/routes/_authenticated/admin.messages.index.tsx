@@ -6,7 +6,7 @@ import { User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
-export const Route = createFileRoute("/_authenticated/admin/messages")({
+export const Route = createFileRoute("/_authenticated/admin/messages/")({
   head: () => ({ meta: [{ title: "Messagerie agence" }] }),
   beforeLoad: async () => {
     const { data: user } = await supabase.auth.getUser();
