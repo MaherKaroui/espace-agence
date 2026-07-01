@@ -101,6 +101,7 @@ function DossierDetail() {
   const downloadDoc = async (doc: any) => {
     const { data, error } = await supabase.storage.from("documents").createSignedUrl(doc.storage_path, 60);
     if (error) { toast.error(error.message); return; }
+    await supabase.rpc("log_document_download", { _document_id: doc.id });
     window.open(data.signedUrl, "_blank");
   };
 

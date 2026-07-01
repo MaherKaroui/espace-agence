@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          ip: string | null
+          metadata: Json
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip?: string | null
+          metadata?: Json
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip?: string | null
+          metadata?: Json
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           commentaire: string | null
@@ -281,6 +320,42 @@ export type Database = {
         }
         Relationships: []
       }
+      security_settings: {
+        Row: {
+          blocked_keywords: string[]
+          business_hours_end: string
+          business_hours_only: boolean
+          business_hours_start: string
+          filter_keywords: boolean
+          id: number
+          mask_emails: boolean
+          mask_phones: boolean
+          updated_at: string
+        }
+        Insert: {
+          blocked_keywords?: string[]
+          business_hours_end?: string
+          business_hours_only?: boolean
+          business_hours_start?: string
+          filter_keywords?: boolean
+          id?: number
+          mask_emails?: boolean
+          mask_phones?: boolean
+          updated_at?: string
+        }
+        Update: {
+          blocked_keywords?: string[]
+          business_hours_end?: string
+          business_hours_only?: boolean
+          business_hours_start?: string
+          filter_keywords?: boolean
+          id?: number
+          mask_emails?: boolean
+          mask_phones?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tache_templates: {
         Row: {
           actif: boolean
@@ -427,6 +502,28 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      log_document_download: {
+        Args: { _document_id: string }
+        Returns: undefined
+      }
+      log_event: {
+        Args: {
+          _action: string
+          _entity_id: string
+          _entity_type: string
+          _metadata: Json
+          _severity: string
+        }
+        Returns: undefined
+      }
+      sanitize_message_content: {
+        Args: { _content: string }
+        Returns: {
+          flagged: boolean
+          reasons: string[]
+          sanitized: string
+        }[]
+      }
     }
     Enums: {
       app_role: "client" | "admin" | "direction" | "manager" | "consultant"
