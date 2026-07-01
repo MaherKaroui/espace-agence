@@ -30,6 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/dossiers", label: "Mes dossiers", icon: FolderOpen },
     { to: "/rendez-vous", label: "Prendre rendez-vous", icon: CalendarDays },
     { to: "/messages", label: "Messagerie", icon: MessageSquare },
+    { to: "/messages/groupes", label: "Groupes", icon: Users2 },
     { to: "/notifications", label: "Notifications", icon: Bell },
     { to: "/preferences", label: "Préférences", icon: Settings },
   ];
