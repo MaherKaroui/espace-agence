@@ -136,3 +136,10 @@
 @utility ring-gold {
   --tw-ring-color: var(--gold);
 }
+
+/* Mobile responsive polish: shrink oversized display headings on narrow screens */
+@media (max-width: 640px) {
+  main h1.font-display { font-size: 1.5rem; line-height: 2rem; }
+  main .text-3xl.font-display { font-size: 1.5rem; line-height: 2rem; }
+  main .text-4xl.font-display { font-size: 1.75rem; line-height: 2.1rem; }
+}
