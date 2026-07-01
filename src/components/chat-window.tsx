@@ -219,23 +219,14 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/20">
-          {filtered.length === 0 && (
-            <div className="text-center text-sm text-muted-foreground py-12">Aucun message. Envoyez le premier !</div>
-          )}
-          {filtered.map((m) => (
-            <MessageBubble key={m.id} m={m} isMine={m.sender_id === user?.id} isAdmin={isAdmin} />
-          ))}
+        <SwipeableList
+          filtered={filtered}
+          user={user}
+          isAdmin={isAdmin}
+          otherTyping={otherTyping}
+          bottomRef={bottomRef}
+        />
 
-          {otherTyping && (
-            <div className="flex gap-1 px-2">
-              <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" />
-              <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0.15s]" />
-              <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0.3s]" />
-            </div>
-          )}
-          <div ref={bottomRef} />
-        </div>
 
         <form onSubmit={submit} className="p-3 border-t flex gap-2 items-end bg-background">
           <input ref={fileInput} type="file" hidden multiple onChange={handleFile} />
