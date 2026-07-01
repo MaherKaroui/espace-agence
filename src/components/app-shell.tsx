@@ -1,14 +1,16 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, LogOut, Menu, X, ShieldCheck, TrendingUp,
+  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { useProfile } from "@/hooks/use-profile";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { NotificationsRealtime } from "@/components/notifications-realtime";
 import { cn } from "@/lib/utils";
+
 import { useQueryClient } from "@tanstack/react-query";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
