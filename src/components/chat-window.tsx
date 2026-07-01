@@ -167,7 +167,10 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
 function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmin: boolean }) {
   const qc = useQueryClient();
   const [url, setUrl] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<string>(m.content ?? "");
   const isDeleted = !!m.deleted_at;
+  const canEdit = isAdmin && isMine && !isDeleted && !!m.content;
 
   useEffect(() => {
     if (!m.attachment_path || isDeleted) return;
@@ -187,6 +190,19 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
       .eq("id", m.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Message supprimé");
+    qc.invalidateQueries({ queryKey: ["messages", m.client_id] });
+  };
+
+  const saveEdit = async () => {
+    const next = draft.trim();
+    if (!next || next === m.content) { setEditing(false); return; }
+    const { error } = await supabase
+      .from("messages")
+      .update({ content: next })
+      .eq("id", m.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Message modifié");
+    setEditing(false);
     qc.invalidateQueries({ queryKey: ["messages", m.client_id] });
   };
 
