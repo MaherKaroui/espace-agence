@@ -191,7 +191,7 @@ function DossierDetail() {
 
       <TasksPanel dossierId={id} />
 
-      <RequiredDocuments categorie={dossier.categorie} documents={documents} />
+      <RequiredDocuments dossierId={id} categorie={dossier.categorie} documents={documents as any} />
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
