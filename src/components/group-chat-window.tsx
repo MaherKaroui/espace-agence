@@ -52,6 +52,33 @@ export function GroupChatWindow({
     },
   });
 
+  const messageIds = useMemo(() => messages.map((m) => m.id), [messages]);
+
+  const { data: reads = [] } = useQuery({
+    queryKey: ["group-message-reads", conversationId, messageIds.length],
+    enabled: messageIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("group_message_reads")
+        .select("*")
+        .in("message_id", messageIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const readsByMessage = useMemo(() => {
+    const map = new Map<string, { user_id: string; read_at: string }[]>();
+    for (const r of reads) {
+      const arr = map.get(r.message_id) ?? [];
+      arr.push({ user_id: r.user_id, read_at: r.read_at });
+      map.set(r.message_id, arr);
+    }
+    return map;
+  }, [reads]);
+
+  const memberCount = Object.keys(memberNames).length;
+
   useEffect(() => {
     const channel = supabase
       .channel(`group-chat-${conversationId}`)
@@ -60,9 +87,28 @@ export function GroupChatWindow({
         { event: "*", schema: "public", table: "group_messages", filter: `conversation_id=eq.${conversationId}` },
         () => qc.invalidateQueries({ queryKey: ["group-messages", conversationId] }),
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "group_message_reads" },
+        () => qc.invalidateQueries({ queryKey: ["group-message-reads", conversationId] }),
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [conversationId, qc]);
+
+  // Mark received messages as read
+  useEffect(() => {
+    if (!user || messages.length === 0) return;
+    const myReadIds = new Set(reads.filter((r) => r.user_id === user.id).map((r) => r.message_id));
+    const toMark = messages
+      .filter((m) => m.sender_id !== user.id && !m.deleted_at && !myReadIds.has(m.id))
+      .map((m) => ({ message_id: m.id, user_id: user.id }));
+    if (toMark.length === 0) return;
+    supabase.from("group_message_reads").insert(toMark).then(({ error }) => {
+      if (error && !error.message.includes("duplicate")) console.error("mark read", error);
+    });
+  }, [messages, reads, user]);
+
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
 
@@ -207,7 +253,16 @@ export function GroupChatWindow({
             <div className="text-center text-sm text-muted-foreground py-12">Aucun message. Envoyez le premier !</div>
           )}
           {filtered.map((m) => (
-            <GroupBubble key={m.id} m={m} isMine={m.sender_id === user?.id} isAdmin={isAdmin} senderName={memberNames[m.sender_id] ?? "—"} />
+            <GroupBubble
+              key={m.id}
+              m={m}
+              isMine={m.sender_id === user?.id}
+              isAdmin={isAdmin}
+              senderName={memberNames[m.sender_id] ?? "—"}
+              reads={readsByMessage.get(m.id) ?? []}
+              memberNames={memberNames}
+              memberCount={memberCount}
+            />
           ))}
           <div ref={bottomRef} />
         </div>
@@ -255,7 +310,7 @@ export function GroupChatWindow({
   );
 }
 
-function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boolean; isAdmin: boolean; senderName: string }) {
+function GroupBubble({ m, isMine, isAdmin, senderName, reads, memberNames, memberCount }: { m: any; isMine: boolean; isAdmin: boolean; senderName: string; reads: { user_id: string; read_at: string }[]; memberNames: Record<string, string>; memberCount: number }) {
   const qc = useQueryClient();
   const [url, setUrl] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -373,6 +428,20 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
         <div className={`text-[10px] mt-1 ${isMine ? "text-primary-foreground/70 text-right" : "text-muted-foreground"}`}>
           {format(new Date(m.created_at), "HH:mm", { locale: fr })}
           {m.edited_at && <span> · modifié</span>}
+          {isMine && (() => {
+            const others = reads.filter((r) => r.user_id !== m.sender_id);
+            const totalOthers = Math.max(0, memberCount - 1);
+            if (others.length === 0) return <span> · ✓ Envoyé</span>;
+            const last = others.reduce((a, b) => (a.read_at > b.read_at ? a : b));
+            const tooltip = others
+              .map((r) => `${memberNames[r.user_id] ?? "—"} — ${format(new Date(r.read_at), "dd/MM HH:mm", { locale: fr })}`)
+              .join("\n");
+            return (
+              <span title={tooltip}>
+                {" "}· ✓✓ Vu par {others.length}/{totalOthers} · {format(new Date(last.read_at), "dd/MM HH:mm", { locale: fr })}
+              </span>
+            );
+          })()}
         </div>
       </div>
       {canEdit && !editing && (
