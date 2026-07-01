@@ -29,6 +29,15 @@ function DossiersPage() {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<string>("all");
 
+  const { data: poles = [] } = useQuery({
+    queryKey: ["poles"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("poles").select("id, code, nom").eq("actif", true).order("nom");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: dossiers = [], isLoading } = useQuery({
     queryKey: ["dossiers-mine", user?.id],
     enabled: !!user,
@@ -41,11 +50,12 @@ function DossiersPage() {
   });
 
   const create = useMutation({
-    mutationFn: async (payload: { titre: string; categorie: string; description: string }) => {
+    mutationFn: async (payload: { titre: string; categorie: string; pole_id: string; description: string }) => {
       const { error } = await supabase.from("dossiers").insert({
         client_id: user!.id,
         titre: payload.titre,
         categorie: payload.categorie as any,
+        pole_id: payload.pole_id,
         description: payload.description || null,
       });
       if (error) throw error;
@@ -63,9 +73,10 @@ function DossiersPage() {
     const fd = new FormData(e.currentTarget);
     const titre = (fd.get("titre") as string)?.trim();
     const categorie = fd.get("categorie") as string;
+    const pole_id = fd.get("pole_id") as string;
     const description = (fd.get("description") as string)?.trim() ?? "";
-    if (!titre || !categorie) { toast.error("Champs requis"); return; }
-    create.mutate({ titre, categorie, description });
+    if (!titre || !categorie || !pole_id) { toast.error("Champs requis"); return; }
+    create.mutate({ titre, categorie, pole_id, description });
   };
 
   const filtered = filter === "all" ? dossiers : dossiers.filter((d) => d.categorie === filter);
@@ -87,6 +98,15 @@ function DossiersPage() {
               <div>
                 <Label htmlFor="titre">Titre</Label>
                 <Input id="titre" name="titre" required maxLength={120} />
+              </div>
+              <div>
+                <Label>Pôle</Label>
+                <Select name="pole_id" required>
+                  <SelectTrigger><SelectValue placeholder="Choisir un pôle…" /></SelectTrigger>
+                  <SelectContent>
+                    {poles.map((p) => <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>Catégorie</Label>

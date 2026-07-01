@@ -73,6 +73,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          pole_id: string
           statut: Database["public"]["Enums"]["dossier_statut"]
           titre: string
           updated_at: string
@@ -85,6 +86,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          pole_id: string
           statut?: Database["public"]["Enums"]["dossier_statut"]
           titre: string
           updated_at?: string
@@ -97,11 +99,20 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          pole_id?: string
           statut?: Database["public"]["Enums"]["dossier_statut"]
           titre?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "dossiers_pole_id_fkey"
+            columns: ["pole_id"]
+            isOneToOne: false
+            referencedRelation: "poles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -175,6 +186,71 @@ export type Database = {
         }
         Relationships: []
       }
+      pole_members: {
+        Row: {
+          created_at: string
+          id: string
+          pole_id: string
+          role: Database["public"]["Enums"]["pole_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pole_id: string
+          role?: Database["public"]["Enums"]["pole_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pole_id?: string
+          role?: Database["public"]["Enums"]["pole_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pole_members_pole_id_fkey"
+            columns: ["pole_id"]
+            isOneToOne: false
+            referencedRelation: "poles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poles: {
+        Row: {
+          actif: boolean
+          code: string
+          couleur: string
+          created_at: string
+          description: string | null
+          id: string
+          nom: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          code: string
+          couleur?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          nom: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          code?: string
+          couleur?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          nom?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -238,9 +314,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_pole_member: {
+        Args: { _pole_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "client" | "admin"
+      app_role: "client" | "admin" | "direction" | "manager" | "consultant"
       dossier_categorie:
         | "qualiopi"
         | "bpf"
@@ -272,6 +353,7 @@ export type Database = {
         | "email_verifie"
         | "rappel"
         | "action_requise"
+      pole_role: "manager" | "consultant"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -399,7 +481,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["client", "admin"],
+      app_role: ["client", "admin", "direction", "manager", "consultant"],
       dossier_categorie: [
         "qualiopi",
         "bpf",
@@ -434,6 +516,7 @@ export const Constants = {
         "rappel",
         "action_requise",
       ],
+      pole_role: ["manager", "consultant"],
     },
   },
 } as const
