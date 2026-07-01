@@ -284,7 +284,7 @@ export function GroupChatWindow({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onPaste={handlePaste}
-                placeholder="Écrire un message… (Ctrl+V pour coller une image)"
+                placeholder="Écrire un message…"
                 className="flex-1"
               />
 
