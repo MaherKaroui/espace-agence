@@ -22,6 +22,7 @@ import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
 import { Route as AuthenticatedAdminMessagesRouteImport } from './routes/_authenticated/admin.messages'
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
+import { Route as AuthenticatedAdminDirectionRouteImport } from './routes/_authenticated/admin.direction'
 import { Route as AuthenticatedAdminClientsRouteImport } from './routes/_authenticated/admin.clients'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as AuthenticatedAdminMessagesClientIdRouteImport } from './routes/_authenticated/admin.messages.$clientId'
@@ -95,6 +96,12 @@ const AuthenticatedAdminDossiersRoute =
     path: '/dossiers',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminDirectionRoute =
+  AuthenticatedAdminDirectionRouteImport.update({
+    id: '/direction',
+    path: '/direction',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminClientsRoute =
   AuthenticatedAdminClientsRouteImport.update({
     id: '/clients',
@@ -130,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
+  '/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/messages': typeof AuthenticatedAdminMessagesRouteWithChildren
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
@@ -148,6 +156,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
+  '/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/messages': typeof AuthenticatedAdminMessagesRouteWithChildren
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
@@ -168,6 +177,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/clients': typeof AuthenticatedAdminClientsRouteWithChildren
+  '/_authenticated/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/_authenticated/admin/messages': typeof AuthenticatedAdminMessagesRouteWithChildren
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/admin/audit'
     | '/admin/clients'
+    | '/admin/direction'
     | '/admin/dossiers'
     | '/admin/messages'
     | '/admin/security'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/admin/audit'
     | '/admin/clients'
+    | '/admin/direction'
     | '/admin/dossiers'
     | '/admin/messages'
     | '/admin/security'
@@ -225,6 +237,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/clients'
+    | '/_authenticated/admin/direction'
     | '/_authenticated/admin/dossiers'
     | '/_authenticated/admin/messages'
     | '/_authenticated/admin/security'
@@ -333,6 +346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDossiersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/direction': {
+      id: '/_authenticated/admin/direction'
+      path: '/direction'
+      fullPath: '/admin/direction'
+      preLoaderRoute: typeof AuthenticatedAdminDirectionRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/clients': {
       id: '/_authenticated/admin/clients'
       path: '/clients'
@@ -396,6 +416,7 @@ const AuthenticatedAdminMessagesRouteWithChildren =
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminClientsRoute: typeof AuthenticatedAdminClientsRouteWithChildren
+  AuthenticatedAdminDirectionRoute: typeof AuthenticatedAdminDirectionRoute
   AuthenticatedAdminDossiersRoute: typeof AuthenticatedAdminDossiersRoute
   AuthenticatedAdminMessagesRoute: typeof AuthenticatedAdminMessagesRouteWithChildren
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
@@ -404,6 +425,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminClientsRoute: AuthenticatedAdminClientsRouteWithChildren,
+  AuthenticatedAdminDirectionRoute: AuthenticatedAdminDirectionRoute,
   AuthenticatedAdminDossiersRoute: AuthenticatedAdminDossiersRoute,
   AuthenticatedAdminMessagesRoute: AuthenticatedAdminMessagesRouteWithChildren,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
