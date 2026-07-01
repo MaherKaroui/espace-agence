@@ -114,6 +114,11 @@ function AuditPage() {
 function Row({ log, who }: { log: any; who: string }) {
   const Icon = log.severity === "critical" ? ShieldAlert : log.severity === "warning" ? AlertTriangle : Info;
   const tone = log.severity === "critical" ? "text-destructive" : log.severity === "warning" ? "text-warning-foreground" : "text-muted-foreground";
+  const md = log.metadata ?? {};
+  const prev = md.previous_content ?? md.deleted_content;
+  const next = md.new_content;
+  const isEdit = log.action === "message.edited";
+  const isDel = log.action === "message.deleted";
   return (
     <div className="p-4 flex gap-3 items-start">
       <Icon className={`h-4 w-4 mt-1 ${tone}`} />
@@ -126,8 +131,35 @@ function Row({ log, who }: { log: any; who: string }) {
         <div className="text-xs text-muted-foreground mt-1">
           {who} · {format(new Date(log.created_at), "dd MMM yyyy HH:mm", { locale: fr })}
         </div>
+
+        {(isEdit || isDel) && (prev || next) && (
+          <div className="mt-2 space-y-2">
+            {prev !== undefined && prev !== null && (
+              <div>
+                <div className="text-xs font-medium text-muted-foreground mb-1">
+                  {isDel ? "Message supprimé" : "Contenu avant modification"}
+                </div>
+                <div className="text-sm bg-destructive/5 border border-destructive/20 rounded p-2 whitespace-pre-wrap break-words">
+                  {prev || <span className="italic text-muted-foreground">(vide)</span>}
+                </div>
+              </div>
+            )}
+            {isEdit && next !== undefined && next !== null && (
+              <div>
+                <div className="text-xs font-medium text-muted-foreground mb-1">Nouveau contenu</div>
+                <div className="text-sm bg-success/5 border border-success/20 rounded p-2 whitespace-pre-wrap break-words">
+                  {next || <span className="italic text-muted-foreground">(vide)</span>}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {log.metadata && Object.keys(log.metadata).length > 0 && (
-          <pre className="text-xs bg-muted/40 rounded p-2 mt-2 overflow-x-auto">{JSON.stringify(log.metadata, null, 2)}</pre>
+          <details className="mt-2">
+            <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">Détails techniques</summary>
+            <pre className="text-xs bg-muted/40 rounded p-2 mt-2 overflow-x-auto">{JSON.stringify(log.metadata, null, 2)}</pre>
+          </details>
         )}
       </div>
     </div>
