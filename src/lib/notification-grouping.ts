@@ -27,16 +27,17 @@ export type NotifGroup = {
   unread: boolean;
 };
 
+// Titre sans compteur — le badge à côté affiche déjà le nombre.
 const GROUP_TITLES: Record<string, (n: number) => string> = {
-  message: (n) => `${n} nouveaux messages`,
-  document_depose: (n) => `${n} documents déposés`,
-  document_demande: (n) => `${n} documents demandés`,
-  tache_attente: (n) => `${n} tâches en attente`,
-  tache_assignee: (n) => `${n} tâches assignées`,
-  rdv: (n) => `${n} rendez-vous`,
-  statut_change: (n) => `${n} changements de statut`,
-  alerte: (n) => `${n} alertes sécurité`,
-  rapport_quotidien: (n) => `${n} rapports quotidiens`,
+  message: (n) => (n > 1 ? "Nouveaux messages" : "Nouveau message"),
+  document_depose: (n) => (n > 1 ? "Documents déposés" : "Document déposé"),
+  document_demande: (n) => (n > 1 ? "Documents demandés" : "Document demandé"),
+  tache_attente: (n) => (n > 1 ? "Tâches en attente" : "Tâche en attente"),
+  tache_assignee: (n) => "Tâches assignées",
+  rdv: (n) => "Rendez-vous",
+  statut_change: (n) => (n > 1 ? "Changements de statut" : "Changement de statut"),
+  alerte: (n) => (n > 1 ? "Alertes sécurité" : "Alerte sécurité"),
+  rapport_quotidien: (n) => (n > 1 ? "Rapports quotidiens" : "Rapport quotidien"),
 };
 
 // Remplace les enums techniques (en_attente, documents_manquants…) par leur libellé FR.
