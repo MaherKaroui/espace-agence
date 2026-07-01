@@ -14,13 +14,32 @@ export function useRole() {
         .eq("user_id", user!.id);
       if (error) throw error;
       const roles = (data ?? []).map((r) => r.role);
-      return { roles, isAdmin: roles.includes("admin"), isClient: roles.includes("client") };
+      const isAdmin = roles.includes("admin");
+      const isDirection = roles.includes("direction");
+      const isManager = roles.includes("manager");
+      const isConsultant = roles.includes("consultant");
+      const isClient = roles.includes("client");
+      return {
+        roles,
+        isAdmin,
+        isDirection,
+        isManager,
+        isConsultant,
+        isClient,
+        isStaff: isAdmin || isDirection || isManager || isConsultant,
+        isDirectionOrAdmin: isAdmin || isDirection,
+      };
     },
   });
   return {
     roles: q.data?.roles ?? [],
     isAdmin: q.data?.isAdmin ?? false,
+    isDirection: q.data?.isDirection ?? false,
+    isManager: q.data?.isManager ?? false,
+    isConsultant: q.data?.isConsultant ?? false,
     isClient: q.data?.isClient ?? false,
+    isStaff: q.data?.isStaff ?? false,
+    isDirectionOrAdmin: q.data?.isDirectionOrAdmin ?? false,
     loading: q.isLoading,
   };
 }

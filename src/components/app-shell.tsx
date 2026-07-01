@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isStaff, isDirectionOrAdmin } = useRole();
   const { data: profile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,12 +28,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/messages", label: "Messagerie", icon: MessageSquare },
     { to: "/notifications", label: "Notifications", icon: Bell },
   ];
-  const adminNav = [
-    { to: "/admin", label: "Admin — Dashboard", icon: LayoutDashboard },
+  // Staff (Manager/Consultant/Direction/Admin) — RLS filtre par pôle
+  const staffNav = [
+    { to: "/admin", label: "Vue agence", icon: LayoutDashboard },
+    { to: "/admin/dossiers", label: "Dossiers de mes pôles", icon: FolderOpen },
+    { to: "/admin/messages", label: "Messagerie agence", icon: MessageSquare },
+  ];
+  // Réservé Direction / Admin
+  const directionNav = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
     { to: "/admin/clients", label: "Clients", icon: Users },
-    { to: "/admin/dossiers", label: "Tous les dossiers", icon: FolderOpen },
-    { to: "/admin/messages", label: "Messagerie agence", icon: MessageSquare },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
   ];
@@ -57,10 +61,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <n.icon className="h-4 w-4" /> {n.label}
         </Link>
       ))}
-      {isAdmin && (
+      {isStaff && (
         <>
           <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Agence</div>
-          {adminNav.map((n) => (
+          {staffNav.map((n) => (
+            <Link
+              key={n.to} to={n.to}
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
+            >
+              <n.icon className="h-4 w-4" /> {n.label}
+            </Link>
+          ))}
+        </>
+      )}
+      {isDirectionOrAdmin && (
+        <>
+          <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Direction</div>
+          {directionNav.map((n) => (
             <Link
               key={n.to} to={n.to}
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -92,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="p-3 border-t border-sidebar-border">
           <div className="px-3 py-2">
             <div className="text-sm font-medium truncate">{displayName}</div>
-            <div className="text-xs text-sidebar-foreground/50 truncate">{isAdmin ? "Administrateur" : "Client"}</div>
+            <div className="text-xs text-sidebar-foreground/50 truncate">{isStaff ? "Membre agence" : "Client"}</div>
           </div>
           <button onClick={signOut} className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent">
             <LogOut className="h-4 w-4" /> Déconnexion
