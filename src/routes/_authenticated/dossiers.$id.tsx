@@ -18,6 +18,7 @@ import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { RelanceButton } from "@/components/relance-button";
 import { RequiredDocuments } from "@/components/required-documents";
+import { NextActionCard } from "@/components/next-action-card";
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
 
@@ -54,6 +55,16 @@ function DossierDetail() {
       return data ?? [];
     },
   });
+
+  const { data: taches = [] } = useQuery({
+    queryKey: ["taches", id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("taches").select("id,titre,statut,cote_client,verrouillee").eq("dossier_id", id);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
 
   const classify = useServerFn(classifyDocument);
 
@@ -214,9 +225,19 @@ function DossierDetail() {
         </div>
       </Card>
 
+      {!isAdmin && (
+        <NextActionCard
+          categorie={dossier.categorie}
+          documents={documents as any}
+          taches={taches as any}
+          dossierStatut={dossier.statut}
+        />
+      )}
+
       <TasksPanel dossierId={id} />
 
       <RequiredDocuments dossierId={id} categorie={dossier.categorie} documents={documents as any} />
+
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
