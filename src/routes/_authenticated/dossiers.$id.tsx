@@ -181,6 +181,8 @@ function DossierDetail() {
 
       <TasksPanel dossierId={id} />
 
+      <RequiredDocuments categorie={dossier.categorie} documents={documents} />
+
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-xl">Documents ({documents.length})</h2>
