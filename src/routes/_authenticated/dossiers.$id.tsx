@@ -187,11 +187,36 @@ function DossierDetail() {
             <p className="text-sm">{dossier.commentaire_agence}</p>
           </div>
         )}
+
+        <div className="mt-6 pt-6 border-t">
+          <label className="text-xs text-muted-foreground">Site web</label>
+          <div className="flex items-center gap-2 mt-1">
+            <Input
+              type="url"
+              placeholder="https://exemple.com"
+              defaultValue={(dossier as any).site_web ?? ""}
+              onBlur={(e) => {
+                const v = e.target.value.trim() || null;
+                if (v !== ((dossier as any).site_web ?? null)) updateDossier.mutate({ site_web: v });
+              }}
+            />
+            {(dossier as any).site_web && (
+              <a
+                href={(dossier as any).site_web}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline whitespace-nowrap"
+              >
+                Ouvrir ↗
+              </a>
+            )}
+          </div>
+        </div>
       </Card>
 
       <TasksPanel dossierId={id} />
 
-      <RequiredDocuments categorie={dossier.categorie} documents={documents} />
+      <RequiredDocuments dossierId={id} categorie={dossier.categorie} documents={documents as any} />
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
