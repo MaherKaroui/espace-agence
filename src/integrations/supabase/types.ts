@@ -281,6 +281,114 @@ export type Database = {
         }
         Relationships: []
       }
+      tache_templates: {
+        Row: {
+          actif: boolean
+          categorie: Database["public"]["Enums"]["dossier_categorie"]
+          cote_client: boolean
+          created_at: string
+          depends_on_ordre: number | null
+          description: string | null
+          id: string
+          jours_echeance: number | null
+          ordre: number
+          titre: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          categorie: Database["public"]["Enums"]["dossier_categorie"]
+          cote_client?: boolean
+          created_at?: string
+          depends_on_ordre?: number | null
+          description?: string | null
+          id?: string
+          jours_echeance?: number | null
+          ordre: number
+          titre: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          categorie?: Database["public"]["Enums"]["dossier_categorie"]
+          cote_client?: boolean
+          created_at?: string
+          depends_on_ordre?: number | null
+          description?: string | null
+          id?: string
+          jours_echeance?: number | null
+          ordre?: number
+          titre?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      taches: {
+        Row: {
+          assigne_id: string | null
+          completed_at: string | null
+          cote_client: boolean
+          created_at: string
+          date_echeance: string | null
+          depends_on_id: string | null
+          description: string | null
+          dossier_id: string
+          id: string
+          ordre: number
+          statut: Database["public"]["Enums"]["tache_statut"]
+          titre: string
+          updated_at: string
+          verrouillee: boolean
+        }
+        Insert: {
+          assigne_id?: string | null
+          completed_at?: string | null
+          cote_client?: boolean
+          created_at?: string
+          date_echeance?: string | null
+          depends_on_id?: string | null
+          description?: string | null
+          dossier_id: string
+          id?: string
+          ordre?: number
+          statut?: Database["public"]["Enums"]["tache_statut"]
+          titre: string
+          updated_at?: string
+          verrouillee?: boolean
+        }
+        Update: {
+          assigne_id?: string | null
+          completed_at?: string | null
+          cote_client?: boolean
+          created_at?: string
+          date_echeance?: string | null
+          depends_on_id?: string | null
+          description?: string | null
+          dossier_id?: string
+          id?: string
+          ordre?: number
+          statut?: Database["public"]["Enums"]["tache_statut"]
+          titre?: string
+          updated_at?: string
+          verrouillee?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taches_depends_on_id_fkey"
+            columns: ["depends_on_id"]
+            isOneToOne: false
+            referencedRelation: "taches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taches_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -354,6 +462,13 @@ export type Database = {
         | "rappel"
         | "action_requise"
       pole_role: "manager" | "consultant"
+      tache_statut:
+        | "a_faire"
+        | "en_cours"
+        | "en_attente_client"
+        | "bloque"
+        | "termine"
+        | "annule"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -517,6 +632,14 @@ export const Constants = {
         "action_requise",
       ],
       pole_role: ["manager", "consultant"],
+      tache_statut: [
+        "a_faire",
+        "en_cours",
+        "en_attente_client",
+        "bloque",
+        "termine",
+        "annule",
+      ],
     },
   },
 } as const
