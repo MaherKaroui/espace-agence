@@ -60,7 +60,7 @@ function DossierDetail() {
   const { data: taches = [] } = useQuery({
     queryKey: ["taches", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("taches").select("id,titre,statut,cote_client,verrouillee").eq("dossier_id", id);
+      const { data, error } = await supabase.from("taches").select("id,titre,statut,cote_client,verrouillee,updated_at").eq("dossier_id", id);
       if (error) throw error;
       return data ?? [];
     },
