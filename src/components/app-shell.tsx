@@ -10,6 +10,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { NotificationsRealtime } from "@/components/notifications-realtime";
 import { SessionTracker } from "@/components/session-tracker";
+import { AdminFlaggedAlert } from "@/components/admin-flagged-alert";
 import { cn } from "@/lib/utils";
 
 import { useQueryClient } from "@tanstack/react-query";
