@@ -58,6 +58,7 @@ export type Database = {
           commentaire: string | null
           created_at: string
           dossier_id: string
+          duration_seconds: number | null
           from_agence: boolean
           id: string
           mime_type: string | null
@@ -65,12 +66,14 @@ export type Database = {
           statut: string
           storage_path: string
           taille: number | null
+          thumbnail_path: string | null
           uploader_id: string
         }
         Insert: {
           commentaire?: string | null
           created_at?: string
           dossier_id: string
+          duration_seconds?: number | null
           from_agence?: boolean
           id?: string
           mime_type?: string | null
@@ -78,12 +81,14 @@ export type Database = {
           statut?: string
           storage_path: string
           taille?: number | null
+          thumbnail_path?: string | null
           uploader_id: string
         }
         Update: {
           commentaire?: string | null
           created_at?: string
           dossier_id?: string
+          duration_seconds?: number | null
           from_agence?: boolean
           id?: string
           mime_type?: string | null
@@ -91,6 +96,7 @@ export type Database = {
           statut?: string
           storage_path?: string
           taille?: number | null
+          thumbnail_path?: string | null
           uploader_id?: string
         }
         Relationships: [
@@ -153,6 +159,39 @@ export type Database = {
           },
         ]
       }
+      message_deletion_log: {
+        Row: {
+          client_id: string
+          content_hash: string
+          content_length: number | null
+          deleted_at: string
+          deleted_by: string
+          deleted_message_id: string
+          id: string
+          original_author_id: string
+        }
+        Insert: {
+          client_id: string
+          content_hash: string
+          content_length?: number | null
+          deleted_at?: string
+          deleted_by: string
+          deleted_message_id: string
+          id?: string
+          original_author_id: string
+        }
+        Update: {
+          client_id?: string
+          content_hash?: string
+          content_length?: number | null
+          deleted_at?: string
+          deleted_by?: string
+          deleted_message_id?: string
+          id?: string
+          original_author_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           attachment_mime: string | null
@@ -161,6 +200,8 @@ export type Database = {
           client_id: string
           content: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           from_agence: boolean
           id: string
           read_at: string | null
@@ -173,6 +214,8 @@ export type Database = {
           client_id: string
           content?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           from_agence?: boolean
           id?: string
           read_at?: string | null
@@ -185,10 +228,39 @@ export type Database = {
           client_id?: string
           content?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           from_agence?: boolean
           id?: string
           read_at?: string | null
           sender_id?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          event_type: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          event_type: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          event_type?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
