@@ -52,6 +52,33 @@ export function GroupChatWindow({
     },
   });
 
+  const messageIds = useMemo(() => messages.map((m) => m.id), [messages]);
+
+  const { data: reads = [] } = useQuery({
+    queryKey: ["group-message-reads", conversationId, messageIds.length],
+    enabled: messageIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("group_message_reads")
+        .select("*")
+        .in("message_id", messageIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const readsByMessage = useMemo(() => {
+    const map = new Map<string, { user_id: string; read_at: string }[]>();
+    for (const r of reads) {
+      const arr = map.get(r.message_id) ?? [];
+      arr.push({ user_id: r.user_id, read_at: r.read_at });
+      map.set(r.message_id, arr);
+    }
+    return map;
+  }, [reads]);
+
+  const memberCount = Object.keys(memberNames).length;
+
   useEffect(() => {
     const channel = supabase
       .channel(`group-chat-${conversationId}`)
@@ -60,9 +87,28 @@ export function GroupChatWindow({
         { event: "*", schema: "public", table: "group_messages", filter: `conversation_id=eq.${conversationId}` },
         () => qc.invalidateQueries({ queryKey: ["group-messages", conversationId] }),
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "group_message_reads" },
+        () => qc.invalidateQueries({ queryKey: ["group-message-reads", conversationId] }),
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [conversationId, qc]);
+
+  // Mark received messages as read
+  useEffect(() => {
+    if (!user || messages.length === 0) return;
+    const myReadIds = new Set(reads.filter((r) => r.user_id === user.id).map((r) => r.message_id));
+    const toMark = messages
+      .filter((m) => m.sender_id !== user.id && !m.deleted_at && !myReadIds.has(m.id))
+      .map((m) => ({ message_id: m.id, user_id: user.id }));
+    if (toMark.length === 0) return;
+    supabase.from("group_message_reads").insert(toMark).then(({ error }) => {
+      if (error && !error.message.includes("duplicate")) console.error("mark read", error);
+    });
+  }, [messages, reads, user]);
+
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
 
