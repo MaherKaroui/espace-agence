@@ -272,6 +272,71 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   );
 }
 
+function SwipeableList({
+  filtered,
+  user,
+  isAdmin,
+  otherTyping,
+  bottomRef,
+}: {
+  filtered: any[];
+  user: any;
+  isAdmin: boolean;
+  otherTyping: boolean;
+  bottomRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const { dragX, dragging, max, containerProps } = useSwipeReveal(120);
+  const shift = { transform: `translateX(-${dragX}px)`, transition: dragging ? "none" : "transform 0.25s ease" };
+
+  return (
+    <div
+      className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 bg-muted/20 select-none"
+      {...containerProps}
+    >
+      {filtered.length === 0 && (
+        <div className="text-center text-sm text-muted-foreground py-12">Aucun message. Envoyez le premier !</div>
+      )}
+      {filtered.map((m) => {
+        const isMine = m.sender_id === user?.id;
+        let info: React.ReactNode;
+        if (isMine) {
+          info = m.read_at ? (
+            <div className="space-y-0.5">
+              <div>✓✓ Vu</div>
+              <div className="text-[10px] opacity-80">{format(new Date(m.read_at), "dd/MM/yyyy HH:mm", { locale: fr })}</div>
+            </div>
+          ) : (
+            <span>✓ Envoyé</span>
+          );
+        } else {
+          info = <span>Reçu · {format(new Date(m.created_at), "dd/MM HH:mm", { locale: fr })}</span>;
+        }
+        return (
+          <div key={m.id} className="relative">
+            <div style={shift}>
+              <MessageBubble m={m} isMine={isMine} isAdmin={isAdmin} />
+            </div>
+            <div
+              className="absolute top-0 h-full flex items-center text-[11px] text-muted-foreground pl-2 pointer-events-none"
+              style={{ right: `-${max}px`, width: `${max}px`, ...shift, opacity: Math.min(1, dragX / (max * 0.5)) }}
+            >
+              {info}
+            </div>
+          </div>
+        );
+      })}
+      {otherTyping && (
+        <div className="flex gap-1 px-2">
+          <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" />
+          <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0.15s]" />
+          <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0.3s]" />
+        </div>
+      )}
+      <div ref={bottomRef} />
+    </div>
+  );
+}
+
 function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmin: boolean }) {
   const qc = useQueryClient();
   const [url, setUrl] = useState<string | null>(null);
