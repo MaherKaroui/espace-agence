@@ -13,12 +13,13 @@ import { StatusBadge } from "@/components/status-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, STATUTS } from "@/lib/labels";
-import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film } from "lucide-react";
+import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2 } from "lucide-react";
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { RelanceButton } from "@/components/relance-button";
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
+import { DossierTimeline } from "@/components/dossier-timeline";
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
 
