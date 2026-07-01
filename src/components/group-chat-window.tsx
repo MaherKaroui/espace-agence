@@ -12,7 +12,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Paperclip, Send, Search, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic } from "lucide-react";
+import { Paperclip, Send, Search, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic, Download } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
