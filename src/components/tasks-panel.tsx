@@ -40,7 +40,7 @@ export function TasksPanel({ dossierId }: { dossierId: string }) {
 
   const update = useMutation({
     mutationFn: async ({ id, statut }: { id: string; statut: string }) => {
-      const { error } = await supabase.from("taches").update({ statut }).eq("id", id);
+      const { error } = await supabase.from("taches").update({ statut: statut as any }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
