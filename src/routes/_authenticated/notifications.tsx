@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Bell } from "lucide-react";
+import { groupNotifications, type NotifRow } from "@/lib/notification-grouping";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({ meta: [{ title: "Notifications" }] }),
@@ -22,13 +23,21 @@ function NotifPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from("notifications").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(200);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as NotifRow[];
     },
   });
+
+  const groups = groupNotifications(notifications);
 
   const markAll = async () => {
     if (!user) return;
     await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("user_id", user.id).is("read_at", null);
+    qc.invalidateQueries();
+  };
+
+  const markGroup = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).in("id", ids);
     qc.invalidateQueries();
   };
 
@@ -37,26 +46,37 @@ function NotifPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-3xl">Notifications</h1>
-          <p className="text-muted-foreground mt-1">Historique complet.</p>
+          <p className="text-muted-foreground mt-1">Historique regroupé par type.</p>
         </div>
         <Button variant="outline" onClick={markAll}>Tout marquer lu</Button>
       </div>
 
-      {notifications.length === 0 ? (
+      {groups.length === 0 ? (
         <Card className="p-12 text-center">
           <Bell className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
           <p className="text-muted-foreground">Aucune notification.</p>
         </Card>
       ) : (
         <Card className="divide-y">
-          {notifications.map((n) => (
-            <Link key={n.id} to={n.link || "/dashboard"} className={`block p-4 hover:bg-muted/30 ${n.read_at ? "" : "bg-accent/30"}`}>
+          {groups.map((g) => (
+            <Link
+              key={g.key} to={g.link || "/dashboard"}
+              onClick={() => g.unread && markGroup(g.ids)}
+              className={`block p-4 hover:bg-muted/30 ${g.unread ? "bg-accent/30" : ""}`}
+            >
               <div className="flex items-start gap-3">
-                <div className={`h-2 w-2 rounded-full mt-2 ${n.read_at ? "bg-muted-foreground/30" : "bg-gold"}`} />
+                <div className={`h-2 w-2 rounded-full mt-2 ${g.unread ? "bg-gold" : "bg-muted-foreground/30"}`} />
                 <div className="flex-1">
-                  <div className="font-medium text-sm">{n.titre}</div>
-                  {n.message && <div className="text-sm text-muted-foreground mt-0.5">{n.message}</div>}
-                  <div className="text-xs text-muted-foreground mt-1">{formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: fr })}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-medium text-sm">{g.titre}</div>
+                    {g.count > 1 && (
+                      <span className="h-5 min-w-5 px-1.5 rounded-full bg-gold text-[10px] font-semibold text-primary flex items-center justify-center">
+                        {g.count}
+                      </span>
+                    )}
+                  </div>
+                  {g.message && <div className="text-sm text-muted-foreground mt-0.5">{g.message}</div>}
+                  <div className="text-xs text-muted-foreground mt-1">{formatDistanceToNow(new Date(g.latest_at), { addSuffix: true, locale: fr })}</div>
                 </div>
               </div>
             </Link>
@@ -66,3 +86,4 @@ function NotifPage() {
     </div>
   );
 }
+

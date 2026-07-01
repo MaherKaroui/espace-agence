@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { groupNotifications, type NotifRow } from "@/lib/notification-grouping";
 
 export function NotificationsBell() {
   const { user } = useAuth();
@@ -21,9 +22,9 @@ export function NotificationsBell() {
         .from("notifications").select("*")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
-        .limit(20);
+        .limit(50);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as NotifRow[];
     },
   });
 
@@ -38,6 +39,7 @@ export function NotificationsBell() {
     return () => { supabase.removeChannel(channel); };
   }, [user, qc]);
 
+  const groups = groupNotifications(notifications);
   const unread = notifications.filter((n) => !n.read_at).length;
 
   const markAll = async () => {
@@ -45,6 +47,12 @@ export function NotificationsBell() {
     await supabase.from("notifications").update({ read_at: new Date().toISOString() })
       .eq("user_id", user.id).is("read_at", null);
     qc.invalidateQueries({ queryKey: ["notifications", user.id] });
+  };
+
+  const markGroup = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).in("id", ids);
+    qc.invalidateQueries({ queryKey: ["notifications", user?.id] });
   };
 
   return (
@@ -65,18 +73,26 @@ export function NotificationsBell() {
           {unread > 0 && <Button size="sm" variant="ghost" onClick={markAll}>Tout marquer lu</Button>}
         </div>
         <div className="max-h-96 overflow-y-auto">
-          {notifications.length === 0 && (
+          {groups.length === 0 && (
             <div className="p-6 text-center text-sm text-muted-foreground">Aucune notification</div>
           )}
-          {notifications.map((n) => (
+          {groups.slice(0, 20).map((g) => (
             <Link
-              key={n.id} to={n.link || "/dashboard"}
-              className={`block px-4 py-3 border-b hover:bg-muted/50 ${n.read_at ? "" : "bg-accent/40"}`}
+              key={g.key} to={g.link || "/dashboard"}
+              onClick={() => g.unread && markGroup(g.ids)}
+              className={`block px-4 py-3 border-b hover:bg-muted/50 ${g.unread ? "bg-accent/40" : ""}`}
             >
-              <div className="text-sm font-medium">{n.titre}</div>
-              {n.message && <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{n.message}</div>}
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-sm font-medium">{g.titre}</div>
+                {g.count > 1 && (
+                  <span className="shrink-0 h-5 min-w-5 px-1.5 rounded-full bg-gold text-[10px] font-semibold text-primary flex items-center justify-center">
+                    {g.count}
+                  </span>
+                )}
+              </div>
+              {g.message && <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{g.message}</div>}
               <div className="text-[10px] text-muted-foreground mt-1">
-                {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: fr })}
+                {formatDistanceToNow(new Date(g.latest_at), { addSuffix: true, locale: fr })}
               </div>
             </Link>
           ))}
@@ -85,3 +101,4 @@ export function NotificationsBell() {
     </Popover>
   );
 }
+

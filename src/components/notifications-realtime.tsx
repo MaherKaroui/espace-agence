@@ -46,10 +46,11 @@ export function NotificationsRealtime() {
           // Préférences : par défaut activé, désactivé uniquement si explicitement false
           if (prefsRef.current[cat] === false) return;
 
-          // Anti-spam : ignorer les doublons du même type à < 4s
+          // Anti-spam : ignorer les doublons du même type+link à < 15s
           const key = `${n.type}:${n.link ?? ""}`;
           const now = Date.now();
-          if (recentRef.current[key] && now - recentRef.current[key] < 4000) return;
+          if (recentRef.current[key] && now - recentRef.current[key] < 15000) return;
+          recentRef.current[key] = now;
           recentRef.current[key] = now;
 
           const Icon = iconOf(n.type);
