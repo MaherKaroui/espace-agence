@@ -160,26 +160,26 @@ function RendezVousPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl">Demander un rendez-vous</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="font-display text-2xl sm:text-3xl">Demander un rendez-vous</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Créneaux du lundi au vendredi, 9h–18h. Sélectionnez un créneau libre : votre demande sera envoyée à l'agence pour validation.
         </p>
       </div>
 
       {mine.length > 0 && (
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-lg border bg-card p-3 sm:p-4">
           <h2 className="font-medium mb-2">Mes demandes récentes</h2>
           <ul className="divide-y">
             {mine.map((r) => {
               const canReplan = (r.status === "en_attente" || r.status === "confirme") && new Date(r.starts_at) > new Date();
               return (
-                <li key={r.id} className="py-2 flex items-center justify-between gap-3 text-sm">
-                  <span>
+                <li key={r.id} className="py-2 flex items-start sm:items-center justify-between gap-2 sm:gap-3 text-sm flex-wrap">
+                  <span className="min-w-0 flex-1">
                     {new Date(r.starts_at).toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "long" })}
                     {" — "}
                     {new Date(r.starts_at).getHours()}h00
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <span className={
                       "text-xs px-2 py-0.5 rounded-full " +
                       (r.status === "confirme" ? "bg-emerald-500/15 text-emerald-600" :
@@ -198,7 +198,8 @@ function RendezVousPage() {
                         variant="outline"
                         onClick={() => { setReplan(r); setReplanDate(toLocalInput(r.starts_at)); }}
                       >
-                        <CalendarCog className="h-4 w-4 mr-1" /> Replanifier
+                        <CalendarCog className="h-4 w-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Replanifier</span>
                       </Button>
                     )}
                   </div>
@@ -210,11 +211,12 @@ function RendezVousPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between rounded-lg border bg-card p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card p-2 sm:p-3">
         <Button variant="outline" size="sm" onClick={() => setWeekStart((w) => addDays(w, -7))}>
-          <ChevronLeft className="h-4 w-4" /> Semaine précédente
+          <ChevronLeft className="h-4 w-4" />
+          <span className="hidden sm:inline ml-1">Semaine précédente</span>
         </Button>
-        <div className="font-medium">
+        <div className="font-medium text-xs sm:text-sm order-first w-full text-center sm:order-none sm:w-auto">
           Semaine du {fmtDate(weekStart)} au {fmtDate(addDays(weekStart, 4))}
         </div>
         <div className="flex gap-2">
@@ -222,7 +224,8 @@ function RendezVousPage() {
             Aujourd'hui
           </Button>
           <Button variant="outline" size="sm" onClick={() => setWeekStart((w) => addDays(w, 7))}>
-            Semaine suivante <ChevronRight className="h-4 w-4" />
+            <span className="hidden sm:inline mr-1">Semaine suivante</span>
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
