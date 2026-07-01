@@ -119,11 +119,40 @@ function RendezVousPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl">Prendre rendez-vous</h1>
+        <h1 className="font-display text-3xl">Demander un rendez-vous</h1>
         <p className="text-muted-foreground mt-1">
-          Créneaux disponibles du lundi au vendredi, de 9h à 18h. Cliquez sur un créneau libre pour réserver.
+          Créneaux du lundi au vendredi, 9h–18h. Sélectionnez un créneau libre : votre demande sera envoyée à l'agence pour validation.
         </p>
       </div>
+
+      {mine.length > 0 && (
+        <div className="rounded-lg border bg-card p-4">
+          <h2 className="font-medium mb-2">Mes demandes récentes</h2>
+          <ul className="divide-y">
+            {mine.map((r) => (
+              <li key={r.id} className="py-2 flex items-center justify-between text-sm">
+                <span>
+                  {new Date(r.starts_at).toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "long" })}
+                  {" — "}
+                  {new Date(r.starts_at).getHours()}h00
+                </span>
+                <span className={
+                  "text-xs px-2 py-0.5 rounded-full " +
+                  (r.status === "confirme" ? "bg-emerald-500/15 text-emerald-600" :
+                   r.status === "refuse" ? "bg-red-500/15 text-red-600" :
+                   r.status === "annule" ? "bg-muted text-muted-foreground" :
+                   "bg-amber-500/15 text-amber-600")
+                }>
+                  {r.status === "en_attente" ? "En attente"
+                    : r.status === "confirme" ? "Accepté"
+                    : r.status === "refuse" ? "Refusé"
+                    : r.status === "annule" ? "Annulé" : r.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex items-center justify-between rounded-lg border bg-card p-3">
         <Button variant="outline" size="sm" onClick={() => setWeekStart((w) => addDays(w, -7))}>
