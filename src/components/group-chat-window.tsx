@@ -253,7 +253,16 @@ export function GroupChatWindow({
             <div className="text-center text-sm text-muted-foreground py-12">Aucun message. Envoyez le premier !</div>
           )}
           {filtered.map((m) => (
-            <GroupBubble key={m.id} m={m} isMine={m.sender_id === user?.id} isAdmin={isAdmin} senderName={memberNames[m.sender_id] ?? "—"} />
+            <GroupBubble
+              key={m.id}
+              m={m}
+              isMine={m.sender_id === user?.id}
+              isAdmin={isAdmin}
+              senderName={memberNames[m.sender_id] ?? "—"}
+              reads={readsByMessage.get(m.id) ?? []}
+              memberNames={memberNames}
+              memberCount={memberCount}
+            />
           ))}
           <div ref={bottomRef} />
         </div>
