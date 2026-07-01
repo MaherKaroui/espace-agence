@@ -13,12 +13,13 @@ import { StatusBadge } from "@/components/status-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, STATUTS } from "@/lib/labels";
-import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film } from "lucide-react";
+import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2 } from "lucide-react";
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { RelanceButton } from "@/components/relance-button";
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
+import { DossierTimeline } from "@/components/dossier-timeline";
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
 
@@ -59,7 +60,7 @@ function DossierDetail() {
   const { data: taches = [] } = useQuery({
     queryKey: ["taches", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("taches").select("id,titre,statut,cote_client,verrouillee").eq("dossier_id", id);
+      const { data, error } = await supabase.from("taches").select("id,titre,statut,cote_client,verrouillee,updated_at").eq("dossier_id", id);
       if (error) throw error;
       return data ?? [];
     },
@@ -245,13 +246,18 @@ function DossierDetail() {
           <div>
             <input ref={fileInput} type="file" multiple hidden onChange={handleUpload} />
             <Button onClick={() => fileInput.current?.click()} disabled={upload.isPending}>
-              <Upload className="h-4 w-4 mr-2" /> Déposer un document
+              {upload.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+              {upload.isPending ? "Envoi en cours…" : "Déposer un document"}
             </Button>
           </div>
         </div>
 
         {documents.length === 0 ? (
-          <div className="text-center py-12 text-sm text-muted-foreground">Aucun document pour l'instant.</div>
+          <div className="text-center py-12">
+            <FileText className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+            <p className="text-sm text-muted-foreground">Aucun document pour l'instant.</p>
+            <p className="text-xs text-muted-foreground/80 mt-1">Cliquez sur « Déposer un document » pour commencer.</p>
+          </div>
         ) : (
           <div className="divide-y">
             {documents.map((d) => {
@@ -280,9 +286,21 @@ function DossierDetail() {
                       {d.from_agence ? "Envoyé par l'agence" : "Déposé par le client"} · {formatDistanceToNow(new Date(d.created_at), { addSuffix: true, locale: fr })}
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => downloadDoc(d)}><Download className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => downloadDoc(d)} aria-label="Télécharger"><Download className="h-4 w-4" /></Button>
                   {(isAdmin || d.uploader_id === user?.id) && (
-                    <Button size="sm" variant="ghost" onClick={() => del.mutate(d)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label="Supprimer"
+                      disabled={del.isPending && (del.variables as any)?.id === d.id}
+                      onClick={() => del.mutate(d)}
+                    >
+                      {del.isPending && (del.variables as any)?.id === d.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      )}
+                    </Button>
                   )}
                 </div>
               );
@@ -291,6 +309,12 @@ function DossierDetail() {
           </div>
         )}
       </Card>
+
+      <DossierTimeline
+        dossier={dossier as any}
+        documents={documents as any}
+        taches={taches as any}
+      />
     </div>
   );
 }
