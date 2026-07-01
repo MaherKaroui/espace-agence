@@ -77,7 +77,7 @@ function RequiredRow({
     if (!doc) return;
     const { data, error } = await supabase.storage
       .from("documents")
-      .createSignedUrl(doc.storage_path, 60);
+      .createSignedUrl(doc.storage_path, 60, { download: doc.nom });
     if (error) return toast.error(error.message);
     await supabase.rpc("log_document_download", { _document_id: doc.id });
     window.open(data.signedUrl, "_blank");
@@ -91,13 +91,18 @@ function RequiredRow({
         await supabase.storage.from("documents").remove([doc.storage_path]);
         await supabase.from("documents").delete().eq("id", doc.id);
       }
-      const path = `${dossierId}/${crypto.randomUUID()}-${file.name}`;
-      const { error: upErr } = await supabase.storage.from("documents").upload(path, file);
+      // Renommer le fichier avec la clé du document requis (ex: kbis.pdf)
+      const ext = file.name.includes(".") ? file.name.split(".").pop()!.toLowerCase() : "bin";
+      const renamed = `${req.key}.${ext}`;
+      const path = `${dossierId}/${crypto.randomUUID()}-${renamed}`;
+      const { error: upErr } = await supabase.storage
+        .from("documents")
+        .upload(path, file, { contentType: file.type || undefined, upsert: false });
       if (upErr) throw upErr;
       const { error } = await supabase.from("documents").insert({
         dossier_id: dossierId,
         uploader_id: user!.id,
-        nom: file.name,
+        nom: renamed,
         storage_path: path,
         taille: file.size,
         mime_type: file.type,
@@ -106,6 +111,7 @@ function RequiredRow({
       });
       if (error) throw error;
     },
+
     onSuccess: () => {
       toast.success(doc ? "Document remplacé" : "Document ajouté");
       qc.invalidateQueries({ queryKey: ["documents", dossierId] });
