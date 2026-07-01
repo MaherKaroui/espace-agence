@@ -96,7 +96,7 @@ function AdminRdv() {
       const d_str = start.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
       await supabase.from("notifications").insert({
         user_id: rdv.client_id,
-        type: "rdv",
+        type: "rdv" as any,
         titre: "Rendez-vous replanifié",
         message: `Votre rendez-vous a été replanifié au ${d_str}.`,
         link: "/rendez-vous",
