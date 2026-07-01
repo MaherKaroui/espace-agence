@@ -27,7 +27,25 @@ type Session = {
   ended_at: string | null;
   duration_seconds: number | null;
   user_agent: string | null;
+  ip: string | null;
+  city: string | null;
+  region: string | null;
+  country: string | null;
+  country_code: string | null;
+  latitude: number | null;
+  longitude: number | null;
 };
+
+function flagEmoji(code: string | null | undefined): string {
+  if (!code || code.length !== 2) return "";
+  const cc = code.toUpperCase();
+  return String.fromCodePoint(...[...cc].map((c) => 127397 + c.charCodeAt(0)));
+}
+
+function locationLabel(s: Session): string {
+  const parts = [s.city, s.region, s.country].filter((x): x is string => !!x && x.trim() !== "");
+  return parts.join(", ");
+}
 
 type Profile = { id: string; nom: string | null; prenom: string | null; email: string };
 
