@@ -33,6 +33,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/admin/clients", label: "Clients", icon: Users },
     { to: "/admin/dossiers", label: "Tous les dossiers", icon: FolderOpen },
     { to: "/admin/messages", label: "Messagerie agence", icon: MessageSquare },
+    { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
+    { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
   ];
 
   const signOut = async () => {
