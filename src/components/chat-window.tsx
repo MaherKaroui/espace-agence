@@ -269,5 +269,3 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
     </div>
   );
 }
-
-}
