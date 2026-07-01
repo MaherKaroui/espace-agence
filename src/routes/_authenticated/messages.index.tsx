@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { ChatWindow } from "@/components/chat-window";
 
-export const Route = createFileRoute("/_authenticated/messages")({
+export const Route = createFileRoute("/_authenticated/messages/")({
   head: () => ({ meta: [{ title: "Messagerie" }] }),
   component: MessagesPage,
 });
