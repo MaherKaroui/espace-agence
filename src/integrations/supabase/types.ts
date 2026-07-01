@@ -298,6 +298,8 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
+          edited_at: string | null
+          edited_by: string | null
           from_agence: boolean
           id: string
           read_at: string | null
@@ -312,6 +314,8 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
           from_agence?: boolean
           id?: string
           read_at?: string | null
@@ -326,6 +330,8 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
           from_agence?: boolean
           id?: string
           read_at?: string | null
