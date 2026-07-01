@@ -286,9 +286,21 @@ function DossierDetail() {
                       {d.from_agence ? "Envoyé par l'agence" : "Déposé par le client"} · {formatDistanceToNow(new Date(d.created_at), { addSuffix: true, locale: fr })}
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => downloadDoc(d)}><Download className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => downloadDoc(d)} aria-label="Télécharger"><Download className="h-4 w-4" /></Button>
                   {(isAdmin || d.uploader_id === user?.id) && (
-                    <Button size="sm" variant="ghost" onClick={() => del.mutate(d)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label="Supprimer"
+                      disabled={del.isPending && del.variables?.id === d.id}
+                      onClick={() => del.mutate(d)}
+                    >
+                      {del.isPending && del.variables?.id === d.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      )}
+                    </Button>
                   )}
                 </div>
               );
