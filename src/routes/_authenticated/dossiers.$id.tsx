@@ -17,6 +17,7 @@ import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { RelanceButton } from "@/components/relance-button";
+import { RequiredDocuments } from "@/components/required-documents";
 
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -179,6 +180,8 @@ function DossierDetail() {
       </Card>
 
       <TasksPanel dossierId={id} />
+
+      <RequiredDocuments categorie={dossier.categorie} documents={documents} />
 
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
