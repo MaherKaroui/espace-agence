@@ -249,24 +249,16 @@ export function GroupChatWindow({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/20">
-          {filtered.length === 0 && (
-            <div className="text-center text-sm text-muted-foreground py-12">Aucun message. Envoyez le premier !</div>
-          )}
-          {filtered.map((m) => (
-            <GroupBubble
-              key={m.id}
-              m={m}
-              isMine={m.sender_id === user?.id}
-              isAdmin={isAdmin}
-              senderName={memberNames[m.sender_id] ?? "—"}
-              reads={readsByMessage.get(m.id) ?? []}
-              memberNames={memberNames}
-              memberCount={memberCount}
-            />
-          ))}
-          <div ref={bottomRef} />
-        </div>
+        <SwipeableList
+          filtered={filtered}
+          user={user}
+          isAdmin={isAdmin}
+          memberNames={memberNames}
+          memberCount={memberCount}
+          readsByMessage={readsByMessage}
+          bottomRef={bottomRef}
+        />
+
 
         <form onSubmit={submit} className="p-3 border-t flex gap-2 items-end bg-background">
           <input ref={fileInput} type="file" hidden multiple onChange={handleFile} />
