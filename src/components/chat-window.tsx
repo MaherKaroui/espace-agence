@@ -253,6 +253,7 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
   const isImg = m.attachment_mime?.startsWith("image/");
   const isPdf = m.attachment_mime === "application/pdf";
   const isVideo = m.attachment_mime?.startsWith("video/");
+  const isAudio = m.attachment_mime?.startsWith("audio/");
 
   const softDelete = async () => {
     const { error } = await supabase
