@@ -331,16 +331,20 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
                 <span className="text-xs truncate">{m.attachment_name}</span>
               </a>
             )}
-            {url && !isAudio && !isMine && (
-              <a
-                href={url}
-                download={m.attachment_name || true}
-                target="_blank"
-                rel="noreferrer"
+            {!isAudio && !isMine && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const { data, error } = await supabase.storage
+                    .from("chat-files")
+                    .createSignedUrl(m.attachment_path, 3600, { download: m.attachment_name || true });
+                  if (error || !data) { toast.error("Fichier introuvable"); return; }
+                  window.open(data.signedUrl, "_blank");
+                }}
                 className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded ${isMine ? "bg-white/10 hover:bg-white/20" : "bg-muted hover:bg-muted/70"}`}
               >
                 <Download className="h-3 w-3" /> Télécharger
-              </a>
+              </button>
             )}
           </div>
         )}
