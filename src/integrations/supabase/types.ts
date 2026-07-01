@@ -53,6 +53,41 @@ export type Database = {
         }
         Relationships: []
       }
+      client_notes: {
+        Row: {
+          author_id: string
+          client_id: string
+          contenu: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          client_id: string
+          contenu: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          client_id?: string
+          contenu?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_members: {
         Row: {
           added_at: string
@@ -615,27 +650,33 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           email: string
+          entreprise: string | null
           id: string
           nom: string
           prenom: string
+          telephone: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           email: string
+          entreprise?: string | null
           id: string
           nom?: string
           prenom?: string
+          telephone?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           email?: string
+          entreprise?: string | null
           id?: string
           nom?: string
           prenom?: string
+          telephone?: string | null
           updated_at?: string
         }
         Relationships: []
