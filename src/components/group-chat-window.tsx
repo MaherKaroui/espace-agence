@@ -362,9 +362,6 @@ function SwipeableList({
                 isMine={isMine}
                 isAdmin={isAdmin}
                 senderName={memberNames[m.sender_id] ?? "—"}
-                reads={reads}
-                memberNames={memberNames}
-                memberCount={memberCount}
               />
             </div>
             <div
@@ -381,7 +378,7 @@ function SwipeableList({
   );
 }
 
-function GroupBubble({ m, isMine, isAdmin, senderName, reads, memberNames, memberCount }: { m: any; isMine: boolean; isAdmin: boolean; senderName: string; reads: { user_id: string; read_at: string }[]; memberNames: Record<string, string>; memberCount: number }) {
+function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boolean; isAdmin: boolean; senderName: string }) {
   const qc = useQueryClient();
   const [url, setUrl] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -499,20 +496,6 @@ function GroupBubble({ m, isMine, isAdmin, senderName, reads, memberNames, membe
         <div className={`text-[10px] mt-1 ${isMine ? "text-primary-foreground/70 text-right" : "text-muted-foreground"}`}>
           {format(new Date(m.created_at), "HH:mm", { locale: fr })}
           {m.edited_at && <span> · modifié</span>}
-          {isMine && (() => {
-            const others = reads.filter((r) => r.user_id !== m.sender_id);
-            const totalOthers = Math.max(0, memberCount - 1);
-            if (others.length === 0) return <span> · ✓ Envoyé</span>;
-            const last = others.reduce((a, b) => (a.read_at > b.read_at ? a : b));
-            const tooltip = others
-              .map((r) => `${memberNames[r.user_id] ?? "—"} — ${format(new Date(r.read_at), "dd/MM HH:mm", { locale: fr })}`)
-              .join("\n");
-            return (
-              <span title={tooltip}>
-                {" "}· ✓✓ Vu par {others.length}/{totalOthers} · {format(new Date(last.read_at), "dd/MM HH:mm", { locale: fr })}
-              </span>
-            );
-          })()}
         </div>
       </div>
       {canEdit && !editing && (

@@ -12,7 +12,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Paperclip, Send, Search, Check, CheckCheck, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic, Square, Download } from "lucide-react";
+import { Paperclip, Send, Search, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic, Square, Download } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -482,13 +482,6 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
         <div className={`text-[10px] mt-1 flex items-center gap-1 flex-wrap ${isMine ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"}`}>
           {format(new Date(m.created_at), "HH:mm", { locale: fr })}
           {m.edited_at && <span title={`Modifié le ${format(new Date(m.edited_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}`}>· modifié</span>}
-          {isMine && (m.read_at ? (
-            <span className="inline-flex items-center gap-1" title={`Vu le ${format(new Date(m.read_at), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}`}>
-              <CheckCheck className="h-3 w-3" /> Vu · {format(new Date(m.read_at), "dd/MM HH:mm", { locale: fr })}
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1"><Check className="h-3 w-3" /> Envoyé</span>
-          ))}
         </div>
       </div>
       {canEdit && !editing && (
