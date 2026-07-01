@@ -45,11 +45,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const directionNav = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
     { to: "/admin/clients", label: "Clients", icon: Users },
+    { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
   ];
 
   const signOut = async () => {
+    // Ferme toutes les sessions ouvertes de l'utilisateur avant de perdre le token
+    if (user) {
+      const now = new Date().toISOString();
+      await supabase
+        .from("user_sessions")
+        .update({ ended_at: now, last_seen_at: now })
+        .eq("user_id", user.id)
+        .is("ended_at", null);
+    }
     await qc.cancelQueries();
     qc.clear();
     await supabase.auth.signOut();
