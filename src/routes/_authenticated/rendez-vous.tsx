@@ -11,8 +11,20 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, CalendarCheck, CalendarCog } from "lucide-react";
+
+const RDV_TYPES = [
+  "Certification",
+  "Cession de parts",
+  "CFA",
+  "Consultation client (1h — 100€, payante)",
+  "Création d'entreprise",
+  "Autre",
+] as const;
 
 function toLocalInput(iso: string) {
   const d = new Date(iso);
