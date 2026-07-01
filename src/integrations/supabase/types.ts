@@ -446,6 +446,50 @@ export type Database = {
         }
         Relationships: []
       }
+      rendez_vous: {
+        Row: {
+          client_id: string
+          created_at: string
+          dossier_id: string | null
+          ends_at: string
+          id: string
+          notes: string | null
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          dossier_id?: string | null
+          ends_at: string
+          id?: string
+          notes?: string | null
+          starts_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          dossier_id?: string | null
+          ends_at?: string
+          id?: string
+          notes?: string | null
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rendez_vous_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_settings: {
         Row: {
           blocked_keywords: string[]

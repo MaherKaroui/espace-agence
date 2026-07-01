@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings,
+  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings, CalendarDays,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -27,6 +27,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const nav = [
     { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
     { to: "/dossiers", label: "Mes dossiers", icon: FolderOpen },
+    { to: "/rendez-vous", label: "Prendre rendez-vous", icon: CalendarDays },
     { to: "/messages", label: "Messagerie", icon: MessageSquare },
     { to: "/notifications", label: "Notifications", icon: Bell },
     { to: "/preferences", label: "Préférences", icon: Settings },
