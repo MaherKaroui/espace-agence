@@ -26,11 +26,14 @@ function AdminMessages() {
       const { data: msgs } = await supabase.from("messages").select("client_id, content, created_at, from_agence, read_at").order("created_at", { ascending: false });
       const map = new Map<string, any>();
       (msgs ?? []).forEach((m) => { if (!map.has(m.client_id)) map.set(m.client_id, m); });
-      return (profiles ?? []).map((p) => ({ ...p, last: map.get(p.id) })).sort((a, b) => {
-        const at = a.last?.created_at ?? "";
-        const bt = b.last?.created_at ?? "";
-        return bt.localeCompare(at);
-      });
+      return (profiles ?? [])
+        .map((p) => ({ ...p, last: map.get(p.id) }))
+        .filter((t) => !!t.last)
+        .sort((a, b) => {
+          const at = a.last?.created_at ?? "";
+          const bt = b.last?.created_at ?? "";
+          return bt.localeCompare(at);
+        });
     },
   });
 
@@ -42,7 +45,7 @@ function AdminMessages() {
           <Link key={t.id} to="/admin/messages/$clientId" params={{ clientId: t.id }} className="flex items-center gap-3 p-4 hover:bg-muted/30">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center"><User className="h-5 w-5 text-primary" /></div>
             <div className="flex-1 min-w-0">
-              <div className="font-medium truncate">{t.prenom} {t.nom}</div>
+              <div className="font-medium truncate">{`${t.prenom ?? ""} ${t.nom ?? ""}`.trim() || t.email || "Client sans nom"}</div>
               <div className="text-xs text-muted-foreground truncate">
                 {t.last ? (t.last.from_agence ? "Vous : " : "") + (t.last.content || "Pièce jointe") : "Aucun message"}
               </div>
