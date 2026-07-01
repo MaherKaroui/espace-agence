@@ -44,7 +44,7 @@ function MfaPage() {
       }
 
       // Nettoyer un facteur non vérifié résiduel
-      const unverified = factors?.totp?.find((f) => f.status === "unverified");
+      const unverified = factors?.totp?.find((f) => f.status !== "verified");
       if (unverified) await supabase.auth.mfa.unenroll({ factorId: unverified.id });
 
       // Nouveau facteur
