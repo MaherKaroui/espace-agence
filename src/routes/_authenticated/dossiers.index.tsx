@@ -116,6 +116,8 @@ function DossiersPage() {
       nb_stagiaires?: number | null;
       nb_formateurs?: number | null;
       nb_formations?: number | null;
+      has_stagiaires?: boolean;
+      stagiaires?: any[];
     },
   ) => {
     const pole_id = poleForCategorie(categorie);
