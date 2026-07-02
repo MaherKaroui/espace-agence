@@ -400,3 +400,89 @@ function RendezVousPage() {
 
   );
 }
+
+function MobileDayHourPicker({
+  weekStart,
+  takenSet,
+  now,
+  onPick,
+}: {
+  weekStart: Date;
+  takenSet: Set<string>;
+  now: Date;
+  onPick: (d: Date) => void;
+}) {
+  const [dayIdx, setDayIdx] = useState<number | null>(null);
+
+  const days = DAY_LABELS.map((label, i) => {
+    const d = addDays(weekStart, i);
+    const anyFree = HOURS.some((h) => {
+      const s = slotDate(weekStart, i, h);
+      return s.getTime() >= now.getTime() && !takenSet.has(s.toISOString());
+    });
+    return { label, i, date: d, anyFree };
+  });
+
+  if (dayIdx === null) {
+    return (
+      <div className="rounded-lg border bg-card p-3 space-y-2">
+        <div className="text-sm font-medium">Étape 1 — Choisissez un jour</div>
+        <div className="grid grid-cols-1 gap-2">
+          {days.map((d) => (
+            <button
+              key={d.i}
+              type="button"
+              disabled={!d.anyFree}
+              onClick={() => setDayIdx(d.i)}
+              className={
+                "flex items-center justify-between rounded-md border px-3 py-3 text-sm transition " +
+                (d.anyFree ? "hover:bg-gold/10 hover:border-primary/40" : "bg-muted/40 text-muted-foreground cursor-not-allowed")
+              }
+            >
+              <span className="font-medium">{d.label} {fmtDate(d.date)}</span>
+              <span className="text-xs">{d.anyFree ? "Créneaux libres" : "Complet"}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const dayDate = addDays(weekStart, dayIdx);
+  const dayLabel = DAY_LABELS[dayIdx];
+
+  return (
+    <div className="rounded-lg border bg-card p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-medium">Étape 2 — Choisissez une heure</div>
+        <Button variant="ghost" size="sm" onClick={() => setDayIdx(null)}>Changer de jour</Button>
+      </div>
+      <div className="text-xs text-muted-foreground">{dayLabel} {fmtDate(dayDate)}</div>
+      <div className="grid grid-cols-2 gap-2">
+        {HOURS.map((h) => {
+          const start = slotDate(weekStart, dayIdx, h);
+          const isPast = start.getTime() < now.getTime();
+          const isTaken = takenSet.has(start.toISOString());
+          const disabled = isPast || isTaken;
+          return (
+            <button
+              key={h}
+              type="button"
+              disabled={disabled}
+              onClick={() => onPick(start)}
+              className={
+                "rounded-md border py-3 text-sm transition " +
+                (disabled
+                  ? "bg-muted/40 text-muted-foreground/50 cursor-not-allowed"
+                  : "hover:bg-gold/10 hover:border-primary/40 text-emerald-600 dark:text-emerald-400 font-medium")
+              }
+            >
+              {String(h).padStart(2, "0")}h – {String(h + 1).padStart(2, "0")}h
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-xs text-muted-foreground pt-1">Étape 3 : validez votre demande dans la fenêtre qui s'ouvre.</p>
+    </div>
+  );
+}
