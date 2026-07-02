@@ -277,6 +277,7 @@ function ClientRequestWizard({
       nb_formations?: number | null;
       has_stagiaires?: boolean;
       stagiaires?: any[];
+      organisme_nom?: string;
     },
   ) => void;
   pending: boolean;
