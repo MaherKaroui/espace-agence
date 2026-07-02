@@ -147,7 +147,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="lg:hidden fixed inset-0 z-40">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-72 bg-sidebar text-sidebar-foreground p-3 flex flex-col">
-            <button className="self-end p-2" onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></button>
+            <button aria-label="Fermer le menu" className="self-end p-2" onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></button>
             <nav className="flex-1 space-y-1 overflow-y-auto"><NavList /></nav>
             <button onClick={signOut} className="mt-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent">
               <LogOut className="h-4 w-4" /> Déconnexion
@@ -158,7 +158,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/95 backdrop-blur px-4 sm:px-6 h-16">
-          <button className="lg:hidden p-2" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
+          <button aria-label="Ouvrir le menu" className="lg:hidden p-2" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="lg:hidden font-display">Espace Agence</div>
           <div className="hidden lg:block" />
           <div className="flex items-center gap-2">
