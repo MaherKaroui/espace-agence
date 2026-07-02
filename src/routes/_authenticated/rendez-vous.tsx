@@ -251,7 +251,18 @@ function RendezVousPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-card overflow-x-auto">
+      {/* Mode simplifié (mobile) : jour → heure */}
+      <div className="sm:hidden space-y-3">
+        <MobileDayHourPicker
+          weekStart={weekStart}
+          takenSet={takenSet}
+          now={now}
+          onPick={(d) => setSelected(d)}
+        />
+      </div>
+
+      <div className="rounded-lg border bg-card overflow-x-auto hidden sm:block">
+
         <div className="grid grid-cols-[80px_repeat(5,minmax(120px,1fr))] min-w-[720px]">
           <div className="border-b border-r p-2 text-xs font-medium text-muted-foreground">Heure</div>
           {DAY_LABELS.map((label, i) => {
