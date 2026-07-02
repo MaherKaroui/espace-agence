@@ -72,17 +72,28 @@ function GroupesIndex() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display text-3xl">Groupes de discussion</h1>
-          <p className="text-muted-foreground mt-1">Créez un groupe pour discuter à plusieurs, avec sous-groupes en arborescence.</p>
+          <p className="text-muted-foreground mt-1">
+            {isStaff
+              ? "Créez un groupe pour discuter à plusieurs, avec sous-groupes en arborescence."
+              : "Retrouvez ici les groupes auxquels l'agence vous a ajouté."}
+          </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-1" /> Nouveau groupe</Button>
-          </DialogTrigger>
-          <CreateGroupDialog
-            onCreated={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["my-conv-memberships"] }); qc.invalidateQueries({ queryKey: ["conversations-list"] }); }}
-          />
-        </Dialog>
+        {isStaff ? (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-1" /> Nouveau groupe</Button>
+            </DialogTrigger>
+            <CreateGroupDialog
+              onCreated={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["my-conv-memberships"] }); qc.invalidateQueries({ queryKey: ["conversations-list"] }); }}
+            />
+          </Dialog>
+        ) : (
+          <Button asChild variant="outline">
+            <Link to="/messages"><MessageSquare className="h-4 w-4 mr-1" /> Contacter l'agence</Link>
+          </Button>
+        )}
       </div>
+
 
       <Card className="p-4">
         {conversations.length === 0 ? (
