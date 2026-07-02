@@ -50,14 +50,32 @@ function DossiersPage() {
   });
 
   const create = useMutation({
-    mutationFn: async (payload: { titre: string; categorie: string; pole_id: string; description: string }) => {
-      const { error } = await supabase.from("dossiers").insert({
+    mutationFn: async (payload: {
+      titre: string;
+      categorie: string;
+      pole_id: string;
+      description: string;
+      qualiopi_audit_type?: string | null;
+      qualiopi_scopes?: string[];
+      nb_stagiaires?: number | null;
+      nb_formateurs?: number | null;
+      nb_formations?: number | null;
+    }) => {
+      const row: any = {
         client_id: user!.id,
         titre: payload.titre,
         categorie: payload.categorie as any,
         pole_id: payload.pole_id,
         description: payload.description || null,
-      });
+      };
+      if (payload.categorie === "qualiopi") {
+        row.qualiopi_audit_type = payload.qualiopi_audit_type ?? null;
+        row.qualiopi_scopes = payload.qualiopi_scopes ?? [];
+        row.nb_stagiaires = payload.nb_stagiaires ?? null;
+        row.nb_formateurs = payload.nb_formateurs ?? null;
+        row.nb_formations = payload.nb_formations ?? null;
+      }
+      const { error } = await supabase.from("dossiers").insert(row);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -85,12 +103,22 @@ function DossiersPage() {
     create.mutate({ titre, categorie, pole_id, description });
   };
 
-  const submitClient = (categorie: string, description: string) => {
+  const submitClient = (
+    categorie: string,
+    description: string,
+    extra?: {
+      qualiopi_audit_type?: string | null;
+      qualiopi_scopes?: string[];
+      nb_stagiaires?: number | null;
+      nb_formateurs?: number | null;
+      nb_formations?: number | null;
+    },
+  ) => {
     const pole_id = poleForCategorie(categorie);
     if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
     const label = categorieLabel(categorie);
     const titre = `Demande ${label}`;
-    create.mutate({ titre, categorie, pole_id, description });
+    create.mutate({ titre, categorie, pole_id, description, ...(extra ?? {}) });
   };
 
   const filtered = filter === "all" ? dossiers : dossiers.filter((d) => d.categorie === filter);
@@ -229,7 +257,17 @@ function ClientRequestWizard({
   onSubmit,
   pending,
 }: {
-  onSubmit: (categorie: string, description: string) => void;
+  onSubmit: (
+    categorie: string,
+    description: string,
+    extra?: {
+      qualiopi_audit_type?: string | null;
+      qualiopi_scopes?: string[];
+      nb_stagiaires?: number | null;
+      nb_formateurs?: number | null;
+      nb_formations?: number | null;
+    },
+  ) => void;
   pending: boolean;
 }) {
   const [step, setStep] = useState(1);
@@ -247,24 +285,21 @@ function ClientRequestWizard({
   const toggleScope = (v: string) =>
     setScopes((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
 
-  const buildDescription = () => {
-    if (!isQualiopi) return description.trim();
-    const auditLabel = QUALIOPI_AUDIT_TYPES.find((a) => a.value === auditType)?.label ?? "";
-    const scopeLabels = scopes
-      .map((v) => QUALIOPI_SCOPES.find((s) => s.value === v)?.label ?? v)
-      .join(", ");
-    const parts = [
-      auditLabel ? `Type d'audit : ${auditLabel}` : null,
-      scopeLabels ? `Périmètre : ${scopeLabels}` : null,
-      nbStagiaires ? `Nombre de stagiaires / an : ${nbStagiaires}` : null,
-      nbFormateurs ? `Nombre de formateurs : ${nbFormateurs}` : null,
-      nbFormations ? `Nombre de formations proposées : ${nbFormations}` : null,
-      description.trim() ? `Message : ${description.trim()}` : null,
-    ].filter(Boolean);
-    return parts.join("\n");
-  };
-
   const canSubmitQualiopi = isQualiopi && auditType && scopes.length > 0;
+
+  const submitQualiopi = () => {
+    const toInt = (s: string) => {
+      const n = parseInt(s, 10);
+      return Number.isFinite(n) && n >= 0 ? n : null;
+    };
+    onSubmit(categorie, description.trim(), {
+      qualiopi_audit_type: auditType || null,
+      qualiopi_scopes: scopes,
+      nb_stagiaires: toInt(nbStagiaires),
+      nb_formateurs: toInt(nbFormateurs),
+      nb_formations: toInt(nbFormations),
+    });
+  };
 
   return (
     <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
@@ -376,7 +411,7 @@ function ClientRequestWizard({
               type="button"
               className="flex-1"
               disabled={pending || !canSubmitQualiopi}
-              onClick={() => onSubmit(categorie, buildDescription())}
+              onClick={submitQualiopi}
             >
               {pending ? "Envoi…" : "Envoyer ma demande à l'agence"}
             </Button>
