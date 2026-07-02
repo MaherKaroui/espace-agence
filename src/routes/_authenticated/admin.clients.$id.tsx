@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
-import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock, User as UserIcon } from "lucide-react";
+import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock } from "lucide-react";
 import { RelanceButton } from "@/components/relance-button";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
