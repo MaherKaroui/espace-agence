@@ -257,7 +257,17 @@ function ClientRequestWizard({
   onSubmit,
   pending,
 }: {
-  onSubmit: (categorie: string, description: string) => void;
+  onSubmit: (
+    categorie: string,
+    description: string,
+    extra?: {
+      qualiopi_audit_type?: string | null;
+      qualiopi_scopes?: string[];
+      nb_stagiaires?: number | null;
+      nb_formateurs?: number | null;
+      nb_formations?: number | null;
+    },
+  ) => void;
   pending: boolean;
 }) {
   const [step, setStep] = useState(1);
