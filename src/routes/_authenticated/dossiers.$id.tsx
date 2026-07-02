@@ -160,10 +160,20 @@ function DossierDetail() {
             {dossier.description && <p className="text-muted-foreground mt-2">{dossier.description}</p>}
           </div>
           <div className="w-full md:w-64">
-            <div className="text-xs text-muted-foreground mb-1">Avancement</div>
-            <Progress value={dossier.avancement} />
-            <div className="text-sm mt-1">{dossier.avancement}%</div>
+            {isAdmin ? (
+              <>
+                <div className="text-xs text-muted-foreground mb-1">Avancement</div>
+                <Progress value={dossier.avancement} />
+                <div className="text-sm mt-1">{dossier.avancement}%</div>
+              </>
+            ) : (
+              <ClientProgressSummary
+                avancement={dossier.avancement}
+                taches={taches as any}
+              />
+            )}
           </div>
+
         </div>
 
         {isAdmin && (
