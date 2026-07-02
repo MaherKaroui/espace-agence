@@ -248,19 +248,18 @@ function RequiredRow({
               </Badge>
             )}
             {!isAdmin && req.hint && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button size="sm" variant="ghost" className="h-6 px-2 text-xs gap-1">
-                    <HelpCircle className="h-3.5 w-3.5" />
-                    C'est quoi ce document&nbsp;?
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 text-sm leading-relaxed">
-                  {req.hint}
-                </PopoverContent>
-              </Popover>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-xs gap-1"
+                onClick={() => setHintDialog(true)}
+              >
+                <HelpCircle className="h-3.5 w-3.5" />
+                C'est quoi ce document&nbsp;?
+              </Button>
             )}
           </div>
+
 
           {!isAdmin && !doc && req.hint && (
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{req.hint}</p>
