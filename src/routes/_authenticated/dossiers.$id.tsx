@@ -319,6 +319,13 @@ function DossierDetail() {
 
       <RequiredDocuments dossierId={id} categorie={dossier.categorie} documents={documents as any} />
 
+      {dossier.categorie === "qualiopi" && (
+        <QualiopiBlock
+          dossier={dossier}
+          onUpdate={(patch) => updateDossier.mutate(patch)}
+        />
+      )}
+
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div>
