@@ -43,7 +43,7 @@ export const updateClientProfile = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Réservé aux administrateurs");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const patch: Record<string, unknown> = {};
+    const patch: { prenom?: string; nom?: string; email?: string } = {};
     if (data.prenom !== undefined) patch.prenom = data.prenom;
     if (data.nom !== undefined) patch.nom = data.nom;
     if (data.email !== undefined) patch.email = data.email;
