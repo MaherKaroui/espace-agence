@@ -61,21 +61,35 @@ function DossiersPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Dossier créé");
+      toast.success("Votre demande a été envoyée à l'agence");
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["dossiers-mine"] });
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  const submit = (e: React.FormEvent<HTMLFormElement>) => {
+  // Auto-map catégorie → pôle (par code, sinon premier pôle)
+  const poleForCategorie = (cat: string) => {
+    const byCode = poles.find((p: any) => p.code?.toLowerCase() === cat.toLowerCase());
+    return byCode?.id ?? poles[0]?.id ?? "";
+  };
+
+  const submitAdmin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const titre = (fd.get("titre") as string)?.trim();
     const categorie = fd.get("categorie") as string;
     const pole_id = fd.get("pole_id") as string;
     const description = (fd.get("description") as string)?.trim() ?? "";
-    if (!titre || !categorie || !pole_id) { toast.error("Champs requis"); return; }
+    if (!titre || !categorie || !pole_id) { toast.error("Champs requis" ); return; }
+    create.mutate({ titre, categorie, pole_id, description });
+  };
+
+  const submitClient = (categorie: string, description: string) => {
+    const pole_id = poleForCategorie(categorie);
+    if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
+    const label = categorieLabel(categorie);
+    const titre = `Demande ${label}`;
     create.mutate({ titre, categorie, pole_id, description });
   };
 
@@ -86,46 +100,55 @@ function DossiersPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl">Mes dossiers</h1>
-          <p className="text-muted-foreground mt-1">Suivez l'avancement et déposez vos pièces.</p>
+          <p className="text-muted-foreground mt-1">
+            {isAdmin ? "Suivez l'avancement et déposez vos pièces." : "Suivez vos demandes en cours."}
+          </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> Nouveau dossier</Button>
+            <Button><Plus className="h-4 w-4 mr-2" /> {isAdmin ? "Nouveau dossier" : "Nouvelle demande"}</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nouveau dossier</DialogTitle></DialogHeader>
-            <form onSubmit={submit} className="space-y-4">
-              <div>
-                <Label htmlFor="titre">Titre</Label>
-                <Input id="titre" name="titre" required maxLength={120} />
-              </div>
-              <div>
-                <Label>Pôle</Label>
-                <Select name="pole_id" required>
-                  <SelectTrigger><SelectValue placeholder="Choisir un pôle…" /></SelectTrigger>
-                  <SelectContent>
-                    {poles.map((p) => <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Catégorie</Label>
-                <Select name="categorie" required>
-                  <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="description">Description (optionnel)</Label>
-                <Textarea id="description" name="description" rows={3} maxLength={500} />
-              </div>
-              <Button type="submit" disabled={create.isPending} className="w-full">Créer le dossier</Button>
-            </form>
+            <DialogHeader>
+              <DialogTitle>{isAdmin ? "Nouveau dossier" : "Créer une nouvelle demande"}</DialogTitle>
+            </DialogHeader>
+            {isAdmin ? (
+              <form onSubmit={submitAdmin} className="space-y-4">
+                <div>
+                  <Label htmlFor="titre">Titre</Label>
+                  <Input id="titre" name="titre" required maxLength={120} />
+                </div>
+                <div>
+                  <Label>Pôle</Label>
+                  <Select name="pole_id" required>
+                    <SelectTrigger><SelectValue placeholder="Choisir un pôle…" /></SelectTrigger>
+                    <SelectContent>
+                      {poles.map((p) => <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Catégorie</Label>
+                  <Select name="categorie" required>
+                    <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="description">Description (optionnel)</Label>
+                  <Textarea id="description" name="description" rows={3} maxLength={500} />
+                </div>
+                <Button type="submit" disabled={create.isPending} className="w-full">Créer le dossier</Button>
+              </form>
+            ) : (
+              <ClientRequestWizard onSubmit={submitClient} pending={create.isPending} />
+            )}
           </DialogContent>
         </Dialog>
       </div>
+
 
       <div className="flex flex-wrap gap-2">
         <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Tous</FilterChip>
