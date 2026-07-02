@@ -66,6 +66,17 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   // Auto scroll
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length, otherTyping]);
 
+  // Message pré-rempli (ex : « Je n'ai pas ce document » depuis un dossier)
+  useEffect(() => {
+    try {
+      const p = sessionStorage.getItem("chat-prefill");
+      if (p) {
+        setText(p);
+        sessionStorage.removeItem("chat-prefill");
+      }
+    } catch {}
+  }, []);
+
   // Mark as read
   useEffect(() => {
     if (!user) return;
