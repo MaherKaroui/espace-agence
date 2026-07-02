@@ -106,6 +106,9 @@ function ClientDetail() {
 
   const [telephone, setTelephone] = useState<string | null>(null);
   const [entreprise, setEntreprise] = useState<string | null>(null);
+  const [prenom, setPrenom] = useState<string | null>(null);
+  const [nom, setNom] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
 
   const updateProfile = useMutation({
     mutationFn: async (patch: { telephone?: string | null; entreprise?: string | null }) => {
@@ -115,6 +118,29 @@ function ClientDetail() {
     onSuccess: () => {
       toast.success("Fiche mise à jour");
       qc.invalidateQueries({ queryKey: ["profile", id] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const updateIdentityFn = useServerFn(updateClientProfile);
+  const updateIdentity = useMutation({
+    mutationFn: async (patch: { prenom?: string; nom?: string; email?: string }) =>
+      updateIdentityFn({ data: { userId: id, ...patch } }),
+    onSuccess: () => {
+      toast.success("Identité mise à jour");
+      qc.invalidateQueries({ queryKey: ["profile", id] });
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const deleteClientFn = useServerFn(deleteClient);
+  const deleteClientM = useMutation({
+    mutationFn: async () => deleteClientFn({ data: { userId: id } }),
+    onSuccess: () => {
+      toast.success("Client supprimé");
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      nav({ to: "/admin/clients" });
     },
     onError: (e: any) => toast.error(e.message),
   });
