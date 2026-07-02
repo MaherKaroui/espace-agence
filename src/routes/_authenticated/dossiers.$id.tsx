@@ -123,6 +123,20 @@ function DossierDetail() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const deleteDossier = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("dossiers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Dossier supprimé");
+      qc.invalidateQueries({ queryKey: ["admin-dossiers"] });
+      qc.invalidateQueries({ queryKey: ["dossiers-mine"] });
+      nav({ to: "/admin/dossiers" });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
