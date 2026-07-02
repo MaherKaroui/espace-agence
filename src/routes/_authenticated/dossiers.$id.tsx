@@ -247,7 +247,7 @@ function DossierDetail() {
             <input ref={fileInput} type="file" multiple hidden onChange={handleUpload} />
             <Button onClick={() => fileInput.current?.click()} disabled={upload.isPending}>
               {upload.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-              {upload.isPending ? "Envoi en cours…" : "Déposer un document"}
+              {upload.isPending ? "Envoi en cours…" : "Autres documents"}
             </Button>
           </div>
         </div>
@@ -256,7 +256,7 @@ function DossierDetail() {
           <div className="text-center py-12">
             <FileText className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
             <p className="text-sm text-muted-foreground">Aucun document pour l'instant.</p>
-            <p className="text-xs text-muted-foreground/80 mt-1">Cliquez sur « Déposer un document » pour commencer.</p>
+            <p className="text-xs text-muted-foreground/80 mt-1">Cliquez sur « Autres documents » pour commencer.</p>
           </div>
         ) : (
           <div className="divide-y">
