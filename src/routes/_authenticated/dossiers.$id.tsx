@@ -464,3 +464,150 @@ function ClientProgressSummary({
   );
 }
 
+const QUALIOPI_AUDIT_TYPES = [
+  { value: "nouvel_entrant", label: "Nouvel entrant" },
+  { value: "audit_surveillance", label: "Audit de surveillance" },
+  { value: "renouvellement", label: "Renouvellement" },
+  { value: "complementaire", label: "Audit complémentaire" },
+];
+const QUALIOPI_SCOPES = [
+  { value: "AF", label: "Actions de Formation (AF)" },
+  { value: "BC", label: "Bilans de Compétences (BC)" },
+  { value: "VAE", label: "Validation des Acquis (VAE)" },
+  { value: "CFA", label: "Apprentissage / CFA" },
+];
+
+function QualiopiBlock({
+  dossier,
+  onUpdate,
+}: {
+  dossier: any;
+  onUpdate: (patch: any) => void;
+}) {
+  const auditType: string | null = dossier.qualiopi_audit_type ?? null;
+  const scopes: string[] = Array.isArray(dossier.qualiopi_scopes) ? dossier.qualiopi_scopes : [];
+
+  const toggleScope = (v: string) => {
+    const next = scopes.includes(v) ? scopes.filter((x) => x !== v) : [...scopes, v];
+    onUpdate({ qualiopi_scopes: next });
+  };
+
+  const parseNum = (s: string): number | null => {
+    const t = s.trim();
+    if (!t) return null;
+    const n = parseInt(t, 10);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+
+  return (
+    <Card className="p-6 space-y-5">
+      <div>
+        <h2 className="font-display text-xl">Détails Qualiopi</h2>
+        <p className="text-sm text-muted-foreground mt-1">Type d'audit, périmètre et informations sur vos stagiaires.</p>
+      </div>
+
+      <div>
+        <div className="text-sm font-medium mb-2">Type d'audit</div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {QUALIOPI_AUDIT_TYPES.map((a) => {
+            const active = auditType === a.value;
+            return (
+              <button
+                key={a.value}
+                type="button"
+                onClick={() => onUpdate({ qualiopi_audit_type: a.value })}
+                className={`text-left rounded-lg border p-3 hover:border-primary/60 transition-colors ${
+                  active ? "border-primary bg-primary/5" : ""
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                      active ? "border-primary" : "border-muted-foreground/40"
+                    }`}
+                  >
+                    {active && <span className="h-2 w-2 rounded-full bg-primary" />}
+                  </span>
+                  <span className="text-sm font-medium">{a.label}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-sm font-medium mb-2">Périmètre concerné (cochez tout ce qui s'applique)</div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {QUALIOPI_SCOPES.map((s) => {
+            const active = scopes.includes(s.value);
+            return (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => toggleScope(s.value)}
+                className={`text-left rounded-lg border p-3 hover:border-primary/60 transition-colors ${
+                  active ? "border-primary bg-primary/5" : ""
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`h-4 w-4 rounded border flex items-center justify-center text-primary-foreground ${
+                      active ? "bg-primary border-primary" : "border-muted-foreground/40"
+                    }`}
+                  >
+                    {active && <span className="text-[10px] leading-none">✓</span>}
+                  </span>
+                  <span className="text-sm font-medium">{s.label}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <div className="text-sm font-medium mb-2">Informations sur vos stagiaires</div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Stagiaires / an</label>
+            <Input
+              type="number"
+              min={0}
+              defaultValue={dossier.nb_stagiaires ?? ""}
+              onBlur={(e) => {
+                const v = parseNum(e.target.value);
+                if (v !== (dossier.nb_stagiaires ?? null)) onUpdate({ nb_stagiaires: v });
+              }}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Formateurs</label>
+            <Input
+              type="number"
+              min={0}
+              defaultValue={dossier.nb_formateurs ?? ""}
+              onBlur={(e) => {
+                const v = parseNum(e.target.value);
+                if (v !== (dossier.nb_formateurs ?? null)) onUpdate({ nb_formateurs: v });
+              }}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Formations proposées</label>
+            <Input
+              type="number"
+              min={0}
+              defaultValue={dossier.nb_formations ?? ""}
+              onBlur={(e) => {
+                const v = parseNum(e.target.value);
+                if (v !== (dossier.nb_formations ?? null)) onUpdate({ nb_formations: v });
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
