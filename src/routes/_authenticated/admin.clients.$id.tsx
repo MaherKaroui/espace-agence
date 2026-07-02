@@ -178,6 +178,9 @@ function ClientDetail() {
 
   const currentTel = telephone ?? (profile as any)?.telephone ?? "";
   const currentEnt = entreprise ?? (profile as any)?.entreprise ?? "";
+  const currentPrenom = prenom ?? profile?.prenom ?? "";
+  const currentNom = nom ?? profile?.nom ?? "";
+  const currentEmail = email ?? profile?.email ?? "";
 
   return (
     <div className="space-y-6">
@@ -207,6 +210,28 @@ function ClientDetail() {
               <Button variant="outline"><MessageSquare className="h-4 w-4 mr-2" /> Ouvrir la conversation</Button>
             </Link>
             <RelanceButton clientId={id} clientEmail={profile?.email} />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={deleteClientM.isPending}>
+                  {deleteClientM.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                  Supprimer le client
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer ce client&nbsp;?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action est <strong>irréversible</strong>. Le compte, ses dossiers, documents et messages seront supprimés définitivement.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => deleteClientM.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Supprimer définitivement
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
@@ -229,6 +254,40 @@ function ClientDetail() {
 
         <div className="mt-6 pt-6 border-t grid gap-3 md:grid-cols-2">
           <div>
+            <label className="text-xs text-muted-foreground">Prénom</label>
+            <Input
+              value={currentPrenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v && v !== (profile?.prenom ?? "")) updateIdentity.mutate({ prenom: v });
+              }}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Nom</label>
+            <Input
+              value={currentNom}
+              onChange={(e) => setNom(e.target.value)}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v && v !== (profile?.nom ?? "")) updateIdentity.mutate({ nom: v });
+              }}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">E-mail</label>
+            <Input
+              type="email"
+              value={currentEmail}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v && v !== (profile?.email ?? "")) updateIdentity.mutate({ email: v });
+              }}
+            />
+          </div>
+          <div>
             <label className="text-xs text-muted-foreground">Téléphone</label>
             <Input
               placeholder="+33 …"
@@ -240,7 +299,7 @@ function ClientDetail() {
               }}
             />
           </div>
-          <div>
+          <div className="md:col-span-2">
             <label className="text-xs text-muted-foreground">Entreprise</label>
             <Input
               placeholder="Nom de l'organisme"
