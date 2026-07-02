@@ -13,7 +13,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, STATUTS } from "@/lib/labels";
-import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2, LifeBuoy, MessageSquare } from "lucide-react";
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { RelanceButton } from "@/components/relance-button";
@@ -138,7 +138,7 @@ function DossierDetail() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-2">
         <button onClick={() => nav({ to: "/dossiers" })} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-          <ArrowLeft className="h-4 w-4" /> Retour aux dossiers
+          <ArrowLeft className="h-4 w-4" /> {isAdmin ? "Retour aux dossiers" : "Retour à mes dossiers"}
         </button>
         {isAdmin && dossier.client_id && (
           <RelanceButton
@@ -219,7 +219,7 @@ function DossierDetail() {
                 rel="noopener noreferrer"
                 className="text-sm text-primary hover:underline whitespace-nowrap"
               >
-                Ouvrir ↗
+                {isAdmin ? "Ouvrir ↗" : "Voir mon site ↗"}
               </a>
             )}
           </div>
@@ -235,19 +235,30 @@ function DossierDetail() {
         />
       )}
 
-      <TasksPanel dossierId={id} />
+      {/* Côté admin : panneau des tâches en haut ; côté client : plus bas, moins prioritaire */}
+      {isAdmin && <TasksPanel dossierId={id} />}
 
       <RequiredDocuments dossierId={id} categorie={dossier.categorie} documents={documents as any} />
 
-
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl">Documents ({documents.length})</h2>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div>
+            <h2 className="font-display text-xl">
+              {isAdmin ? `Documents (${documents.length})` : "Documents déjà envoyés"}
+            </h2>
+            {!isAdmin && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {documents.length === 0
+                  ? "Aucun document envoyé pour l'instant."
+                  : `Vous avez envoyé ${documents.length} document${documents.length > 1 ? "s" : ""}.`}
+              </p>
+            )}
+          </div>
           <div>
             <input ref={fileInput} type="file" multiple hidden onChange={handleUpload} />
-            <Button onClick={() => fileInput.current?.click()} disabled={upload.isPending}>
+            <Button variant={isAdmin ? "default" : "outline"} onClick={() => fileInput.current?.click()} disabled={upload.isPending}>
               {upload.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-              {upload.isPending ? "Envoi en cours…" : "Autres documents"}
+              {upload.isPending ? "Envoi en cours…" : isAdmin ? "Autres documents" : "Ajouter un autre document"}
             </Button>
           </div>
         </div>
@@ -256,7 +267,11 @@ function DossierDetail() {
           <div className="text-center py-12">
             <FileText className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
             <p className="text-sm text-muted-foreground">Aucun document pour l'instant.</p>
-            <p className="text-xs text-muted-foreground/80 mt-1">Cliquez sur « Autres documents » pour commencer.</p>
+            <p className="text-xs text-muted-foreground/80 mt-1">
+              {isAdmin
+                ? "Cliquez sur « Autres documents » pour commencer."
+                : "Utilisez la liste plus haut pour envoyer les documents demandés."}
+            </p>
           </div>
         ) : (
           <div className="divide-y">
@@ -305,10 +320,42 @@ function DossierDetail() {
                 </div>
               );
             })}
-
           </div>
         )}
       </Card>
+
+      {!isAdmin && (
+        <Card className="p-6 border-primary/20 bg-primary/5">
+          <div className="flex items-start gap-3 flex-wrap">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <LifeBuoy className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display text-lg">Besoin d'aide&nbsp;?</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Si vous êtes bloqué ou si vous avez une question, envoyez-nous un message.
+                L'agence vous répond dans les meilleurs délais.
+              </p>
+            </div>
+            <Button
+              onClick={() => {
+                try {
+                  sessionStorage.setItem(
+                    "chat-prefill",
+                    `Bonjour, j'ai besoin d'aide sur mon dossier « ${dossier.titre} ».`,
+                  );
+                } catch {}
+                nav({ to: "/messages" });
+              }}
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Demander de l'aide
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {!isAdmin && <TasksPanel dossierId={id} />}
 
       <DossierTimeline
         dossier={dossier as any}
