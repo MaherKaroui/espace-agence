@@ -60,6 +60,8 @@ function DossiersPage() {
       nb_stagiaires?: number | null;
       nb_formateurs?: number | null;
       nb_formations?: number | null;
+      has_stagiaires?: boolean;
+      stagiaires?: any[];
     }) => {
       const row: any = {
         client_id: user!.id,
@@ -74,6 +76,8 @@ function DossiersPage() {
         row.nb_stagiaires = payload.nb_stagiaires ?? null;
         row.nb_formateurs = payload.nb_formateurs ?? null;
         row.nb_formations = payload.nb_formations ?? null;
+        row.has_stagiaires = !!payload.has_stagiaires;
+        row.stagiaires = payload.stagiaires ?? [];
       }
       const { error } = await supabase.from("dossiers").insert(row);
       if (error) throw error;
