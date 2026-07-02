@@ -414,6 +414,75 @@ function ClientRequestWizard({
             </div>
           </div>
 
+          <div className="pt-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                checked={hasStagiaires}
+                onChange={(e) => {
+                  const c = e.target.checked;
+                  setHasStagiaires(c);
+                  if (c && stagiaires.length === 0) addStagiaire();
+                }}
+              />
+              <span className="text-sm font-medium">Avez-vous un stagiaire à déclarer&nbsp;?</span>
+            </label>
+          </div>
+
+          {hasStagiaires && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">Informations du/des stagiaire(s)</div>
+                <Button type="button" size="sm" variant="outline" onClick={addStagiaire}>
+                  + Ajouter
+                </Button>
+              </div>
+              {stagiaires.map((s, i) => (
+                <div key={i} className="rounded-lg border p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">Stagiaire #{i + 1}</div>
+                    {stagiaires.length > 1 && (
+                      <Button type="button" size="sm" variant="ghost" onClick={() => removeStagiaire(i)}>
+                        Supprimer
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label>Nom</Label>
+                      <Input value={s.nom} onChange={(e) => updateStagiaire(i, { nom: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Prénom</Label>
+                      <Input value={s.prenom} onChange={(e) => updateStagiaire(i, { prenom: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Email</Label>
+                      <Input type="email" value={s.email} onChange={(e) => updateStagiaire(i, { email: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Téléphone</Label>
+                      <Input value={s.telephone} onChange={(e) => updateStagiaire(i, { telephone: e.target.value })} />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Formation suivie</Label>
+                      <Input value={s.formation} onChange={(e) => updateStagiaire(i, { formation: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Date de début</Label>
+                      <Input type="date" value={s.date_debut} onChange={(e) => updateStagiaire(i, { date_debut: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Date de fin</Label>
+                      <Input type="date" value={s.date_fin} onChange={(e) => updateStagiaire(i, { date_fin: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div>
             <Label htmlFor="msg">Message complémentaire (optionnel)</Label>
             <Textarea
