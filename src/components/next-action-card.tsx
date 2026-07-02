@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
-import { AlertTriangle, CheckCircle2, Clock, XCircle, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, CheckCircle2, Clock, XCircle, ArrowRight, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { computeNextAction, type DocLite, type TacheLite } from "@/lib/next-action";
 
@@ -28,9 +29,14 @@ interface Props {
   compact?: boolean;
 }
 
+function triggerUpload(key: string) {
+  window.dispatchEvent(new CustomEvent("required-doc-upload", { detail: { key } }));
+}
+
 export function NextActionCard({ categorie, documents, taches, dossierStatut, compact }: Props) {
   const na = computeNextAction(categorie, documents, taches, dossierStatut);
   const Icon = ICONS[na.kind];
+  const hasCta = !!na.primaryKey && !!na.primaryLabel;
 
   if (compact) {
     return (
@@ -45,14 +51,24 @@ export function NextActionCard({ categorie, documents, taches, dossierStatut, co
   }
 
   return (
-    <Card className={cn("p-4 border-l-4", TONES[na.tone])}>
-      <div className="flex items-start gap-3">
-        <Icon className="h-5 w-5 mt-0.5 shrink-0" />
+    <Card className={cn("p-5 border-l-4", TONES[na.tone])}>
+      <div className="flex flex-wrap items-start gap-4">
+        <Icon className="h-6 w-6 mt-1 shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="text-xs uppercase tracking-wider opacity-70">Prochaine action</div>
-          <div className="font-medium mt-0.5">{na.label}</div>
+          <div className="font-medium text-lg mt-1">{na.label}</div>
           {na.detail && <div className="text-sm opacity-80 mt-1">{na.detail}</div>}
         </div>
+        {hasCta && (
+          <Button
+            size="lg"
+            onClick={() => triggerUpload(na.primaryKey!)}
+            className="shrink-0"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Ajouter mon {na.primaryLabel}
+          </Button>
+        )}
       </div>
     </Card>
   );
