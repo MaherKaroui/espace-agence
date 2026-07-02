@@ -285,24 +285,21 @@ function ClientRequestWizard({
   const toggleScope = (v: string) =>
     setScopes((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
 
-  const buildDescription = () => {
-    if (!isQualiopi) return description.trim();
-    const auditLabel = QUALIOPI_AUDIT_TYPES.find((a) => a.value === auditType)?.label ?? "";
-    const scopeLabels = scopes
-      .map((v) => QUALIOPI_SCOPES.find((s) => s.value === v)?.label ?? v)
-      .join(", ");
-    const parts = [
-      auditLabel ? `Type d'audit : ${auditLabel}` : null,
-      scopeLabels ? `Périmètre : ${scopeLabels}` : null,
-      nbStagiaires ? `Nombre de stagiaires / an : ${nbStagiaires}` : null,
-      nbFormateurs ? `Nombre de formateurs : ${nbFormateurs}` : null,
-      nbFormations ? `Nombre de formations proposées : ${nbFormations}` : null,
-      description.trim() ? `Message : ${description.trim()}` : null,
-    ].filter(Boolean);
-    return parts.join("\n");
-  };
-
   const canSubmitQualiopi = isQualiopi && auditType && scopes.length > 0;
+
+  const submitQualiopi = () => {
+    const toInt = (s: string) => {
+      const n = parseInt(s, 10);
+      return Number.isFinite(n) && n >= 0 ? n : null;
+    };
+    onSubmit(categorie, description.trim(), {
+      qualiopi_audit_type: auditType || null,
+      qualiopi_scopes: scopes,
+      nb_stagiaires: toInt(nbStagiaires),
+      nb_formateurs: toInt(nbFormateurs),
+      nb_formations: toInt(nbFormations),
+    });
+  };
 
   return (
     <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
