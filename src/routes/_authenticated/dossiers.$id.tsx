@@ -567,46 +567,75 @@ function QualiopiBlock({
       </div>
 
       <div>
-        <div className="text-sm font-medium mb-2">Informations sur vos stagiaires</div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div>
-            <label className="text-xs text-muted-foreground">Stagiaires / an</label>
-            <Input
-              type="number"
-              min={0}
-              defaultValue={dossier.nb_stagiaires ?? ""}
-              onBlur={(e) => {
-                const v = parseNum(e.target.value);
-                if (v !== (dossier.nb_stagiaires ?? null)) onUpdate({ nb_stagiaires: v });
-              }}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Formateurs</label>
-            <Input
-              type="number"
-              min={0}
-              defaultValue={dossier.nb_formateurs ?? ""}
-              onBlur={(e) => {
-                const v = parseNum(e.target.value);
-                if (v !== (dossier.nb_formateurs ?? null)) onUpdate({ nb_formateurs: v });
-              }}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Formations proposées</label>
-            <Input
-              type="number"
-              min={0}
-              defaultValue={dossier.nb_formations ?? ""}
-              onBlur={(e) => {
-                const v = parseNum(e.target.value);
-                if (v !== (dossier.nb_formations ?? null)) onUpdate({ nb_formations: v });
-              }}
-            />
-          </div>
-        </div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            className="h-4 w-4"
+            checked={!!dossier.has_stagiaires}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              const patch: any = { has_stagiaires: checked };
+              if (checked && (!Array.isArray(dossier.stagiaires) || dossier.stagiaires.length === 0)) {
+                patch.stagiaires = [{ nom: "", prenom: "", email: "", telephone: "", formation: "", date_debut: "", date_fin: "" }];
+              }
+              onUpdate(patch);
+            }}
+          />
+          <span className="text-sm font-medium">Avez-vous des stagiaires à déclarer&nbsp;?</span>
+        </label>
       </div>
+
+      {dossier.has_stagiaires && (
+        <div className="space-y-4">
+          <div>
+            <div className="text-sm font-medium mb-2">Volumétrie</div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Stagiaires / an</label>
+                <Input
+                  type="number"
+                  min={0}
+                  defaultValue={dossier.nb_stagiaires ?? ""}
+                  onBlur={(e) => {
+                    const v = parseNum(e.target.value);
+                    if (v !== (dossier.nb_stagiaires ?? null)) onUpdate({ nb_stagiaires: v });
+                  }}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Formateurs</label>
+                <Input
+                  type="number"
+                  min={0}
+                  defaultValue={dossier.nb_formateurs ?? ""}
+                  onBlur={(e) => {
+                    const v = parseNum(e.target.value);
+                    if (v !== (dossier.nb_formateurs ?? null)) onUpdate({ nb_formateurs: v });
+                  }}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Formations proposées</label>
+                <Input
+                  type="number"
+                  min={0}
+                  defaultValue={dossier.nb_formations ?? ""}
+                  onBlur={(e) => {
+                    const v = parseNum(e.target.value);
+                    if (v !== (dossier.nb_formations ?? null)) onUpdate({ nb_formations: v });
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <StagiairesList
+            list={Array.isArray(dossier.stagiaires) ? dossier.stagiaires : []}
+            onChange={(next) => onUpdate({ stagiaires: next })}
+          />
+        </div>
+      )}
+
     </Card>
   );
 }
