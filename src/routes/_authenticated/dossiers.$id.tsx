@@ -430,3 +430,38 @@ function DossierDetail() {
     </div>
   );
 }
+
+function ClientProgressSummary({
+  avancement,
+  taches,
+}: {
+  avancement: number;
+  taches: Array<{ statut: string }>;
+}) {
+  const total = taches.length;
+  const done = taches.filter((t) => t.statut === "termine").length;
+
+  let phrase: string;
+  if (total === 0) {
+    if (avancement >= 100) phrase = "Votre dossier est terminé.";
+    else if (avancement >= 66) phrase = "Votre dossier avance très bien.";
+    else if (avancement >= 33) phrase = "Votre dossier avance bien.";
+    else if (avancement > 0) phrase = "Votre dossier est commencé.";
+    else phrase = "Votre dossier va démarrer.";
+  } else if (done === total) {
+    phrase = "Toutes les étapes sont terminées.";
+  } else if (done === 0) {
+    phrase = `Votre dossier est commencé. ${total} étape${total > 1 ? "s" : ""} à venir.`;
+  } else {
+    phrase = `Votre dossier avance bien : ${done} étape${done > 1 ? "s" : ""} terminée${done > 1 ? "s" : ""} sur ${total}.`;
+  }
+
+  return (
+    <>
+      <div className="text-xs text-muted-foreground mb-1">Avancement</div>
+      <Progress value={avancement} />
+      <p className="text-sm mt-2 leading-snug">{phrase}</p>
+    </>
+  );
+}
+
