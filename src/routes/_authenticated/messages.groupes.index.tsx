@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Users2, Plus, ChevronRight, ChevronDown } from "lucide-react";
+import { Users2, Plus, ChevronRight, ChevronDown, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+
 
 export const Route = createFileRoute("/_authenticated/messages/groupes/")({
   head: () => ({ meta: [{ title: "Groupes de discussion" }] }),
@@ -31,6 +33,7 @@ type Conv = {
 
 function GroupesIndex() {
   const { user } = useAuth();
+  const { isStaff } = useRole();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
 
@@ -69,17 +72,28 @@ function GroupesIndex() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display text-3xl">Groupes de discussion</h1>
-          <p className="text-muted-foreground mt-1">Créez un groupe pour discuter à plusieurs, avec sous-groupes en arborescence.</p>
+          <p className="text-muted-foreground mt-1">
+            {isStaff
+              ? "Créez un groupe pour discuter à plusieurs, avec sous-groupes en arborescence."
+              : "Retrouvez ici les groupes auxquels l'agence vous a ajouté."}
+          </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-1" /> Nouveau groupe</Button>
-          </DialogTrigger>
-          <CreateGroupDialog
-            onCreated={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["my-conv-memberships"] }); qc.invalidateQueries({ queryKey: ["conversations-list"] }); }}
-          />
-        </Dialog>
+        {isStaff ? (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-1" /> Nouveau groupe</Button>
+            </DialogTrigger>
+            <CreateGroupDialog
+              onCreated={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["my-conv-memberships"] }); qc.invalidateQueries({ queryKey: ["conversations-list"] }); }}
+            />
+          </Dialog>
+        ) : (
+          <Button asChild variant="outline">
+            <Link to="/messages"><MessageSquare className="h-4 w-4 mr-1" /> Contacter l'agence</Link>
+          </Button>
+        )}
       </div>
+
 
       <Card className="p-4">
         {conversations.length === 0 ? (

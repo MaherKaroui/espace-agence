@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { categorieLabel } from "@/lib/labels";
 import { NextActionCard } from "@/components/next-action-card";
+import { computeNextAction } from "@/lib/next-action";
 import { FolderOpen, FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -76,27 +77,62 @@ function Dashboard() {
         <p className="text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
       </div>
 
-      {!isAdmin && activeDossiers.length > 0 && (
-        <div>
-          <h2 className="font-display text-xl mb-3">Vos prochaines actions</h2>
-          <div className="grid gap-2">
-            {activeDossiers.slice(0, 4).map((d) => (
-              <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block">
-                <div className="grid grid-cols-[1fr_auto] items-center gap-3">
-                  <NextActionCard
-                    categorie={d.categorie}
-                    documents={allDocs.filter((doc) => doc.dossier_id === d.id) as any}
-                    taches={allTaches.filter((t) => t.dossier_id === d.id) as any}
-                    dossierStatut={d.statut}
-                    compact
-                  />
-                  <span className="text-xs text-muted-foreground truncate max-w-[180px]">{d.titre}</span>
+      {!isAdmin && (() => {
+        const actionable = activeDossiers.filter((d) => {
+          const na = computeNextAction(
+            d.categorie,
+            allDocs.filter((doc) => doc.dossier_id === d.id) as any,
+            allTaches.filter((t) => t.dossier_id === d.id) as any,
+            d.statut,
+          );
+          return na.kind !== "aucune" && na.kind !== "attente_agence";
+        });
+        const handled = activeDossiers.filter((d) => !actionable.includes(d));
+        return (
+          <>
+            {actionable.length > 0 && (
+              <div>
+                <h2 className="font-display text-xl mb-3">À faire maintenant</h2>
+                <div className="grid gap-2">
+                  {actionable.slice(0, 4).map((d) => (
+                    <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block">
+                      <div className="grid grid-cols-[1fr_auto] items-center gap-3">
+                        <NextActionCard
+                          categorie={d.categorie}
+                          documents={allDocs.filter((doc) => doc.dossier_id === d.id) as any}
+                          taches={allTaches.filter((t) => t.dossier_id === d.id) as any}
+                          dossierStatut={d.statut}
+                          compact
+                        />
+                        <span className="text-xs text-muted-foreground truncate max-w-[180px]">{d.titre}</span>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+              </div>
+            )}
+            {handled.length > 0 && (
+              <div>
+                <h2 className="font-display text-xl mb-3">L'agence s'en occupe</h2>
+                <Card className="p-4 bg-muted/30">
+                  <ul className="text-sm space-y-1">
+                    {handled.map((d) => (
+                      <li key={d.id} className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                        <Link to="/dossiers/$id" params={{ id: d.id }} className="hover:underline truncate">
+                          {d.titre}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-muted-foreground mt-2">Rien à faire de votre côté, vous serez notifié.</p>
+                </Card>
+              </div>
+            )}
+          </>
+        );
+      })()}
+
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={FolderOpen} label="Dossiers" value={stats.total} />

@@ -61,21 +61,35 @@ function DossiersPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Dossier créé");
+      toast.success("Votre demande a été envoyée à l'agence");
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["dossiers-mine"] });
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  const submit = (e: React.FormEvent<HTMLFormElement>) => {
+  // Auto-map catégorie → pôle (par code, sinon premier pôle)
+  const poleForCategorie = (cat: string) => {
+    const byCode = poles.find((p: any) => p.code?.toLowerCase() === cat.toLowerCase());
+    return byCode?.id ?? poles[0]?.id ?? "";
+  };
+
+  const submitAdmin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const titre = (fd.get("titre") as string)?.trim();
     const categorie = fd.get("categorie") as string;
     const pole_id = fd.get("pole_id") as string;
     const description = (fd.get("description") as string)?.trim() ?? "";
-    if (!titre || !categorie || !pole_id) { toast.error("Champs requis"); return; }
+    if (!titre || !categorie || !pole_id) { toast.error("Champs requis" ); return; }
+    create.mutate({ titre, categorie, pole_id, description });
+  };
+
+  const submitClient = (categorie: string, description: string) => {
+    const pole_id = poleForCategorie(categorie);
+    if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
+    const label = categorieLabel(categorie);
+    const titre = `Demande ${label}`;
     create.mutate({ titre, categorie, pole_id, description });
   };
 
@@ -86,46 +100,55 @@ function DossiersPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl">Mes dossiers</h1>
-          <p className="text-muted-foreground mt-1">Suivez l'avancement et déposez vos pièces.</p>
+          <p className="text-muted-foreground mt-1">
+            {isAdmin ? "Suivez l'avancement et déposez vos pièces." : "Suivez vos demandes en cours."}
+          </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> Nouveau dossier</Button>
+            <Button><Plus className="h-4 w-4 mr-2" /> {isAdmin ? "Nouveau dossier" : "Nouvelle demande"}</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nouveau dossier</DialogTitle></DialogHeader>
-            <form onSubmit={submit} className="space-y-4">
-              <div>
-                <Label htmlFor="titre">Titre</Label>
-                <Input id="titre" name="titre" required maxLength={120} />
-              </div>
-              <div>
-                <Label>Pôle</Label>
-                <Select name="pole_id" required>
-                  <SelectTrigger><SelectValue placeholder="Choisir un pôle…" /></SelectTrigger>
-                  <SelectContent>
-                    {poles.map((p) => <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Catégorie</Label>
-                <Select name="categorie" required>
-                  <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="description">Description (optionnel)</Label>
-                <Textarea id="description" name="description" rows={3} maxLength={500} />
-              </div>
-              <Button type="submit" disabled={create.isPending} className="w-full">Créer le dossier</Button>
-            </form>
+            <DialogHeader>
+              <DialogTitle>{isAdmin ? "Nouveau dossier" : "Créer une nouvelle demande"}</DialogTitle>
+            </DialogHeader>
+            {isAdmin ? (
+              <form onSubmit={submitAdmin} className="space-y-4">
+                <div>
+                  <Label htmlFor="titre">Titre</Label>
+                  <Input id="titre" name="titre" required maxLength={120} />
+                </div>
+                <div>
+                  <Label>Pôle</Label>
+                  <Select name="pole_id" required>
+                    <SelectTrigger><SelectValue placeholder="Choisir un pôle…" /></SelectTrigger>
+                    <SelectContent>
+                      {poles.map((p) => <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Catégorie</Label>
+                  <Select name="categorie" required>
+                    <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="description">Description (optionnel)</Label>
+                  <Textarea id="description" name="description" rows={3} maxLength={500} />
+                </div>
+                <Button type="submit" disabled={create.isPending} className="w-full">Créer le dossier</Button>
+              </form>
+            ) : (
+              <ClientRequestWizard onSubmit={submitClient} pending={create.isPending} />
+            )}
           </DialogContent>
         </Dialog>
       </div>
+
 
       <div className="flex flex-wrap gap-2">
         <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Tous</FilterChip>
@@ -178,3 +201,79 @@ function FilterChip({ children, active, onClick }: { children: React.ReactNode; 
     </button>
   );
 }
+
+const CLIENT_NEEDS: { value: string; label: string; hint: string }[] = [
+  { value: "qualiopi", label: "Qualiopi", hint: "Certification qualité pour organismes de formation" },
+  { value: "nda", label: "NDA (Numéro de Déclaration d'Activité)", hint: "Obtenir votre numéro auprès de la préfecture" },
+  { value: "cfa", label: "Création / Gestion CFA", hint: "Centre de Formation d'Apprentis" },
+  { value: "edof", label: "EDOF (CPF)", hint: "Référencement Mon Compte Formation" },
+  { value: "bpf", label: "BPF (Bilan Pédagogique)", hint: "Bilan annuel à envoyer à la préfecture" },
+  { value: "autres", label: "Je ne sais pas / Autre demande", hint: "L'agence vous rappelle pour préciser" },
+];
+
+function ClientRequestWizard({
+  onSubmit,
+  pending,
+}: {
+  onSubmit: (categorie: string, description: string) => void;
+  pending: boolean;
+}) {
+  const [step, setStep] = useState(1);
+  const [categorie, setCategorie] = useState<string>("");
+  const [description, setDescription] = useState("");
+
+  return (
+    <div className="space-y-4">
+      {step === 1 && (
+        <div className="space-y-3">
+          <div>
+            <div className="font-medium">Quel est votre besoin ?</div>
+            <p className="text-sm text-muted-foreground">Choisissez la demande qui correspond le mieux.</p>
+          </div>
+          <div className="grid gap-2">
+            {CLIENT_NEEDS.map((n) => (
+              <button
+                key={n.value}
+                type="button"
+                onClick={() => { setCategorie(n.value); setStep(2); }}
+                className={`text-left rounded-lg border p-3 hover:border-primary/60 hover:bg-muted/40 transition-colors ${
+                  categorie === n.value ? "border-primary bg-primary/5" : ""
+                }`}
+              >
+                <div className="font-medium">{n.label}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{n.hint}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {step === 2 && (
+        <div className="space-y-3">
+          <div>
+            <div className="font-medium">Expliquez votre demande en une phrase</div>
+            <p className="text-sm text-muted-foreground">Ex : « Je souhaite obtenir la certification Qualiopi pour mon organisme. »</p>
+          </div>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            maxLength={500}
+            placeholder="Votre message pour l'agence…"
+          />
+          <div className="flex gap-2">
+            <Button variant="outline" type="button" onClick={() => setStep(1)}>Retour</Button>
+            <Button
+              type="button"
+              className="flex-1"
+              disabled={pending}
+              onClick={() => onSubmit(categorie, description.trim())}
+            >
+              {pending ? "Envoi…" : "Envoyer ma demande à l'agence"}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

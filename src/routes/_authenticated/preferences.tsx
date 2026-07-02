@@ -64,17 +64,23 @@ function PreferencesPage() {
           const enabled = prefMap[c.key] !== false; // défaut activé
           return (
             <div key={c.key} className="p-4 flex items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <div className="font-medium">{c.label}</div>
                 <div className="text-sm text-muted-foreground">{c.description}</div>
               </div>
-              <Switch
-                checked={enabled}
-                onCheckedChange={(v) => toggle.mutate({ key: c.key, enabled: v })}
-              />
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={`text-xs font-medium ${enabled ? "text-success" : "text-muted-foreground"}`}>
+                  {enabled ? "Activé" : "Désactivé"}
+                </span>
+                <Switch
+                  checked={enabled}
+                  onCheckedChange={(v) => toggle.mutate({ key: c.key, enabled: v })}
+                />
+              </div>
             </div>
           );
         })}
+
       </Card>
 
       <p className="text-xs text-muted-foreground">
