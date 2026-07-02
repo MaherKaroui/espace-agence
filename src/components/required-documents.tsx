@@ -113,9 +113,25 @@ function RequiredRow({
   const qc = useQueryClient();
   const nav = useNavigate();
   const fileInput = useRef<HTMLInputElement>(null);
+  const rowRef = useRef<HTMLLIElement>(null);
   const [busy, setBusy] = useState(false);
   const [showComment, setShowComment] = useState(false);
   const [uploadDialog, setUploadDialog] = useState(false);
+  const [hintDialog, setHintDialog] = useState(false);
+
+  // Ouvre la boîte de dépôt quand l'utilisateur clique sur le CTA « Ajouter mon … »
+  // depuis la carte « Prochaine action ».
+  useEffect(() => {
+    function onOpen(e: Event) {
+      const detail = (e as CustomEvent<{ key: string }>).detail;
+      if (!detail || detail.key !== req.key) return;
+      setUploadDialog(true);
+      rowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    window.addEventListener("required-doc-upload", onOpen as EventListener);
+    return () => window.removeEventListener("required-doc-upload", onOpen as EventListener);
+  }, [req.key]);
+
 
   const friendly = friendlyClientStatus(doc);
   const adminMeta = reviewStatusMeta(doc?.statut);
