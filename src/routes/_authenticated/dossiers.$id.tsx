@@ -221,25 +221,15 @@ function DossierDetail() {
             {isAdmin ? "Site web" : "Votre site web"}
           </label>
           <div className="flex items-center gap-2 mt-1">
-            {isAdmin ? (
-              <Input
-                type="url"
-                placeholder="https://exemple.com"
-                defaultValue={(dossier as any).site_web ?? ""}
-                onBlur={(e) => {
-                  const v = e.target.value.trim() || null;
-                  if (v !== ((dossier as any).site_web ?? null)) updateDossier.mutate({ site_web: v });
-                }}
-              />
-            ) : (dossier as any).site_web ? (
-              <div className="flex-1 text-sm px-3 py-2 rounded-md border bg-muted/30 truncate">
-                {(dossier as any).site_web}
-              </div>
-            ) : (
-              <div className="flex-1 text-sm px-3 py-2 rounded-md border bg-muted/30 text-muted-foreground italic">
-                Pas encore renseigné par l'agence
-              </div>
-            )}
+            <Input
+              type="url"
+              placeholder="https://exemple.com"
+              defaultValue={(dossier as any).site_web ?? ""}
+              onBlur={(e) => {
+                const v = e.target.value.trim() || null;
+                if (v !== ((dossier as any).site_web ?? null)) updateDossier.mutate({ site_web: v });
+              }}
+            />
             {(dossier as any).site_web && (
               <a
                 href={(dossier as any).site_web}
@@ -251,6 +241,10 @@ function DossierDetail() {
               </a>
             )}
           </div>
+          {!isAdmin && (
+            <p className="text-xs text-muted-foreground mt-1">Renseignez l'adresse de votre site (facultatif).</p>
+          )}
+
         </div>
 
       </Card>
