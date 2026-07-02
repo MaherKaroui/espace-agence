@@ -211,6 +211,20 @@ const CLIENT_NEEDS: { value: string; label: string; hint: string }[] = [
   { value: "autres", label: "Je ne sais pas / Autre demande", hint: "L'agence vous rappelle pour préciser" },
 ];
 
+const QUALIOPI_AUDIT_TYPES = [
+  { value: "nouvel_entrant", label: "Nouvel entrant", hint: "Première certification Qualiopi" },
+  { value: "audit_surveillance", label: "Audit de surveillance", hint: "Audit intermédiaire (18 mois après la certification)" },
+  { value: "renouvellement", label: "Renouvellement", hint: "Renouvellement de la certification (tous les 3 ans)" },
+  { value: "complementaire", label: "Audit complémentaire", hint: "Ajout d'une nouvelle catégorie d'action" },
+];
+
+const QUALIOPI_SCOPES = [
+  { value: "AF", label: "Actions de Formation (AF)" },
+  { value: "BC", label: "Bilans de Compétences (BC)" },
+  { value: "VAE", label: "Validation des Acquis (VAE)" },
+  { value: "CFA", label: "Apprentissage / CFA" },
+];
+
 function ClientRequestWizard({
   onSubmit,
   pending,
@@ -222,8 +236,38 @@ function ClientRequestWizard({
   const [categorie, setCategorie] = useState<string>("");
   const [description, setDescription] = useState("");
 
+  // Champs spécifiques Qualiopi
+  const [auditType, setAuditType] = useState<string>("");
+  const [scopes, setScopes] = useState<string[]>([]);
+  const [nbStagiaires, setNbStagiaires] = useState<string>("");
+  const [nbFormateurs, setNbFormateurs] = useState<string>("");
+  const [nbFormations, setNbFormations] = useState<string>("");
+
+  const isQualiopi = categorie === "qualiopi";
+  const toggleScope = (v: string) =>
+    setScopes((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
+
+  const buildDescription = () => {
+    if (!isQualiopi) return description.trim();
+    const auditLabel = QUALIOPI_AUDIT_TYPES.find((a) => a.value === auditType)?.label ?? "";
+    const scopeLabels = scopes
+      .map((v) => QUALIOPI_SCOPES.find((s) => s.value === v)?.label ?? v)
+      .join(", ");
+    const parts = [
+      auditLabel ? `Type d'audit : ${auditLabel}` : null,
+      scopeLabels ? `Périmètre : ${scopeLabels}` : null,
+      nbStagiaires ? `Nombre de stagiaires / an : ${nbStagiaires}` : null,
+      nbFormateurs ? `Nombre de formateurs : ${nbFormateurs}` : null,
+      nbFormations ? `Nombre de formations proposées : ${nbFormations}` : null,
+      description.trim() ? `Message : ${description.trim()}` : null,
+    ].filter(Boolean);
+    return parts.join("\n");
+  };
+
+  const canSubmitQualiopi = isQualiopi && auditType && scopes.length > 0;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
       {step === 1 && (
         <div className="space-y-3">
           <div>
@@ -247,11 +291,104 @@ function ClientRequestWizard({
           </div>
         </div>
       )}
-      {step === 2 && (
+
+      {step === 2 && isQualiopi && (
+        <div className="space-y-4">
+          <div>
+            <div className="font-medium">Type d'audit Qualiopi</div>
+            <p className="text-sm text-muted-foreground">Sélectionnez le type qui vous concerne.</p>
+          </div>
+          <div className="grid gap-2">
+            {QUALIOPI_AUDIT_TYPES.map((a) => (
+              <button
+                key={a.value}
+                type="button"
+                onClick={() => setAuditType(a.value)}
+                className={`text-left rounded-lg border p-3 hover:border-primary/60 hover:bg-muted/40 transition-colors ${
+                  auditType === a.value ? "border-primary bg-primary/5" : ""
+                }`}
+              >
+                <div className="font-medium">{a.label}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{a.hint}</div>
+              </button>
+            ))}
+          </div>
+
+          <div className="pt-2">
+            <div className="font-medium">Périmètre concerné</div>
+            <p className="text-sm text-muted-foreground">Cochez toutes les catégories concernées.</p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {QUALIOPI_SCOPES.map((s) => {
+              const active = scopes.includes(s.value);
+              return (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => toggleScope(s.value)}
+                  className={`text-left rounded-lg border p-3 hover:border-primary/60 transition-colors ${
+                    active ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  <div className="text-sm font-medium">{s.label}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="pt-2">
+            <div className="font-medium">Informations sur vos stagiaires</div>
+            <p className="text-sm text-muted-foreground">Estimations, pour préparer votre dossier.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <Label htmlFor="nb-stg">Stagiaires / an</Label>
+              <Input id="nb-stg" type="number" min={0} value={nbStagiaires}
+                onChange={(e) => setNbStagiaires(e.target.value)} placeholder="Ex : 30" />
+            </div>
+            <div>
+              <Label htmlFor="nb-form">Formateurs</Label>
+              <Input id="nb-form" type="number" min={0} value={nbFormateurs}
+                onChange={(e) => setNbFormateurs(e.target.value)} placeholder="Ex : 2" />
+            </div>
+            <div>
+              <Label htmlFor="nb-fo">Formations</Label>
+              <Input id="nb-fo" type="number" min={0} value={nbFormations}
+                onChange={(e) => setNbFormations(e.target.value)} placeholder="Ex : 5" />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="msg">Message complémentaire (optionnel)</Label>
+            <Textarea
+              id="msg"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Précisez votre contexte, votre échéance, etc."
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button variant="outline" type="button" onClick={() => setStep(1)}>Retour</Button>
+            <Button
+              type="button"
+              className="flex-1"
+              disabled={pending || !canSubmitQualiopi}
+              onClick={() => onSubmit(categorie, buildDescription())}
+            >
+              {pending ? "Envoi…" : "Envoyer ma demande à l'agence"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && !isQualiopi && (
         <div className="space-y-3">
           <div>
             <div className="font-medium">Expliquez votre demande en une phrase</div>
-            <p className="text-sm text-muted-foreground">Ex : « Je souhaite obtenir la certification Qualiopi pour mon organisme. »</p>
+            <p className="text-sm text-muted-foreground">Ex : « Je souhaite obtenir mon NDA pour mon organisme. »</p>
           </div>
           <Textarea
             value={description}
