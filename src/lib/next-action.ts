@@ -24,6 +24,10 @@ export type NextAction = {
   label: string;
   detail?: string;
   tone: "destructive" | "warning" | "info" | "muted" | "success";
+  /** Clé du document requis à traiter en priorité (pour le bouton CTA). */
+  primaryKey?: string;
+  /** Libellé lisible du document à traiter en priorité. */
+  primaryLabel?: string;
 };
 
 export function computeNextAction(
@@ -42,28 +46,37 @@ export function computeNextAction(
   const refuse = items.find((i) => i.doc && i.doc.statut === "refuse");
   if (refuse) return {
     kind: "refuse",
-    label: `Redéposer : ${refuse.req.label}`,
+    label: `Renvoyez votre ${refuse.req.label}`,
     detail: refuse.doc?.commentaire ?? "Ce document a été refusé par l'agence.",
     tone: "destructive",
+    primaryKey: refuse.req.key,
+    primaryLabel: refuse.req.label,
   };
 
   const aCorriger = items.find((i) => i.doc && i.doc.statut === "a_corriger");
   if (aCorriger) return {
     kind: "a_corriger",
-    label: `Corriger : ${aCorriger.req.label}`,
+    label: `Corrigez votre ${aCorriger.req.label}`,
     detail: aCorriger.doc?.commentaire ?? "L'agence demande une correction.",
     tone: "warning",
+    primaryKey: aCorriger.req.key,
+    primaryLabel: aCorriger.req.label,
   };
 
   const manquants = items.filter((i) => !i.doc);
-  if (manquants.length > 0) return {
-    kind: "manquant",
-    label: manquants.length === 1
-      ? `Déposer : ${manquants[0].req.label}`
-      : `Déposer ${manquants.length} documents`,
-    detail: manquants.length > 1 ? manquants.slice(0, 3).map((m) => m.req.label).join(" · ") : undefined,
-    tone: "warning",
-  };
+  if (manquants.length > 0) {
+    const first = manquants[0];
+    return {
+      kind: "manquant",
+      label: `Commencez par envoyer votre ${first.req.label}`,
+      detail: manquants.length > 1
+        ? `Il vous reste ${manquants.length} documents à envoyer.`
+        : "C'est le dernier document à envoyer.",
+      tone: "warning",
+      primaryKey: first.req.key,
+      primaryLabel: first.req.label,
+    };
+  }
 
   const tacheClient = taches.find(
     (t) => t.cote_client && !t.verrouillee && ["a_faire", "en_cours", "en_attente_client"].includes(t.statut),
