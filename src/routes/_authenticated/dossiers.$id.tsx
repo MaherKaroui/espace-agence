@@ -249,6 +249,11 @@ function DossierDetail() {
 
       </Card>
 
+      {dossier.categorie === "qualiopi" && (
+        <QualiopiBlock dossier={dossier} onUpdate={(patch) => updateDossier.mutate(patch)} />
+      )}
+
+
       {!isAdmin && (
         <NextActionCard
           categorie={dossier.categorie}
