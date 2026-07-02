@@ -60,6 +60,8 @@ function DossiersPage() {
       nb_stagiaires?: number | null;
       nb_formateurs?: number | null;
       nb_formations?: number | null;
+      has_stagiaires?: boolean;
+      stagiaires?: any[];
     }) => {
       const row: any = {
         client_id: user!.id,
@@ -74,6 +76,8 @@ function DossiersPage() {
         row.nb_stagiaires = payload.nb_stagiaires ?? null;
         row.nb_formateurs = payload.nb_formateurs ?? null;
         row.nb_formations = payload.nb_formations ?? null;
+        row.has_stagiaires = !!payload.has_stagiaires;
+        row.stagiaires = payload.stagiaires ?? [];
       }
       const { error } = await supabase.from("dossiers").insert(row);
       if (error) throw error;
@@ -112,6 +116,8 @@ function DossiersPage() {
       nb_stagiaires?: number | null;
       nb_formateurs?: number | null;
       nb_formations?: number | null;
+      has_stagiaires?: boolean;
+      stagiaires?: any[];
     },
   ) => {
     const pole_id = poleForCategorie(categorie);
@@ -266,6 +272,8 @@ function ClientRequestWizard({
       nb_stagiaires?: number | null;
       nb_formateurs?: number | null;
       nb_formations?: number | null;
+      has_stagiaires?: boolean;
+      stagiaires?: any[];
     },
   ) => void;
   pending: boolean;
@@ -280,10 +288,21 @@ function ClientRequestWizard({
   const [nbStagiaires, setNbStagiaires] = useState<string>("");
   const [nbFormateurs, setNbFormateurs] = useState<string>("");
   const [nbFormations, setNbFormations] = useState<string>("");
+  const [hasStagiaires, setHasStagiaires] = useState<boolean>(false);
+  const [stagiaires, setStagiaires] = useState<Array<{
+    nom: string; prenom: string; email: string; telephone: string; formation: string; date_debut: string; date_fin: string;
+  }>>([]);
 
   const isQualiopi = categorie === "qualiopi";
   const toggleScope = (v: string) =>
     setScopes((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
+
+  const addStagiaire = () =>
+    setStagiaires((l) => [...l, { nom: "", prenom: "", email: "", telephone: "", formation: "", date_debut: "", date_fin: "" }]);
+  const updateStagiaire = (i: number, patch: Partial<(typeof stagiaires)[number]>) =>
+    setStagiaires((l) => l.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  const removeStagiaire = (i: number) =>
+    setStagiaires((l) => l.filter((_, idx) => idx !== i));
 
   const canSubmitQualiopi = isQualiopi && auditType && scopes.length > 0;
 
@@ -298,6 +317,8 @@ function ClientRequestWizard({
       nb_stagiaires: toInt(nbStagiaires),
       nb_formateurs: toInt(nbFormateurs),
       nb_formations: toInt(nbFormations),
+      has_stagiaires: hasStagiaires,
+      stagiaires: hasStagiaires ? stagiaires : [],
     });
   };
 
@@ -392,6 +413,75 @@ function ClientRequestWizard({
                 onChange={(e) => setNbFormations(e.target.value)} placeholder="Ex : 5" />
             </div>
           </div>
+
+          <div className="pt-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                checked={hasStagiaires}
+                onChange={(e) => {
+                  const c = e.target.checked;
+                  setHasStagiaires(c);
+                  if (c && stagiaires.length === 0) addStagiaire();
+                }}
+              />
+              <span className="text-sm font-medium">Avez-vous un stagiaire à déclarer&nbsp;?</span>
+            </label>
+          </div>
+
+          {hasStagiaires && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">Informations du/des stagiaire(s)</div>
+                <Button type="button" size="sm" variant="outline" onClick={addStagiaire}>
+                  + Ajouter
+                </Button>
+              </div>
+              {stagiaires.map((s, i) => (
+                <div key={i} className="rounded-lg border p-3 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">Stagiaire #{i + 1}</div>
+                    {stagiaires.length > 1 && (
+                      <Button type="button" size="sm" variant="ghost" onClick={() => removeStagiaire(i)}>
+                        Supprimer
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label>Nom</Label>
+                      <Input value={s.nom} onChange={(e) => updateStagiaire(i, { nom: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Prénom</Label>
+                      <Input value={s.prenom} onChange={(e) => updateStagiaire(i, { prenom: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Email</Label>
+                      <Input type="email" value={s.email} onChange={(e) => updateStagiaire(i, { email: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Téléphone</Label>
+                      <Input value={s.telephone} onChange={(e) => updateStagiaire(i, { telephone: e.target.value })} />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Formation suivie</Label>
+                      <Input value={s.formation} onChange={(e) => updateStagiaire(i, { formation: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Date de début</Label>
+                      <Input type="date" value={s.date_debut} onChange={(e) => updateStagiaire(i, { date_debut: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Date de fin</Label>
+                      <Input type="date" value={s.date_fin} onChange={(e) => updateStagiaire(i, { date_fin: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div>
             <Label htmlFor="msg">Message complémentaire (optionnel)</Label>
