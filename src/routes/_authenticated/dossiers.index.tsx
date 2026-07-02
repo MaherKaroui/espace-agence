@@ -411,7 +411,7 @@ function ClientRequestWizard({
               type="button"
               className="flex-1"
               disabled={pending || !canSubmitQualiopi}
-              onClick={() => onSubmit(categorie, buildDescription())}
+              onClick={submitQualiopi}
             >
               {pending ? "Envoi…" : "Envoyer ma demande à l'agence"}
             </Button>
