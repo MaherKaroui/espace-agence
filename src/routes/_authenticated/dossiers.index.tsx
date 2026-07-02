@@ -201,3 +201,79 @@ function FilterChip({ children, active, onClick }: { children: React.ReactNode; 
     </button>
   );
 }
+
+const CLIENT_NEEDS: { value: string; label: string; hint: string }[] = [
+  { value: "qualiopi", label: "Qualiopi", hint: "Certification qualité pour organismes de formation" },
+  { value: "nda", label: "NDA (Numéro de Déclaration d'Activité)", hint: "Obtenir votre numéro auprès de la préfecture" },
+  { value: "cfa", label: "Création / Gestion CFA", hint: "Centre de Formation d'Apprentis" },
+  { value: "edof", label: "EDOF (CPF)", hint: "Référencement Mon Compte Formation" },
+  { value: "bpf", label: "BPF (Bilan Pédagogique)", hint: "Bilan annuel à envoyer à la préfecture" },
+  { value: "autres", label: "Je ne sais pas / Autre demande", hint: "L'agence vous rappelle pour préciser" },
+];
+
+function ClientRequestWizard({
+  onSubmit,
+  pending,
+}: {
+  onSubmit: (categorie: string, description: string) => void;
+  pending: boolean;
+}) {
+  const [step, setStep] = useState(1);
+  const [categorie, setCategorie] = useState<string>("");
+  const [description, setDescription] = useState("");
+
+  return (
+    <div className="space-y-4">
+      {step === 1 && (
+        <div className="space-y-3">
+          <div>
+            <div className="font-medium">Quel est votre besoin ?</div>
+            <p className="text-sm text-muted-foreground">Choisissez la demande qui correspond le mieux.</p>
+          </div>
+          <div className="grid gap-2">
+            {CLIENT_NEEDS.map((n) => (
+              <button
+                key={n.value}
+                type="button"
+                onClick={() => { setCategorie(n.value); setStep(2); }}
+                className={`text-left rounded-lg border p-3 hover:border-primary/60 hover:bg-muted/40 transition-colors ${
+                  categorie === n.value ? "border-primary bg-primary/5" : ""
+                }`}
+              >
+                <div className="font-medium">{n.label}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{n.hint}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {step === 2 && (
+        <div className="space-y-3">
+          <div>
+            <div className="font-medium">Expliquez votre demande en une phrase</div>
+            <p className="text-sm text-muted-foreground">Ex : « Je souhaite obtenir la certification Qualiopi pour mon organisme. »</p>
+          </div>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            maxLength={500}
+            placeholder="Votre message pour l'agence…"
+          />
+          <div className="flex gap-2">
+            <Button variant="outline" type="button" onClick={() => setStep(1)}>Retour</Button>
+            <Button
+              type="button"
+              className="flex-1"
+              disabled={pending}
+              onClick={() => onSubmit(categorie, description.trim())}
+            >
+              {pending ? "Envoi…" : "Envoyer ma demande à l'agence"}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
