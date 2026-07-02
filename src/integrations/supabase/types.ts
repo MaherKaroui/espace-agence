@@ -226,7 +226,12 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          nb_formateurs: number | null
+          nb_formations: number | null
+          nb_stagiaires: number | null
           pole_id: string
+          qualiopi_audit_type: string | null
+          qualiopi_scopes: string[]
           site_web: string | null
           statut: Database["public"]["Enums"]["dossier_statut"]
           titre: string
@@ -240,7 +245,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          nb_formateurs?: number | null
+          nb_formations?: number | null
+          nb_stagiaires?: number | null
           pole_id: string
+          qualiopi_audit_type?: string | null
+          qualiopi_scopes?: string[]
           site_web?: string | null
           statut?: Database["public"]["Enums"]["dossier_statut"]
           titre: string
@@ -254,7 +264,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          nb_formateurs?: number | null
+          nb_formations?: number | null
+          nb_stagiaires?: number | null
           pole_id?: string
+          qualiopi_audit_type?: string | null
+          qualiopi_scopes?: string[]
           site_web?: string | null
           statut?: Database["public"]["Enums"]["dossier_statut"]
           titre?: string
