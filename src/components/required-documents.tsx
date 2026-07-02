@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -11,9 +11,6 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Popover, PopoverContent, PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   CheckCircle2, Circle, Download, Upload, RefreshCw, AlertTriangle, XCircle,
   MessageSquare, HelpCircle, HandHelping,
 } from "lucide-react";
@@ -22,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { cn } from "@/lib/utils";
+
 
 type Doc = {
   id: string;
@@ -115,9 +113,25 @@ function RequiredRow({
   const qc = useQueryClient();
   const nav = useNavigate();
   const fileInput = useRef<HTMLInputElement>(null);
+  const rowRef = useRef<HTMLLIElement>(null);
   const [busy, setBusy] = useState(false);
   const [showComment, setShowComment] = useState(false);
   const [uploadDialog, setUploadDialog] = useState(false);
+  const [hintDialog, setHintDialog] = useState(false);
+
+  // Ouvre la boîte de dépôt quand l'utilisateur clique sur le CTA « Ajouter mon … »
+  // depuis la carte « Prochaine action ».
+  useEffect(() => {
+    function onOpen(e: Event) {
+      const detail = (e as CustomEvent<{ key: string }>).detail;
+      if (!detail || detail.key !== req.key) return;
+      setUploadDialog(true);
+      rowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    window.addEventListener("required-doc-upload", onOpen as EventListener);
+    return () => window.removeEventListener("required-doc-upload", onOpen as EventListener);
+  }, [req.key]);
+
 
   const friendly = friendlyClientStatus(doc);
   const adminMeta = reviewStatusMeta(doc?.statut);
@@ -212,7 +226,8 @@ function RequiredRow({
   };
 
   return (
-    <li className="py-4 text-sm">
+    <li ref={rowRef} className="py-4 text-sm">
+
       <div className="flex flex-wrap items-start gap-3">
         {isAdmin ? (
           <AdminIcon className={cn("h-5 w-5 shrink-0 mt-0.5", doc ? toneClass[adminMeta.tone] : "text-muted-foreground")} />
@@ -233,19 +248,18 @@ function RequiredRow({
               </Badge>
             )}
             {!isAdmin && req.hint && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button size="sm" variant="ghost" className="h-6 px-2 text-xs gap-1">
-                    <HelpCircle className="h-3.5 w-3.5" />
-                    C'est quoi ce document&nbsp;?
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 text-sm leading-relaxed">
-                  {req.hint}
-                </PopoverContent>
-              </Popover>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-xs gap-1"
+                onClick={() => setHintDialog(true)}
+              >
+                <HelpCircle className="h-3.5 w-3.5" />
+                C'est quoi ce document&nbsp;?
+              </Button>
             )}
           </div>
+
 
           {!isAdmin && !doc && req.hint && (
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{req.hint}</p>
@@ -348,6 +362,23 @@ function RequiredRow({
           </DialogContent>
         </Dialog>
       )}
+
+      {!isAdmin && req.hint && (
+        <Dialog open={hintDialog} onOpenChange={setHintDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{req.label}</DialogTitle>
+              <DialogDescription className="pt-2 text-sm leading-relaxed">
+                {req.hint}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button onClick={() => setHintDialog(false)}>J'ai compris</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </li>
   );
 }

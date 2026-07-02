@@ -61,29 +61,41 @@ export function TasksPanel({ dossierId }: { dossierId: string }) {
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display text-xl">
-          Étapes du dossier <span className="text-muted-foreground text-sm font-sans">({done}/{taches.length})</span>
+          {isStaff ? "Étapes du dossier" : "Où en est votre dossier ?"}{" "}
+          <span className="text-muted-foreground text-sm font-sans">({done}/{taches.length})</span>
         </h2>
       </div>
+      {!isStaff && (
+        <p className="text-sm text-muted-foreground -mt-2 mb-4">
+          Voici les grandes étapes. Vous n'avez rien à faire ici : l'agence les met à jour au fil de l'avancement.
+        </p>
+      )}
       <div className="space-y-2">
-        {taches.map((t) => {
+        {taches.map((t, idx) => {
           const meta = statutMeta(t.statut);
           const Icon = meta.icon;
           const locked = t.verrouillee;
           return (
             <div
               key={t.id}
-              className={`flex items-start gap-3 p-3 rounded-lg border ${locked ? "opacity-60 bg-muted/40" : "bg-background"}`}
+              className={`flex items-start gap-3 p-3 rounded-lg border ${locked ? "opacity-70 bg-muted/40" : "bg-background"}`}
             >
               <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${meta.tone}`}>
-                <Icon className="h-4 w-4" />
+                {isStaff ? <Icon className="h-4 w-4" /> : <span className="text-sm font-medium">{idx + 1}</span>}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Étape {t.ordre}</span>
+                  {isStaff && <span className="text-xs text-muted-foreground">Étape {t.ordre}</span>}
                   <span className="font-medium">{t.titre}</span>
-                  {t.cote_client && <Badge variant="outline" className="text-xs">Action client</Badge>}
-                  {locked && <Badge variant="outline" className="text-xs"><Lock className="h-3 w-3 mr-1" />Verrouillée</Badge>}
+                  {isStaff && t.cote_client && <Badge variant="outline" className="text-xs">Action client</Badge>}
+                  {locked && (
+                    <Badge variant="outline" className="text-xs">
+                      <Lock className="h-3 w-3 mr-1" />
+                      {isStaff ? "Verrouillée" : "Pas encore disponible"}
+                    </Badge>
+                  )}
                 </div>
+
                 {t.description && <p className="text-sm text-muted-foreground mt-1">{t.description}</p>}
                 <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
                   {t.date_echeance && (

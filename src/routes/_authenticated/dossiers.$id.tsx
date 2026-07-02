@@ -14,6 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, STATUTS } from "@/lib/labels";
 import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2, LifeBuoy, MessageSquare } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { RelanceButton } from "@/components/relance-button";
@@ -160,10 +166,20 @@ function DossierDetail() {
             {dossier.description && <p className="text-muted-foreground mt-2">{dossier.description}</p>}
           </div>
           <div className="w-full md:w-64">
-            <div className="text-xs text-muted-foreground mb-1">Avancement</div>
-            <Progress value={dossier.avancement} />
-            <div className="text-sm mt-1">{dossier.avancement}%</div>
+            {isAdmin ? (
+              <>
+                <div className="text-xs text-muted-foreground mb-1">Avancement</div>
+                <Progress value={dossier.avancement} />
+                <div className="text-sm mt-1">{dossier.avancement}%</div>
+              </>
+            ) : (
+              <ClientProgressSummary
+                avancement={dossier.avancement}
+                taches={taches as any}
+              />
+            )}
           </div>
+
         </div>
 
         {isAdmin && (
@@ -201,17 +217,29 @@ function DossierDetail() {
         )}
 
         <div className="mt-6 pt-6 border-t">
-          <label className="text-xs text-muted-foreground">Site web</label>
+          <label className="text-xs text-muted-foreground">
+            {isAdmin ? "Site web" : "Votre site web"}
+          </label>
           <div className="flex items-center gap-2 mt-1">
-            <Input
-              type="url"
-              placeholder="https://exemple.com"
-              defaultValue={(dossier as any).site_web ?? ""}
-              onBlur={(e) => {
-                const v = e.target.value.trim() || null;
-                if (v !== ((dossier as any).site_web ?? null)) updateDossier.mutate({ site_web: v });
-              }}
-            />
+            {isAdmin ? (
+              <Input
+                type="url"
+                placeholder="https://exemple.com"
+                defaultValue={(dossier as any).site_web ?? ""}
+                onBlur={(e) => {
+                  const v = e.target.value.trim() || null;
+                  if (v !== ((dossier as any).site_web ?? null)) updateDossier.mutate({ site_web: v });
+                }}
+              />
+            ) : (dossier as any).site_web ? (
+              <div className="flex-1 text-sm px-3 py-2 rounded-md border bg-muted/30 truncate">
+                {(dossier as any).site_web}
+              </div>
+            ) : (
+              <div className="flex-1 text-sm px-3 py-2 rounded-md border bg-muted/30 text-muted-foreground italic">
+                Pas encore renseigné par l'agence
+              </div>
+            )}
             {(dossier as any).site_web && (
               <a
                 href={(dossier as any).site_web}
@@ -224,6 +252,7 @@ function DossierDetail() {
             )}
           </div>
         </div>
+
       </Card>
 
       {!isAdmin && (
@@ -303,20 +332,56 @@ function DossierDetail() {
                   </div>
                   <Button size="sm" variant="ghost" onClick={() => downloadDoc(d)} aria-label="Télécharger"><Download className="h-4 w-4" /></Button>
                   {(isAdmin || d.uploader_id === user?.id) && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      aria-label="Supprimer"
-                      disabled={del.isPending && (del.variables as any)?.id === d.id}
-                      onClick={() => del.mutate(d)}
-                    >
-                      {del.isPending && (del.variables as any)?.id === d.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-destructive" />
-                      ) : (
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      )}
-                    </Button>
+                    isAdmin ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        aria-label="Supprimer"
+                        disabled={del.isPending && (del.variables as any)?.id === d.id}
+                        onClick={() => del.mutate(d)}
+                      >
+                        {del.isPending && (del.variables as any)?.id === d.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        )}
+                      </Button>
+                    ) : (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            aria-label="Retirer ce fichier"
+                            disabled={del.isPending && (del.variables as any)?.id === d.id}
+                          >
+                            {del.isPending && (del.variables as any)?.id === d.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Retirer ce fichier&nbsp;?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Êtes-vous sûr&nbsp;? Vous pourrez en ajouter un autre après.
+                              <br />
+                              <span className="block mt-2 text-xs text-muted-foreground">Fichier : {d.nom}</span>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => del.mutate(d)}>
+                              Oui, retirer
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )
                   )}
+
                 </div>
               );
             })}
@@ -365,3 +430,38 @@ function DossierDetail() {
     </div>
   );
 }
+
+function ClientProgressSummary({
+  avancement,
+  taches,
+}: {
+  avancement: number;
+  taches: Array<{ statut: string }>;
+}) {
+  const total = taches.length;
+  const done = taches.filter((t) => t.statut === "termine").length;
+
+  let phrase: string;
+  if (total === 0) {
+    if (avancement >= 100) phrase = "Votre dossier est terminé.";
+    else if (avancement >= 66) phrase = "Votre dossier avance très bien.";
+    else if (avancement >= 33) phrase = "Votre dossier avance bien.";
+    else if (avancement > 0) phrase = "Votre dossier est commencé.";
+    else phrase = "Votre dossier va démarrer.";
+  } else if (done === total) {
+    phrase = "Toutes les étapes sont terminées.";
+  } else if (done === 0) {
+    phrase = `Votre dossier est commencé. ${total} étape${total > 1 ? "s" : ""} à venir.`;
+  } else {
+    phrase = `Votre dossier avance bien : ${done} étape${done > 1 ? "s" : ""} terminée${done > 1 ? "s" : ""} sur ${total}.`;
+  }
+
+  return (
+    <>
+      <div className="text-xs text-muted-foreground mb-1">Avancement</div>
+      <Progress value={avancement} />
+      <p className="text-sm mt-2 leading-snug">{phrase}</p>
+    </>
+  );
+}
+
