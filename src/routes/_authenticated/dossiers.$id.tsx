@@ -332,20 +332,56 @@ function DossierDetail() {
                   </div>
                   <Button size="sm" variant="ghost" onClick={() => downloadDoc(d)} aria-label="Télécharger"><Download className="h-4 w-4" /></Button>
                   {(isAdmin || d.uploader_id === user?.id) && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      aria-label="Supprimer"
-                      disabled={del.isPending && (del.variables as any)?.id === d.id}
-                      onClick={() => del.mutate(d)}
-                    >
-                      {del.isPending && (del.variables as any)?.id === d.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-destructive" />
-                      ) : (
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      )}
-                    </Button>
+                    isAdmin ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        aria-label="Supprimer"
+                        disabled={del.isPending && (del.variables as any)?.id === d.id}
+                        onClick={() => del.mutate(d)}
+                      >
+                        {del.isPending && (del.variables as any)?.id === d.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        )}
+                      </Button>
+                    ) : (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            aria-label="Retirer ce fichier"
+                            disabled={del.isPending && (del.variables as any)?.id === d.id}
+                          >
+                            {del.isPending && (del.variables as any)?.id === d.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Retirer ce fichier&nbsp;?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Êtes-vous sûr&nbsp;? Vous pourrez en ajouter un autre après.
+                              <br />
+                              <span className="block mt-2 text-xs text-muted-foreground">Fichier : {d.nom}</span>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => del.mutate(d)}>
+                              Oui, retirer
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )
                   )}
+
                 </div>
               );
             })}
