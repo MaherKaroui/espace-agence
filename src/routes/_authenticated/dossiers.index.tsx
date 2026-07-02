@@ -272,6 +272,8 @@ function ClientRequestWizard({
       nb_stagiaires?: number | null;
       nb_formateurs?: number | null;
       nb_formations?: number | null;
+      has_stagiaires?: boolean;
+      stagiaires?: any[];
     },
   ) => void;
   pending: boolean;
@@ -286,10 +288,21 @@ function ClientRequestWizard({
   const [nbStagiaires, setNbStagiaires] = useState<string>("");
   const [nbFormateurs, setNbFormateurs] = useState<string>("");
   const [nbFormations, setNbFormations] = useState<string>("");
+  const [hasStagiaires, setHasStagiaires] = useState<boolean>(false);
+  const [stagiaires, setStagiaires] = useState<Array<{
+    nom: string; prenom: string; email: string; telephone: string; formation: string; date_debut: string; date_fin: string;
+  }>>([]);
 
   const isQualiopi = categorie === "qualiopi";
   const toggleScope = (v: string) =>
     setScopes((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
+
+  const addStagiaire = () =>
+    setStagiaires((l) => [...l, { nom: "", prenom: "", email: "", telephone: "", formation: "", date_debut: "", date_fin: "" }]);
+  const updateStagiaire = (i: number, patch: Partial<(typeof stagiaires)[number]>) =>
+    setStagiaires((l) => l.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  const removeStagiaire = (i: number) =>
+    setStagiaires((l) => l.filter((_, idx) => idx !== i));
 
   const canSubmitQualiopi = isQualiopi && auditType && scopes.length > 0;
 
@@ -304,6 +317,8 @@ function ClientRequestWizard({
       nb_stagiaires: toInt(nbStagiaires),
       nb_formateurs: toInt(nbFormateurs),
       nb_formations: toInt(nbFormations),
+      has_stagiaires: hasStagiaires,
+      stagiaires: hasStagiaires ? stagiaires : [],
     });
   };
 
