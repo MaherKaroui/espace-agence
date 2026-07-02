@@ -198,6 +198,22 @@ function DossierDetail() {
 
         {isAdmin && (
           <div className="mt-6 grid md:grid-cols-3 gap-3 pt-6 border-t">
+            <div className="md:col-span-3">
+              <label className="text-xs text-muted-foreground">Titre du dossier</label>
+              <Input defaultValue={dossier.titre}
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (v && v !== dossier.titre) updateDossier.mutate({ titre: v });
+                }} />
+            </div>
+            <div className="md:col-span-3">
+              <label className="text-xs text-muted-foreground">Description</label>
+              <Textarea defaultValue={dossier.description ?? ""}
+                onBlur={(e) => {
+                  const v = e.target.value;
+                  if (v !== (dossier.description ?? "")) updateDossier.mutate({ description: v });
+                }} rows={3} />
+            </div>
             <div>
               <label className="text-xs text-muted-foreground">Statut</label>
               <Select defaultValue={dossier.statut} onValueChange={(v) => updateDossier.mutate({ statut: v })}>
@@ -214,6 +230,30 @@ function DossierDetail() {
                   const v = Math.max(0, Math.min(100, Number(e.target.value)));
                   if (v !== dossier.avancement) updateDossier.mutate({ avancement: v });
                 }} />
+            </div>
+            <div className="flex items-end">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full" disabled={deleteDossier.isPending}>
+                    {deleteDossier.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                    Supprimer le dossier
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Supprimer ce dossier&nbsp;?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Action <strong>irréversible</strong>. Documents, tâches et historique seront supprimés.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteDossier.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Supprimer définitivement
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
             <div className="md:col-span-3">
               <label className="text-xs text-muted-foreground">Commentaire de l'agence</label>
