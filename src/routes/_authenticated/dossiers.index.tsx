@@ -118,13 +118,16 @@ function DossiersPage() {
       nb_formations?: number | null;
       has_stagiaires?: boolean;
       stagiaires?: any[];
+      organisme_nom?: string;
     },
   ) => {
     const pole_id = poleForCategorie(categorie);
     if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
     const label = categorieLabel(categorie);
-    const titre = `Demande ${label}`;
-    create.mutate({ titre, categorie, pole_id, description, ...(extra ?? {}) });
+    const organisme = extra?.organisme_nom?.trim();
+    const titre = organisme ? `Demande ${label} - ${organisme}` : `Demande ${label}`;
+    const { organisme_nom, ...rest } = extra ?? {};
+    create.mutate({ titre, categorie, pole_id, description, ...rest });
   };
 
   const filtered = filter === "all" ? dossiers : dossiers.filter((d) => d.categorie === filter);
@@ -274,6 +277,7 @@ function ClientRequestWizard({
       nb_formations?: number | null;
       has_stagiaires?: boolean;
       stagiaires?: any[];
+      organisme_nom?: string;
     },
   ) => void;
   pending: boolean;
@@ -283,6 +287,7 @@ function ClientRequestWizard({
   const [description, setDescription] = useState("");
 
   // Champs spécifiques Qualiopi
+  const [organismeNom, setOrganismeNom] = useState<string>("");
   const [auditType, setAuditType] = useState<string>("");
   const [scopes, setScopes] = useState<string[]>([]);
   const [nbStagiaires, setNbStagiaires] = useState<string>("");
@@ -304,7 +309,7 @@ function ClientRequestWizard({
   const removeStagiaire = (i: number) =>
     setStagiaires((l) => l.filter((_, idx) => idx !== i));
 
-  const canSubmitQualiopi = isQualiopi && auditType && scopes.length > 0;
+  const canSubmitQualiopi = isQualiopi && organismeNom.trim().length > 0 && auditType && scopes.length > 0;
 
   const submitQualiopi = () => {
     const toInt = (s: string) => {
@@ -319,6 +324,7 @@ function ClientRequestWizard({
       nb_formations: toInt(nbFormations),
       has_stagiaires: hasStagiaires,
       stagiaires: hasStagiaires ? stagiaires : [],
+      organisme_nom: organismeNom.trim(),
     });
   };
 
@@ -350,6 +356,17 @@ function ClientRequestWizard({
 
       {step === 2 && isQualiopi && (
         <div className="space-y-4">
+          <div>
+            <Label htmlFor="organisme-nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
+            <Input
+              id="organisme-nom"
+              value={organismeNom}
+              onChange={(e) => setOrganismeNom(e.target.value)}
+              placeholder="Ex : Mon Centre de Formation"
+              maxLength={120}
+              required
+            />
+          </div>
           <div>
             <div className="font-medium">Type d'audit Qualiopi</div>
             <p className="text-sm text-muted-foreground">Sélectionnez le type qui vous concerne.</p>
