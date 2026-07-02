@@ -96,7 +96,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
           .replace(/[^\w.\-]+/g, "_")
           .replace(/_+/g, "_")
           .replace(/^_|_$/g, "");
-        const path = `${user!.id}/${crypto.randomUUID()}-${safeName || "fichier"}`;
+        const path = `${user!.id}/dm-${clientId}/${crypto.randomUUID()}-${safeName || "fichier"}`;
         const { error } = await supabase.storage.from("chat-files").upload(path, file);
         if (error) throw error;
         attachment_path = path; attachment_name = file.name; attachment_mime = file.type;
