@@ -118,13 +118,16 @@ function DossiersPage() {
       nb_formations?: number | null;
       has_stagiaires?: boolean;
       stagiaires?: any[];
+      organisme_nom?: string;
     },
   ) => {
     const pole_id = poleForCategorie(categorie);
     if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
     const label = categorieLabel(categorie);
-    const titre = `Demande ${label}`;
-    create.mutate({ titre, categorie, pole_id, description, ...(extra ?? {}) });
+    const organisme = extra?.organisme_nom?.trim();
+    const titre = organisme ? `Demande ${label} - ${organisme}` : `Demande ${label}`;
+    const { organisme_nom, ...rest } = extra ?? {};
+    create.mutate({ titre, categorie, pole_id, description, ...rest });
   };
 
   const filtered = filter === "all" ? dossiers : dossiers.filter((d) => d.categorie === filter);
