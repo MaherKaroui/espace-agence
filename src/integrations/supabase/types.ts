@@ -1153,6 +1153,7 @@ export type Database = {
         | "rappel"
         | "action_requise"
         | "rdv"
+        | "alerte_securite"
       pole_role: "manager" | "consultant"
       tache_statut:
         | "a_faire"
@@ -1323,6 +1324,7 @@ export const Constants = {
         "rappel",
         "action_requise",
         "rdv",
+        "alerte_securite",
       ],
       pole_role: ["manager", "consultant"],
       tache_statut: [
