@@ -362,6 +362,23 @@ function RequiredRow({
           </DialogContent>
         </Dialog>
       )}
+
+      {!isAdmin && req.hint && (
+        <Dialog open={hintDialog} onOpenChange={setHintDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{req.label}</DialogTitle>
+              <DialogDescription className="pt-2 text-sm leading-relaxed">
+                {req.hint}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button onClick={() => setHintDialog(false)}>J'ai compris</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </li>
   );
 }
