@@ -567,47 +567,187 @@ function QualiopiBlock({
       </div>
 
       <div>
-        <div className="text-sm font-medium mb-2">Informations sur vos stagiaires</div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div>
-            <label className="text-xs text-muted-foreground">Stagiaires / an</label>
-            <Input
-              type="number"
-              min={0}
-              defaultValue={dossier.nb_stagiaires ?? ""}
-              onBlur={(e) => {
-                const v = parseNum(e.target.value);
-                if (v !== (dossier.nb_stagiaires ?? null)) onUpdate({ nb_stagiaires: v });
-              }}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Formateurs</label>
-            <Input
-              type="number"
-              min={0}
-              defaultValue={dossier.nb_formateurs ?? ""}
-              onBlur={(e) => {
-                const v = parseNum(e.target.value);
-                if (v !== (dossier.nb_formateurs ?? null)) onUpdate({ nb_formateurs: v });
-              }}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Formations proposées</label>
-            <Input
-              type="number"
-              min={0}
-              defaultValue={dossier.nb_formations ?? ""}
-              onBlur={(e) => {
-                const v = parseNum(e.target.value);
-                if (v !== (dossier.nb_formations ?? null)) onUpdate({ nb_formations: v });
-              }}
-            />
-          </div>
-        </div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            className="h-4 w-4"
+            checked={!!dossier.has_stagiaires}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              const patch: any = { has_stagiaires: checked };
+              if (checked && (!Array.isArray(dossier.stagiaires) || dossier.stagiaires.length === 0)) {
+                patch.stagiaires = [{ nom: "", prenom: "", email: "", telephone: "", formation: "", date_debut: "", date_fin: "" }];
+              }
+              onUpdate(patch);
+            }}
+          />
+          <span className="text-sm font-medium">Avez-vous des stagiaires à déclarer&nbsp;?</span>
+        </label>
       </div>
+
+      {dossier.has_stagiaires && (
+        <div className="space-y-4">
+          <div>
+            <div className="text-sm font-medium mb-2">Volumétrie</div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Stagiaires / an</label>
+                <Input
+                  type="number"
+                  min={0}
+                  defaultValue={dossier.nb_stagiaires ?? ""}
+                  onBlur={(e) => {
+                    const v = parseNum(e.target.value);
+                    if (v !== (dossier.nb_stagiaires ?? null)) onUpdate({ nb_stagiaires: v });
+                  }}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Formateurs</label>
+                <Input
+                  type="number"
+                  min={0}
+                  defaultValue={dossier.nb_formateurs ?? ""}
+                  onBlur={(e) => {
+                    const v = parseNum(e.target.value);
+                    if (v !== (dossier.nb_formateurs ?? null)) onUpdate({ nb_formateurs: v });
+                  }}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Formations proposées</label>
+                <Input
+                  type="number"
+                  min={0}
+                  defaultValue={dossier.nb_formations ?? ""}
+                  onBlur={(e) => {
+                    const v = parseNum(e.target.value);
+                    if (v !== (dossier.nb_formations ?? null)) onUpdate({ nb_formations: v });
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <StagiairesList
+            list={Array.isArray(dossier.stagiaires) ? dossier.stagiaires : []}
+            onChange={(next) => onUpdate({ stagiaires: next })}
+          />
+        </div>
+      )}
+
     </Card>
+  );
+}
+
+type Stagiaire = {
+  nom?: string;
+  prenom?: string;
+  email?: string;
+  telephone?: string;
+  formation?: string;
+  date_debut?: string;
+  date_fin?: string;
+};
+
+function StagiairesList({
+  list,
+  onChange,
+}: {
+  list: Stagiaire[];
+  onChange: (next: Stagiaire[]) => void;
+}) {
+  const update = (i: number, patch: Partial<Stagiaire>) => {
+    const next = list.map((s, idx) => (idx === i ? { ...s, ...patch } : s));
+    onChange(next);
+  };
+  const add = () =>
+    onChange([
+      ...list,
+      { nom: "", prenom: "", email: "", telephone: "", formation: "", date_debut: "", date_fin: "" },
+    ]);
+  const remove = (i: number) => onChange(list.filter((_, idx) => idx !== i));
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm font-medium">Informations des stagiaires</div>
+        <Button type="button" size="sm" variant="outline" onClick={add}>
+          + Ajouter un stagiaire
+        </Button>
+      </div>
+
+      {list.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Aucun stagiaire renseigné.</p>
+      ) : (
+        <div className="space-y-3">
+          {list.map((s, i) => (
+            <div key={i} className="rounded-lg border p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">Stagiaire #{i + 1}</div>
+                <Button type="button" size="sm" variant="ghost" onClick={() => remove(i)}>
+                  Supprimer
+                </Button>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs text-muted-foreground">Nom</label>
+                  <Input
+                    defaultValue={s.nom ?? ""}
+                    onBlur={(e) => update(i, { nom: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Prénom</label>
+                  <Input
+                    defaultValue={s.prenom ?? ""}
+                    onBlur={(e) => update(i, { prenom: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Email</label>
+                  <Input
+                    type="email"
+                    defaultValue={s.email ?? ""}
+                    onBlur={(e) => update(i, { email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Téléphone</label>
+                  <Input
+                    defaultValue={s.telephone ?? ""}
+                    onBlur={(e) => update(i, { telephone: e.target.value })}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-xs text-muted-foreground">Formation suivie</label>
+                  <Input
+                    defaultValue={s.formation ?? ""}
+                    onBlur={(e) => update(i, { formation: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Date de début</label>
+                  <Input
+                    type="date"
+                    defaultValue={s.date_debut ?? ""}
+                    onBlur={(e) => update(i, { date_debut: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Date de fin</label>
+                  <Input
+                    type="date"
+                    defaultValue={s.date_fin ?? ""}
+                    onBlur={(e) => update(i, { date_fin: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
