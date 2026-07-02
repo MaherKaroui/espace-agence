@@ -219,7 +219,7 @@ function DossierDetail() {
                 rel="noopener noreferrer"
                 className="text-sm text-primary hover:underline whitespace-nowrap"
               >
-                Ouvrir ↗
+                {isAdmin ? "Ouvrir ↗" : "Voir mon site ↗"}
               </a>
             )}
           </div>
