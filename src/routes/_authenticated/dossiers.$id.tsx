@@ -250,7 +250,7 @@ function DossierDetail() {
       </Card>
 
       {dossier.categorie === "qualiopi" && (
-        <QualiopiBlock dossier={dossier} onUpdate={(patch) => updateDossier.mutate(patch)} />
+        <QualiopiBlock dossier={dossier} onUpdate={(patch: any) => updateDossier.mutate(patch)} />
       )}
 
 
