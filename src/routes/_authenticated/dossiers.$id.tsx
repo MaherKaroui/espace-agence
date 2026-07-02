@@ -14,6 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, STATUTS } from "@/lib/labels";
 import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2, LifeBuoy, MessageSquare } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { RelanceButton } from "@/components/relance-button";
