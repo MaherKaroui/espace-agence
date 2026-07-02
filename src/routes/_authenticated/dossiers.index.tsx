@@ -286,6 +286,7 @@ function ClientRequestWizard({
   const [description, setDescription] = useState("");
 
   // Champs spécifiques Qualiopi
+  const [organismeNom, setOrganismeNom] = useState<string>("");
   const [auditType, setAuditType] = useState<string>("");
   const [scopes, setScopes] = useState<string[]>([]);
   const [nbStagiaires, setNbStagiaires] = useState<string>("");
@@ -307,7 +308,7 @@ function ClientRequestWizard({
   const removeStagiaire = (i: number) =>
     setStagiaires((l) => l.filter((_, idx) => idx !== i));
 
-  const canSubmitQualiopi = isQualiopi && auditType && scopes.length > 0;
+  const canSubmitQualiopi = isQualiopi && organismeNom.trim().length > 0 && auditType && scopes.length > 0;
 
   const submitQualiopi = () => {
     const toInt = (s: string) => {
@@ -322,6 +323,7 @@ function ClientRequestWizard({
       nb_formations: toInt(nbFormations),
       has_stagiaires: hasStagiaires,
       stagiaires: hasStagiaires ? stagiaires : [],
+      organisme_nom: organismeNom.trim(),
     });
   };
 
