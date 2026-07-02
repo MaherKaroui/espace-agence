@@ -163,7 +163,7 @@ function DossierDetail() {
               <StatusBadge statut={dossier.statut} />
             </div>
             <h1 className="font-display text-2xl">{dossier.titre}</h1>
-            {dossier.description && <p className="text-muted-foreground mt-2">{dossier.description}</p>}
+            {dossier.description && <p className="text-muted-foreground mt-2 whitespace-pre-line">{dossier.description}</p>}
           </div>
           <div className="w-full md:w-64">
             {isAdmin ? (
