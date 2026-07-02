@@ -226,7 +226,8 @@ function RequiredRow({
   };
 
   return (
-    <li className="py-4 text-sm">
+    <li ref={rowRef} className="py-4 text-sm">
+
       <div className="flex flex-wrap items-start gap-3">
         {isAdmin ? (
           <AdminIcon className={cn("h-5 w-5 shrink-0 mt-0.5", doc ? toneClass[adminMeta.tone] : "text-muted-foreground")} />
