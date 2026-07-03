@@ -284,6 +284,5 @@ function MesDonneesPage() {
           )}
         </Card>
       </div>
-    </AppShell>
   );
 }
