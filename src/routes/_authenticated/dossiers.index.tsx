@@ -136,25 +136,70 @@ function DossiersPage() {
 
   const filtered = filter === "all" ? dossiers : dossiers.filter((d) => d.categorie === filter);
 
+  const dossierIds = dossiers.map((d) => d.id);
+  const { data: allDocs = [] } = useQuery({
+    queryKey: ["dossiers-mine-docs", user?.id, dossierIds.join(",")],
+    enabled: !isAdmin && dossierIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("id,nom,detected_type,statut,commentaire,dossier_id")
+        .in("dossier_id", dossierIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const { data: allTaches = [] } = useQuery({
+    queryKey: ["dossiers-mine-taches", user?.id, dossierIds.join(",")],
+    enabled: !isAdmin && dossierIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("taches")
+        .select("id,titre,statut,cote_client,verrouillee,dossier_id")
+        .in("dossier_id", dossierIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const dossierWithAction = dossiers.map((d) => {
+    const na = computeNextAction(
+      d.categorie,
+      allDocs.filter((doc: any) => doc.dossier_id === d.id) as any,
+      allTaches.filter((t: any) => t.dossier_id === d.id) as any,
+      d.statut,
+    );
+    return { d, na };
+  });
+
+  const isDone = (s: string) => ["termine", "valide"].includes(s);
+  const aFaire = dossierWithAction.filter(
+    ({ d, na }) => !isDone(d.statut) && na.kind !== "aucune" && na.kind !== "attente_agence",
+  );
+  const enCours = dossierWithAction.filter(
+    ({ d, na }) => !isDone(d.statut) && (na.kind === "aucune" || na.kind === "attente_agence"),
+  );
+  const termines = dossierWithAction.filter(({ d }) => isDone(d.statut));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl">Mes dossiers</h1>
           <p className="text-muted-foreground mt-1">
-            {isAdmin ? "Suivez l'avancement et déposez vos pièces." : "Suivez vos demandes en cours."}
+            {isAdmin ? "Suivez l'avancement et déposez vos pièces." : "Voici vos demandes, regroupées pour vous."}
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> {isAdmin ? "Nouveau dossier" : "Faire une nouvelle demande"}</Button>
+            <Button><Plus className="h-4 w-4 mr-2" /> {isAdmin ? "Nouveau dossier" : "Faire une demande à l'agence"}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{isAdmin ? "Nouveau dossier" : "De quoi avez-vous besoin ?"}</DialogTitle>
               {!isAdmin && (
                 <p className="text-sm text-muted-foreground pt-1">
-                  Choisissez simplement le sujet de votre demande. Si vous ne savez pas, sélectionnez « Je ne sais pas / Autre demande ».
+                  Choisissez ce dont vous avez besoin. Si vous ne savez pas, sélectionnez « Je ne sais pas ».
                 </p>
               )}
             </DialogHeader>
@@ -195,43 +240,139 @@ function DossiersPage() {
         </Dialog>
       </div>
 
-
-      <div className="flex flex-wrap gap-2">
-        <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Tous</FilterChip>
-        {CATEGORIES.map((c) => (
-          <FilterChip key={c.value} active={filter === c.value} onClick={() => setFilter(c.value)}>{c.label}</FilterChip>
-        ))}
-      </div>
-
       {isLoading ? (
         <Card className="p-8 text-center text-muted-foreground">Chargement…</Card>
-      ) : filtered.length === 0 ? (
+      ) : isAdmin ? (
+        <>
+          <div className="flex flex-wrap gap-2">
+            <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Tous</FilterChip>
+            {CATEGORIES.map((c) => (
+              <FilterChip key={c.value} active={filter === c.value} onClick={() => setFilter(c.value)}>{c.label}</FilterChip>
+            ))}
+          </div>
+          {filtered.length === 0 ? (
+            <Card className="p-12 text-center"><p className="text-muted-foreground">Aucun dossier.</p></Card>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {filtered.map((d) => (
+                <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}>
+                  <Card className="p-5 hover:border-primary/40 transition-colors h-full">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
+                      <StatusBadge statut={d.statut} />
+                    </div>
+                    <div className="font-medium">{d.titre}</div>
+                    {d.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
+                    <div className="mt-4">
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>Avancement</span><span>{d.avancement}%</span>
+                      </div>
+                      <Progress value={d.avancement} className="h-1.5" />
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
+      ) : dossiers.length === 0 ? (
         <Card className="p-12 text-center">
-          <p className="text-muted-foreground">Aucun dossier dans cette catégorie.</p>
+          <AlertCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+          <p className="text-muted-foreground">Vous n'avez pas encore de demande.</p>
+          <button onClick={() => setOpen(true)} className="text-sm text-primary hover:underline mt-2">Faire une demande à l'agence</button>
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((d) => (
-            <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}>
-              <Card className="p-5 hover:border-primary/40 transition-colors h-full">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
+        <div className="space-y-8">
+          <ClientSection
+            title="À faire maintenant"
+            subtitle="Ces dossiers attendent une action de votre part."
+            icon={AlertCircle}
+            tone="warning"
+            items={aFaire}
+            empty="Rien à faire pour le moment 🎉"
+          />
+          <ClientSection
+            title="En cours avec l'agence"
+            subtitle="L'agence s'occupe de ces dossiers. Vous serez notifié."
+            icon={Clock}
+            tone="info"
+            items={enCours}
+            empty="Aucun dossier en cours côté agence."
+          />
+          <ClientSection
+            title="Terminés"
+            subtitle="Vos dossiers finalisés."
+            icon={CheckCircle2}
+            tone="success"
+            items={termines}
+            empty="Aucun dossier terminé pour l'instant."
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClientSection({
+  title, subtitle, icon: Icon, tone, items, empty,
+}: {
+  title: string; subtitle: string; icon: any; tone: "warning" | "info" | "success";
+  items: { d: any; na: ReturnType<typeof computeNextAction> }[]; empty: string;
+}) {
+  const toneCls: Record<string, string> = {
+    warning: "text-warning-foreground bg-warning/20",
+    info: "text-info bg-info/10",
+    success: "text-success bg-success/10",
+  };
+  return (
+    <section>
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${toneCls[tone]}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <h2 className="font-display text-xl leading-tight">{title}</h2>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+      {items.length === 0 ? (
+        <Card className="p-6 text-center text-sm text-muted-foreground bg-muted/30">{empty}</Card>
+      ) : (
+        <div className="grid gap-3">
+          {items.map(({ d, na }) => (
+            <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block group">
+              <Card className="p-5 hover:border-primary/40 transition-colors">
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+                  <div className="min-w-0">
+                    <div className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</div>
+                    <div className="font-medium text-lg mt-0.5 truncate">{d.titre}</div>
+                  </div>
                   <StatusBadge statut={d.statut} />
                 </div>
-                <div className="font-medium">{d.titre}</div>
-                {d.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
-                <div className="mt-4">
-                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                    <span>Avancement</span><span>{d.avancement}%</span>
+                {na.kind !== "aucune" && (
+                  <div className="mt-2 rounded-lg border bg-muted/40 p-3">
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Prochaine action</div>
+                    <div className="text-sm font-medium mt-0.5">{na.label}</div>
+                    {na.detail && <div className="text-xs text-muted-foreground mt-1">{na.detail}</div>}
                   </div>
-                  <Progress value={d.avancement} className="h-1.5" />
+                )}
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                      <span>Avancement</span><span>{d.avancement}%</span>
+                    </div>
+                    <Progress value={d.avancement} className="h-1.5" />
+                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm font-medium group-hover:opacity-90 shrink-0">
+                    Ouvrir <ArrowRight className="h-4 w-4" />
+                  </span>
                 </div>
               </Card>
             </Link>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
