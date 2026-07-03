@@ -236,16 +236,16 @@ export function GroupChatWindow({
   }, [messages, search]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] min-h-0">
-      <Card className="flex flex-col flex-1 overflow-hidden min-h-0">
-        <div className="flex items-center justify-between gap-2 p-3 sm:p-4 border-b">
-          <div className="min-w-0 flex-1">
+    <div className="flex flex-col h-[calc(100vh-6rem)] sm:h-[calc(100vh-8rem)]">
+      <Card className="flex flex-col flex-1 overflow-hidden rounded-none sm:rounded-xl border-x-0 sm:border-x min-h-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-3 sm:p-4 border-b sm:flex sm:justify-between">
+          <div className="min-w-0">
             <div className="font-display text-base sm:text-lg truncate">{title}</div>
-            <div className="text-xs text-muted-foreground">Discussion de groupe</div>
+            <div className="text-[11px] sm:text-xs text-muted-foreground truncate">Discussion de groupe</div>
           </div>
           <div className="relative shrink-0">
-            <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground" />
-            <Input className="pl-8 h-9 w-32 sm:w-48" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground pointer-events-none" />
+            <Input className="pl-8 h-9 w-36 sm:w-48" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </div>
 
@@ -260,7 +260,7 @@ export function GroupChatWindow({
         />
 
 
-        <form onSubmit={submit} className="p-3 border-t flex gap-2 items-end bg-background">
+        <form onSubmit={submit} className="p-2 sm:p-3 border-t flex gap-1.5 sm:gap-2 items-end bg-background">
           <input ref={fileInput} type="file" hidden multiple onChange={handleFile} />
           <Button type="button" size="icon" variant="ghost" onClick={() => fileInput.current?.click()} disabled={recording}>
             <Paperclip className="h-5 w-5" />
@@ -320,12 +320,19 @@ function SwipeableList({
   readsByMessage: Map<string, { user_id: string; read_at: string }[]>;
   bottomRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  const { dragX, dragging, max, containerProps } = useSwipeReveal(120);
+  const [swipeMax, setSwipeMax] = useState(120);
+  useEffect(() => {
+    const update = () => setSwipeMax(window.innerWidth < 640 ? 80 : 120);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  const { dragX, dragging, max, containerProps } = useSwipeReveal(swipeMax);
   const shift = { transform: `translateX(-${dragX}px)`, transition: dragging ? "none" : "transform 0.25s ease" };
 
   return (
     <div
-      className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 bg-muted/20 select-none"
+      className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-2 sm:space-y-3 bg-muted/20 select-none"
       {...containerProps}
     >
       {filtered.length === 0 && (
@@ -446,7 +453,7 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
 
   return (
     <div className={`group flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}>
-      <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
+      <div className={`max-w-[82%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 shadow-sm break-words ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
         {!isMine && <div className="text-xs font-medium text-muted-foreground mb-1">{senderName}</div>}
         {m.attachment_path && (
           <div className="mb-2 space-y-1">

@@ -128,15 +128,15 @@ function GroupePage() {
   if (!conv) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 sm:space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <Link to="/messages/groupes" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-          <ArrowLeft className="h-4 w-4" /> Retour aux groupes
+          <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Retour aux groupes</span>
         </Link>
         <div className="flex gap-2">
           <Dialog open={openSub} onOpenChange={setOpenSub}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm"><Plus className="h-4 w-4 mr-1" /> Sous-groupe</Button>
+              <Button variant="outline" size="sm"><Plus className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Sous-groupe</span></Button>
             </DialogTrigger>
             <CreateGroupDialog
               parentId={id}
@@ -230,8 +230,10 @@ function GroupePage() {
             <div className="lg:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Users className="h-4 w-4 mr-1" /> Membres ({members.length})
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Users className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Membres</span>
+                    <span className="sm:hidden">({members.length})</span>
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[85vw] sm:max-w-sm overflow-y-auto">
