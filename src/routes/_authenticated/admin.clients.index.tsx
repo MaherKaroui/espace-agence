@@ -1,12 +1,19 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { inviteClient } from "@/lib/admin-clients.functions";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, User, Building2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { Search, User, Building2, UserPlus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+
 
 export const Route = createFileRoute("/_authenticated/admin/clients/")({
   head: () => ({ meta: [{ title: "Clients — Admin" }] }),
