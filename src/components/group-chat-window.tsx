@@ -320,12 +320,19 @@ function SwipeableList({
   readsByMessage: Map<string, { user_id: string; read_at: string }[]>;
   bottomRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  const { dragX, dragging, max, containerProps } = useSwipeReveal(120);
+  const [swipeMax, setSwipeMax] = useState(120);
+  useEffect(() => {
+    const update = () => setSwipeMax(window.innerWidth < 640 ? 80 : 120);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  const { dragX, dragging, max, containerProps } = useSwipeReveal(swipeMax);
   const shift = { transform: `translateX(-${dragX}px)`, transition: dragging ? "none" : "transform 0.25s ease" };
 
   return (
     <div
-      className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 bg-muted/20 select-none"
+      className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-2 sm:space-y-3 bg-muted/20 select-none"
       {...containerProps}
     >
       {filtered.length === 0 && (
