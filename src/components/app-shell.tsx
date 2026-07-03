@@ -24,6 +24,9 @@ function matchesSection(row: NavUnreadRow, to: string): boolean {
   const link = row.link ?? "";
   if (to === "/messages/groupes") return link.startsWith("/messages/groupes");
   if (to === "/messages") return link.startsWith("/messages") && !link.startsWith("/messages/groupes");
+  if (to === "/admin/messages") return row.type === "message" || link.startsWith("/admin/messages") || (link.startsWith("/messages") && !link.startsWith("/messages/groupes"));
+  if (to === "/admin/dossiers") return link.startsWith("/dossiers") || link.startsWith("/admin/dossiers") || row.type.startsWith("document") || row.type === "statut_change" || row.type.startsWith("tache");
+  if (to === "/admin/rendez-vous") return link.startsWith("/rendez-vous") || link.startsWith("/admin/rendez-vous") || row.type.startsWith("rdv");
   if (to === "/dossiers") return link.startsWith("/dossiers") || row.type.startsWith("document") || row.type === "statut_change" || row.type.startsWith("tache");
   if (to === "/rendez-vous") return link.startsWith("/rendez-vous") || row.type.startsWith("rdv");
   if (to === "/notifications") return true;
