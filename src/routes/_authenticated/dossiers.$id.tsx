@@ -708,7 +708,7 @@ function QualiopiBlock({
       {dossier.has_stagiaires && (
         <div className="space-y-4">
           <div>
-            <div className="text-sm font-medium mb-2">Volumétrie</div>
+            <div className="text-sm font-medium mb-2">Quelques chiffres sur votre activité</div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
                 <label className="text-xs text-muted-foreground">Stagiaires / an</label>
