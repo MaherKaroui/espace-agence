@@ -268,37 +268,48 @@ function DossiersPage() {
           <button onClick={() => setOpen(true)} className="text-sm text-primary hover:underline mt-2">Faire une demande à l'agence</button>
         </Card>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory items-start">
-          <ClientSection
-            title="À faire maintenant"
-            subtitle="Ces dossiers attendent une action de votre part."
-            icon={AlertCircle}
-            tone="warning"
-            items={aFaire}
-            empty="Rien à faire pour le moment 🎉"
-            className="w-full md:w-1/3 md:min-w-[320px] snap-start"
-          />
-          <ClientSection
-            title="En cours avec l'agence"
-            subtitle="L'agence s'occupe de ces dossiers. Vous serez notifié."
-            icon={Clock}
-            tone="info"
-            items={enCours}
-            empty="Aucun dossier en cours côté agence."
-            className="w-full md:w-1/3 md:min-w-[320px] snap-start"
-          />
-          <ClientSection
-            title="Terminés"
-            subtitle="Vos dossiers finalisés."
-            icon={CheckCircle2}
-            tone="success"
-            items={termines}
-            empty="Aucun dossier terminé pour l'instant."
-            className="w-full md:w-1/3 md:min-w-[320px] snap-start"
-          />
-        </div>
+        <DossiersBoard aFaire={aFaire} enCours={enCours} termines={termines} />
       )}
     </div>
+  );
+}
+
+function DossiersBoard({ aFaire, enCours, termines }: {
+  aFaire: { d: any; na: ReturnType<typeof computeNextAction> }[];
+  enCours: { d: any; na: ReturnType<typeof computeNextAction> }[];
+  termines: { d: any; na: ReturnType<typeof computeNextAction> }[];
+}) {
+  const cols = [
+    { key: "a-faire", title: "À faire", subtitle: "Ces dossiers attendent une action de votre part.", icon: AlertCircle, tone: "warning" as const, items: aFaire, empty: "Rien à faire pour le moment 🎉" },
+    { key: "en-cours", title: "En cours", subtitle: "L'agence s'occupe de ces dossiers. Vous serez notifié.", icon: Clock, tone: "info" as const, items: enCours, empty: "Aucun dossier en cours côté agence." },
+    { key: "termines", title: "Terminés", subtitle: "Vos dossiers finalisés.", icon: CheckCircle2, tone: "success" as const, items: termines, empty: "Aucun dossier terminé pour l'instant." },
+  ];
+  const defaultTab = aFaire.length > 0 ? "a-faire" : enCours.length > 0 ? "en-cours" : "termines";
+  return (
+    <>
+      <div className="md:hidden">
+        <Tabs defaultValue={defaultTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
+            {cols.map((c) => (
+              <TabsTrigger key={c.key} value={c.key} className="flex-col gap-0.5 py-2 text-xs">
+                <span className="truncate max-w-full">{c.title}</span>
+                <span className="text-[10px] opacity-70">{c.items.length}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {cols.map((c) => (
+            <TabsContent key={c.key} value={c.key} className="mt-3">
+              <ClientSection title={c.title} subtitle={c.subtitle} icon={c.icon} tone={c.tone} items={c.items} empty={c.empty} className="w-full" />
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+      <div className="hidden md:flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory items-start">
+        {cols.map((c) => (
+          <ClientSection key={c.key} title={c.title} subtitle={c.subtitle} icon={c.icon} tone={c.tone} items={c.items} empty={c.empty} className="w-1/3 min-w-[320px] snap-start" />
+        ))}
+      </div>
+    </>
   );
 }
 
