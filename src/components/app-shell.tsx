@@ -94,9 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/rendez-vous", label: "Prendre rendez-vous", icon: CalendarDays },
     { to: "/messages", label: "Messages", icon: MessageSquare },
     { to: "/messages/groupes", label: "Groupes", icon: Users2 },
-    { to: "/notifications", label: "Notifications", icon: Bell },
     { to: "/mes-donnees", label: "Mes données", icon: UserCog },
-    { to: "/preferences", label: "Préférences", icon: Settings },
   ];
 
 
