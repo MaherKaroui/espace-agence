@@ -443,7 +443,7 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
           </AlertDialogContent>
         </AlertDialog>
       )}
-      <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
+      <div className={`max-w-[82%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 shadow-sm break-words ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
         {m.attachment_path && (
           <div className="mb-2 space-y-1">
             {isImg && url ? (
