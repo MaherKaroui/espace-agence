@@ -73,7 +73,7 @@ function MesDonneesPage() {
         nom: String(fd.get("nom") || ""),
         prenom: String(fd.get("prenom") || ""),
         telephone: String(fd.get("telephone") || "") || null,
-        societe: String(fd.get("societe") || "") || null,
+        entreprise: String(fd.get("societe") || "") || null,
       })
       .eq("id", user.id);
     setSaving(false);
