@@ -88,6 +88,36 @@ export type Database = {
           },
         ]
       }
+      consents: {
+        Row: {
+          accepted_at: string
+          document_type: string
+          id: string
+          ip: string | null
+          user_agent: string | null
+          user_id: string
+          version: string
+        }
+        Insert: {
+          accepted_at?: string
+          document_type: string
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id: string
+          version: string
+        }
+        Update: {
+          accepted_at?: string
+          document_type?: string
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
       conversation_members: {
         Row: {
           added_at: string
@@ -151,6 +181,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      deletion_requests: {
+        Row: {
+          admin_notes: string | null
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          reason: string | null
+          requested_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          requested_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          reason?: string | null
+          requested_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       documents: {
         Row: {
@@ -1074,6 +1137,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      anonymize_user_account: { Args: { _user_id: string }; Returns: undefined }
       close_stale_sessions: { Args: never; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
