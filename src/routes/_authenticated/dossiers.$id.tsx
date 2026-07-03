@@ -362,6 +362,12 @@ function DossierDetail() {
             </Button>
           </div>
         </div>
+        <p className="text-xs text-muted-foreground -mt-2 mb-2">
+          Vos documents sont stockés de manière sécurisée et traités conformément à notre{" "}
+          <a href="/politique-confidentialite" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+            Politique de confidentialité
+          </a>.
+        </p>
 
         {documents.length === 0 ? (
           <div className="text-center py-12">
