@@ -128,15 +128,20 @@ function GroupePage() {
   if (!conv) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
   return (
-    <div className="space-y-2 sm:space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <Link to="/messages/groupes" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+    <div className="flex flex-col h-[calc(100vh-4rem)] -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8">
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 border-b bg-background shrink-0">
+        <Link to="/messages/groupes" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
           <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Retour aux groupes</span>
         </Link>
-        <div className="flex gap-2">
+        <div className="min-w-0 text-center">
+          <div className="font-display text-base truncate">{conv.titre}</div>
+        </div>
+        <div className="flex gap-2 shrink-0">
           <Dialog open={openSub} onOpenChange={setOpenSub}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm"><Plus className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Sous-groupe</span></Button>
+              <Button variant="outline" size="icon" className="sm:h-9 sm:px-3 sm:w-auto">
+                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Sous-groupe</span>
+              </Button>
             </DialogTrigger>
             <CreateGroupDialog
               parentId={id}
