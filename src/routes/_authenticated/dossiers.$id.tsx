@@ -401,6 +401,7 @@ function DossierDetail() {
                       {d.from_agence ? "Envoyé par l'agence" : "Déposé par le client"} · {formatDistanceToNow(new Date(d.created_at), { addSuffix: true, locale: fr })}
                     </div>
                   </div>
+                  <Button size="sm" variant="ghost" onClick={() => openPreview(d)} aria-label="Aperçu"><Eye className="h-4 w-4" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => downloadDoc(d)} aria-label="Télécharger"><Download className="h-4 w-4" /></Button>
                   {(isAdmin || d.uploader_id === user?.id) && (
                     isAdmin ? (
