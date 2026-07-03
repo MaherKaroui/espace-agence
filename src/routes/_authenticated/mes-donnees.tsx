@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LEGAL_LABELS } from "@/lib/legal-versions";
-import { ShieldAlert, User as UserIcon, FileText, Loader2 } from "lucide-react";
+import { ShieldAlert, User as UserIcon, FileText, Loader2, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/mes-donnees")({
   head: () => ({ meta: [{ title: "Mes données — Espace Client" }] }),
