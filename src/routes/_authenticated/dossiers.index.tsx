@@ -87,7 +87,7 @@ function DossiersPage() {
       return data;
     },
     onSuccess: (data) => {
-      toast.success("Votre demande a été envoyée à l'agence");
+      toast.success("Demande créée. Déposez vos documents puis l'agence prendra le relais.");
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["dossiers-mine"] });
       if (data?.id) navigate({ to: "/dossiers/$id", params: { id: data.id } });
