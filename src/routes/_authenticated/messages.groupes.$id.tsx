@@ -231,29 +231,15 @@ function GroupePage() {
         );
 
         return (
-          <>
-            <div className="lg:hidden">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                    <Users className="h-4 w-4 sm:mr-1" />
-                    <span className="hidden sm:inline">Membres</span>
-                    <span className="sm:hidden">({members.length})</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[85vw] sm:max-w-sm overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Groupe</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-4">{membersPanel}</div>
-                </SheetContent>
-              </Sheet>
+          <div className="flex-1 min-h-0 flex flex-col">
+            <div className="hidden lg:grid grid-cols-[1fr_18rem] gap-4 flex-1 min-h-0">
+              <GroupChatWindow conversationId={id} title={conv.titre} memberNames={memberNames} className="h-full" />
+              <Card className="p-4 h-fit overflow-y-auto">{membersPanel}</Card>
             </div>
-            <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
-              <GroupChatWindow conversationId={id} title={conv.titre} memberNames={memberNames} />
-              <Card className="hidden lg:block p-4 h-fit">{membersPanel}</Card>
+            <div className="lg:hidden flex-1 min-h-0">
+              <GroupChatWindow conversationId={id} title={conv.titre} memberNames={memberNames} className="h-full" />
             </div>
-          </>
+          </div>
         );
       })()}
     </div>
