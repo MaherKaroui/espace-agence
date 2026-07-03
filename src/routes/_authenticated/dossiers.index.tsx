@@ -146,11 +146,16 @@ function DossiersPage() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> {isAdmin ? "Nouveau dossier" : "Nouvelle demande"}</Button>
+            <Button><Plus className="h-4 w-4 mr-2" /> {isAdmin ? "Nouveau dossier" : "Faire une nouvelle demande"}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{isAdmin ? "Nouveau dossier" : "Créer une nouvelle demande"}</DialogTitle>
+              <DialogTitle>{isAdmin ? "Nouveau dossier" : "De quoi avez-vous besoin ?"}</DialogTitle>
+              {!isAdmin && (
+                <p className="text-sm text-muted-foreground pt-1">
+                  Choisissez simplement le sujet de votre demande. Si vous ne savez pas, sélectionnez « Je ne sais pas / Autre demande ».
+                </p>
+              )}
             </DialogHeader>
             {isAdmin ? (
               <form onSubmit={submitAdmin} className="space-y-4">
