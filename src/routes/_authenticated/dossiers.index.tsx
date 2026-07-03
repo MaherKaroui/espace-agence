@@ -339,13 +339,17 @@ function ClientSection({
         <Card className="p-6 text-center text-sm text-muted-foreground bg-muted/30">{empty}</Card>
       ) : (
         <div className="grid gap-3">
-          {items.map(({ d, na }) => (
+          {items.map(({ d, na }) => {
+            const isAutre = d.categorie === "autres";
+            const catLabel = isAutre ? "Autre demande" : categorieLabel(d.categorie);
+            const titre = isAutre ? "L'agence va vous aider à préciser votre besoin" : d.titre;
+            return (
             <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block group">
               <Card className="p-5 hover:border-primary/40 transition-colors">
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
                   <div className="min-w-0">
-                    <div className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</div>
-                    <div className="font-medium text-lg mt-0.5 truncate">{d.titre}</div>
+                    <div className="text-xs uppercase tracking-wider text-gold font-medium">{catLabel}</div>
+                    <div className={`mt-0.5 truncate ${isAutre ? "text-sm text-muted-foreground" : "font-medium text-lg"}`}>{titre}</div>
                   </div>
                   <StatusBadge statut={d.statut} />
                 </div>
@@ -356,21 +360,23 @@ function ClientSection({
                     {na.detail && <div className="text-xs text-muted-foreground mt-1">{na.detail}</div>}
                   </div>
                 )}
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>Avancement</span><span>{d.avancement}%</span>
-                    </div>
-                    <Progress value={d.avancement} className="h-1.5" />
+                <div className="mt-4">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                    <span>Avancement</span><span>{d.avancement}%</span>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm font-medium group-hover:opacity-90 shrink-0">
-                    Ouvrir <ArrowRight className="h-4 w-4" />
+                  <Progress value={d.avancement} className="h-1.5" />
+                </div>
+                <div className="mt-4">
+                  <span className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 py-3 text-sm font-semibold group-hover:opacity-90">
+                    Ouvrir ce dossier <ArrowRight className="h-4 w-4" />
                   </span>
                 </div>
               </Card>
             </Link>
-          ))}
+            );
+          })}
         </div>
+
       )}
     </section>
   );
