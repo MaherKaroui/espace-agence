@@ -57,6 +57,22 @@ export function TasksPanel({ dossierId }: { dossierId: string }) {
 
   const done = taches.filter((t) => t.statut === "termine").length;
 
+  // Côté client : afficher d'abord les étapes terminées, puis en cours, puis à faire.
+  const statutRank = (s: string): number => {
+    if (s === "termine") return 0;
+    if (s === "en_cours" || s === "en_attente_client") return 1;
+    if (s === "a_faire") return 2;
+    if (s === "bloque") return 3;
+    return 4;
+  };
+  const tachesAffichees = isStaff
+    ? taches
+    : [...taches].sort((a, b) => {
+        const r = statutRank(a.statut) - statutRank(b.statut);
+        if (r !== 0) return r;
+        return (a.ordre ?? 0) - (b.ordre ?? 0);
+      });
+
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -71,7 +87,7 @@ export function TasksPanel({ dossierId }: { dossierId: string }) {
         </p>
       )}
       <div className="space-y-2">
-        {taches.map((t, idx) => {
+        {tachesAffichees.map((t, idx) => {
           const meta = statutMeta(t.statut);
           const Icon = meta.icon;
           const locked = t.verrouillee;

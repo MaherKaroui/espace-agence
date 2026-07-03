@@ -407,22 +407,23 @@ function DossierDetail() {
                       {d.from_agence ? "Envoyé par l'agence" : "Déposé par le client"} · {formatDistanceToNow(new Date(d.created_at), { addSuffix: true, locale: fr })}
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => openPreview(d)} aria-label="Aperçu"><Eye className="h-4 w-4" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => downloadDoc(d)} aria-label="Télécharger"><Download className="h-4 w-4" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => openPreview(d)} aria-label="Voir"><Eye className="h-4 w-4 mr-1.5" /> Voir</Button>
+                  <Button size="sm" variant="ghost" onClick={() => downloadDoc(d)} aria-label="Télécharger"><Download className="h-4 w-4 mr-1.5" /> Télécharger</Button>
                   {(isAdmin || d.uploader_id === user?.id) && (
                     isAdmin ? (
                       <Button
                         size="sm"
                         variant="ghost"
-                        aria-label="Supprimer"
+                        aria-label="Retirer"
                         disabled={del.isPending && (del.variables as any)?.id === d.id}
                         onClick={() => del.mutate(d)}
                       >
                         {del.isPending && (del.variables as any)?.id === d.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                          <Loader2 className="h-4 w-4 mr-1.5 animate-spin text-destructive" />
                         ) : (
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-4 w-4 mr-1.5 text-destructive" />
                         )}
+                        <span className="text-destructive">Retirer</span>
                       </Button>
                     ) : (
                       <AlertDialog>
@@ -434,10 +435,11 @@ function DossierDetail() {
                             disabled={del.isPending && (del.variables as any)?.id === d.id}
                           >
                             {del.isPending && (del.variables as any)?.id === d.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                              <Loader2 className="h-4 w-4 mr-1.5 animate-spin text-destructive" />
                             ) : (
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Trash2 className="h-4 w-4 mr-1.5 text-destructive" />
                             )}
+                            <span className="text-destructive">Retirer</span>
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -622,8 +624,8 @@ function QualiopiBlock({
   return (
     <Card className="p-6 space-y-5">
       <div>
-        <h2 className="font-display text-xl">Détails Qualiopi</h2>
-        <p className="text-sm text-muted-foreground mt-1">Type d'audit, périmètre et informations sur vos stagiaires.</p>
+        <h2 className="font-display text-xl">Informations pour votre dossier Qualiopi</h2>
+        <p className="text-sm text-muted-foreground mt-1">Type d'audit, vos activités concernées et informations sur vos stagiaires.</p>
       </div>
 
       <div>
@@ -657,7 +659,7 @@ function QualiopiBlock({
       </div>
 
       <div>
-        <div className="text-sm font-medium mb-2">Périmètre concerné (cochez tout ce qui s'applique)</div>
+        <div className="text-sm font-medium mb-2">Vos activités concernées (cochez tout ce qui s'applique)</div>
         <div className="grid gap-2 sm:grid-cols-2">
           {QUALIOPI_SCOPES.map((s) => {
             const active = scopes.includes(s.value);
@@ -708,7 +710,7 @@ function QualiopiBlock({
       {dossier.has_stagiaires && (
         <div className="space-y-4">
           <div>
-            <div className="text-sm font-medium mb-2">Volumétrie</div>
+            <div className="text-sm font-medium mb-2">Quelques chiffres sur votre activité</div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
                 <label className="text-xs text-muted-foreground">Stagiaires / an</label>

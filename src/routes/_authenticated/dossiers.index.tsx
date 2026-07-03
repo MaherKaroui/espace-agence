@@ -578,7 +578,7 @@ function ClientRequestWizard({
           </div>
 
           <div className="pt-2">
-            <div className="font-medium">Périmètre concerné</div>
+            <div className="font-medium">Vos activités concernées</div>
             <p className="text-sm text-muted-foreground">Cochez toutes les catégories concernées.</p>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
