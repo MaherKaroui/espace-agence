@@ -137,6 +137,21 @@ function GroupePage() {
           <div className="font-display text-base truncate">{conv.titre}</div>
         </div>
         <div className="flex gap-2 shrink-0">
+          <div className="lg:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Membres">
+                  <Users className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[85vw] sm:max-w-sm overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Groupe</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4">{membersPanel}</div>
+              </SheetContent>
+            </Sheet>
+          </div>
           <Dialog open={openSub} onOpenChange={setOpenSub}>
             <DialogTrigger asChild>
               <Button variant="outline" size="icon" className="sm:h-9 sm:px-3 sm:w-auto">
