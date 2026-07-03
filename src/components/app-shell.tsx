@@ -37,14 +37,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const nav = [
-    { to: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
+    { to: "/dashboard", label: "Accueil", icon: LayoutDashboard },
     { to: "/dossiers", label: "Mes dossiers", icon: FolderOpen },
     { to: "/rendez-vous", label: "Prendre rendez-vous", icon: CalendarDays },
-    { to: "/messages", label: "Messagerie", icon: MessageSquare },
+    { to: "/messages", label: "Messages", icon: MessageSquare },
     { to: "/messages/groupes", label: "Groupes", icon: Users2 },
     { to: "/notifications", label: "Notifications", icon: Bell },
     { to: "/preferences", label: "Préférences", icon: Settings },
   ];
+
 
   // Staff (Manager/Consultant/Direction/Admin) — RLS filtre par pôle
   const staffNav = [
