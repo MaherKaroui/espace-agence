@@ -87,7 +87,7 @@ function DossiersPage() {
       return data;
     },
     onSuccess: (data) => {
-      toast.success("Votre demande a été envoyée à l'agence");
+      toast.success("Demande créée. Déposez vos documents puis l'agence prendra le relais.");
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["dossiers-mine"] });
       if (data?.id) navigate({ to: "/dossiers/$id", params: { id: data.id } });
@@ -707,7 +707,7 @@ function ClientRequestWizard({
               disabled={pending || !canSubmitQualiopi}
               onClick={submitQualiopi}
             >
-              {pending ? "Envoi…" : "Envoyer ma demande à l'agence"}
+              {pending ? "Création…" : "Créer la demande"}
             </Button>
           </div>
         </div>
@@ -734,7 +734,7 @@ function ClientRequestWizard({
               disabled={pending}
               onClick={() => onSubmit(categorie, description.trim())}
             >
-              {pending ? "Envoi…" : "Envoyer ma demande à l'agence"}
+              {pending ? "Création…" : "Créer la demande"}
             </Button>
           </div>
         </div>
