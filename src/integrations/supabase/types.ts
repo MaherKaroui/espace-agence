@@ -756,6 +756,32 @@ export type Database = {
         }
         Relationships: []
       }
+      rdv_reminders_sent: {
+        Row: {
+          kind: string
+          rdv_id: string
+          sent_at: string
+        }
+        Insert: {
+          kind: string
+          rdv_id: string
+          sent_at?: string
+        }
+        Update: {
+          kind?: string
+          rdv_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rdv_reminders_sent_rdv_id_fkey"
+            columns: ["rdv_id"]
+            isOneToOne: false
+            referencedRelation: "rendez_vous"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rendez_vous: {
         Row: {
           client_id: string
@@ -1118,6 +1144,7 @@ export type Database = {
           sanitized: string
         }[]
       }
+      send_rdv_reminders: { Args: never; Returns: undefined }
       session_end: { Args: { _session_id: string }; Returns: undefined }
       session_heartbeat: { Args: { _session_id: string }; Returns: undefined }
       session_start:
