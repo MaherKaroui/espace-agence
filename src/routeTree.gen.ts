@@ -27,6 +27,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
 import { Route as AuthenticatedAdminSessionsRouteImport } from './routes/_authenticated/admin.sessions'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
+import { Route as AuthenticatedAdminRgpdRouteImport } from './routes/_authenticated/admin.rgpd'
 import { Route as AuthenticatedAdminRendezVousRouteImport } from './routes/_authenticated/admin.rendez-vous'
 import { Route as AuthenticatedAdminPolesRouteImport } from './routes/_authenticated/admin.poles'
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
@@ -136,6 +137,11 @@ const AuthenticatedAdminSecurityRoute =
     path: '/admin/security',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminRgpdRoute = AuthenticatedAdminRgpdRouteImport.update({
+  id: '/admin/rgpd',
+  path: '/admin/rgpd',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRendezVousRoute =
   AuthenticatedAdminRendezVousRouteImport.update({
     id: '/admin/rendez-vous',
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
+  '/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
+  '/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
@@ -288,6 +296,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/_authenticated/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/_authenticated/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
+  '/_authenticated/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
@@ -321,6 +330,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers'
     | '/admin/poles'
     | '/admin/rendez-vous'
+    | '/admin/rgpd'
     | '/admin/security'
     | '/admin/sessions'
     | '/dossiers/$id'
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers'
     | '/admin/poles'
     | '/admin/rendez-vous'
+    | '/admin/rgpd'
     | '/admin/security'
     | '/admin/sessions'
     | '/dossiers/$id'
@@ -384,6 +395,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/dossiers'
     | '/_authenticated/admin/poles'
     | '/_authenticated/admin/rendez-vous'
+    | '/_authenticated/admin/rgpd'
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/sessions'
     | '/_authenticated/dossiers/$id'
@@ -538,6 +550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSecurityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/rgpd': {
+      id: '/_authenticated/admin/rgpd'
+      path: '/admin/rgpd'
+      fullPath: '/admin/rgpd'
+      preLoaderRoute: typeof AuthenticatedAdminRgpdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/rendez-vous': {
       id: '/_authenticated/admin/rendez-vous'
       path: '/admin/rendez-vous'
@@ -636,6 +655,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDossiersRoute: typeof AuthenticatedAdminDossiersRoute
   AuthenticatedAdminPolesRoute: typeof AuthenticatedAdminPolesRoute
   AuthenticatedAdminRendezVousRoute: typeof AuthenticatedAdminRendezVousRoute
+  AuthenticatedAdminRgpdRoute: typeof AuthenticatedAdminRgpdRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminSessionsRoute: typeof AuthenticatedAdminSessionsRoute
   AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRoute
@@ -661,6 +681,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminDossiersRoute: AuthenticatedAdminDossiersRoute,
   AuthenticatedAdminPolesRoute: AuthenticatedAdminPolesRoute,
   AuthenticatedAdminRendezVousRoute: AuthenticatedAdminRendezVousRoute,
+  AuthenticatedAdminRgpdRoute: AuthenticatedAdminRgpdRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminSessionsRoute: AuthenticatedAdminSessionsRoute,
   AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRoute,
