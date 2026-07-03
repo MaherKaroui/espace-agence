@@ -181,17 +181,23 @@ function DossiersPage() {
     ["en_cours_traitement", "en_cours_etude"].includes(s);
   const isAFaireStatut = (s: string) =>
     ["en_attente", "documents_manquants", "a_completer"].includes(s);
-  const needsClientAction = (kind: string) =>
-    kind !== "aucune" && kind !== "attente_agence";
+  // Côté client : tant qu'il reste une action (documents à envoyer/corriger, tâches),
+  // le dossier reste en « À faire ». Il bascule automatiquement en « En cours » dès
+  // que tous les documents requis sont acceptés par l'agence.
+  const allRequiredAccepted = (d: any, na: ReturnType<typeof computeNextAction>) => {
+    const requis = requiredDocsFor(d.categorie);
+    if (requis.length === 0) return false; // pas de requis => reste en À faire jusqu'à action agence
+    return na.kind === "attente_agence" || na.kind === "aucune";
+  };
   const aFaire = dossierWithAction.filter(({ d, na }) =>
     isAdmin
       ? !isDone(d.statut) && !isEnCoursStatut(d.statut)
-      : !isDone(d.statut) && !isEnCoursStatut(d.statut) && isAFaireStatut(d.statut) && needsClientAction(na.kind),
+      : !isDone(d.statut) && !isEnCoursStatut(d.statut) && isAFaireStatut(d.statut) && !allRequiredAccepted(d, na),
   );
   const enCours = dossierWithAction.filter(({ d, na }) =>
     isAdmin
       ? !isDone(d.statut) && isEnCoursStatut(d.statut)
-      : !isDone(d.statut) && (isEnCoursStatut(d.statut) || !needsClientAction(na.kind)),
+      : !isDone(d.statut) && (isEnCoursStatut(d.statut) || (isAFaireStatut(d.statut) && allRequiredAccepted(d, na))),
   );
   const termines = dossierWithAction.filter(({ d }) => isDone(d.statut));
 
