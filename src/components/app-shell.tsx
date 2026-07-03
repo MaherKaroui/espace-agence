@@ -19,7 +19,15 @@ import { useQueryClient } from "@tanstack/react-query";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { isStaff, isDirectionOrAdmin, isAdmin, isDirection, isManager, isConsultant } = useRole();
-  const roleLabel = isAdmin ? "Admin" : isDirection ? "Direction" : isManager ? "Manager" : isConsultant ? "Consultant" : "Client";
+  const roleLabel = isAdmin
+    ? roleLabelFr("admin")
+    : isDirection
+      ? roleLabelFr("direction")
+      : isManager
+        ? roleLabelFr("manager")
+        : isConsultant
+          ? roleLabelFr("consultant")
+          : roleLabelFr("client");
   const { data: profile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
