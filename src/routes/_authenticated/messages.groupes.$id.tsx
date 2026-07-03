@@ -230,8 +230,10 @@ function GroupePage() {
             <div className="lg:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Users className="h-4 w-4 mr-1" /> Membres ({members.length})
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Users className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Membres</span>
+                    <span className="sm:hidden">({members.length})</span>
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[85vw] sm:max-w-sm overflow-y-auto">
