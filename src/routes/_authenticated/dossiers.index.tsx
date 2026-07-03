@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, categorieLabel } from "@/lib/labels";
 import { computeNextAction } from "@/lib/next-action";
+import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dossiers/")({
