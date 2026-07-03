@@ -24,6 +24,7 @@ import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminSessionsRouteImport } from './routes/_authenticated/admin.sessions'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
 import { Route as AuthenticatedAdminRendezVousRouteImport } from './routes/_authenticated/admin.rendez-vous'
+import { Route as AuthenticatedAdminPolesRouteImport } from './routes/_authenticated/admin.poles'
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
 import { Route as AuthenticatedAdminDirectionRouteImport } from './routes/_authenticated/admin.direction'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
@@ -116,6 +117,11 @@ const AuthenticatedAdminRendezVousRoute =
     path: '/admin/rendez-vous',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminPolesRoute = AuthenticatedAdminPolesRouteImport.update({
+  id: '/admin/poles',
+  path: '/admin/poles',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminDossiersRoute =
   AuthenticatedAdminDossiersRouteImport.update({
     id: '/admin/dossiers',
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
+  '/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
+  '/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/direction': typeof AuthenticatedAdminDirectionRoute
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
+  '/_authenticated/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/_authenticated/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/sessions': typeof AuthenticatedAdminSessionsRoute
@@ -269,6 +278,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/direction'
     | '/admin/dossiers'
+    | '/admin/poles'
     | '/admin/rendez-vous'
     | '/admin/security'
     | '/admin/sessions'
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/direction'
     | '/admin/dossiers'
+    | '/admin/poles'
     | '/admin/rendez-vous'
     | '/admin/security'
     | '/admin/sessions'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/direction'
     | '/_authenticated/admin/dossiers'
+    | '/_authenticated/admin/poles'
     | '/_authenticated/admin/rendez-vous'
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/sessions'
@@ -453,6 +465,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRendezVousRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/poles': {
+      id: '/_authenticated/admin/poles'
+      path: '/admin/poles'
+      fullPath: '/admin/poles'
+      preLoaderRoute: typeof AuthenticatedAdminPolesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/dossiers': {
       id: '/_authenticated/admin/dossiers'
       path: '/admin/dossiers'
@@ -534,6 +553,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminDirectionRoute: typeof AuthenticatedAdminDirectionRoute
   AuthenticatedAdminDossiersRoute: typeof AuthenticatedAdminDossiersRoute
+  AuthenticatedAdminPolesRoute: typeof AuthenticatedAdminPolesRoute
   AuthenticatedAdminRendezVousRoute: typeof AuthenticatedAdminRendezVousRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminSessionsRoute: typeof AuthenticatedAdminSessionsRoute
@@ -557,6 +577,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminDirectionRoute: AuthenticatedAdminDirectionRoute,
   AuthenticatedAdminDossiersRoute: AuthenticatedAdminDossiersRoute,
+  AuthenticatedAdminPolesRoute: AuthenticatedAdminPolesRoute,
   AuthenticatedAdminRendezVousRoute: AuthenticatedAdminRendezVousRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminSessionsRoute: AuthenticatedAdminSessionsRoute,
