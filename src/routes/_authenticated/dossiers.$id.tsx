@@ -13,12 +13,13 @@ import { StatusBadge } from "@/components/status-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, STATUTS } from "@/lib/labels";
-import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2, LifeBuoy, MessageSquare } from "lucide-react";
+import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2, LifeBuoy, MessageSquare, Eye } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
@@ -151,6 +152,14 @@ function DossierDetail() {
     await supabase.rpc("log_document_download", { _document_id: doc.id });
     window.open(data.signedUrl, "_blank");
   };
+
+  const [previewDoc, setPreviewDoc] = useState<{ doc: any; url: string } | null>(null);
+  const openPreview = async (doc: any) => {
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(doc.storage_path, 600);
+    if (error) { toast.error(error.message); return; }
+    setPreviewDoc({ doc, url: data.signedUrl });
+  };
+
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Chargement…</div>;
   if (!dossier) return <div className="p-8">Dossier introuvable.</div>;
@@ -392,6 +401,7 @@ function DossierDetail() {
                       {d.from_agence ? "Envoyé par l'agence" : "Déposé par le client"} · {formatDistanceToNow(new Date(d.created_at), { addSuffix: true, locale: fr })}
                     </div>
                   </div>
+                  <Button size="sm" variant="ghost" onClick={() => openPreview(d)} aria-label="Aperçu"><Eye className="h-4 w-4" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => downloadDoc(d)} aria-label="Télécharger"><Download className="h-4 w-4" /></Button>
                   {(isAdmin || d.uploader_id === user?.id) && (
                     isAdmin ? (
@@ -489,6 +499,47 @@ function DossierDetail() {
         documents={documents as any}
         taches={taches as any}
       />
+
+      <Dialog open={!!previewDoc} onOpenChange={(o) => !o && setPreviewDoc(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle className="truncate pr-8">{previewDoc?.doc?.nom ?? "Aperçu"}</DialogTitle>
+          </DialogHeader>
+          <div className="bg-muted/30 h-[75vh] flex items-center justify-center overflow-auto">
+            {previewDoc && (() => {
+              const mime: string = previewDoc.doc.mime_type ?? "";
+              if (mime.startsWith("image/")) {
+                return <img src={previewDoc.url} alt={previewDoc.doc.nom} className="max-h-full max-w-full object-contain" />;
+              }
+              if (isVideoMime(mime)) {
+                return <video src={previewDoc.url} controls className="max-h-full max-w-full" />;
+              }
+              if (mime.startsWith("audio/")) {
+                return <audio src={previewDoc.url} controls />;
+              }
+              if (mime === "application/pdf" || previewDoc.doc.nom?.toLowerCase().endsWith(".pdf")) {
+                return <iframe src={previewDoc.url} title={previewDoc.doc.nom} className="w-full h-full bg-white" />;
+              }
+              return (
+                <div className="text-center p-6 space-y-3">
+                  <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Aperçu non disponible pour ce type de fichier.</p>
+                  <Button onClick={() => downloadDoc(previewDoc.doc)}>
+                    <Download className="h-4 w-4 mr-2" /> Télécharger pour ouvrir
+                  </Button>
+                </div>
+              );
+            })()}
+          </div>
+          {previewDoc && (
+            <div className="flex justify-end gap-2 p-3 border-t">
+              <Button variant="outline" onClick={() => downloadDoc(previewDoc.doc)}>
+                <Download className="h-4 w-4 mr-2" /> Télécharger
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
