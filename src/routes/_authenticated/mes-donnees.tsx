@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LEGAL_LABELS } from "@/lib/legal-versions";
-import { ShieldAlert, User as UserIcon, FileText, Loader2 } from "lucide-react";
+import { ShieldAlert, User as UserIcon, FileText, Loader2, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/mes-donnees")({
   head: () => ({ meta: [{ title: "Mes données — Espace Client" }] }),
@@ -132,6 +132,15 @@ function MesDonneesPage() {
             <div className="sm:col-span-2">
               <Label htmlFor="societe">Société</Label>
               <Input id="societe" name="societe" defaultValue={profile?.entreprise ?? ""} />
+              <a
+                href={`https://www.pappers.fr/recherche?q=${encodeURIComponent(profile?.entreprise ?? "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1.5"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Rechercher ma société sur Pappers
+              </a>
             </div>
             <div className="sm:col-span-2">
               <Button disabled={saving}>
