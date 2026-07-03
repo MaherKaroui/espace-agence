@@ -1139,6 +1139,10 @@ export type Database = {
         Args: { _a: string; _b: string }
         Returns: boolean
       }
+      staff_can_view_client: {
+        Args: { _client_id: string; _staff_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "client" | "admin" | "direction" | "manager" | "consultant"
