@@ -257,35 +257,8 @@ function DossiersPage() {
           {filtered.length === 0 ? (
             <Card className="p-12 text-center"><p className="text-muted-foreground">Aucun dossier.</p></Card>
           ) : (
-            <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory items-start">
-              <ClientSection
-                title="À faire maintenant"
-                subtitle="Ces dossiers attendent une action de votre part."
-                icon={AlertCircle}
-                tone="warning"
-                items={aFaire}
-                empty="Rien à faire pour le moment 🎉"
-                className="w-full md:w-1/3 md:min-w-[320px] snap-start"
-              />
-              <ClientSection
-                title="En cours avec l'agence"
-                subtitle="L'agence s'occupe de ces dossiers. Vous serez notifié."
-                icon={Clock}
-                tone="info"
-                items={enCours}
-                empty="Aucun dossier en cours côté agence."
-                className="w-full md:w-1/3 md:min-w-[320px] snap-start"
-              />
-              <ClientSection
-                title="Terminés"
-                subtitle="Vos dossiers finalisés."
-                icon={CheckCircle2}
-                tone="success"
-                items={termines}
-                empty="Aucun dossier terminé pour l'instant."
-                className="w-full md:w-1/3 md:min-w-[320px] snap-start"
-              />
-            </div>
+            <DossiersBoard aFaire={aFaire} enCours={enCours} termines={termines} />
+
           )}
         </>
       ) : dossiers.length === 0 ? (
