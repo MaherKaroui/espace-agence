@@ -54,34 +54,33 @@ export function AdminFlaggedAlert() {
 
   useEffect(() => {
     if (!isAdmin) return;
-    const channel = supabase
-      .channel("admin-flagged-audit")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "audit_logs", filter: "action=eq.message.flagged" },
-        async (payload) => {
-          const row: any = payload.new;
-          const md = row.metadata ?? {};
-          const clientId: string | null = md.client_id ?? null;
-          const reasons: string[] = Array.isArray(md.reasons) ? md.reasons : [];
-          let clientName = "un client";
-          if (clientId) {
-            const { data: p } = await supabase
-              .from("profiles")
-              .select("prenom, nom, email")
-              .eq("id", clientId)
-              .maybeSingle();
-            if (p) clientName = `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email || clientName;
-          }
-          const alert: Alert = { id: row.id, clientId, clientName, reasons, at: new Date(row.created_at) };
-          setAlerts((prev) => [alert, ...prev].slice(0, 5));
-          if (audioReady.current) playBeep();
-          setTimeout(() => {
-            setAlerts((prev) => prev.filter((a) => a.id !== alert.id));
-          }, 30000);
+    const channel = supabase.channel(`admin-flagged-audit-${Math.random().toString(36).slice(2)}`);
+    channel.on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "audit_logs", filter: "action=eq.message.flagged" },
+      async (payload) => {
+        const row: any = payload.new;
+        const md = row.metadata ?? {};
+        const clientId: string | null = md.client_id ?? null;
+        const reasons: string[] = Array.isArray(md.reasons) ? md.reasons : [];
+        let clientName = "un client";
+        if (clientId) {
+          const { data: p } = await supabase
+            .from("profiles")
+            .select("prenom, nom, email")
+            .eq("id", clientId)
+            .maybeSingle();
+          if (p) clientName = `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email || clientName;
         }
-      )
-      .subscribe();
+        const alert: Alert = { id: row.id, clientId, clientName, reasons, at: new Date(row.created_at) };
+        setAlerts((prev) => [alert, ...prev].slice(0, 5));
+        if (audioReady.current) playBeep();
+        setTimeout(() => {
+          setAlerts((prev) => prev.filter((a) => a.id !== alert.id));
+        }, 30000);
+      },
+    );
+    channel.subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
