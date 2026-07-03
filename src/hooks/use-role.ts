@@ -40,6 +40,6 @@ export function useRole() {
     isClient: q.data?.isClient ?? false,
     isStaff: q.data?.isStaff ?? false,
     isDirectionOrAdmin: q.data?.isDirectionOrAdmin ?? false,
-    loading: q.isLoading,
+    loading: authLoading || (!!user && q.isLoading),
   };
 }
