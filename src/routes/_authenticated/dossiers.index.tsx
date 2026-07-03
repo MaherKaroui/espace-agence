@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, categorieLabel } from "@/lib/labels";
 import { computeNextAction } from "@/lib/next-action";
+import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dossiers/")({
@@ -162,7 +163,9 @@ function DossiersPage() {
     },
   });
 
-  const dossierWithAction = dossiers.map((d) => {
+  const displayedDossiers = isAdmin ? filtered : dossiers;
+
+  const dossierWithAction = displayedDossiers.map((d) => {
     const na = computeNextAction(
       d.categorie,
       allDocs.filter((doc: any) => doc.dossier_id === d.id) as any,
@@ -253,25 +256,34 @@ function DossiersPage() {
           {filtered.length === 0 ? (
             <Card className="p-12 text-center"><p className="text-muted-foreground">Aucun dossier.</p></Card>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {filtered.map((d) => (
-                <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}>
-                  <Card className="p-5 hover:border-primary/40 transition-colors h-full">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
-                      <StatusBadge statut={d.statut} />
-                    </div>
-                    <div className="font-medium">{d.titre}</div>
-                    {d.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
-                    <div className="mt-4">
-                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                        <span>Avancement</span><span>{d.avancement}%</span>
-                      </div>
-                      <Progress value={d.avancement} className="h-1.5" />
-                    </div>
-                  </Card>
-                </Link>
-              ))}
+            <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory items-start">
+              <ClientSection
+                title="À faire maintenant"
+                subtitle="Ces dossiers attendent une action de votre part."
+                icon={AlertCircle}
+                tone="warning"
+                items={aFaire}
+                empty="Rien à faire pour le moment 🎉"
+                className="w-full md:w-1/3 md:min-w-[320px] snap-start"
+              />
+              <ClientSection
+                title="En cours avec l'agence"
+                subtitle="L'agence s'occupe de ces dossiers. Vous serez notifié."
+                icon={Clock}
+                tone="info"
+                items={enCours}
+                empty="Aucun dossier en cours côté agence."
+                className="w-full md:w-1/3 md:min-w-[320px] snap-start"
+              />
+              <ClientSection
+                title="Terminés"
+                subtitle="Vos dossiers finalisés."
+                icon={CheckCircle2}
+                tone="success"
+                items={termines}
+                empty="Aucun dossier terminé pour l'instant."
+                className="w-full md:w-1/3 md:min-w-[320px] snap-start"
+              />
             </div>
           )}
         </>
@@ -282,7 +294,7 @@ function DossiersPage() {
           <button onClick={() => setOpen(true)} className="text-sm text-primary hover:underline mt-2">Faire une demande à l'agence</button>
         </Card>
       ) : (
-        <div className="space-y-8">
+        <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory items-start">
           <ClientSection
             title="À faire maintenant"
             subtitle="Ces dossiers attendent une action de votre part."
@@ -290,6 +302,7 @@ function DossiersPage() {
             tone="warning"
             items={aFaire}
             empty="Rien à faire pour le moment 🎉"
+            className="w-full md:w-1/3 md:min-w-[320px] snap-start"
           />
           <ClientSection
             title="En cours avec l'agence"
@@ -298,6 +311,7 @@ function DossiersPage() {
             tone="info"
             items={enCours}
             empty="Aucun dossier en cours côté agence."
+            className="w-full md:w-1/3 md:min-w-[320px] snap-start"
           />
           <ClientSection
             title="Terminés"
@@ -306,6 +320,7 @@ function DossiersPage() {
             tone="success"
             items={termines}
             empty="Aucun dossier terminé pour l'instant."
+            className="w-full md:w-1/3 md:min-w-[320px] snap-start"
           />
         </div>
       )}
@@ -314,70 +329,74 @@ function DossiersPage() {
 }
 
 function ClientSection({
-  title, subtitle, icon: Icon, tone, items, empty,
+  title, subtitle, icon: Icon, tone, items, empty, className,
 }: {
   title: string; subtitle: string; icon: any; tone: "warning" | "info" | "success";
-  items: { d: any; na: ReturnType<typeof computeNextAction> }[]; empty: string;
+  items: { d: any; na: ReturnType<typeof computeNextAction> }[]; empty: string; className?: string;
 }) {
   const toneCls: Record<string, string> = {
-    warning: "text-warning-foreground bg-warning/20",
-    info: "text-info bg-info/10",
-    success: "text-success bg-success/10",
+    warning: "text-warning-foreground bg-warning/20 border-warning/20",
+    info: "text-info bg-info/10 border-info/20",
+    success: "text-success bg-success/10 border-success/20",
   };
   return (
-    <section>
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${toneCls[tone]}`}>
+    <section className={cn("flex flex-col min-w-0", className)}>
+      <div className="flex items-center gap-3 mb-3 px-1">
+        <div className={`h-9 w-9 rounded-lg flex items-center justify-center border ${toneCls[tone]}`}>
           <Icon className="h-4 w-4" />
         </div>
-        <div>
-          <h2 className="font-display text-xl leading-tight">{title}</h2>
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-lg leading-tight">{title}</h2>
+            <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-muted text-xs font-medium text-muted-foreground">
+              {items.length}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground line-clamp-2">{subtitle}</p>
         </div>
       </div>
-      {items.length === 0 ? (
-        <Card className="p-6 text-center text-sm text-muted-foreground bg-muted/30">{empty}</Card>
-      ) : (
-        <div className="grid gap-3">
-          {items.map(({ d, na }) => {
+      <div className="flex-1 flex flex-col gap-3 bg-muted/40 rounded-xl p-3 border border-border/50 min-h-[300px]">
+        {items.length === 0 ? (
+          <Card className="p-4 text-center text-sm text-muted-foreground bg-background/60 border-dashed">{empty}</Card>
+        ) : (
+          items.map(({ d, na }) => {
             const isAutre = d.categorie === "autres";
             const catLabel = isAutre ? "Autre demande" : categorieLabel(d.categorie);
             const titre = isAutre ? "L'agence va vous aider à préciser votre besoin" : d.titre;
             return (
             <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block group">
-              <Card className="p-5 hover:border-primary/40 transition-colors">
-                <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+              <Card className="p-4 hover:border-primary/40 transition-colors bg-background">
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
                   <div className="min-w-0">
                     <div className="text-xs uppercase tracking-wider text-gold font-medium">{catLabel}</div>
-                    <div className={`mt-0.5 truncate ${isAutre ? "text-sm text-muted-foreground" : "font-medium text-lg"}`}>{titre}</div>
+                    <div className={`mt-0.5 truncate ${isAutre ? "text-sm text-muted-foreground" : "font-medium"}`}>{titre}</div>
                   </div>
                   <StatusBadge statut={d.statut} />
                 </div>
                 {na.kind !== "aucune" && (
-                  <div className="mt-2 rounded-lg border bg-muted/40 p-3">
+                  <div className="mt-2 rounded-lg border bg-muted/40 p-2.5">
                     <div className="text-xs text-muted-foreground uppercase tracking-wider">Prochaine action</div>
                     <div className="text-sm font-medium mt-0.5">{na.label}</div>
                     {na.detail && <div className="text-xs text-muted-foreground mt-1">{na.detail}</div>}
                   </div>
                 )}
-                <div className="mt-4">
+                <div className="mt-3">
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
                     <span>Avancement</span><span>{d.avancement}%</span>
                   </div>
                   <Progress value={d.avancement} className="h-1.5" />
                 </div>
-                <div className="mt-4">
-                  <span className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 py-3 text-sm font-semibold group-hover:opacity-90">
+                <div className="mt-3">
+                  <span className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 py-2.5 text-sm font-semibold group-hover:opacity-90">
                     Ouvrir ce dossier <ArrowRight className="h-4 w-4" />
                   </span>
                 </div>
               </Card>
             </Link>
             );
-          })}
-        </div>
-
-      )}
+          })
+        )}
+      </div>
     </section>
   );
 }
