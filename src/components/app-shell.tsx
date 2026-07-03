@@ -136,6 +136,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <NotificationsRealtime />
       <SessionTracker />
       <AdminFlaggedAlert />
+      <ConsentBanner />
 
 
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
