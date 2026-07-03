@@ -177,11 +177,17 @@ function DossiersPage() {
   });
 
   const isDone = (s: string) => ["termine", "valide"].includes(s);
-  const aFaire = dossierWithAction.filter(
-    ({ d, na }) => !isDone(d.statut) && na.kind !== "aucune" && na.kind !== "attente_agence",
+  const isEnCoursStatut = (s: string) =>
+    ["en_cours_traitement", "en_cours_etude"].includes(s);
+  const aFaire = dossierWithAction.filter(({ d, na }) =>
+    isAdmin
+      ? !isDone(d.statut) && !isEnCoursStatut(d.statut)
+      : !isDone(d.statut) && na.kind !== "aucune" && na.kind !== "attente_agence",
   );
-  const enCours = dossierWithAction.filter(
-    ({ d, na }) => !isDone(d.statut) && (na.kind === "aucune" || na.kind === "attente_agence"),
+  const enCours = dossierWithAction.filter(({ d, na }) =>
+    isAdmin
+      ? !isDone(d.statut) && isEnCoursStatut(d.statut)
+      : !isDone(d.statut) && (na.kind === "aucune" || na.kind === "attente_agence"),
   );
   const termines = dossierWithAction.filter(({ d }) => isDone(d.statut));
 
