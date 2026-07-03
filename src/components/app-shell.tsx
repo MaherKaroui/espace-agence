@@ -57,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const directionNav = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
     { to: "/admin/clients", label: "Clients", icon: Users },
+    { to: "/admin/poles", label: "Pôles & équipes", icon: Users2 },
     { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
