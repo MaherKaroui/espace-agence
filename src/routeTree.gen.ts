@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PolitiqueConfidentialiteRouteImport } from './routes/politique-confidentialite'
 import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as CguRouteImport } from './routes/cgu'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -52,6 +53,11 @@ const PolitiqueConfidentialiteRoute =
 const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
   id: '/mentions-legales',
   path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CguRoute = CguRouteImport.update({
+  id: '/cgu',
+  path: '/cgu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -198,6 +204,7 @@ const AuthenticatedAdminClientsIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cgu': typeof CguRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -227,6 +234,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cgu': typeof CguRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/cgu': typeof CguRoute
   '/mentions-legales': typeof MentionsLegalesRoute
   '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -289,6 +298,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/cgu'
     | '/mentions-legales'
     | '/politique-confidentialite'
     | '/reset-password'
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/cgu'
     | '/mentions-legales'
     | '/politique-confidentialite'
     | '/reset-password'
@@ -348,6 +359,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/cgu'
     | '/mentions-legales'
     | '/politique-confidentialite'
     | '/reset-password'
@@ -379,6 +391,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CguRoute: typeof CguRoute
   MentionsLegalesRoute: typeof MentionsLegalesRoute
   PolitiqueConfidentialiteRoute: typeof PolitiqueConfidentialiteRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -406,6 +419,13 @@ declare module '@tanstack/react-router' {
       path: '/mentions-legales'
       fullPath: '/mentions-legales'
       preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cgu': {
+      id: '/cgu'
+      path: '/cgu'
+      fullPath: '/cgu'
+      preLoaderRoute: typeof CguRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -643,6 +663,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  CguRoute: CguRoute,
   MentionsLegalesRoute: MentionsLegalesRoute,
   PolitiqueConfidentialiteRoute: PolitiqueConfidentialiteRoute,
   ResetPasswordRoute: ResetPasswordRoute,
