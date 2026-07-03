@@ -9,9 +9,10 @@ import { Progress } from "@/components/ui/progress";
 import { categorieLabel } from "@/lib/labels";
 import { NextActionCard } from "@/components/next-action-card";
 import { computeNextAction } from "@/lib/next-action";
-import { FolderOpen, FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { FolderOpen, FileText, Clock, CheckCircle2, AlertCircle, Upload, MessageSquare, CalendarDays } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Tableau de bord" }] }),
