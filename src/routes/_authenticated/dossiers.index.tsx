@@ -500,7 +500,7 @@ function ClientRequestWizard({
               <button
                 key={n.value}
                 type="button"
-                onClick={() => { setCategorie(n.value); setStep(2); }}
+                onClick={() => setCategorie(n.value)}
                 className={`text-left rounded-lg border p-3 hover:border-primary/60 hover:bg-muted/40 transition-colors ${
                   categorie === n.value ? "border-primary bg-primary/5" : ""
                 }`}
@@ -510,8 +510,17 @@ function ClientRequestWizard({
               </button>
             ))}
           </div>
+          <Button
+            type="button"
+            className="w-full"
+            disabled={!categorie}
+            onClick={() => setStep(2)}
+          >
+            Continuer
+          </Button>
         </div>
       )}
+
 
       {step === 2 && isQualiopi && (
         <div className="space-y-4">
