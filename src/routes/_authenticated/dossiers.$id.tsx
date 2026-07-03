@@ -167,6 +167,10 @@ function DossierDetail() {
             dossierTitre={dossier.titre}
           />
         )}
+        {isAdmin && !dossier.client_id && (
+          <InviteClientToDossier dossierId={dossier.id} onDone={() => qc.invalidateQueries({ queryKey: ["dossier", id] })} />
+        )}
+
       </div>
 
       <Card className="p-6">
