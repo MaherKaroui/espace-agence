@@ -146,11 +146,16 @@ function DossiersPage() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> {isAdmin ? "Nouveau dossier" : "Nouvelle demande"}</Button>
+            <Button><Plus className="h-4 w-4 mr-2" /> {isAdmin ? "Nouveau dossier" : "Faire une nouvelle demande"}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{isAdmin ? "Nouveau dossier" : "Créer une nouvelle demande"}</DialogTitle>
+              <DialogTitle>{isAdmin ? "Nouveau dossier" : "De quoi avez-vous besoin ?"}</DialogTitle>
+              {!isAdmin && (
+                <p className="text-sm text-muted-foreground pt-1">
+                  Choisissez simplement le sujet de votre demande. Si vous ne savez pas, sélectionnez « Je ne sais pas / Autre demande ».
+                </p>
+              )}
             </DialogHeader>
             {isAdmin ? (
               <form onSubmit={submitAdmin} className="space-y-4">
@@ -243,12 +248,15 @@ function FilterChip({ children, active, onClick }: { children: React.ReactNode; 
 }
 
 const CLIENT_NEEDS: { value: string; label: string; hint: string }[] = [
-  { value: "qualiopi", label: "Qualiopi", hint: "Certification qualité pour organismes de formation" },
-  { value: "nda", label: "NDA (Numéro de Déclaration d'Activité)", hint: "Obtenir votre numéro auprès de la préfecture" },
-  { value: "cfa", label: "Création / Gestion CFA", hint: "Centre de Formation d'Apprentis" },
-  { value: "edof", label: "EDOF (CPF)", hint: "Référencement Mon Compte Formation" },
-  { value: "bpf", label: "BPF (Bilan Pédagogique)", hint: "Bilan annuel à envoyer à la préfecture" },
-  { value: "autres", label: "Je ne sais pas / Autre demande", hint: "L'agence vous rappelle pour préciser" },
+  { value: "qualiopi", label: "Certification Qualiopi", hint: "Pour obtenir ou renouveler votre certification qualité." },
+  { value: "nda", label: "Demande de NDA", hint: "Pour obtenir votre numéro de déclaration d'activité." },
+  { value: "edof", label: "Dossier EDOF / CPF", hint: "Pour les démarches Mon Compte Formation." },
+  { value: "cfa", label: "Création ou gestion CFA", hint: "Pour créer ou suivre votre CFA." },
+  { value: "bpf", label: "BPF annuel", hint: "Pour préparer votre bilan pédagogique et financier." },
+  { value: "vae", label: "VAE", hint: "Pour une demande liée à la validation des acquis." },
+  { value: "contrats", label: "Contrats", hint: "Pour les conventions, contrats ou documents à signer." },
+  { value: "documents_administratifs", label: "Documents administratifs", hint: "Pour envoyer ou demander un document administratif." },
+  { value: "autres", label: "Je ne sais pas / Autre demande", hint: "L'agence vous rappellera pour comprendre votre besoin." },
 ];
 
 const QUALIOPI_AUDIT_TYPES = [

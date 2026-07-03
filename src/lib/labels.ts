@@ -1,13 +1,13 @@
 export const CATEGORIES = [
-  { value: "qualiopi", label: "Qualiopi" },
-  { value: "bpf", label: "BPF" },
-  { value: "nda", label: "NDA" },
-  { value: "cfa", label: "CFA" },
+  { value: "qualiopi", label: "Certification Qualiopi" },
+  { value: "bpf", label: "BPF annuel" },
+  { value: "nda", label: "Demande de NDA" },
+  { value: "cfa", label: "Création ou gestion CFA" },
   { value: "vae", label: "VAE" },
-  { value: "edof", label: "EDOF" },
+  { value: "edof", label: "Dossier EDOF / CPF" },
   { value: "contrats", label: "Contrats" },
   { value: "documents_administratifs", label: "Documents administratifs" },
-  { value: "autres", label: "Autres" },
+  { value: "autres", label: "Je ne sais pas / Autre demande" },
 ] as const;
 
 export type Categorie = (typeof CATEGORIES)[number]["value"];
