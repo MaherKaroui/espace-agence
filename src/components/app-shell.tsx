@@ -134,15 +134,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const NavList = () => (
     <>
       <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/50">Espace client</div>
-      {nav.map((n) => (
-        <Link
-          key={n.to} to={n.to}
-          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
-        >
-          <n.icon className="h-4 w-4" /> {n.label}
-        </Link>
-      ))}
+      {nav.map((n) => {
+        const c = countFor(n.to);
+        return (
+          <Link
+            key={n.to} to={n.to}
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
+          >
+            <n.icon className="h-4 w-4" />
+            <span className="flex-1">{n.label}</span>
+            {c > 0 && (
+              <span className="h-5 min-w-5 px-1.5 rounded-full bg-gold text-[10px] font-semibold text-primary flex items-center justify-center">
+                {c > 99 ? "99+" : c}
+              </span>
+            )}
+          </Link>
+        );
+      })}
       {isStaff && (
         <>
           <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Agence</div>
