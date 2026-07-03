@@ -10,12 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PolitiqueConfidentialiteRouteImport } from './routes/politique-confidentialite'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as CguRouteImport } from './routes/cgu'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRendezVousRouteImport } from './routes/_authenticated/rendez-vous'
 import { Route as AuthenticatedPreferencesRouteImport } from './routes/_authenticated/preferences'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedMesDonneesRouteImport } from './routes/_authenticated/mes-donnees'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
 import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
@@ -23,6 +27,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
 import { Route as AuthenticatedAdminSessionsRouteImport } from './routes/_authenticated/admin.sessions'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
+import { Route as AuthenticatedAdminRgpdRouteImport } from './routes/_authenticated/admin.rgpd'
 import { Route as AuthenticatedAdminRendezVousRouteImport } from './routes/_authenticated/admin.rendez-vous'
 import { Route as AuthenticatedAdminPolesRouteImport } from './routes/_authenticated/admin.poles'
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
@@ -39,6 +44,22 @@ import { Route as AuthenticatedAdminClientsIdRouteImport } from './routes/_authe
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PolitiqueConfidentialiteRoute =
+  PolitiqueConfidentialiteRouteImport.update({
+    id: '/politique-confidentialite',
+    path: '/politique-confidentialite',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CguRoute = CguRouteImport.update({
+  id: '/cgu',
+  path: '/cgu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -72,6 +93,11 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMesDonneesRoute = AuthenticatedMesDonneesRouteImport.update({
+  id: '/mes-donnees',
+  path: '/mes-donnees',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -111,6 +137,11 @@ const AuthenticatedAdminSecurityRoute =
     path: '/admin/security',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminRgpdRoute = AuthenticatedAdminRgpdRouteImport.update({
+  id: '/admin/rgpd',
+  path: '/admin/rgpd',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminRendezVousRoute =
   AuthenticatedAdminRendezVousRouteImport.update({
     id: '/admin/rendez-vous',
@@ -185,8 +216,12 @@ const AuthenticatedAdminClientsIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cgu': typeof CguRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/mes-donnees': typeof AuthenticatedMesDonneesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
   '/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -195,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
+  '/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
@@ -212,8 +248,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cgu': typeof CguRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/mes-donnees': typeof AuthenticatedMesDonneesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
   '/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -222,6 +262,7 @@ export interface FileRoutesByTo {
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
+  '/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
@@ -241,8 +282,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/cgu': typeof CguRoute
+  '/mentions-legales': typeof MentionsLegalesRoute
+  '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/mes-donnees': typeof AuthenticatedMesDonneesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/preferences': typeof AuthenticatedPreferencesRoute
   '/_authenticated/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -251,6 +296,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRoute
   '/_authenticated/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/_authenticated/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
+  '/_authenticated/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
@@ -270,8 +316,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/cgu'
+    | '/mentions-legales'
+    | '/politique-confidentialite'
     | '/reset-password'
     | '/dashboard'
+    | '/mes-donnees'
     | '/notifications'
     | '/preferences'
     | '/rendez-vous'
@@ -280,6 +330,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers'
     | '/admin/poles'
     | '/admin/rendez-vous'
+    | '/admin/rgpd'
     | '/admin/security'
     | '/admin/sessions'
     | '/dossiers/$id'
@@ -297,8 +348,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/cgu'
+    | '/mentions-legales'
+    | '/politique-confidentialite'
     | '/reset-password'
     | '/dashboard'
+    | '/mes-donnees'
     | '/notifications'
     | '/preferences'
     | '/rendez-vous'
@@ -307,6 +362,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers'
     | '/admin/poles'
     | '/admin/rendez-vous'
+    | '/admin/rgpd'
     | '/admin/security'
     | '/admin/sessions'
     | '/dossiers/$id'
@@ -325,8 +381,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/cgu'
+    | '/mentions-legales'
+    | '/politique-confidentialite'
     | '/reset-password'
     | '/_authenticated/dashboard'
+    | '/_authenticated/mes-donnees'
     | '/_authenticated/notifications'
     | '/_authenticated/preferences'
     | '/_authenticated/rendez-vous'
@@ -335,6 +395,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/dossiers'
     | '/_authenticated/admin/poles'
     | '/_authenticated/admin/rendez-vous'
+    | '/_authenticated/admin/rgpd'
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/sessions'
     | '/_authenticated/dossiers/$id'
@@ -354,6 +415,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CguRoute: typeof CguRoute
+  MentionsLegalesRoute: typeof MentionsLegalesRoute
+  PolitiqueConfidentialiteRoute: typeof PolitiqueConfidentialiteRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
@@ -365,6 +429,27 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politique-confidentialite': {
+      id: '/politique-confidentialite'
+      path: '/politique-confidentialite'
+      fullPath: '/politique-confidentialite'
+      preLoaderRoute: typeof PolitiqueConfidentialiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cgu': {
+      id: '/cgu'
+      path: '/cgu'
+      fullPath: '/cgu'
+      preLoaderRoute: typeof CguRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -407,6 +492,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mes-donnees': {
+      id: '/_authenticated/mes-donnees'
+      path: '/mes-donnees'
+      fullPath: '/mes-donnees'
+      preLoaderRoute: typeof AuthenticatedMesDonneesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -456,6 +548,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/security'
       fullPath: '/admin/security'
       preLoaderRoute: typeof AuthenticatedAdminSecurityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/rgpd': {
+      id: '/_authenticated/admin/rgpd'
+      path: '/admin/rgpd'
+      fullPath: '/admin/rgpd'
+      preLoaderRoute: typeof AuthenticatedAdminRgpdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/rendez-vous': {
@@ -547,6 +646,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedMesDonneesRoute: typeof AuthenticatedMesDonneesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPreferencesRoute: typeof AuthenticatedPreferencesRoute
   AuthenticatedRendezVousRoute: typeof AuthenticatedRendezVousRoute
@@ -555,6 +655,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDossiersRoute: typeof AuthenticatedAdminDossiersRoute
   AuthenticatedAdminPolesRoute: typeof AuthenticatedAdminPolesRoute
   AuthenticatedAdminRendezVousRoute: typeof AuthenticatedAdminRendezVousRoute
+  AuthenticatedAdminRgpdRoute: typeof AuthenticatedAdminRgpdRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminSessionsRoute: typeof AuthenticatedAdminSessionsRoute
   AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRoute
@@ -571,6 +672,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedMesDonneesRoute: AuthenticatedMesDonneesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPreferencesRoute: AuthenticatedPreferencesRoute,
   AuthenticatedRendezVousRoute: AuthenticatedRendezVousRoute,
@@ -579,6 +681,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminDossiersRoute: AuthenticatedAdminDossiersRoute,
   AuthenticatedAdminPolesRoute: AuthenticatedAdminPolesRoute,
   AuthenticatedAdminRendezVousRoute: AuthenticatedAdminRendezVousRoute,
+  AuthenticatedAdminRgpdRoute: AuthenticatedAdminRgpdRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminSessionsRoute: AuthenticatedAdminSessionsRoute,
   AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRoute,
@@ -602,6 +705,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  CguRoute: CguRoute,
+  MentionsLegalesRoute: MentionsLegalesRoute,
+  PolitiqueConfidentialiteRoute: PolitiqueConfidentialiteRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }

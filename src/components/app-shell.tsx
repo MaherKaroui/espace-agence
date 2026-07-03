@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, Users2, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings, CalendarDays,
+  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, Users2, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings, CalendarDays, UserCog,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,6 +12,8 @@ import { NotificationsBell } from "@/components/notifications-bell";
 import { NotificationsRealtime } from "@/components/notifications-realtime";
 import { SessionTracker } from "@/components/session-tracker";
 import { AdminFlaggedAlert } from "@/components/admin-flagged-alert";
+import { ConsentBanner } from "@/components/consent-banner";
+import { LegalFooter } from "@/components/legal-footer";
 import { cn } from "@/lib/utils";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -43,6 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/messages", label: "Messages", icon: MessageSquare },
     { to: "/messages/groupes", label: "Groupes", icon: Users2 },
     { to: "/notifications", label: "Notifications", icon: Bell },
+    { to: "/mes-donnees", label: "Mes données", icon: UserCog },
     { to: "/preferences", label: "Préférences", icon: Settings },
   ];
 
@@ -62,6 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
+    { to: "/admin/rgpd", label: "RGPD", icon: UserCog },
   ];
 
   const signOut = async () => {
@@ -132,6 +136,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <NotificationsRealtime />
       <SessionTracker />
       <AdminFlaggedAlert />
+      <ConsentBanner />
 
 
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
@@ -177,6 +182,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className={cn("p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto")}>{children}</main>
+        <LegalFooter />
       </div>
     </div>
   );
