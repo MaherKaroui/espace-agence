@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { roleLabelFr } from "@/lib/role-labels";
 import { useRole } from "@/hooks/use-role";
 import { useProfile } from "@/hooks/use-profile";
 import { NotificationsBell } from "@/components/notifications-bell";
@@ -18,7 +19,15 @@ import { useQueryClient } from "@tanstack/react-query";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const { isStaff, isDirectionOrAdmin, isAdmin, isDirection, isManager, isConsultant } = useRole();
-  const roleLabel = isAdmin ? "Admin" : isDirection ? "Direction" : isManager ? "Manager" : isConsultant ? "Consultant" : "Client";
+  const roleLabel = isAdmin
+    ? roleLabelFr("admin")
+    : isDirection
+      ? roleLabelFr("direction")
+      : isManager
+        ? roleLabelFr("manager")
+        : isConsultant
+          ? roleLabelFr("consultant")
+          : roleLabelFr("client");
   const { data: profile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const directionNav = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
     { to: "/admin/clients", label: "Clients", icon: Users },
+    { to: "/admin/poles", label: "Pôles & équipes", icon: Users2 },
     { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
