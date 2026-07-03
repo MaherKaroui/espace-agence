@@ -183,7 +183,9 @@ function DossiersPage() {
     ["en_attente", "documents_manquants", "a_completer"].includes(s);
   // Côté client : tant qu'il reste une action (documents à envoyer/corriger, tâches),
   // le dossier reste en « À faire ». Il bascule automatiquement en « En cours » dès
-  // que tous les documents requis sont acceptés par l'agence.
+  // que tous les documents requis sont acceptés par l'agence — indépendamment du
+  // statut interne (les triggers DB peuvent passer le statut à `en_cours_traitement`
+  // dès la création de tâches internes, ce qu'on ignore pour la vue client).
   const allRequiredAccepted = (d: any, na: ReturnType<typeof computeNextAction>) => {
     const requis = requiredDocsFor(d.categorie);
     if (requis.length === 0) return false; // pas de requis => reste en À faire jusqu'à action agence
@@ -192,12 +194,12 @@ function DossiersPage() {
   const aFaire = dossierWithAction.filter(({ d, na }) =>
     isAdmin
       ? !isDone(d.statut) && !isEnCoursStatut(d.statut)
-      : !isDone(d.statut) && !isEnCoursStatut(d.statut) && isAFaireStatut(d.statut) && !allRequiredAccepted(d, na),
+      : !isDone(d.statut) && !allRequiredAccepted(d, na),
   );
   const enCours = dossierWithAction.filter(({ d, na }) =>
     isAdmin
       ? !isDone(d.statut) && isEnCoursStatut(d.statut)
-      : !isDone(d.statut) && (isEnCoursStatut(d.statut) || (isAFaireStatut(d.statut) && allRequiredAccepted(d, na))),
+      : !isDone(d.statut) && allRequiredAccepted(d, na),
   );
   const termines = dossierWithAction.filter(({ d }) => isDone(d.statut));
 
