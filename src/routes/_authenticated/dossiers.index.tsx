@@ -26,6 +26,7 @@ function DossiersPage() {
   const { user } = useAuth();
   const { isAdmin } = useRole();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<string>("all");
 
