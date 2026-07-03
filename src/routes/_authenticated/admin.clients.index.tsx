@@ -67,14 +67,18 @@ function AdminClients() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl">Clients</h1>
-        <p className="text-muted-foreground mt-1">{clients.length} inscrit(s)</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl">Clients</h1>
+          <p className="text-muted-foreground mt-1">{clients.length} inscrit(s)</p>
+        </div>
+        <InviteClientDialog />
       </div>
       <div className="relative max-w-md">
         <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
         <Input placeholder="Rechercher par nom, e-mail ou entreprise…" className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
+
       <Card className="divide-y">
         {filtered.map((c: any) => {
           const s = stats.get(c.id);
