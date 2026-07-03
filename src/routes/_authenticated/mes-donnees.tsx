@@ -102,8 +102,8 @@ function MesDonneesPage() {
       // Génère des URLs signées 60s pour chaque document
       const documentsWithUrls = await Promise.all(
         (documents ?? []).map(async (d) => {
-          if (!d.path) return { ...d, download_url: null };
-          const { data } = await supabase.storage.from("documents").createSignedUrl(d.path, 60);
+          if (!d.storage_path) return { ...d, download_url: null };
+          const { data } = await supabase.storage.from("documents").createSignedUrl(d.storage_path, 60);
           return { ...d, download_url: data?.signedUrl ?? null };
         })
       );
