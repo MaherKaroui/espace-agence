@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, categorieLabel } from "@/lib/labels";
-import { Plus } from "lucide-react";
+import { computeNextAction } from "@/lib/next-action";
+import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dossiers/")({
   head: () => ({ meta: [{ title: "Mes dossiers" }] }),
