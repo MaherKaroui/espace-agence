@@ -168,6 +168,15 @@ function AuthPage() {
                   <Input id="s-password" name="password" type="password" required minLength={8} autoComplete="new-password" />
                   <p className="text-xs text-muted-foreground mt-1">8 caractères minimum. Un e-mail de vérification vous sera envoyé.</p>
                 </div>
+                <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <input type="checkbox" name="accept_legal" required className="mt-0.5" />
+                  <span>
+                    J'ai lu et j'accepte les{" "}
+                    <Link to="/cgu" target="_blank" className="underline text-primary">CGU</Link>{" "}
+                    et la{" "}
+                    <Link to="/politique-confidentialite" target="_blank" className="underline text-primary">Politique de confidentialité</Link>.
+                  </span>
+                </label>
                 <Button className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Créer mon compte
