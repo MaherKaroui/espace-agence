@@ -245,7 +245,6 @@ function AdminRgpdPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </AppShell>
+    </div>
   );
 }
