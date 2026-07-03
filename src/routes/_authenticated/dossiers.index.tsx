@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, categorieLabel, requiredDocsFor } from "@/lib/labels";
-import { computeNextAction } from "@/lib/next-action";
+import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -167,13 +167,13 @@ function DossiersPage() {
   const displayedDossiers = isAdmin ? filtered : dossiers;
 
   const dossierWithAction = displayedDossiers.map((d) => {
-    const na = computeNextAction(
-      d.categorie,
-      allDocs.filter((doc: any) => doc.dossier_id === d.id) as any,
-      allTaches.filter((t: any) => t.dossier_id === d.id) as any,
-      d.statut,
-    );
-    return { d, na };
+    const docs = allDocs.filter((doc: any) => doc.dossier_id === d.id) as any;
+    const tks = allTaches.filter((t: any) => t.dossier_id === d.id) as any;
+    const na = computeNextAction(d.categorie, docs, tks, d.statut);
+    const avancement = isAdmin
+      ? d.avancement
+      : computeAvancement(d.categorie, docs, tks, d.statut);
+    return { d: { ...d, avancement }, na };
   });
 
   const isDone = (s: string) => ["termine", "valide"].includes(s);

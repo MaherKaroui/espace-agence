@@ -113,3 +113,50 @@ export function computeNextAction(
     tone: "muted",
   };
 }
+
+/**
+ * Calcule l'avancement (0-100) d'un dossier côté client à partir des
+ * documents requis acceptés et des tâches terminées. Formule :
+ * - Dossier terminé/validé → 100
+ * - Sinon : moyenne pondérée
+ *     • 60% documents requis acceptés / total
+ *     • 40% tâches terminées / total
+ *   (l'une des composantes est ignorée si son total = 0)
+ * - Le résultat est plafonné à 95 tant que le dossier n'est pas terminé,
+ *   pour signifier qu'il reste au moins la validation finale de l'agence.
+ */
+export function computeAvancement(
+  categorie: string,
+  documents: DocLite[],
+  taches: TacheLite[],
+  dossierStatut?: string,
+): number {
+  if (dossierStatut === "termine" || dossierStatut === "valide") return 100;
+
+  const requis = requiredDocsFor(categorie);
+  const docsTotal = requis.length;
+  const docsOk = requis.filter((r) =>
+    documents.some((d) => docMatches(d, r) && d.statut === "accepte"),
+  ).length;
+
+  const tachesActives = taches.filter((t) => t.statut !== "annule");
+  const tachesTotal = tachesActives.length;
+  const tachesOk = tachesActives.filter((t) => t.statut === "termine").length;
+
+  const docsRatio = docsTotal > 0 ? docsOk / docsTotal : null;
+  const tachesRatio = tachesTotal > 0 ? tachesOk / tachesTotal : null;
+
+  let ratio: number;
+  if (docsRatio !== null && tachesRatio !== null) {
+    ratio = docsRatio * 0.6 + tachesRatio * 0.4;
+  } else if (docsRatio !== null) {
+    ratio = docsRatio;
+  } else if (tachesRatio !== null) {
+    ratio = tachesRatio;
+  } else {
+    ratio = 0;
+  }
+
+  const pct = Math.round(ratio * 100);
+  return Math.min(95, Math.max(0, pct));
+}
