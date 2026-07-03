@@ -46,6 +46,11 @@ function AuthPage() {
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    // Case obligatoire d'acceptation CGU / Politique de confidentialité (RGPD)
+    if (!fd.get("accept_legal")) {
+      toast.error("Vous devez accepter les CGU et la Politique de confidentialité.");
+      return;
+    }
     const parsed = signupSchema.safeParse(Object.fromEntries(fd));
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setLoading(true);
