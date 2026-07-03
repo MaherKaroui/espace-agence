@@ -179,15 +179,17 @@ function DossiersPage() {
   const isDone = (s: string) => ["termine", "valide"].includes(s);
   const isEnCoursStatut = (s: string) =>
     ["en_cours_traitement", "en_cours_etude"].includes(s);
+  const isAFaireStatut = (s: string) =>
+    ["en_attente", "documents_manquants", "a_completer"].includes(s);
   const aFaire = dossierWithAction.filter(({ d, na }) =>
     isAdmin
       ? !isDone(d.statut) && !isEnCoursStatut(d.statut)
-      : !isDone(d.statut) && !isEnCoursStatut(d.statut) && na.kind !== "aucune" && na.kind !== "attente_agence",
+      : !isDone(d.statut) && (isAFaireStatut(d.statut) || (!isEnCoursStatut(d.statut) && na.kind !== "aucune" && na.kind !== "attente_agence")),
   );
   const enCours = dossierWithAction.filter(({ d, na }) =>
     isAdmin
       ? !isDone(d.statut) && isEnCoursStatut(d.statut)
-      : !isDone(d.statut) && (isEnCoursStatut(d.statut) || na.kind === "aucune" || na.kind === "attente_agence"),
+      : !isDone(d.statut) && !isAFaireStatut(d.statut) && (isEnCoursStatut(d.statut) || na.kind === "aucune" || na.kind === "attente_agence"),
   );
   const termines = dossierWithAction.filter(({ d }) => isDone(d.statut));
 
