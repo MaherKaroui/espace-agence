@@ -207,6 +207,21 @@ function Dashboard() {
   );
 }
 
+function GuideStep({ n, icon: Icon, title, text }: { n: number; icon: any; title: string; text: string }) {
+  return (
+    <li className="flex gap-3 items-start rounded-lg bg-background border p-3">
+      <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-sm font-medium">{n}. {title}</div>
+        <div className="text-xs text-muted-foreground">{text}</div>
+      </div>
+    </li>
+  );
+}
+
+
 function StatCard({ icon: Icon, label, value, tone = "default" }: { icon: any; label: string; value: number; tone?: string }) {
   const colors: Record<string, string> = {
     default: "text-primary bg-primary/10",
