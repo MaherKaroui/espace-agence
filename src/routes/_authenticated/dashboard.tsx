@@ -78,6 +78,28 @@ function Dashboard() {
         <p className="text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
       </div>
 
+      {!isAdmin && dossiers.length === 0 && (
+        <Card className="p-6 border-primary/20 bg-primary/5">
+          <h2 className="font-display text-xl mb-1">Bienvenue dans votre espace</h2>
+          <p className="text-sm text-muted-foreground mb-4">Voici comment ça marche, en 4 étapes simples :</p>
+          <ol className="grid sm:grid-cols-2 gap-3">
+            <GuideStep n={1} icon={FolderOpen} title="Créez un dossier" text="Choisissez votre demande (Qualiopi, NDA, EDOF…)." />
+            <GuideStep n={2} icon={Upload} title="Déposez vos documents" text="On vous guide fichier par fichier." />
+            <GuideStep n={3} icon={MessageSquare} title="Échangez avec l'agence" text="Messagerie sécurisée intégrée." />
+            <GuideStep n={4} icon={CheckCircle2} title="Suivez l'avancement" text="Statuts et notifications en temps réel." />
+          </ol>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Link to="/dossiers" className="inline-flex items-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90">
+              <FolderOpen className="h-4 w-4" /> Créer mon premier dossier
+            </Link>
+            <Link to="/rendez-vous" className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm hover:bg-accent">
+              <CalendarDays className="h-4 w-4" /> Prendre rendez-vous
+            </Link>
+          </div>
+        </Card>
+      )}
+
+
       {!isAdmin && (() => {
         const actionable = activeDossiers.filter((d) => {
           const na = computeNextAction(
