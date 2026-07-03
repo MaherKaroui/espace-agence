@@ -153,6 +153,14 @@ function DossierDetail() {
     window.open(data.signedUrl, "_blank");
   };
 
+  const [previewDoc, setPreviewDoc] = useState<{ doc: any; url: string } | null>(null);
+  const openPreview = async (doc: any) => {
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(doc.storage_path, 600);
+    if (error) { toast.error(error.message); return; }
+    setPreviewDoc({ doc, url: data.signedUrl });
+  };
+
+
   if (isLoading) return <div className="p-8 text-muted-foreground">Chargement…</div>;
   if (!dossier) return <div className="p-8">Dossier introuvable.</div>;
 
