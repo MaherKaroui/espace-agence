@@ -68,9 +68,18 @@ export function NotificationsBell() {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-96 p-0">
-        <div className="flex items-center justify-between p-3 border-b">
-          <div className="font-medium">Notifications</div>
-          {unread > 0 && <Button size="sm" variant="ghost" onClick={markAll}>Tout marquer lu</Button>}
+        <div className="p-3 border-b space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="font-medium">
+              {unread > 0 ? `${unread} notification${unread > 1 ? "s" : ""} non lue${unread > 1 ? "s" : ""}` : "Notifications"}
+            </div>
+            {unread > 0 && <Button size="sm" variant="ghost" onClick={markAll}>Tout marquer lu</Button>}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {unread > 0
+              ? "Cliquez sur une notification pour l'ouvrir. Elle sera marquée comme lue."
+              : "Aucune nouvelle notification."}
+          </p>
         </div>
         <div className="max-h-96 overflow-y-auto">
           {groups.length === 0 && (
