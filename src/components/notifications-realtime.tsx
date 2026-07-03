@@ -40,6 +40,12 @@ export function NotificationsRealtime() {
       { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
       (payload) => {
         const n: any = payload.new;
+
+        // Toujours rafraîchir les compteurs / listes, même si le toast est filtré
+        qc.invalidateQueries({ queryKey: ["notifications", user.id] });
+        qc.invalidateQueries({ queryKey: ["notifications-all", user.id] });
+        qc.invalidateQueries({ queryKey: ["nav-unread", user.id] });
+
         const cat = categoryOf(n.type);
 
         // Préférences : par défaut activé, désactivé uniquement si explicitement false
@@ -60,10 +66,6 @@ export function NotificationsRealtime() {
             onClick: () => nav({ to: n.link, replace: false }),
           } : undefined,
         });
-
-        qc.invalidateQueries({ queryKey: ["notifications", user.id] });
-        qc.invalidateQueries({ queryKey: ["notifications-all", user.id] });
-        qc.invalidateQueries({ queryKey: ["nav-unread", user.id] });
       },
     );
     channel.subscribe();
