@@ -28,6 +28,7 @@ import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
+import { inviteClient } from "@/lib/admin-clients.functions";
 
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -167,6 +168,10 @@ function DossierDetail() {
             dossierTitre={dossier.titre}
           />
         )}
+        {isAdmin && !dossier.client_id && (
+          <InviteClientToDossier dossierId={dossier.id} onDone={() => qc.invalidateQueries({ queryKey: ["dossier", id] })} />
+        )}
+
       </div>
 
       <Card className="p-6">
@@ -809,3 +814,57 @@ function StagiairesList({
   );
 }
 
+
+function InviteClientToDossier({ dossierId, onDone }: { dossierId: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
+  const invite = useServerFn(inviteClient);
+  const m = useMutation({
+    mutationFn: async () => invite({ data: { email, prenom: prenom || undefined, nom: nom || undefined, dossier_id: dossierId } }),
+    onSuccess: (res: any) => {
+      toast.success(res?.invited ? "Invitation envoyée" : "Client existant rattaché au dossier");
+      setOpen(false); setEmail(""); setPrenom(""); setNom("");
+      onDone();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erreur"),
+  });
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" variant="outline">Inviter le client</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Inviter le client sur ce dossier</AlertDialogTitle>
+          <AlertDialogDescription>
+            Un e-mail d'invitation sera envoyé. Si l'adresse existe déjà, le compte sera réutilisé et rattaché au dossier.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground">Prénom</label>
+              <Input value={prenom} onChange={(e) => setPrenom(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Nom</label>
+              <Input value={nom} onChange={(e) => setNom(e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">E-mail</label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="client@exemple.fr" />
+          </div>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuler</AlertDialogCancel>
+          <AlertDialogAction onClick={(e) => { e.preventDefault(); m.mutate(); }} disabled={!email || m.isPending}>
+            {m.isPending ? "Envoi…" : "Envoyer l'invitation"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
