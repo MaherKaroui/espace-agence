@@ -41,7 +41,12 @@ export function computeNextAction(
   }
 
   const requis = requiredDocsFor(categorie);
-  const items = requis.map((r) => ({ req: r, doc: documents.find((d) => docMatches(d, r)) ?? null }));
+  // Un document ne remplit son emplacement que s'il est ACCEPTÉ par l'agence.
+  // Tant qu'il est en attente / à corriger / refusé, la case reste « à faire ».
+  const items = requis.map((r) => ({
+    req: r,
+    doc: documents.find((d) => docMatches(d, r)) ?? null,
+  }));
 
   const refuse = items.find((i) => i.doc && i.doc.statut === "refuse");
   if (refuse) return {
@@ -63,23 +68,29 @@ export function computeNextAction(
     primaryLabel: aCorriger.req.label,
   };
 
-  // Documents validés par l'agence : ils comblent n'importe quel emplacement requis
-  // (le nom du fichier n'a pas besoin de contenir le mot-clé attendu).
-  const matchedIds = new Set(items.filter((i) => i.doc).map((i) => i.doc!.id));
+  // Documents validés par l'agence : ils comblent n'importe quel emplacement requis.
+  const acceptedItems = items.filter((i) => i.doc && i.doc.statut === "accepte");
+  const matchedAcceptedIds = new Set(acceptedItems.map((i) => i.doc!.id));
   const extraValides = documents.filter(
-    (d) => !matchedIds.has(d.id) && d.statut === "accepte",
+    (d) => !matchedAcceptedIds.has(d.id) && d.statut === "accepte",
   ).length;
-  const manquants = items.filter((i) => !i.doc);
+  // Un emplacement est « manquant » si aucun doc accepté ne le remplit.
+  const manquants = items.filter((i) => !i.doc || i.doc.statut !== "accepte");
   const manquantsCount = Math.max(0, manquants.length - extraValides);
 
   if (manquantsCount > 0) {
     const first = manquants[0];
+    const enAttente = first.doc && first.doc.statut === "en_attente";
     return {
       kind: "manquant",
-      label: `Commencez par envoyer votre ${first.req.label}`,
-      detail: manquantsCount > 1
-        ? `Il vous reste ${manquantsCount} documents à envoyer.`
-        : "C'est le dernier document à envoyer.",
+      label: enAttente
+        ? `En attente de validation : ${first.req.label}`
+        : `Commencez par envoyer votre ${first.req.label}`,
+      detail: enAttente
+        ? "L'agence doit encore valider ce document."
+        : manquantsCount > 1
+          ? `Il vous reste ${manquantsCount} document${manquantsCount > 1 ? "s" : ""} à faire valider.`
+          : "C'est le dernier document à faire valider.",
       tone: "warning",
       primaryKey: first.req.key,
       primaryLabel: first.req.label,
