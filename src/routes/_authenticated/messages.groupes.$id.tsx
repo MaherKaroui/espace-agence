@@ -206,7 +206,6 @@ function GroupePage() {
   );
 
   return (
-  return (
     <div className="flex flex-col h-[calc(100vh-4rem)] -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8">
       <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 border-b bg-background shrink-0">
         <Link to="/messages/groupes" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
