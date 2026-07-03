@@ -352,10 +352,10 @@ function ClientSection({
               {items.length}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
+          <p className="text-xs text-muted-foreground line-clamp-2">{subtitle}</p>
         </div>
       </div>
-        <div className="flex-1 flex flex-col gap-3 bg-muted/40 rounded-xl p-3 border border-border/50 min-h-[300px]">
+      <div className="flex-1 flex flex-col gap-3 bg-muted/40 rounded-xl p-3 border border-border/50 min-h-[300px]">
         {items.length === 0 ? (
           <Card className="p-4 text-center text-sm text-muted-foreground bg-background/60 border-dashed">{empty}</Card>
         ) : (
