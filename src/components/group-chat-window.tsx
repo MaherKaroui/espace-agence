@@ -85,7 +85,7 @@ export function GroupChatWindow({
 
   useEffect(() => {
     const channel = supabase
-      .channel(`group-chat-${conversationId}`)
+      .channel(`group-chat-${conversationId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "group_messages", filter: `conversation_id=eq.${conversationId}` },
