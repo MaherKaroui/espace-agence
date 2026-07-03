@@ -81,7 +81,6 @@ function MesDonneesPage() {
     qc.invalidateQueries({ queryKey: ["profile"] });
   };
 
-
   const handleRequestDeletion = async () => {
     if (!user) return;
     setSubmittingDelete(true);
@@ -142,7 +141,6 @@ function MesDonneesPage() {
             </div>
           </form>
         </Card>
-
 
         {/* Consentements */}
         <Card className="p-6">
