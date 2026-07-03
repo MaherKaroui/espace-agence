@@ -183,7 +183,7 @@ function MesDonneesPage() {
             </div>
             <div className="sm:col-span-2">
               <Label htmlFor="societe">Société</Label>
-              <Input id="societe" name="societe" defaultValue={profile?.societe ?? ""} />
+              <Input id="societe" name="societe" defaultValue={profile?.entreprise ?? ""} />
             </div>
             <div className="sm:col-span-2">
               <Button disabled={saving}>
