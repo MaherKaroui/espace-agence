@@ -215,18 +215,23 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   }, [messages, search]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
-      <Card className="flex flex-col flex-1 overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b">
-          <div>
-            <div className="font-display text-lg">{title || "Discussion avec l'agence"}</div>
-            <div className="text-xs text-muted-foreground">
+    <div className="flex flex-col h-[calc(100vh-6rem)] sm:h-[calc(100vh-8rem)]">
+      <Card className="flex flex-col flex-1 overflow-hidden rounded-none sm:rounded-xl border-x-0 sm:border-x">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-3 sm:p-4 border-b sm:flex sm:justify-between">
+          <div className="min-w-0">
+            <div className="font-display text-base sm:text-lg truncate">{title || "Discussion avec l'agence"}</div>
+            <div className="text-[11px] sm:text-xs text-muted-foreground truncate">
               {otherTyping ? <span className="text-primary animate-pulse">L'agence est en train d'écrire…</span> : "Messagerie sécurisée"}
             </div>
           </div>
-          <div className="relative">
-            <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground" />
-            <Input className="pl-8 h-9 w-48" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <div className="relative shrink-0">
+            <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground pointer-events-none" />
+            <Input
+              className="pl-8 h-9 w-36 sm:w-48"
+              placeholder="Rechercher…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
         </div>
 
