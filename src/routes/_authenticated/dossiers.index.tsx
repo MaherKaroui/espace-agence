@@ -191,7 +191,7 @@ function DossiersPage() {
         <div>
           <h1 className="font-display text-3xl">Mes dossiers</h1>
           <p className="text-muted-foreground mt-1">
-            {isAdmin ? "Suivez l'avancement et déposez vos pièces." : "Voici vos demandes, regroupées pour vous."}
+            Suivez l'avancement et déposez vos pièces.
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
