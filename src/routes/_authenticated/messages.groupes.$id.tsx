@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -127,16 +127,114 @@ function GroupePage() {
 
   if (!conv) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
+  const membersPanel = (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="font-medium text-sm">Membres ({members.length})</h3>
+        {canManage && (
+          <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="ghost"><UserPlus className="h-4 w-4" /></Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ajouter des membres</DialogTitle>
+                <DialogDescription>Recherchez et sélectionnez les personnes à ajouter.</DialogDescription>
+              </DialogHeader>
+              <Input placeholder="Rechercher…" value={addSearch} onChange={(e) => setAddSearch(e.target.value)} />
+              <div className="max-h-64 overflow-y-auto border rounded-md divide-y">
+                {available.length === 0 ? (
+                  <div className="p-3 text-xs text-muted-foreground">Aucun résultat.</div>
+                ) : available.map((p: any) => {
+                  const label = `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email;
+                  return (
+                    <label key={p.id} className="flex items-center gap-3 p-2 cursor-pointer hover:bg-muted/50 text-sm">
+                      <Checkbox
+                        checked={addSelected.has(p.id)}
+                        onCheckedChange={() => setAddSelected((prev) => { const n = new Set(prev); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; })}
+                      />
+                      <div className="min-w-0">
+                        <div className="truncate">{label}</div>
+                        <div className="text-xs text-muted-foreground truncate">{p.email}</div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+              <DialogFooter>
+                <Button onClick={addMembers} disabled={addSelected.size === 0}>Ajouter ({addSelected.size})</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+      <ul className="space-y-1">
+        {members.map((m: any) => (
+          <li key={m.user_id} className="flex items-center justify-between text-sm rounded p-1 hover:bg-muted/50">
+            <div className="min-w-0">
+              <div className="truncate">{nameFor(m.user_id)}</div>
+              {m.role === "owner" && <div className="text-[10px] uppercase tracking-wider text-gold">Propriétaire</div>}
+            </div>
+            {(canManage && m.user_id !== user?.id) || m.user_id === user?.id ? (
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeMember(m.user_id)} title="Retirer">
+                <UserMinus className="h-3.5 w-3.5 text-destructive" />
+              </Button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      {canManage && (
+        <div className="pt-3 border-t">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" className="w-full"><Trash2 className="h-4 w-4 mr-1" /> Supprimer le groupe</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Supprimer ce groupe ?</AlertDialogTitle>
+                <AlertDialogDescription>Tous les messages et sous-groupes seront supprimés définitivement.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={deleteGroup}>Supprimer</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div className="space-y-2 sm:space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <Link to="/messages/groupes" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+    <div className="flex flex-col h-[calc(100vh-4rem)] -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8">
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 border-b bg-background shrink-0">
+        <Link to="/messages/groupes" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
           <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">Retour aux groupes</span>
         </Link>
-        <div className="flex gap-2">
+        <div className="min-w-0 text-center">
+          <div className="font-display text-base truncate">{conv.titre}</div>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <div className="lg:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Membres">
+                  <Users className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[85vw] sm:max-w-sm overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Groupe</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4">{membersPanel}</div>
+              </SheetContent>
+            </Sheet>
+          </div>
           <Dialog open={openSub} onOpenChange={setOpenSub}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm"><Plus className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Sous-groupe</span></Button>
+              <Button variant="outline" size="icon" className="sm:h-9 sm:px-3 sm:w-auto">
+                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Sous-groupe</span>
+              </Button>
             </DialogTrigger>
             <CreateGroupDialog
               parentId={id}
@@ -146,111 +244,15 @@ function GroupePage() {
         </div>
       </div>
 
-      {(() => {
-        const membersPanel = (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm">Membres ({members.length})</h3>
-              {canManage && (
-                <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="ghost"><UserPlus className="h-4 w-4" /></Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Ajouter des membres</DialogTitle>
-                      <DialogDescription>Recherchez et sélectionnez les personnes à ajouter.</DialogDescription>
-                    </DialogHeader>
-                    <Input placeholder="Rechercher…" value={addSearch} onChange={(e) => setAddSearch(e.target.value)} />
-                    <div className="max-h-64 overflow-y-auto border rounded-md divide-y">
-                      {available.length === 0 ? (
-                        <div className="p-3 text-xs text-muted-foreground">Aucun résultat.</div>
-                      ) : available.map((p: any) => {
-                        const label = `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email;
-                        return (
-                          <label key={p.id} className="flex items-center gap-3 p-2 cursor-pointer hover:bg-muted/50 text-sm">
-                            <Checkbox
-                              checked={addSelected.has(p.id)}
-                              onCheckedChange={() => setAddSelected((prev) => { const n = new Set(prev); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; })}
-                            />
-                            <div className="min-w-0">
-                              <div className="truncate">{label}</div>
-                              <div className="text-xs text-muted-foreground truncate">{p.email}</div>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                    <DialogFooter>
-                      <Button onClick={addMembers} disabled={addSelected.size === 0}>Ajouter ({addSelected.size})</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
-            <ul className="space-y-1">
-              {members.map((m: any) => (
-                <li key={m.user_id} className="flex items-center justify-between text-sm rounded p-1 hover:bg-muted/50">
-                  <div className="min-w-0">
-                    <div className="truncate">{nameFor(m.user_id)}</div>
-                    {m.role === "owner" && <div className="text-[10px] uppercase tracking-wider text-gold">Propriétaire</div>}
-                  </div>
-                  {(canManage && m.user_id !== user?.id) || m.user_id === user?.id ? (
-                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeMember(m.user_id)} title="Retirer">
-                      <UserMinus className="h-3.5 w-3.5 text-destructive" />
-                    </Button>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-            {canManage && (
-              <div className="pt-3 border-t">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" className="w-full"><Trash2 className="h-4 w-4 mr-1" /> Supprimer le groupe</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Supprimer ce groupe ?</AlertDialogTitle>
-                      <AlertDialogDescription>Tous les messages et sous-groupes seront supprimés définitivement.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Annuler</AlertDialogCancel>
-                      <AlertDialogAction onClick={deleteGroup}>Supprimer</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
-          </div>
-        );
-
-        return (
-          <>
-            <div className="lg:hidden">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                    <Users className="h-4 w-4 sm:mr-1" />
-                    <span className="hidden sm:inline">Membres</span>
-                    <span className="sm:hidden">({members.length})</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[85vw] sm:max-w-sm overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>Groupe</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-4">{membersPanel}</div>
-                </SheetContent>
-              </Sheet>
-            </div>
-            <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
-              <GroupChatWindow conversationId={id} title={conv.titre} memberNames={memberNames} />
-              <Card className="hidden lg:block p-4 h-fit">{membersPanel}</Card>
-            </div>
-          </>
-        );
-      })()}
+      <div className="flex-1 min-h-0 flex flex-col">
+        <div className="hidden lg:grid grid-cols-[1fr_18rem] gap-4 flex-1 min-h-0">
+          <GroupChatWindow conversationId={id} title={conv.titre} memberNames={memberNames} className="h-full" />
+          <Card className="p-4 h-fit overflow-y-auto">{membersPanel}</Card>
+        </div>
+        <div className="lg:hidden flex-1 min-h-0">
+          <GroupChatWindow conversationId={id} title={conv.titre} memberNames={memberNames} className="h-full" />
+        </div>
+      </div>
     </div>
   );
 }
