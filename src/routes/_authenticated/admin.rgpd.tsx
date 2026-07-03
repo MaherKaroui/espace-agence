@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -103,8 +102,7 @@ function AdminRgpdPage() {
   };
 
   return (
-    <AppShell>
-      <div className="max-w-5xl space-y-6">
+    <div className="max-w-5xl space-y-6">
         <div>
           <h1 className="font-display text-3xl">Conformité RGPD</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -247,7 +245,6 @@ function AdminRgpdPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </AppShell>
+    </div>
   );
 }
