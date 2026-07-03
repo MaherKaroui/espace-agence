@@ -127,6 +127,85 @@ function GroupePage() {
 
   if (!conv) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
+  const membersPanel = (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="font-medium text-sm">Membres ({members.length})</h3>
+        {canManage && (
+          <Dialog open={openAdd} onOpenChange={setOpenAdd}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="ghost"><UserPlus className="h-4 w-4" /></Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ajouter des membres</DialogTitle>
+                <DialogDescription>Recherchez et sélectionnez les personnes à ajouter.</DialogDescription>
+              </DialogHeader>
+              <Input placeholder="Rechercher…" value={addSearch} onChange={(e) => setAddSearch(e.target.value)} />
+              <div className="max-h-64 overflow-y-auto border rounded-md divide-y">
+                {available.length === 0 ? (
+                  <div className="p-3 text-xs text-muted-foreground">Aucun résultat.</div>
+                ) : available.map((p: any) => {
+                  const label = `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email;
+                  return (
+                    <label key={p.id} className="flex items-center gap-3 p-2 cursor-pointer hover:bg-muted/50 text-sm">
+                      <Checkbox
+                        checked={addSelected.has(p.id)}
+                        onCheckedChange={() => setAddSelected((prev) => { const n = new Set(prev); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; })}
+                      />
+                      <div className="min-w-0">
+                        <div className="truncate">{label}</div>
+                        <div className="text-xs text-muted-foreground truncate">{p.email}</div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+              <DialogFooter>
+                <Button onClick={addMembers} disabled={addSelected.size === 0}>Ajouter ({addSelected.size})</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+      <ul className="space-y-1">
+        {members.map((m: any) => (
+          <li key={m.user_id} className="flex items-center justify-between text-sm rounded p-1 hover:bg-muted/50">
+            <div className="min-w-0">
+              <div className="truncate">{nameFor(m.user_id)}</div>
+              {m.role === "owner" && <div className="text-[10px] uppercase tracking-wider text-gold">Propriétaire</div>}
+            </div>
+            {(canManage && m.user_id !== user?.id) || m.user_id === user?.id ? (
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => removeMember(m.user_id)} title="Retirer">
+                <UserMinus className="h-3.5 w-3.5 text-destructive" />
+              </Button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      {canManage && (
+        <div className="pt-3 border-t">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" className="w-full"><Trash2 className="h-4 w-4 mr-1" /> Supprimer le groupe</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Supprimer ce groupe ?</AlertDialogTitle>
+                <AlertDialogDescription>Tous les messages et sous-groupes seront supprimés définitivement.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={deleteGroup}>Supprimer</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8">
       <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 border-b bg-background shrink-0">
