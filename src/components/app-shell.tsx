@@ -65,6 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
+    { to: "/admin/rgpd", label: "RGPD", icon: UserCog },
   ];
 
   const signOut = async () => {
