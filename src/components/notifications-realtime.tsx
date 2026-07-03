@@ -34,40 +34,38 @@ export function NotificationsRealtime() {
 
   useEffect(() => {
     if (!user) return;
-    const channel = supabase
-      .channel(`notif-toast-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          const n: any = payload.new;
-          const cat = categoryOf(n.type);
+    const channel = supabase.channel(`notif-toast-${user.id}-${Math.random().toString(36).slice(2)}`);
+    channel.on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+      (payload) => {
+        const n: any = payload.new;
+        const cat = categoryOf(n.type);
 
-          // Préférences : par défaut activé, désactivé uniquement si explicitement false
-          if (prefsRef.current[cat] === false) return;
+        // Préférences : par défaut activé, désactivé uniquement si explicitement false
+        if (prefsRef.current[cat] === false) return;
 
-          // Anti-spam : ignorer les doublons du même type+link à < 15s
-          const key = `${n.type}:${n.link ?? ""}`;
-          const now = Date.now();
-          if (recentRef.current[key] && now - recentRef.current[key] < 15000) return;
-          recentRef.current[key] = now;
-          recentRef.current[key] = now;
+        // Anti-spam : ignorer les doublons du même type+link à < 15s
+        const key = `${n.type}:${n.link ?? ""}`;
+        const now = Date.now();
+        if (recentRef.current[key] && now - recentRef.current[key] < 15000) return;
+        recentRef.current[key] = now;
 
-          const Icon = iconOf(n.type);
-          toast(n.titre, {
-            description: n.message,
-            icon: <Icon className="h-4 w-4" />,
-            action: n.link ? {
-              label: "Ouvrir",
-              onClick: () => nav({ to: n.link, replace: false }),
-            } : undefined,
-          });
+        const Icon = iconOf(n.type);
+        toast(n.titre, {
+          description: n.message,
+          icon: <Icon className="h-4 w-4" />,
+          action: n.link ? {
+            label: "Ouvrir",
+            onClick: () => nav({ to: n.link, replace: false }),
+          } : undefined,
+        });
 
-          qc.invalidateQueries({ queryKey: ["notifications", user.id] });
-          qc.invalidateQueries({ queryKey: ["notifications-all", user.id] });
-        },
-      )
-      .subscribe();
+        qc.invalidateQueries({ queryKey: ["notifications", user.id] });
+        qc.invalidateQueries({ queryKey: ["notifications-all", user.id] });
+      },
+    );
+    channel.subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [user, qc, nav]);
