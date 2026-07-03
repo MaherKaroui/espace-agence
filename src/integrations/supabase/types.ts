@@ -1200,6 +1200,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      rgpd_purge_old_logs: { Args: never; Returns: undefined }
       sanitize_message_content: {
         Args: { _content: string }
         Returns: {
