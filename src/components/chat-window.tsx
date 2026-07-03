@@ -253,6 +253,23 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
         />
 
 
+        {uploading && (
+          <div className="px-3 py-2 border-t bg-primary/5 flex items-center gap-3 text-sm">
+            <svg className="h-4 w-4 animate-spin text-primary shrink-0" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-medium">
+                Envoi en cours… <span className="text-muted-foreground font-normal">{uploading.name}</span>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {uploading.total > 1 ? `Fichier ${uploading.index}/${uploading.total} · ` : ""}{uploading.sizeMb} Mo — merci de patienter
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={submit} className="p-2 sm:p-3 border-t flex gap-1.5 sm:gap-2 items-end bg-background">
           <input ref={fileInput} type="file" hidden multiple onChange={handleFile} />
           <Button type="button" size="icon" variant="ghost" onClick={() => fileInput.current?.click()} disabled={recording}>
