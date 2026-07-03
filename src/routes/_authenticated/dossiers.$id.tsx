@@ -414,15 +414,16 @@ function DossierDetail() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        aria-label="Supprimer"
+                        aria-label="Retirer"
                         disabled={del.isPending && (del.variables as any)?.id === d.id}
                         onClick={() => del.mutate(d)}
                       >
                         {del.isPending && (del.variables as any)?.id === d.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                          <Loader2 className="h-4 w-4 mr-1.5 animate-spin text-destructive" />
                         ) : (
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-4 w-4 mr-1.5 text-destructive" />
                         )}
+                        <span className="text-destructive">Retirer</span>
                       </Button>
                     ) : (
                       <AlertDialog>
@@ -434,10 +435,11 @@ function DossierDetail() {
                             disabled={del.isPending && (del.variables as any)?.id === d.id}
                           >
                             {del.isPending && (del.variables as any)?.id === d.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                              <Loader2 className="h-4 w-4 mr-1.5 animate-spin text-destructive" />
                             ) : (
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Trash2 className="h-4 w-4 mr-1.5 text-destructive" />
                             )}
+                            <span className="text-destructive">Retirer</span>
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
