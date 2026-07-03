@@ -28,6 +28,7 @@ import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
+import { inviteClient } from "@/lib/admin-clients.functions";
 
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
