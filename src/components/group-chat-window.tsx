@@ -22,10 +22,12 @@ export function GroupChatWindow({
   conversationId,
   title,
   memberNames,
+  className,
 }: {
   conversationId: string;
   title: string;
   memberNames: Record<string, string>;
+  className?: string;
 }) {
   const { user } = useAuth();
   const { isAdmin } = useRole();
