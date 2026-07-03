@@ -196,6 +196,11 @@ function AuthPage() {
             <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.5-1.6 4.3-5.4 4.3-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.9 14.6 3 12 3 6.9 3 2.8 7.1 2.8 12S6.9 21 12 21c7 0 9.3-4.9 9.3-7.4 0-.5-.1-.9-.1-1.4H12z"/></svg>
             Continuer avec Google
           </Button>
+          <div className="mt-6 pt-4 border-t text-center text-xs text-muted-foreground space-x-3">
+            <Link to="/mentions-legales" className="hover:underline">Mentions légales</Link>
+            <Link to="/politique-confidentialite" className="hover:underline">Confidentialité</Link>
+            <Link to="/cgu" className="hover:underline">CGU</Link>
+          </div>
         </Card>
       </div>
     </div>
