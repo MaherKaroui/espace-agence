@@ -67,7 +67,7 @@ export function computeNextAction(
   // (le nom du fichier n'a pas besoin de contenir le mot-clé attendu).
   const matchedIds = new Set(items.filter((i) => i.doc).map((i) => i.doc!.id));
   const extraValides = documents.filter(
-    (d) => !matchedIds.has(d.id) && d.statut === "valide",
+    (d) => !matchedIds.has(d.id) && d.statut === "accepte",
   ).length;
   const manquants = items.filter((i) => !i.doc);
   const manquantsCount = Math.max(0, manquants.length - extraValides);
