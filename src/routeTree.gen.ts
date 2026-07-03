@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRendezVousRouteImport } from './routes/_authenticated/rendez-vous'
 import { Route as AuthenticatedPreferencesRouteImport } from './routes/_authenticated/preferences'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedMesDonneesRouteImport } from './routes/_authenticated/mes-donnees'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
 import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
@@ -91,6 +92,11 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedMesDonneesRoute = AuthenticatedMesDonneesRouteImport.update({
+  id: '/mes-donnees',
+  path: '/mes-donnees',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/mes-donnees': typeof AuthenticatedMesDonneesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
   '/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -239,6 +246,7 @@ export interface FileRoutesByTo {
   '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/mes-donnees': typeof AuthenticatedMesDonneesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
   '/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -271,6 +279,7 @@ export interface FileRoutesById {
   '/politique-confidentialite': typeof PolitiqueConfidentialiteRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/mes-donnees': typeof AuthenticatedMesDonneesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/preferences': typeof AuthenticatedPreferencesRoute
   '/_authenticated/rendez-vous': typeof AuthenticatedRendezVousRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/politique-confidentialite'
     | '/reset-password'
     | '/dashboard'
+    | '/mes-donnees'
     | '/notifications'
     | '/preferences'
     | '/rendez-vous'
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/politique-confidentialite'
     | '/reset-password'
     | '/dashboard'
+    | '/mes-donnees'
     | '/notifications'
     | '/preferences'
     | '/rendez-vous'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/politique-confidentialite'
     | '/reset-password'
     | '/_authenticated/dashboard'
+    | '/_authenticated/mes-donnees'
     | '/_authenticated/notifications'
     | '/_authenticated/preferences'
     | '/_authenticated/rendez-vous'
@@ -468,6 +480,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mes-donnees': {
+      id: '/_authenticated/mes-donnees'
+      path: '/mes-donnees'
+      fullPath: '/mes-donnees'
+      preLoaderRoute: typeof AuthenticatedMesDonneesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -608,6 +627,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedMesDonneesRoute: typeof AuthenticatedMesDonneesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPreferencesRoute: typeof AuthenticatedPreferencesRoute
   AuthenticatedRendezVousRoute: typeof AuthenticatedRendezVousRoute
@@ -632,6 +652,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedMesDonneesRoute: AuthenticatedMesDonneesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPreferencesRoute: AuthenticatedPreferencesRoute,
   AuthenticatedRendezVousRoute: AuthenticatedRendezVousRoute,
