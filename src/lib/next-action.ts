@@ -63,14 +63,22 @@ export function computeNextAction(
     primaryLabel: aCorriger.req.label,
   };
 
+  // Documents validés par l'agence : ils comblent n'importe quel emplacement requis
+  // (le nom du fichier n'a pas besoin de contenir le mot-clé attendu).
+  const matchedIds = new Set(items.filter((i) => i.doc).map((i) => i.doc!.id));
+  const extraValides = documents.filter(
+    (d) => !matchedIds.has(d.id) && d.statut === "valide",
+  ).length;
   const manquants = items.filter((i) => !i.doc);
-  if (manquants.length > 0) {
+  const manquantsCount = Math.max(0, manquants.length - extraValides);
+
+  if (manquantsCount > 0) {
     const first = manquants[0];
     return {
       kind: "manquant",
       label: `Commencez par envoyer votre ${first.req.label}`,
-      detail: manquants.length > 1
-        ? `Il vous reste ${manquants.length} documents à envoyer.`
+      detail: manquantsCount > 1
+        ? `Il vous reste ${manquantsCount} documents à envoyer.`
         : "C'est le dernier document à envoyer.",
       tone: "warning",
       primaryKey: first.req.key,
