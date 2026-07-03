@@ -132,6 +132,15 @@ function MesDonneesPage() {
             <div className="sm:col-span-2">
               <Label htmlFor="societe">Société</Label>
               <Input id="societe" name="societe" defaultValue={profile?.entreprise ?? ""} />
+              <a
+                href={`https://www.pappers.fr/recherche?q=${encodeURIComponent(profile?.entreprise ?? "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1.5"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Rechercher ma société sur Pappers
+              </a>
             </div>
             <div className="sm:col-span-2">
               <Button disabled={saving}>
