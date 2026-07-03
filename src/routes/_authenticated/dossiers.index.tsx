@@ -734,7 +734,7 @@ function ClientRequestWizard({
               disabled={pending}
               onClick={() => onSubmit(categorie, description.trim())}
             >
-              {pending ? "Envoi…" : "Envoyer ma demande à l'agence"}
+              {pending ? "Création…" : "Créer la demande"}
             </Button>
           </div>
         </div>
