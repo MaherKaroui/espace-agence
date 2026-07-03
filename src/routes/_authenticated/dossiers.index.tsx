@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ function DossiersPage() {
   const { user } = useAuth();
   const { isAdmin } = useRole();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<string>("all");
 
@@ -79,13 +80,15 @@ function DossiersPage() {
         row.has_stagiaires = !!payload.has_stagiaires;
         row.stagiaires = payload.stagiaires ?? [];
       }
-      const { error } = await supabase.from("dossiers").insert(row);
+      const { data, error } = await supabase.from("dossiers").insert(row).select("id").single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Votre demande a été envoyée à l'agence");
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["dossiers-mine"] });
+      if (data?.id) navigate({ to: "/dossiers/$id", params: { id: data.id } });
     },
     onError: (e: any) => toast.error(e.message),
   });
