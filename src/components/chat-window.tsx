@@ -126,13 +126,21 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
     const initialText = text.trim();
     setText("");
     for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      setUploading({
+        name: f.name,
+        index: i + 1,
+        total: files.length,
+        sizeMb: (f.size / (1024 * 1024)).toFixed(1),
+      });
       try {
-        await send.mutateAsync({ content: i === 0 ? initialText : "", file: files[i] });
+        await send.mutateAsync({ content: i === 0 ? initialText : "", file: f });
       } catch {
         // toast déjà émis par onError
         break;
       }
     }
+    setUploading(null);
     if (files.length > 1) toast.success(`${files.length} fichiers envoyés`);
   };
 
