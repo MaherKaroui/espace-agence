@@ -622,8 +622,8 @@ function QualiopiBlock({
   return (
     <Card className="p-6 space-y-5">
       <div>
-        <h2 className="font-display text-xl">Détails Qualiopi</h2>
-        <p className="text-sm text-muted-foreground mt-1">Type d'audit, périmètre et informations sur vos stagiaires.</p>
+        <h2 className="font-display text-xl">Informations pour votre dossier Qualiopi</h2>
+        <p className="text-sm text-muted-foreground mt-1">Type d'audit, vos activités concernées et informations sur vos stagiaires.</p>
       </div>
 
       <div>
