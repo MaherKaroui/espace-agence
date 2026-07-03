@@ -163,7 +163,9 @@ function DossiersPage() {
     },
   });
 
-  const dossierWithAction = dossiers.map((d) => {
+  const displayedDossiers = isAdmin ? filtered : dossiers;
+
+  const dossierWithAction = displayedDossiers.map((d) => {
     const na = computeNextAction(
       d.categorie,
       allDocs.filter((doc: any) => doc.dossier_id === d.id) as any,
@@ -254,25 +256,34 @@ function DossiersPage() {
           {filtered.length === 0 ? (
             <Card className="p-12 text-center"><p className="text-muted-foreground">Aucun dossier.</p></Card>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {filtered.map((d) => (
-                <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}>
-                  <Card className="p-5 hover:border-primary/40 transition-colors h-full">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
-                      <StatusBadge statut={d.statut} />
-                    </div>
-                    <div className="font-medium">{d.titre}</div>
-                    {d.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{d.description}</p>}
-                    <div className="mt-4">
-                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                        <span>Avancement</span><span>{d.avancement}%</span>
-                      </div>
-                      <Progress value={d.avancement} className="h-1.5" />
-                    </div>
-                  </Card>
-                </Link>
-              ))}
+            <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory items-start">
+              <ClientSection
+                title="À faire maintenant"
+                subtitle="Ces dossiers attendent une action de votre part."
+                icon={AlertCircle}
+                tone="warning"
+                items={aFaire}
+                empty="Rien à faire pour le moment 🎉"
+                className="w-full md:w-1/3 md:min-w-[320px] snap-start"
+              />
+              <ClientSection
+                title="En cours avec l'agence"
+                subtitle="L'agence s'occupe de ces dossiers. Vous serez notifié."
+                icon={Clock}
+                tone="info"
+                items={enCours}
+                empty="Aucun dossier en cours côté agence."
+                className="w-full md:w-1/3 md:min-w-[320px] snap-start"
+              />
+              <ClientSection
+                title="Terminés"
+                subtitle="Vos dossiers finalisés."
+                icon={CheckCircle2}
+                tone="success"
+                items={termines}
+                empty="Aucun dossier terminé pour l'instant."
+                className="w-full md:w-1/3 md:min-w-[320px] snap-start"
+              />
             </div>
           )}
         </>
