@@ -657,7 +657,7 @@ function QualiopiBlock({
       </div>
 
       <div>
-        <div className="text-sm font-medium mb-2">Périmètre concerné (cochez tout ce qui s'applique)</div>
+        <div className="text-sm font-medium mb-2">Vos activités concernées (cochez tout ce qui s'applique)</div>
         <div className="grid gap-2 sm:grid-cols-2">
           {QUALIOPI_SCOPES.map((s) => {
             const active = scopes.includes(s.value);
