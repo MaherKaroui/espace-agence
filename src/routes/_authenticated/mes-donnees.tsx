@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LEGAL_LABELS } from "@/lib/legal-versions";
-import { Download, ShieldAlert, User as UserIcon, FileText, Loader2 } from "lucide-react";
+import { ShieldAlert, User as UserIcon, FileText, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/mes-donnees")({
   head: () => ({ meta: [{ title: "Mes données — Espace Client" }] }),
@@ -25,7 +25,6 @@ function MesDonneesPage() {
   const { data: profile } = useProfile();
   const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
-  const [exporting, setExporting] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
   const [submittingDelete, setSubmittingDelete] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -82,55 +81,6 @@ function MesDonneesPage() {
     qc.invalidateQueries({ queryKey: ["profile"] });
   };
 
-  // Export : génère un JSON avec le profil, dossiers, messages, et liste des fichiers avec URLs signées 60s
-  const handleExport = async () => {
-    if (!user) return;
-    setExporting(true);
-    try {
-      const [{ data: prof }, { data: dossiers }, { data: messages }, { data: documents }, { data: consentsData }] =
-        await Promise.all([
-          supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-          supabase.from("dossiers").select("*").eq("client_id", user.id),
-          supabase.from("messages").select("*").eq("client_id", user.id).is("deleted_at", null),
-          supabase.from("documents").select("*").in(
-            "dossier_id",
-            (await supabase.from("dossiers").select("id").eq("client_id", user.id)).data?.map(d => d.id) ?? [""]
-          ),
-          supabase.from("consents").select("*").eq("user_id", user.id),
-        ]);
-
-      // Génère des URLs signées 60s pour chaque document
-      const documentsWithUrls = await Promise.all(
-        (documents ?? []).map(async (d) => {
-          if (!d.storage_path) return { ...d, download_url: null };
-          const { data } = await supabase.storage.from("documents").createSignedUrl(d.storage_path, 60);
-          return { ...d, download_url: data?.signedUrl ?? null };
-        })
-      );
-
-      const payload = {
-        export_date: new Date().toISOString(),
-        note: "Les URLs de téléchargement sont valides 60 secondes. Relancez l'export si elles ont expiré.",
-        profile: prof,
-        dossiers,
-        messages,
-        documents: documentsWithUrls,
-        consents: consentsData,
-      };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `mes-donnees-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("Export prêt. Téléchargez à nouveau pour rafraîchir les liens.");
-    } catch (err) {
-      toast.error("Erreur pendant l'export : " + (err instanceof Error ? err.message : "inconnue"));
-    } finally {
-      setExporting(false);
-    }
-  };
 
   const handleRequestDeletion = async () => {
     if (!user) return;
@@ -193,21 +143,6 @@ function MesDonneesPage() {
           </form>
         </Card>
 
-        {/* Export */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Download className="h-4 w-4 text-primary" />
-            <h2 className="font-display text-lg">Exporter mes données</h2>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Vous recevrez un fichier JSON contenant votre profil, vos dossiers, vos messages, la liste de vos documents
-            (avec des liens de téléchargement valables 60 secondes) et l'historique de vos consentements.
-          </p>
-          <Button onClick={handleExport} disabled={exporting} variant="outline">
-            {exporting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            Télécharger l'export
-          </Button>
-        </Card>
 
         {/* Consentements */}
         <Card className="p-6">
