@@ -16,7 +16,19 @@ import { ConsentBanner } from "@/components/consent-banner";
 import { LegalFooter } from "@/components/legal-footer";
 import { cn } from "@/lib/utils";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+type NavUnreadRow = { id: string; type: string; link: string | null };
+
+function matchesSection(row: NavUnreadRow, to: string): boolean {
+  const link = row.link ?? "";
+  if (to === "/messages/groupes") return link.startsWith("/messages/groupes");
+  if (to === "/messages") return link.startsWith("/messages") && !link.startsWith("/messages/groupes");
+  if (to === "/dossiers") return link.startsWith("/dossiers") || row.type.startsWith("document") || row.type === "statut_change" || row.type.startsWith("tache");
+  if (to === "/rendez-vous") return link.startsWith("/rendez-vous") || row.type.startsWith("rdv");
+  if (to === "/notifications") return true;
+  return false;
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -37,6 +49,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const qc = useQueryClient();
 
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  const { data: unreadRows = [] } = useQuery({
+    queryKey: ["nav-unread", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id, type, link")
+        .eq("user_id", user!.id)
+        .is("read_at", null);
+      if (error) throw error;
+      return (data ?? []) as NavUnreadRow[];
+    },
+  });
+
+  const countFor = (to: string) => unreadRows.filter((r) => matchesSection(r, to)).length;
+
+  // Auto mark-as-read when entering a section
+  useEffect(() => {
+    if (!user || unreadRows.length === 0) return;
+    const path = location.pathname;
+    const sections = ["/dossiers", "/messages/groupes", "/messages", "/rendez-vous", "/notifications"];
+    const section = sections.find((s) => path === s || path.startsWith(s + "/"));
+    if (!section) return;
+    const ids = unreadRows.filter((r) => matchesSection(r, section)).map((r) => r.id);
+    if (ids.length === 0) return;
+    supabase.from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .in("id", ids)
+      .then(() => {
+        qc.invalidateQueries({ queryKey: ["nav-unread", user.id] });
+        qc.invalidateQueries({ queryKey: ["notifications", user.id] });
+        qc.invalidateQueries({ queryKey: ["notifications-all", user.id] });
+      });
+  }, [location.pathname, user, unreadRows, qc]);
 
   const nav = [
     { to: "/dashboard", label: "Accueil", icon: LayoutDashboard },
