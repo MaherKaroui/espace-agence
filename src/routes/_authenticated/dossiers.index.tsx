@@ -707,7 +707,7 @@ function ClientRequestWizard({
               disabled={pending || !canSubmitQualiopi}
               onClick={submitQualiopi}
             >
-              {pending ? "Envoi…" : "Envoyer ma demande à l'agence"}
+              {pending ? "Création…" : "Créer la demande"}
             </Button>
           </div>
         </div>
