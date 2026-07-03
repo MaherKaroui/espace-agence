@@ -17,6 +17,7 @@ import { Paperclip, Send, Search, FileText, Image as ImageIcon, Trash2, Pencil, 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
+import { cn } from "@/lib/utils";
 
 export function GroupChatWindow({
   conversationId,
