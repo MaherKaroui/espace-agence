@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { AppShell } from "@/components/app-shell";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -148,8 +148,7 @@ function MesDonneesPage() {
   };
 
   return (
-    <AppShell>
-      <div className="max-w-4xl space-y-6">
+    <div className="max-w-4xl space-y-6">
         <div>
           <h1 className="font-display text-3xl">Mes données</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -285,6 +284,5 @@ function MesDonneesPage() {
           )}
         </Card>
       </div>
-    </AppShell>
   );
 }
