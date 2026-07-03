@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/messages/groupes/$id")({
 function GroupePage() {
   const { id } = Route.useParams();
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isAdmin, isStaff } = useRole();
   const qc = useQueryClient();
   const nav = useNavigate();
   const [openSub, setOpenSub] = useState(false);
@@ -230,17 +230,19 @@ function GroupePage() {
               </SheetContent>
             </Sheet>
           </div>
-          <Dialog open={openSub} onOpenChange={setOpenSub}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="icon" className="sm:h-9 sm:px-3 sm:w-auto">
-                <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Sous-groupe</span>
-              </Button>
-            </DialogTrigger>
-            <CreateGroupDialog
-              parentId={id}
-              onCreated={(newId) => { setOpenSub(false); nav({ to: "/messages/groupes/$id", params: { id: newId } }); }}
-            />
-          </Dialog>
+          {isStaff && (
+            <Dialog open={openSub} onOpenChange={setOpenSub}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon" className="sm:h-9 sm:px-3 sm:w-auto">
+                  <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Sous-groupe</span>
+                </Button>
+              </DialogTrigger>
+              <CreateGroupDialog
+                parentId={id}
+                onCreated={(newId) => { setOpenSub(false); nav({ to: "/messages/groupes/$id", params: { id: newId } }); }}
+              />
+            </Dialog>
+          )}
         </div>
       </div>
 
