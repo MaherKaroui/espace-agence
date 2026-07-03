@@ -63,6 +63,7 @@ export function NotificationsRealtime() {
 
         qc.invalidateQueries({ queryKey: ["notifications", user.id] });
         qc.invalidateQueries({ queryKey: ["notifications-all", user.id] });
+        qc.invalidateQueries({ queryKey: ["nav-unread", user.id] });
       },
     );
     channel.subscribe();
