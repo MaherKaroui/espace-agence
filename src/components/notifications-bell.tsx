@@ -30,12 +30,13 @@ export function NotificationsBell() {
 
   useEffect(() => {
     if (!user) return;
-    const channel = supabase
-      .channel(`notif-${user.id}`)
-      .on("postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
-        () => qc.invalidateQueries({ queryKey: ["notifications", user.id] }))
-      .subscribe();
+    const channel = supabase.channel(`notif-${user.id}-${Math.random().toString(36).slice(2)}`);
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+      () => qc.invalidateQueries({ queryKey: ["notifications", user.id] }),
+    );
+    channel.subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, qc]);
 
