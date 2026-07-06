@@ -106,11 +106,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/admin/clients", label: "Clients de mes pôles", icon: Users },
     { to: "/admin/messages", label: "Messagerie clients", icon: MessageSquare },
     { to: "/admin/internal-messages", label: "Messagerie interne", icon: Users2 },
-    { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
   ];
   // Réservé Direction / Admin
   const directionNav = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
+    { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
     { to: "/admin/poles", label: "Pôles & équipes", icon: Users2 },
     { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
