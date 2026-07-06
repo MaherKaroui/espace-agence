@@ -429,27 +429,112 @@ function ContextPanel({ conversationId }: { conversationId: string }) {
       (await supabase.from("internal_conversations").select("*").eq("id", conversationId).maybeSingle()).data,
   });
 
+  const { data: members = [] } = useQuery({
+    queryKey: ["internal-conv-members-panel", conversationId],
+    queryFn: async () => {
+      const { data: mems } = await supabase
+        .from("internal_conversation_members")
+        .select("user_id, role")
+        .eq("conversation_id", conversationId);
+      const ids = ((mems ?? []) as any[]).map((r) => r.user_id);
+      if (ids.length === 0) return [];
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, email")
+        .in("id", ids);
+      const profById = new Map(((profs ?? []) as any[]).map((p) => [p.id, p]));
+      return ((mems ?? []) as any[]).map((m) => ({ ...m, profile: profById.get(m.user_id) }));
+    },
+  });
+
   if (!conv) {
-    return (
-      <Card className="p-4 text-xs text-muted-foreground">Chargement…</Card>
-    );
+    return <Card className="p-4 text-xs text-muted-foreground">Chargement…</Card>;
   }
 
   return (
     <Card className="flex flex-col overflow-hidden max-h-[calc(100vh-8rem)]">
       <div className="p-3 border-b">
-        <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Contexte</div>
+        <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+          Contexte
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
+        {/* Info générale */}
+        <div>
+          <div className="text-sm font-medium">{conv.titre ?? "Conversation"}</div>
+          {conv.description && (
+            <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{conv.description}</p>
+          )}
+          <div className="mt-2 flex flex-wrap gap-1 text-[10px]">
+            {conv.type && (
+              <Badge variant="outline" className="capitalize">
+                {conv.type === "channel" ? "Canal" :
+                 conv.type === "group" ? "Groupe" :
+                 conv.type === "announcement" ? "Annonces" :
+                 conv.type === "pole" ? "Pôle" :
+                 conv.type === "direct" ? "Direct" : conv.type}
+              </Badge>
+            )}
+            {conv.is_private && <Badge variant="outline">Privé</Badge>}
+            {conv.admin_only_posting && <Badge variant="outline">Admin uniquement</Badge>}
+          </div>
+          <div className="mt-2 text-[11px] text-muted-foreground">
+            Créée le {new Date(conv.created_at).toLocaleDateString("fr-FR")}
+          </div>
+        </div>
+
         {conv.type === "pole" && conv.pole_id && <PoleContext poleId={conv.pole_id} />}
-        {conv.type === "client" && conv.client_id && <ClientContext clientId={conv.client_id} />}
-        {conv.type === "dossier" && conv.dossier_id && <DossierContext dossierId={conv.dossier_id} />}
-        {conv.type === "task" && conv.task_id && <TaskContext taskId={conv.task_id} />}
-        {(conv.type === "direct" || conv.type === "custom") && (
-          <MembersContext conversationId={conversationId} />
-        )}
+
+        {/* Membres — toujours affichés */}
+        <div>
+          <SectionTitle icon={Users2} label={`Membres (${members.length})`} />
+          <div className="mt-1 space-y-0.5">
+            {(members as any[]).map((m: any) => {
+              const name =
+                `${m.profile?.prenom ?? ""} ${m.profile?.nom ?? ""}`.trim() ||
+                m.profile?.email ||
+                "Membre";
+              return (
+                <div key={m.user_id} className="text-sm flex items-center justify-between gap-2">
+                  <span className="truncate">{name}</span>
+                  {m.role === "owner" && <Badge variant="outline" className="text-[10px]">owner</Badge>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </Card>
+  );
+}
+
+function PoleContext({ poleId }: { poleId: string }) {
+  const { data: pole } = useQuery({
+    queryKey: ["ctx-pole", poleId],
+    queryFn: async () => (await supabase.from("poles").select("*").eq("id", poleId).maybeSingle()).data,
+  });
+  if (!pole) return null;
+  return (
+    <div>
+      <SectionTitle icon={Users} label="Pôle" />
+      <div className="mt-1 text-sm font-medium flex items-center gap-2">
+        {pole.couleur && (
+          <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: pole.couleur }} />
+        )}
+        {pole.nom}
+      </div>
+      {pole.description && (
+        <p className="text-xs text-muted-foreground mt-1">{pole.description}</p>
+      )}
+    </div>
+  );
+}
+
+function SectionTitle({ icon: Icon, label }: { icon: any; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+      <Icon className="h-3 w-3" /> {label}
+    </div>
   );
 }
 
