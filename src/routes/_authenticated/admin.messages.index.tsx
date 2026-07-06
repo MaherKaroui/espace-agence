@@ -6,6 +6,7 @@ import { User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePresence, PresenceAvatar, PresenceLabel } from "@/components/presence-indicator";
+import { mentionsToPlainText } from "@/lib/mentions";
 
 export const Route = createFileRoute("/_authenticated/admin/messages/")({
   head: () => ({ meta: [{ title: "Messagerie clients" }] }),
