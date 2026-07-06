@@ -2,6 +2,8 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, FolderOpen } from "lucide-react";
@@ -23,8 +25,23 @@ export const Route = createFileRoute("/_authenticated/admin/dossiers")({
 function AdminDossiers() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
+  const { user } = useAuth();
+  const { isDirectionOrAdmin } = useRole();
 
-  const { data: poles = [] } = useQuery({
+  const { data: myPoleIds = [] } = useQuery({
+    queryKey: ["my-pole-ids", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pole_members")
+        .select("pole_id")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return (data ?? []).map((r) => r.pole_id);
+    },
+  });
+
+  const { data: allPoles = [] } = useQuery({
     queryKey: ["admin-dossiers-poles"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -36,6 +53,11 @@ function AdminDossiers() {
       return data ?? [];
     },
   });
+
+  // Direction/Admin voient tous les pôles ; le reste du staff : uniquement leurs pôles.
+  const poles = isDirectionOrAdmin
+    ? allPoles
+    : allPoles.filter((p) => myPoleIds.includes(p.id));
 
   const { data: rows = [] } = useQuery({
     queryKey: ["admin-dossiers"],
