@@ -77,6 +77,7 @@ export function InternalConversationsSidebar({ activeId }: { activeId: string | 
       const { data: conversations } = await supabase
         .from("internal_conversations")
         .select("*")
+        .in("type", INTERNAL_TYPES as unknown as string[])
         .order("updated_at", { ascending: false });
       const ids = (conversations ?? []).map((c: any) => c.id);
       if (ids.length === 0) return [] as any[];
