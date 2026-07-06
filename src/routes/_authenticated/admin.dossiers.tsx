@@ -62,12 +62,26 @@ function AdminDossiers() {
   const { data: rows = [] } = useQuery({
     queryKey: ["admin-dossiers"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: dossiers, error } = await supabase
         .from("dossiers")
-        .select("*, profiles:client_id(nom,prenom,email)")
+        .select("*")
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const dossierRows = dossiers ?? [];
+      const clientIds = [...new Set(dossierRows.map((d: any) => d.client_id).filter(Boolean))];
+
+      if (clientIds.length === 0) return dossierRows;
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, nom, prenom, email")
+        .in("id", clientIds);
+
+      const profileById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+      return dossierRows.map((d: any) => ({
+        ...d,
+        profiles: profileById.get(d.client_id) ?? null,
+      }));
     },
   });
 
