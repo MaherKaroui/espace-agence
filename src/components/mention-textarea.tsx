@@ -198,6 +198,48 @@ export function MentionTextarea({
     ? "Écrire… @ pour une personne, # pour un client/dossier/tâche/pôle"
     : "Écrire… @ pour mentionner une personne";
 
+  // Aperçu des mentions présentes dans la saisie (badges lisibles + retrait 1 clic).
+  const mentionChips = useMemo(() => {
+    const segs = parseMentionSegments(value);
+    return segs
+      .filter((s) => s.kind !== "text")
+      .map((s, idx) => {
+        if (s.kind === "user") {
+          return {
+            key: `u-${idx}-${s.id}`,
+            token: `@[${s.label}](user:${s.id})`,
+            icon: User,
+            label: s.label,
+            prefix: "@",
+            tone: "bg-primary/10 text-primary border-primary/30",
+          };
+        }
+        const Icon = KIND_ICON[s.type];
+        return {
+          key: `e-${idx}-${s.type}-${s.id}`,
+          token: `#[${s.label}](${s.type}:${s.id})`,
+          icon: Icon,
+          label: s.label,
+          prefix: KIND_LABEL[s.type] + " :",
+          tone:
+            s.type === "client"
+              ? "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30"
+              : s.type === "dossier"
+              ? "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30"
+              : s.type === "task"
+              ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/30"
+              : "bg-purple-500/10 text-purple-800 dark:text-purple-300 border-purple-500/30",
+        };
+      });
+  }, [value]);
+
+  const removeMention = (token: string) => {
+    // Retire le token + un espace de séparation éventuel.
+    const re = new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s?", "g");
+    onChange(value.replace(re, ""));
+    requestAnimationFrame(() => ref.current?.focus());
+  };
+
   return (
     <div className="relative">
       {popover}
@@ -210,6 +252,36 @@ export function MentionTextarea({
         onKeyDown={onKeyDown}
         disabled={disabled}
       />
+      {mentionChips.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5" aria-label="Mentions dans ce message">
+          <span className="text-[11px] text-muted-foreground self-center">Vous mentionnez :</span>
+          {mentionChips.map((c) => {
+            const Icon = c.icon;
+            return (
+              <span
+                key={c.key}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
+                  c.tone,
+                )}
+              >
+                <Icon className="h-3 w-3" />
+                <span className="opacity-70">{c.prefix}</span>
+                <span className="truncate max-w-[160px]">{c.label}</span>
+                <button
+                  type="button"
+                  onClick={() => removeMention(c.token)}
+                  className="ml-0.5 opacity-60 hover:opacity-100"
+                  aria-label={`Retirer ${c.label}`}
+                  title="Retirer"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
