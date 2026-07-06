@@ -42,7 +42,9 @@ export const Route = createFileRoute("/_authenticated/dossiers/$id")({
 function DossierDetail() {
   const { id } = Route.useParams();
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  // Any agency staff (admin / direction / manager / consultant) sees the
+  // management UI. RLS restricts non-admins to dossiers in their poles.
+  const { isStaff: isAdmin } = useRole();
   const nav = useNavigate();
   const qc = useQueryClient();
   const fileInput = useRef<HTMLInputElement>(null);
