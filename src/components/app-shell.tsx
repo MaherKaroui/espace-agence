@@ -214,7 +214,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="h-9 w-9 rounded-lg bg-gold flex items-center justify-center">
             <ShieldCheck className="h-5 w-5 text-primary" />
           </div>
-          <span className="font-display text-lg">Espace Agence</span>
+          <span className="font-display text-lg">IZISuivis</span>
         </div>
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto"><NavList /></nav>
         <div className="p-3 border-t border-sidebar-border">
@@ -245,7 +245,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/95 backdrop-blur px-4 sm:px-6 h-16">
           <button aria-label="Ouvrir le menu" className="lg:hidden p-2" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
-          <div className="lg:hidden font-display">Espace Agence</div>
+          <div className="lg:hidden font-display">IZISuivis</div>
           <div className="hidden lg:block" />
           <div className="flex items-center gap-2">
             <NotificationsBell />
