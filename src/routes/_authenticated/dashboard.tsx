@@ -72,10 +72,10 @@ function Dashboard() {
   const activeDossiers = dossiers.filter((d) => !["termine", "annule"].includes(d.statut));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="font-display text-3xl">Bonjour 👋</h1>
-        <p className="text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
+        <h1 className="font-display text-2xl sm:text-3xl">Bonjour 👋</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
       </div>
 
       {!isAdmin && dossiers.length === 0 && (
@@ -115,11 +115,11 @@ function Dashboard() {
           <>
             {actionable.length > 0 && (
               <div>
-                <h2 className="font-display text-xl mb-3">À faire maintenant</h2>
+                <h2 className="font-display text-lg sm:text-xl mb-3">À faire maintenant</h2>
                 <div className="grid gap-2">
                   {actionable.slice(0, 4).map((d) => (
                     <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block">
-                      <div className="grid grid-cols-[1fr_auto] items-center gap-3">
+                      <div className="flex flex-col gap-1 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3">
                         <NextActionCard
                           categorie={d.categorie}
                           documents={allDocs.filter((doc) => doc.dossier_id === d.id) as any}
@@ -127,7 +127,7 @@ function Dashboard() {
                           dossierStatut={d.statut}
                           compact
                         />
-                        <span className="text-xs text-muted-foreground truncate max-w-[180px]">{d.titre}</span>
+                        <span className="text-xs text-muted-foreground truncate sm:max-w-[180px] pl-1 sm:pl-0">{d.titre}</span>
                       </div>
                     </Link>
                   ))}
@@ -136,7 +136,7 @@ function Dashboard() {
             )}
             {handled.length > 0 && (
               <div>
-                <h2 className="font-display text-xl mb-3">L'agence s'en occupe</h2>
+                <h2 className="font-display text-lg sm:text-xl mb-3">L'agence s'en occupe</h2>
                 <Card className="p-4 bg-muted/30">
                   <ul className="text-sm space-y-1">
                     {handled.map((d) => (
@@ -166,9 +166,9 @@ function Dashboard() {
 
 
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-xl">Dossiers récents</h2>
-          <Link to="/dossiers" className="text-sm text-primary hover:underline">Tout voir →</Link>
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <h2 className="font-display text-lg sm:text-xl">Dossiers récents</h2>
+          <Link to="/dossiers" className="text-sm text-primary hover:underline shrink-0">Tout voir →</Link>
         </div>
         {dossiers.length === 0 ? (
           <Card className="p-8 text-center">
@@ -181,9 +181,9 @@ function Dashboard() {
             {dossiers.slice(0, 5).map((d) => (
               <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}>
                 <Card className="p-4 hover:border-primary/40 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
                         <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
                         <StatusBadge statut={d.statut} />
                       </div>
@@ -192,8 +192,8 @@ function Dashboard() {
                         Mis à jour {formatDistanceToNow(new Date(d.updated_at), { addSuffix: true, locale: fr })}
                       </div>
                     </div>
-                    <div className="w-24 shrink-0">
-                      <div className="text-xs text-muted-foreground mb-1 text-right">{d.avancement}%</div>
+                    <div className="w-full sm:w-24 shrink-0">
+                      <div className="text-xs text-muted-foreground mb-1 sm:text-right">{d.avancement}%</div>
                       <Progress value={d.avancement} className="h-1.5" />
                     </div>
                   </div>
