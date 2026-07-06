@@ -57,7 +57,7 @@ function AdminDossiers() {
   // Direction/Admin voient tous les pôles ; le reste du staff : uniquement leurs pôles.
   const poles = isDirectionOrAdmin
     ? allPoles
-    : allPoles.filter((p) => myPoleIds.includes(p.id));
+    : allPoles.filter((p) => (myPoleIds ?? []).includes(p.id));
 
   const { data: rows = [] } = useQuery({
     queryKey: ["admin-dossiers"],
