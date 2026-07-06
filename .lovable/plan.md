@@ -1,101 +1,82 @@
-# Pilotage Direction — refonte complète
+# Système de gestion des tâches internes — Tableau de bord agence
 
-Objectif : transformer `/admin/direction` en vrai outil de pilotage quotidien exploitable par la direction, avec rapport détaillé par personne, contenu des messages, archives et exports.
+## Objectif
+Ajouter un vrai module de gestion des tâches internes à `/admin` (Vue agence) : création, priorités, assignation, échéances, notifications, RLS. Distinct des `taches` existantes (qui sont liées au workflow client d'un dossier).
 
-## 1. Base de données
+## 1. Base de données (migration)
 
-### Nouvelle table `daily_direction_reports`
-- `report_date` (unique)
-- `generated_by` (uuid → auth.users)
-- `summary_json` (KPIs globaux du jour)
-- `user_reports_json` (activité détaillée par utilisateur)
-- `pole_reports_json`, `client_reports_json`
-- `messages_count`, `documents_count`, `dossiers_modified_count`, `relances_count`, `active_users_count`
+### Nouveaux enums
+- `agency_task_priority` : `basse` | `normale` | `haute` | `urgente`
+- `agency_task_status` : `a_faire` | `en_cours` | `bloquee` | `terminee`
 
-RLS : SELECT + INSERT réservés à `admin` / `direction` (via `has_role`).
-GRANT SELECT, INSERT à `authenticated` ; ALL à `service_role`.
+### Table `agency_tasks`
+Champs métier : `title`, `description`, `priority` (défaut `normale`), `status` (défaut `a_faire`), `due_date`, `created_by`, `assigned_to`, `pole_id`, `client_id` (optionnel), `dossier_id` (optionnel), `attachment_path`, `attachment_name`, `internal_comment`, `completed_at`, `archived_at`.
 
-### RPC `generer_rapport_direction(_date date)`
-- SECURITY DEFINER, vérifie `has_role(auth.uid(), 'admin'|'direction')` sinon RAISE.
-- Agrège depuis `audit_logs`, `messages`, `internal_messages`, `group_messages`, `documents`, `dossiers`, `taches`, `client_notes`, `user_sessions` pour `_date`.
-- Regroupe par `user_id` : première/dernière activité, compteurs par type d'action, durée de session.
-- Regroupe par pôle et par client.
-- Upsert dans `daily_direction_reports` et renvoie l'id.
+### Table `agency_task_comments`
+`task_id`, `user_id`, `content`.
 
-### Nouveaux logs d'audit manquants
-Ajouter des inserts `log_event(...)` pour les actions actuellement non tracées :
-- `dossier.viewed` (côté client sur ouverture — via server fn dédié)
-- `dossier.updated` / `dossier.status_changed` (triggers sur `dossiers`)
-- `document.validated` / `document.rejected` (trigger sur update `documents.statut`)
-- `client_note.added` (trigger sur insert `client_notes`)
-- `rendezvous.created` / `rendezvous.updated` (trigger sur `rendez_vous`)
-- `user.session_started` (déjà via `session_start`, ajouter un log)
+### Type de notification
+Ajouter `agency_task` à l'enum `notification_type`.
 
-## 2. Backend — server functions
+### Grants + RLS (règles)
+- **Voir** : admin/direction voient tout. Manager/consultant voient les tâches de leurs pôles OU assignées à eux OU créées par eux. Client : rien.
+- **Créer** : admin/direction partout. Manager uniquement dans ses pôles.
+- **Modifier** : admin/direction, créateur, assigné, ou membre du pôle (manager).
+- **Archiver/supprimer définitivement** : admin/direction uniquement.
+- **Commentaires** : lisibles/écrits par qui peut voir la tâche.
 
-`src/lib/direction-report.functions.ts` protégé par `requireSupabaseAuth` + check role admin/direction :
-- `generateDailyReport({ date })` → appelle la RPC, renvoie le rapport.
-- `getReport({ date })` → lit `daily_direction_reports`.
-- `listReports({ from, to })` → liste archivée.
-- `getUserActivityDetail({ date, userId })` → timeline chronologique depuis `audit_logs` + jointures pour enrichir (titre dossier, nom client, contenu message).
-- `getMessagesForDay({ date, userId?, type? })` → messages/internal/group avec auteur, destinataire, dossier, contenu, pièces jointes.
-- `exportReportCSV({ date })` / `exportReportPDF({ date })` → renvoient string CSV / buffer PDF.
+### Triggers
+- `updated_at` auto.
+- Notification à l'assigné à la création/réassignation (type `agency_task`, lien `/admin/taches-agence`).
+- Audit log : `agency_task.created`, `.updated`, `.status_changed`, `.completed`, `.archived`.
+- `completed_at` auto à la transition vers `terminee`.
 
-Toutes ces fonctions vérifient le rôle en début de handler.
+## 2. Backend server functions
+`src/lib/agency-tasks.functions.ts` (protégées `requireSupabaseAuth`) :
+- `listAgencyTasks` (filtres : bucket, priority, status, assigned_to, pole_id)
+- `createAgencyTask`
+- `updateAgencyTask` (statut, priorité, assigné, échéance, contenu)
+- `archiveAgencyTask`
+- `addTaskComment` / `listTaskComments`
+- `getAgencyTaskKpis` (compteurs jour/urgentes/retard/terminées semaine, par collaborateur, par pôle)
 
-## 3. Frontend — `/admin/direction`
+Le RLS fait le vrai gardiennage ; les server fns exposent juste les requêtes typées.
 
-Refonte de la page en onglets :
+## 3. UI
 
-**Onglet "Aujourd'hui"**
-- Bandeau KPIs : actions totales, messages, documents, dossiers modifiés, relances, clients actifs, staff actif, tâches en retard, alertes.
-- Graphiques : activité par heure (barres), activité par pôle, activité par collaborateur, dossiers par statut, docs déposés/validés/refusés.
-- Top clients actifs, dossiers bloqués/en retard.
-- Bouton **"Générer le rapport du jour"** fonctionnel (invalide les queries et affiche le rapport).
+### `/admin` (Vue agence) — ajouts
+- 4 nouvelles cartes KPI : Aujourd'hui · Urgentes · En retard · Terminées cette semaine.
+- Nouveau bloc **« Priorités du jour »** : tableau trié (urgente+retard > urgente > haute > échéance proche > normale > basse), badge couleur priorité (rouge/orange/bleu/gris), badge statut, personne assignée, pôle, échéance. Actions rapides : changer statut, ouvrir détail.
+- Bouton **« Créer une tâche »** (admin/direction/manager) → dialog.
 
-**Onglet "Rapport par personne"**
-- Tableau des utilisateurs actifs du jour : nom, rôle, pôle, 1re activité, dernière activité, #actions, #messages, #docs, #dossiers consultés/modifiés, #relances, #notes, temps de connexion.
-- Bouton "Voir le détail" → dialog avec timeline chronologique (heure + action + contexte : dossier/client/message).
+### Nouvelle route `/admin/taches-agence`
+Vue complète avec onglets : Urgentes · Aujourd'hui · En retard · Mes tâches · Mon équipe · Terminées · Archivées. Filtres pôle / assigné / priorité / statut. Tableau + drawer détail (commentaires, historique, actions).
 
-**Onglet "Messages du jour"**
-- Liste unifiée messages client / interne / groupe avec auteur, destinataire, type, date, dossier lié, contenu, pièces jointes.
-- Filtres : utilisateur, type.
+### Composants
+- `agency-task-badge.tsx` (priorité + statut, couleurs sémantiques via tokens)
+- `agency-task-form-dialog.tsx` (création/édition)
+- `agency-task-detail-drawer.tsx` (détail + commentaires + actions)
+- `agency-tasks-priority-board.tsx` (bloc dashboard)
 
-**Onglet "Rapports archivés"**
-- Liste des rapports (date, généré par, #actions, #personnes actives).
-- Boutons Voir / Export CSV / Export PDF.
+### Navigation
+Ajouter « Tâches agence » dans `staffNav` (visible manager+, badge nombre à faire assignées à moi).
 
-**Filtres globaux** en haut : date, pôle, utilisateur, rôle, type d'action, client, dossier.
+## 4. Notifications
+- À la création avec `assigned_to` : row dans `notifications` (type `agency_task`, lien vers la route).
+- À la réassignation : notif au nouvel assigné.
+- Badge sur l'entrée de nav utilise le count via `notifications` (déjà géré par `app-shell`).
+- Alerte visuelle « en retard » calculée côté client (`due_date < now()` et statut non terminé).
 
-## 4. Sécurité
+## 5. Sécurité
+- RLS strictes basées sur `has_role` + `is_pole_member` (déjà existants).
+- Tous les server fns passent par `requireSupabaseAuth`.
+- Client : aucune policy ne les inclut → tables invisibles.
+- Attachements : réutiliser le bucket `documents` avec un préfixe `agency-tasks/<task_id>/`.
 
-- Gate route `beforeLoad` : redirect si pas admin/direction (déjà partiellement fait).
-- Toutes les server functions revérifient le rôle.
-- RLS sur `daily_direction_reports` scopée à admin/direction via `has_role`.
-- Aucune donnée sensible (contenu messages) ne transite hors des server functions autorisées.
+## 6. Détails techniques
+- Enum `notification_type` étendu via `ALTER TYPE ... ADD VALUE` dans migration.
+- Index : `(assigned_to, status)`, `(pole_id, status)`, `(due_date) WHERE archived_at IS NULL`.
+- Tri « priorité du jour » côté SQL via CASE.
 
-## 5. Exports
-
-- CSV : construit côté server function, retourné en string, téléchargé côté client via Blob.
-- PDF : utiliser `pdf-lib` (compatible Worker) pour générer un PDF simple listant KPIs, tableau par personne, messages. Retour base64.
-
-## 6. Fichiers touchés
-
-**Migrations**
-- `create_daily_direction_reports.sql` (table + RLS + RPC `generer_rapport_direction` + triggers audit manquants).
-
-**Backend**
-- `src/lib/direction-report.functions.ts` (nouveau).
-
-**Frontend**
-- `src/routes/_authenticated/admin.direction.tsx` (refonte complète).
-- `src/components/direction/` : `KpiGrid.tsx`, `UserActivityTable.tsx`, `UserTimelineDialog.tsx`, `MessagesLog.tsx`, `ReportsArchive.tsx`, `DirectionFilters.tsx`.
-
-## Notes techniques
-
-- Timezone : tout calcul quotidien en `Europe/Paris` (tronqué à la date locale).
-- Performance : indexer `audit_logs(user_id, created_at)` et `audit_logs(action, created_at)` si absent.
-- Le rapport JSON garde tout : pas besoin de rejouer les jointures pour l'affichage archivé.
-- Refetch en temps réel toutes les 30s uniquement sur les KPIs live (pas sur le rapport archivé).
-
-Attention : je veux un vrai pilotage direction exploitable, pas seulement des statistiques simples.
+## Critères de validation
+Admin crée/assigne une tâche, elle apparaît chez l'assigné, priorités colorées, tâches urgentes/retard en tête, RLS bloque les non-autorisés, notifications reçues, workflow jusqu'à `terminee` fonctionne, archivage OK.
