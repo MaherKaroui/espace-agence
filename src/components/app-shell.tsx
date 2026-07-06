@@ -74,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user || unreadRows.length === 0) return;
     const path = location.pathname;
-    const sections = ["/admin/dossiers", "/admin/messages", "/admin/rendez-vous", "/dossiers", "/messages/groupes", "/messages", "/rendez-vous", "/notifications"];
+    const sections = ["/admin/dossiers", "/admin/messages", "/admin/internal-messages", "/admin/rendez-vous", "/dossiers", "/messages/groupes", "/messages", "/rendez-vous", "/notifications"];
     const section = sections.find((s) => path === s || path.startsWith(s + "/"));
     if (!section) return;
     const ids = unreadRows.filter((r) => matchesSection(r, section)).map((r) => r.id);
