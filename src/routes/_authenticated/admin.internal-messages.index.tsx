@@ -158,10 +158,9 @@ export function InternalConversationsSidebar({ activeId }: { activeId: string | 
     { key: "unread", label: "Non lus", icon: MessageSquare, items: filtered.filter((c: any) => c.unread && !c.favorite) },
     { key: "direct", label: "Messages directs", icon: Users2, items: filtered.filter((c: any) => c.type === "direct" && !c.favorite && !c.unread) },
     { key: "pole", label: "Pôles", icon: Users, items: filtered.filter((c: any) => c.type === "pole" && !c.favorite && !c.unread) },
-    { key: "client", label: "Clients", icon: Building2, items: filtered.filter((c: any) => c.type === "client" && !c.favorite && !c.unread) },
-    { key: "dossier", label: "Dossiers", icon: FolderOpen, items: filtered.filter((c: any) => c.type === "dossier" && !c.favorite && !c.unread) },
-    { key: "task", label: "Tâches", icon: ClipboardCheck, items: filtered.filter((c: any) => c.type === "task" && !c.favorite && !c.unread) },
-    { key: "custom", label: "Autres", icon: MessageSquare, items: filtered.filter((c: any) => c.type === "custom" && !c.favorite && !c.unread) },
+    { key: "channel", label: "Canaux", icon: Hash, items: filtered.filter((c: any) => c.type === "channel" && !c.favorite && !c.unread) },
+    { key: "group", label: "Groupes internes", icon: Users2, items: filtered.filter((c: any) => (c.type === "group" || c.type === "custom") && !c.favorite && !c.unread) },
+    { key: "announcement", label: "Annonces", icon: Megaphone, items: filtered.filter((c: any) => c.type === "announcement" && !c.favorite && !c.unread) },
   ].filter((g) => g.items.length > 0);
 
   const totalUnread = convs.filter((c: any) => c.unread).length;
