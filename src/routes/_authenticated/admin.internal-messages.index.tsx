@@ -1,5 +1,5 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,13 +9,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Users2, Plus, MessageSquare } from "lucide-react";
+import {
+  Users2, Plus, MessageSquare, Star, Building2, FolderOpen, ClipboardCheck, Users, Search, Archive,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { createInternalConversation, listAllowedInternalContacts } from "@/lib/internal-messages.functions";
+import {
+  createInternalConversation,
+  listAllowedInternalContacts,
+  openContextConversation,
+} from "@/lib/internal-messages.functions";
 import { roleLabelFr } from "@/lib/role-labels";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/internal-messages/")({
   head: () => ({ meta: [{ title: "Messagerie interne" }] }),
@@ -30,98 +40,283 @@ export const Route = createFileRoute("/_authenticated/admin/internal-messages/")
 });
 
 function InternalMessagesIndex() {
-  const { user } = useAuth();
-
-  // Conversations dont je suis membre — RLS s'en assure côté serveur
-  const { data: convs = [] } = useQuery({
-    queryKey: ["internal-conversations", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data: memberships } = await supabase
-        .from("internal_conversation_members")
-        .select("conversation_id, last_read_at")
-        .eq("user_id", user!.id);
-      const ids = (memberships ?? []).map((m: any) => m.conversation_id);
-      if (ids.length === 0) return [];
-      const { data: conversations } = await supabase
-        .from("internal_conversations")
-        .select("*")
-        .in("id", ids)
-        .order("updated_at", { ascending: false });
-      const { data: allMembers } = await supabase
-        .from("internal_conversation_members")
-        .select("conversation_id, user_id")
-        .in("conversation_id", ids);
-      const memberIds = Array.from(new Set((allMembers ?? []).map((m: any) => m.user_id)));
-      const { data: profiles } = memberIds.length
-        ? await supabase.from("profiles").select("id, prenom, nom, email").in("id", memberIds)
-        : { data: [] as any[] };
-      const profById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
-      return (conversations ?? []).map((c: any) => {
-        const others = (allMembers ?? [])
-          .filter((m: any) => m.conversation_id === c.id && m.user_id !== user!.id)
-          .map((m: any) => profById.get(m.user_id))
-          .filter(Boolean);
-        return { ...c, others };
-      });
-    },
-  });
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4 min-h-[calc(100vh-8rem)]">
+      <InternalConversationsSidebar activeId={null} />
+      <Card className="hidden md:flex items-center justify-center p-10 text-center text-sm text-muted-foreground">
         <div>
-          <h1 className="font-display text-3xl">Messagerie interne</h1>
-          <p className="text-muted-foreground mt-1">Conversations privées entre membres de l'agence.</p>
+          <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-60" />
+          <p>Sélectionnez une conversation à gauche, ou démarrez-en une nouvelle.</p>
+          <p className="mt-1 text-xs">Vous pouvez aussi ouvrir une discussion depuis un client, un dossier, une tâche ou un pôle.</p>
         </div>
-        <NewInternalConversationDialog />
-      </div>
-
-      {convs.length === 0 ? (
-        <Card className="p-10 text-center text-muted-foreground text-sm">
-          <MessageSquare className="h-6 w-6 mx-auto mb-2 opacity-60" />
-          Aucune conversation. Créez-en une avec un membre de vos pôles ou avec la direction.
-        </Card>
-      ) : (
-        <Card className="divide-y">
-          {convs.map((c: any) => (
-            <Link
-              key={c.id}
-              to="/admin/internal-messages/$id"
-              params={{ id: c.id }}
-              className="flex items-center gap-3 p-4 hover:bg-muted/30"
-            >
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Users2 className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium truncate">
-                  {c.titre ||
-                    (c.others.length > 0
-                      ? c.others.map((o: any) => `${o.prenom ?? ""} ${o.nom ?? ""}`.trim() || o.email).join(", ")
-                      : "Conversation")}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {c.is_group ? "Groupe" : "Discussion directe"} · {c.others.length} participant{c.others.length > 1 ? "s" : ""}
-                </div>
-              </div>
-              {c.updated_at && (
-                <div className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(c.updated_at), { addSuffix: true, locale: fr })}
-                </div>
-              )}
-            </Link>
-          ))}
-        </Card>
-      )}
+      </Card>
     </div>
   );
 }
 
+// -------- Sidebar réutilisée par les 2 routes --------
+
+export function InternalConversationsSidebar({ activeId }: { activeId: string | null }) {
+  const { user } = useAuth();
+  const [q, setQ] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
+
+  const { data: convs = [], isLoading } = useQuery({
+    queryKey: ["internal-conversations-full", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      // Toutes les conversations que je peux voir (RLS étendu)
+      const { data: conversations } = await supabase
+        .from("internal_conversations")
+        .select("*")
+        .order("updated_at", { ascending: false });
+      const ids = (conversations ?? []).map((c: any) => c.id);
+      if (ids.length === 0) return [] as any[];
+
+      const [{ data: myMemberships }, { data: allMembers }, { data: lastMsgs }] = await Promise.all([
+        supabase
+          .from("internal_conversation_members")
+          .select("conversation_id, last_read_at, favorite, muted")
+          .eq("user_id", user!.id)
+          .in("conversation_id", ids),
+        supabase
+          .from("internal_conversation_members")
+          .select("conversation_id, user_id, role")
+          .in("conversation_id", ids),
+        supabase
+          .from("internal_messages")
+          .select("conversation_id, content, sender_id, created_at, attachment_name")
+          .in("conversation_id", ids)
+          .order("created_at", { ascending: false })
+          .limit(500),
+      ]);
+
+      const memberIds = Array.from(new Set(((allMembers ?? []) as any[]).map((m) => m.user_id)));
+      const { data: profiles } = memberIds.length
+        ? await supabase.from("profiles").select("id, prenom, nom, email").in("id", memberIds)
+        : { data: [] as any[] };
+      const profById = new Map(((profiles ?? []) as any[]).map((p) => [p.id, p]));
+
+      const mineById = new Map(
+        ((myMemberships ?? []) as any[]).map((m) => [m.conversation_id, m]),
+      );
+      const lastByConv = new Map<string, any>();
+      for (const m of (lastMsgs ?? []) as any[]) {
+        if (!lastByConv.has(m.conversation_id)) lastByConv.set(m.conversation_id, m);
+      }
+
+      return (conversations ?? []).map((c: any) => {
+        const membersOfConv = ((allMembers ?? []) as any[])
+          .filter((m) => m.conversation_id === c.id)
+          .map((m) => ({ ...m, profile: profById.get(m.user_id) }));
+        const others = membersOfConv.filter((m) => m.user_id !== user!.id);
+        const mine = mineById.get(c.id);
+        const lastMsg = lastByConv.get(c.id);
+        const lastAt = lastMsg?.created_at ?? c.updated_at;
+        const unread =
+          lastMsg &&
+          lastMsg.sender_id !== user!.id &&
+          (!mine?.last_read_at || new Date(lastMsg.created_at) > new Date(mine.last_read_at));
+        return {
+          ...c,
+          others,
+          members: membersOfConv,
+          lastMsg,
+          lastAt,
+          unread: !!unread,
+          favorite: !!mine?.favorite,
+          muted: !!mine?.muted,
+          isMember: !!mine,
+        };
+      });
+    },
+  });
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return convs.filter((c: any) => {
+      if (!showArchived && c.archived_at) return false;
+      if (showArchived && !c.archived_at) return false;
+      if (!term) return true;
+      const membersStr = c.others
+        .map((o: any) => `${o.profile?.prenom ?? ""} ${o.profile?.nom ?? ""} ${o.profile?.email ?? ""}`)
+        .join(" ");
+      return (`${c.titre ?? ""} ${membersStr}`).toLowerCase().includes(term);
+    });
+  }, [convs, q, showArchived]);
+
+  const groups: { key: string; label: string; icon: any; items: any[] }[] = [
+    { key: "fav", label: "Favoris", icon: Star, items: filtered.filter((c: any) => c.favorite) },
+    { key: "unread", label: "Non lus", icon: MessageSquare, items: filtered.filter((c: any) => c.unread && !c.favorite) },
+    { key: "direct", label: "Messages directs", icon: Users2, items: filtered.filter((c: any) => c.type === "direct" && !c.favorite && !c.unread) },
+    { key: "pole", label: "Pôles", icon: Users, items: filtered.filter((c: any) => c.type === "pole" && !c.favorite && !c.unread) },
+    { key: "client", label: "Clients", icon: Building2, items: filtered.filter((c: any) => c.type === "client" && !c.favorite && !c.unread) },
+    { key: "dossier", label: "Dossiers", icon: FolderOpen, items: filtered.filter((c: any) => c.type === "dossier" && !c.favorite && !c.unread) },
+    { key: "task", label: "Tâches", icon: ClipboardCheck, items: filtered.filter((c: any) => c.type === "task" && !c.favorite && !c.unread) },
+    { key: "custom", label: "Autres", icon: MessageSquare, items: filtered.filter((c: any) => c.type === "custom" && !c.favorite && !c.unread) },
+  ].filter((g) => g.items.length > 0);
+
+  const totalUnread = convs.filter((c: any) => c.unread).length;
+
+  return (
+    <Card className="flex flex-col overflow-hidden max-h-[calc(100vh-8rem)]">
+      <div className="p-3 border-b space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h1 className="font-display text-lg leading-tight">Messagerie interne</h1>
+            <p className="text-xs text-muted-foreground">
+              {convs.length} conversation{convs.length > 1 ? "s" : ""}
+              {totalUnread > 0 && (
+                <> · <span className="text-primary font-medium">{totalUnread} non lu{totalUnread > 1 ? "s" : ""}</span></>
+              )}
+            </p>
+          </div>
+          <NewInternalConversationDialog />
+        </div>
+        <div className="relative">
+          <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
+          <Input
+            className="pl-8 h-9"
+            placeholder="Rechercher…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-1 text-xs">
+          <button
+            type="button"
+            onClick={() => setShowArchived(false)}
+            className={cn(
+              "px-2 py-1 rounded-md",
+              !showArchived ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50",
+            )}
+          >
+            Actives
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowArchived(true)}
+            className={cn(
+              "px-2 py-1 rounded-md inline-flex items-center gap-1",
+              showArchived ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50",
+            )}
+          >
+            <Archive className="h-3 w-3" /> Archivées
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {isLoading && (
+          <p className="p-4 text-xs text-muted-foreground">Chargement…</p>
+        )}
+        {!isLoading && filtered.length === 0 && (
+          <div className="p-6 text-center text-xs text-muted-foreground">
+            <MessageSquare className="h-5 w-5 mx-auto mb-2 opacity-60" />
+            {showArchived ? "Aucune conversation archivée." : "Aucune conversation. Créez-en une ou ouvrez-en depuis un client, dossier ou tâche."}
+          </div>
+        )}
+        {groups.map((g) => (
+          <div key={g.key}>
+            <div className="px-3 pt-3 pb-1 text-[11px] uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
+              <g.icon className="h-3 w-3" /> {g.label}
+              <span className="ml-1 text-muted-foreground/70">{g.items.length}</span>
+            </div>
+            <ul>
+              {g.items.map((c: any) => (
+                <ConversationRow key={c.id} conv={c} activeId={activeId} currentUserId={user?.id ?? null} />
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function ConversationRow({
+  conv, activeId, currentUserId,
+}: { conv: any; activeId: string | null; currentUserId: string | null }) {
+  const isActive = conv.id === activeId;
+  const title = conversationDisplayTitle(conv, currentUserId);
+  const preview = conv.lastMsg?.content
+    ? conv.lastMsg.content
+    : conv.lastMsg?.attachment_name
+    ? `📎 ${conv.lastMsg.attachment_name}`
+    : "Aucun message";
+
+  return (
+    <li>
+      <Link
+        to="/admin/internal-messages/$id"
+        params={{ id: conv.id }}
+        className={cn(
+          "flex items-start gap-2.5 px-3 py-2.5 border-b last:border-b-0 hover:bg-muted/40 transition-colors",
+          isActive && "bg-primary/5 border-l-2 border-l-primary",
+        )}
+      >
+        <ConversationAvatar conv={conv} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <div className={cn("text-sm truncate", conv.unread ? "font-semibold" : "font-medium")}>
+              {title}
+            </div>
+            {conv.favorite && <Star className="h-3 w-3 fill-warning text-warning shrink-0" />}
+          </div>
+          <div className="text-xs text-muted-foreground truncate">{preview}</div>
+        </div>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          {conv.lastAt && (
+            <div className="text-[10px] text-muted-foreground">
+              {formatDistanceToNow(new Date(conv.lastAt), { addSuffix: true, locale: fr })}
+            </div>
+          )}
+          {conv.unread && <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />}
+        </div>
+      </Link>
+    </li>
+  );
+}
+
+function ConversationAvatar({ conv }: { conv: any }) {
+  const map: Record<string, { icon: any; cls: string }> = {
+    pole: { icon: Users, cls: "bg-gold/15 text-gold" },
+    client: { icon: Building2, cls: "bg-blue-500/15 text-blue-600 dark:text-blue-400" },
+    dossier: { icon: FolderOpen, cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
+    task: { icon: ClipboardCheck, cls: "bg-warning/15 text-warning-foreground" },
+    direct: { icon: Users2, cls: "bg-primary/10 text-primary" },
+    custom: { icon: MessageSquare, cls: "bg-muted text-muted-foreground" },
+  };
+  const spec = map[conv.type] ?? map.custom;
+  const Icon = spec.icon;
+  return (
+    <div className={cn("h-9 w-9 rounded-full flex items-center justify-center shrink-0", spec.cls)}>
+      <Icon className="h-4 w-4" />
+    </div>
+  );
+}
+
+export function conversationDisplayTitle(conv: any, currentUserId: string | null): string {
+  if (conv.titre) return conv.titre;
+  const others = (conv.others ?? []).filter((m: any) => m.user_id !== currentUserId);
+  if (others.length > 0) {
+    return others
+      .map((o: any) =>
+        `${o.profile?.prenom ?? ""} ${o.profile?.nom ?? ""}`.trim() || o.profile?.email || "Membre",
+      )
+      .join(", ");
+  }
+  return "Conversation";
+}
+
+// -------- Boîte de dialogue "Nouvelle conversation directe" --------
+
 function NewInternalConversationDialog() {
   const qc = useQueryClient();
+  const nav = useNavigate();
   const createFn = useServerFn(createInternalConversation);
   const listFn = useServerFn(listAllowedInternalContacts);
+  const openContextFn = useServerFn(openContextConversation);
   const [open, setOpen] = useState(false);
   const [titre, setTitre] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -133,6 +328,15 @@ function NewInternalConversationDialog() {
     queryFn: async () => (await listFn()) as any[],
   });
 
+  const { data: poles = [] } = useQuery({
+    queryKey: ["poles-for-int-msg"],
+    enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase.from("poles").select("id, nom, couleur, actif").eq("actif", true).order("nom");
+      return data ?? [];
+    },
+  });
+
   const filtered = contacts.filter((c: any) => {
     const s = `${c.prenom} ${c.nom} ${c.email}`.toLowerCase();
     return s.includes(q.toLowerCase());
@@ -140,15 +344,24 @@ function NewInternalConversationDialog() {
 
   const create = useMutation({
     mutationFn: async () =>
-      createFn({
-        data: { memberIds: Array.from(selected), titre: titre || undefined },
-      }),
-    onSuccess: () => {
+      createFn({ data: { memberIds: Array.from(selected), titre: titre || undefined } }),
+    onSuccess: ({ id }) => {
       toast.success("Conversation créée");
       setOpen(false);
       setSelected(new Set());
       setTitre("");
-      qc.invalidateQueries({ queryKey: ["internal-conversations"] });
+      qc.invalidateQueries({ queryKey: ["internal-conversations-full"] });
+      nav({ to: "/admin/internal-messages/$id", params: { id } });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erreur"),
+  });
+
+  const openPole = useMutation({
+    mutationFn: (poleId: string) => openContextFn({ data: { type: "pole", entityId: poleId } }),
+    onSuccess: ({ id }) => {
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["internal-conversations-full"] });
+      nav({ to: "/admin/internal-messages/$id", params: { id } });
     },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
@@ -156,8 +369,7 @@ function NewInternalConversationDialog() {
   const toggle = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
@@ -165,49 +377,74 @@ function NewInternalConversationDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="h-4 w-4 mr-2" /> Nouvelle conversation
+        <Button size="sm" className="gap-1">
+          <Plus className="h-4 w-4" /> Nouvelle
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Nouvelle conversation interne</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <Label htmlFor="int-titre">Titre (optionnel — utile pour un groupe)</Label>
-            <Input id="int-titre" value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Ex. Coordination BPF" />
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Ouvrir un canal de pôle</Label>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {poles.map((p: any) => (
+                <Button
+                  key={p.id}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openPole.mutate(p.id)}
+                  disabled={openPole.isPending}
+                  className="h-8"
+                >
+                  <span className="inline-block h-2 w-2 rounded-full mr-2" style={{ backgroundColor: p.couleur }} />
+                  {p.nom}
+                </Button>
+              ))}
+              {poles.length === 0 && (
+                <span className="text-xs text-muted-foreground">Aucun pôle actif accessible.</span>
+              )}
+            </div>
           </div>
-          <div>
-            <Label>Membres</Label>
-            <Input placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} className="mb-2" />
-            <div className="max-h-72 overflow-y-auto rounded-md border divide-y">
-              {filtered.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground text-center">Aucun contact disponible dans vos pôles.</div>
-              ) : (
-                filtered.map((c: any) => {
-                  const label = `${c.prenom ?? ""} ${c.nom ?? ""}`.trim() || c.email;
-                  const roleTags = (c.roles as string[]).map(roleLabelFr).join(", ");
-                  return (
-                    <label key={c.id} className="flex items-center gap-3 p-2 hover:bg-muted/30 cursor-pointer">
-                      <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggle(c.id)} />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{label}</div>
-                        <div className="text-xs text-muted-foreground truncate">{roleTags || c.email}</div>
-                      </div>
-                    </label>
-                  );
-                })
+
+          <div className="pt-2 border-t">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              Ou démarrer une discussion directe / groupe
+            </Label>
+            <div className="mt-2 space-y-2">
+              <Input value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Titre (optionnel — utile pour un groupe)" />
+              <Input placeholder="Rechercher un contact…" value={q} onChange={(e) => setQ(e.target.value)} />
+              <div className="max-h-60 overflow-y-auto rounded-md border divide-y">
+                {filtered.length === 0 ? (
+                  <div className="p-4 text-sm text-muted-foreground text-center">Aucun contact disponible.</div>
+                ) : (
+                  filtered.map((c: any) => {
+                    const label = `${c.prenom ?? ""} ${c.nom ?? ""}`.trim() || c.email;
+                    const roleTags = (c.roles as string[]).map(roleLabelFr).join(", ");
+                    return (
+                      <label key={c.id} className="flex items-center gap-3 p-2 hover:bg-muted/30 cursor-pointer">
+                        <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggle(c.id)} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{label}</div>
+                          <div className="text-xs text-muted-foreground truncate">{roleTags || c.email}</div>
+                        </div>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+              {selected.size > 0 && (
+                <Badge variant="secondary">
+                  {selected.size} personne{selected.size > 1 ? "s" : ""} sélectionnée{selected.size > 1 ? "s" : ""}
+                </Badge>
               )}
             </div>
           </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>Annuler</Button>
-          <Button
-            onClick={() => create.mutate()}
-            disabled={selected.size === 0 || create.isPending}
-          >
+          <Button onClick={() => create.mutate()} disabled={selected.size === 0 || create.isPending}>
             {create.isPending ? "Création…" : "Créer la conversation"}
           </Button>
         </DialogFooter>
