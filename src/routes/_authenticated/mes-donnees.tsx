@@ -16,7 +16,7 @@ import { LEGAL_LABELS } from "@/lib/legal-versions";
 import { ShieldAlert, User as UserIcon, FileText, Loader2, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/mes-donnees")({
-  head: () => ({ meta: [{ title: "Mes données — Espace Client" }] }),
+  head: () => ({ meta: [{ title: "Mes données — IZISuivis" }] }),
   component: MesDonneesPage,
 });
 

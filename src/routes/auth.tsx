@@ -14,7 +14,7 @@ import { ShieldCheck, Loader2 } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Connexion — Espace Client" },
+      { title: "Connexion — IZISuivis" },
       { name: "description", content: "Connectez-vous ou créez votre compte pour accéder à votre espace client." },
     ],
   }),
