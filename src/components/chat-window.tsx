@@ -17,6 +17,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
+import { MentionTextarea } from "@/components/mention-textarea";
+import { RichMessageContent } from "@/components/rich-message-content";
 
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
