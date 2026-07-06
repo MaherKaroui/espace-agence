@@ -265,22 +265,31 @@ export function GroupChatWindow({
         />
 
 
-        <form onSubmit={submit} className="p-2 sm:p-3 border-t flex gap-1.5 sm:gap-2 items-end bg-background">
+        <form onSubmit={submit} className="p-2 sm:p-3 border-t flex gap-1.5 sm:gap-2 items-end bg-background sticky bottom-0">
           <input ref={fileInput} type="file" hidden multiple onChange={handleFile} />
-          <Button type="button" size="icon" variant="ghost" onClick={() => fileInput.current?.click()} disabled={recording}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => fileInput.current?.click()}
+            disabled={recording}
+            className="h-11 min-w-11 px-2 gap-1 shrink-0"
+            aria-label="Joindre un fichier"
+          >
             <Paperclip className="h-5 w-5" />
+            <span className="hidden sm:inline text-xs">Fichier</span>
           </Button>
           {recording ? (
             <>
-              <div className="flex-1 flex items-center gap-2 px-3 h-9 rounded-md border bg-red-500/10 text-red-600 text-sm">
+              <div className="flex-1 flex items-center gap-2 px-3 h-11 rounded-md border bg-red-500/10 text-red-600 text-sm">
                 <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                 Enregistrement… {String(Math.floor(recordSecs / 60)).padStart(2, "0")}:{String(recordSecs % 60).padStart(2, "0")}
               </div>
-              <Button type="button" size="icon" variant="ghost" onClick={() => stopRecording(true)}>
-                <X className="h-4 w-4" />
+              <Button type="button" variant="ghost" onClick={() => stopRecording(true)} className="h-11 min-w-11 shrink-0" aria-label="Annuler">
+                <X className="h-5 w-5" />
               </Button>
-              <Button type="button" size="icon" onClick={() => stopRecording(false)}>
-                <Send className="h-4 w-4" />
+              <Button type="button" onClick={() => stopRecording(false)} className="h-11 min-w-11 gap-1 shrink-0" aria-label="Envoyer le vocal">
+                <Send className="h-5 w-5" />
+                <span className="hidden sm:inline">Envoyer</span>
               </Button>
             </>
           ) : (
@@ -296,15 +305,20 @@ export function GroupChatWindow({
               </div>
 
               {text.trim() ? (
-                <Button type="submit" size="icon" disabled={send.isPending}><Send className="h-4 w-4" /></Button>
+                <Button type="submit" disabled={send.isPending} className="h-11 min-w-11 gap-1 shrink-0" aria-label="Envoyer">
+                  <Send className="h-5 w-5" />
+                  <span className="hidden sm:inline">Envoyer</span>
+                </Button>
               ) : (
-                <Button type="button" size="icon" variant="ghost" onClick={startRecording}>
+                <Button type="button" variant="ghost" onClick={startRecording} className="h-11 min-w-11 gap-1 shrink-0" aria-label="Message vocal">
                   <Mic className="h-5 w-5" />
+                  <span className="hidden sm:inline text-xs">Vocal</span>
                 </Button>
               )}
             </>
           )}
         </form>
+
       </Card>
     </div>
   );
