@@ -27,6 +27,11 @@ import { categorieLabel } from "@/lib/labels";
 import { MentionTextarea } from "@/components/mention-textarea";
 import { RichMessageContent } from "@/components/rich-message-content";
 import { extractMentions } from "@/lib/mentions";
+import { ConversationSummaryButton } from "@/components/conversation-summary-button";
+import { CreateTaskFromMessageDialog } from "@/components/create-task-from-message-dialog";
+import { MessageReactions } from "@/components/message-reactions";
+import { ThreadPane } from "@/components/thread-pane";
+import { MessageSquareReply, Sparkles as SparklesIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/internal-messages/$id")({
   head: () => ({ meta: [{ title: "Conversation interne" }] }),
@@ -72,6 +77,8 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
   const fileRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [content, setContent] = useState("");
+  const [threadParentId, setThreadParentId] = useState<string | null>(null);
+  const [taskFromMessageId, setTaskFromMessageId] = useState<string | null>(null);
   const markRead = useServerFn(markInternalConversationRead);
   const setFlagFn = useServerFn(setInternalConversationFlag);
   const setArchivedFn = useServerFn(setInternalConversationArchived);
@@ -243,6 +250,7 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          <ConversationSummaryButton conversationId={id} />
           <Button
             variant="ghost"
             size="icon"
@@ -279,38 +287,99 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
             Aucun message pour l'instant — soyez la première à écrire.
           </p>
         )}
-        {messages.map((m: any) => {
-          const mine = m.sender_id === userId;
-          const author = profileFor(m.sender_id);
-          const authorLabel = `${author?.prenom ?? ""} ${author?.nom ?? ""}`.trim() || author?.email || "Membre";
-          return (
-            <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-              <div
-                className={cn(
-                  "max-w-[80%] rounded-2xl px-3.5 py-2 text-sm shadow-sm",
-                  mine ? "bg-primary text-primary-foreground" : "bg-muted",
-                )}
-              >
-                {!mine && <div className="text-[10px] font-medium opacity-80 mb-0.5">{authorLabel}</div>}
-                {m.content && (
-                  <RichMessageContent content={m.content} currentUserId={userId} />
-                )}
-                {m.attachment_path && (
-                  <button
-                    onClick={() => openAttachment(m.attachment_path)}
-                    className="mt-1 flex items-center gap-1 text-xs underline underline-offset-2"
-                  >
-                    <Download className="h-3 w-3" /> {m.attachment_name || "Pièce jointe"}
-                  </button>
-                )}
-                <div className={cn("text-[10px] mt-1", mine ? "opacity-80" : "text-muted-foreground")}>
-                  {formatDistanceToNow(new Date(m.created_at), { addSuffix: true, locale: fr })}
+        {(() => {
+          const replyCounts = new Map<string, number>();
+          for (const x of messages as any[]) {
+            if (x.parent_message_id) {
+              replyCounts.set(x.parent_message_id, (replyCounts.get(x.parent_message_id) ?? 0) + 1);
+            }
+          }
+          const roots = (messages as any[]).filter((m) => !m.parent_message_id);
+          return roots.map((m: any) => {
+            const mine = m.sender_id === userId;
+            const author = profileFor(m.sender_id);
+            const authorLabel = `${author?.prenom ?? ""} ${author?.nom ?? ""}`.trim() || author?.email || "Membre";
+            const replyCount = replyCounts.get(m.id) ?? 0;
+            return (
+              <div key={m.id} className={cn("group flex", mine ? "justify-end" : "justify-start")}>
+                <div className={cn("flex flex-col gap-1 max-w-[80%]", mine ? "items-end" : "items-start")}>
+                  <div className="relative">
+                    <div
+                      className={cn(
+                        "rounded-2xl px-3.5 py-2 text-sm shadow-sm",
+                        mine ? "bg-primary text-primary-foreground" : "bg-muted",
+                      )}
+                    >
+                      {!mine && <div className="text-[10px] font-medium opacity-80 mb-0.5">{authorLabel}</div>}
+                      {m.content && <RichMessageContent content={m.content} currentUserId={userId} />}
+                      {m.attachment_path && (
+                        <button
+                          onClick={() => openAttachment(m.attachment_path)}
+                          className="mt-1 flex items-center gap-1 text-xs underline underline-offset-2"
+                        >
+                          <Download className="h-3 w-3" /> {m.attachment_name || "Pièce jointe"}
+                        </button>
+                      )}
+                      <div className={cn("text-[10px] mt-1", mine ? "opacity-80" : "text-muted-foreground")}>
+                        {formatDistanceToNow(new Date(m.created_at), { addSuffix: true, locale: fr })}
+                      </div>
+                    </div>
+                    {/* Actions hover */}
+                    <div
+                      className={cn(
+                        "absolute -top-3 flex items-center gap-0.5 rounded-full border bg-background shadow-sm px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
+                        mine ? "right-2" : "left-2",
+                      )}
+                    >
+                      <button
+                        onClick={() => setThreadParentId(m.id)}
+                        className="h-6 w-6 rounded-full hover:bg-muted flex items-center justify-center"
+                        title="Répondre dans un fil"
+                      >
+                        <MessageSquareReply className="h-3.5 w-3.5" />
+                      </button>
+                      {m.content && (
+                        <button
+                          onClick={() => setTaskFromMessageId(m.id)}
+                          className="h-6 w-6 rounded-full hover:bg-muted flex items-center justify-center"
+                          title="Créer une tâche depuis ce message (IA)"
+                        >
+                          <SparklesIcon className="h-3.5 w-3.5 text-primary" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <MessageReactions messageId={m.id} currentUserId={userId} />
+                  {replyCount > 0 && (
+                    <button
+                      onClick={() => setThreadParentId(m.id)}
+                      className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                    >
+                      <MessageSquareReply className="h-3 w-3" />
+                      {replyCount} réponse{replyCount > 1 ? "s" : ""}
+                    </button>
+                  )}
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          });
+        })()}
       </div>
+
+      {taskFromMessageId && (
+        <CreateTaskFromMessageDialog
+          open={!!taskFromMessageId}
+          onOpenChange={(v) => !v && setTaskFromMessageId(null)}
+          messageId={taskFromMessageId}
+        />
+      )}
+      <ThreadPane
+        parentId={threadParentId}
+        conversationId={id}
+        userId={userId}
+        onClose={() => setThreadParentId(null)}
+      />
+
 
       <div className="border-t p-3 space-y-2">
         <MentionTextarea
