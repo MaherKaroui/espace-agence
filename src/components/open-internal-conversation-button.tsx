@@ -8,12 +8,13 @@ import { openContextConversation } from "@/lib/internal-messages.functions";
 
 type ContextType = "pole" | "client" | "dossier" | "task";
 
-interface Props extends Omit<ButtonProps, "onClick"> {
-  type: ContextType;
+interface Props extends Omit<ButtonProps, "onClick" | "type"> {
+  contextType: ContextType;
   entityId: string;
   label?: string;
   hideIcon?: boolean;
 }
+
 
 const DEFAULT_LABEL: Record<ContextType, string> = {
   pole: "Discuter en interne (pôle)",
