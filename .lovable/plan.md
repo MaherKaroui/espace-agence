@@ -1,128 +1,101 @@
-# Plan — Cloisonnement par pôle & messagerie interne
+# Pilotage Direction — refonte complète
 
-Objectif : empêcher toute fuite entre pôles (backend + UI), remplacer la suppression client par un archivage, et livrer une messagerie interne agence isolée de la messagerie client.
+Objectif : transformer `/admin/direction` en vrai outil de pilotage quotidien exploitable par la direction, avec rapport détaillé par personne, contenu des messages, archives et exports.
 
-Réponses retenues :
-- Suppression client → **remplacée par un archivage** (admin/direction uniquement).
-- Dossiers sans pôle / pôle inactif → **invisibles au staff non-direction** (accès direct = "Accès refusé").
-- Messagerie interne V1 → **1-à-1 + groupes + pièces jointes**, isolée des clients.
-- Staff dans un pôle → **lecture + écriture** avec les clients de ses pôles.
+## 1. Base de données
 
----
+### Nouvelle table `daily_direction_reports`
+- `report_date` (unique)
+- `generated_by` (uuid → auth.users)
+- `summary_json` (KPIs globaux du jour)
+- `user_reports_json` (activité détaillée par utilisateur)
+- `pole_reports_json`, `client_reports_json`
+- `messages_count`, `documents_count`, `dossiers_modified_count`, `relances_count`, `active_users_count`
 
-## 1. Migrations base de données
+RLS : SELECT + INSERT réservés à `admin` / `direction` (via `has_role`).
+GRANT SELECT, INSERT à `authenticated` ; ALL à `service_role`.
 
-### 1.1 Archivage client (remplace la suppression)
-- `profiles.archived_at timestamptz`, `archived_by uuid`, `archive_reason text`.
-- Fonction `public.archive_client(_user_id uuid, _reason text)` SECURITY DEFINER, réservée admin/direction, qui :
-  - anonymise via la logique existante `anonymize_user_account` (adaptée) ou pose simplement `archived_at`,
-  - révoque toutes les sessions actives,
-  - journalise dans `audit_logs`.
-- Fonction `public.unarchive_client(_user_id uuid)` (admin uniquement).
-- Politique RLS `profiles` : le `SELECT` staff exclut les profils archivés sauf pour admin/direction.
+### RPC `generer_rapport_direction(_date date)`
+- SECURITY DEFINER, vérifie `has_role(auth.uid(), 'admin'|'direction')` sinon RAISE.
+- Agrège depuis `audit_logs`, `messages`, `internal_messages`, `group_messages`, `documents`, `dossiers`, `taches`, `client_notes`, `user_sessions` pour `_date`.
+- Regroupe par `user_id` : première/dernière activité, compteurs par type d'action, durée de session.
+- Regroupe par pôle et par client.
+- Upsert dans `daily_direction_reports` et renvoie l'id.
 
-### 1.2 Verrouillage des accès par pôle
-Ajouter helpers SQL (SECURITY DEFINER, stable, search_path=public) :
-- `public.dossier_in_my_scope(_user uuid, _dossier uuid) → boolean` — vrai si admin/direction, sinon si le `pole_id` du dossier appartient à `pole_members` de `_user` **et** le pôle est actif.
-- `public.client_in_my_scope(_staff uuid, _client uuid) → boolean` — remplace/complète `staff_can_view_client` : admin/direction OR il existe un dossier du client dans un pôle du staff (pôle actif).
+### Nouveaux logs d'audit manquants
+Ajouter des inserts `log_event(...)` pour les actions actuellement non tracées :
+- `dossier.viewed` (côté client sur ouverture — via server fn dédié)
+- `dossier.updated` / `dossier.status_changed` (triggers sur `dossiers`)
+- `document.validated` / `document.rejected` (trigger sur update `documents.statut`)
+- `client_note.added` (trigger sur insert `client_notes`)
+- `rendezvous.created` / `rendezvous.updated` (trigger sur `rendez_vous`)
+- `user.session_started` (déjà via `session_start`, ajouter un log)
 
-Réécrire les policies suivantes pour utiliser ces helpers :
-- `dossiers` (SELECT / UPDATE) : staff non-direction limité à `dossier_in_my_scope`. Un dossier `pole_id IS NULL` ou dont le pôle est inactif est invisible hors admin/direction.
-- `documents`, `taches`, `messages` (client_id), `notifications` : `client_in_my_scope` côté staff.
-- `profiles` (SELECT staff) : `client_in_my_scope` OR admin/direction.
-- `client_notes` : même règle.
+## 2. Backend — server functions
 
-### 1.3 Messagerie interne agence
-Nouvelles tables (préfixe `internal_` pour ne pas croiser les tables `conversations`/`group_messages` client) :
-- `internal_conversations` : `id`, `titre`, `is_group boolean`, `created_by`, `created_at`, `updated_at`.
-- `internal_conversation_members` : `conversation_id`, `user_id`, `role ('owner'|'member')`, `joined_at`, `last_read_at`.
-- `internal_messages` : `id`, `conversation_id`, `sender_id`, `content`, `attachment_path`, `attachment_name`, `attachment_mime`, `created_at`, `edited_at`, `deleted_at`.
+`src/lib/direction-report.functions.ts` protégé par `requireSupabaseAuth` + check role admin/direction :
+- `generateDailyReport({ date })` → appelle la RPC, renvoie le rapport.
+- `getReport({ date })` → lit `daily_direction_reports`.
+- `listReports({ from, to })` → liste archivée.
+- `getUserActivityDetail({ date, userId })` → timeline chronologique depuis `audit_logs` + jointures pour enrichir (titre dossier, nom client, contenu message).
+- `getMessagesForDay({ date, userId?, type? })` → messages/internal/group avec auteur, destinataire, dossier, contenu, pièces jointes.
+- `exportReportCSV({ date })` / `exportReportPDF({ date })` → renvoient string CSV / buffer PDF.
 
-Règles d'appartenance :
-- Seuls admin/direction/manager/consultant peuvent participer (fonction `is_agency_member(uuid)`).
-- Un consultant ne peut créer une conversation qu'avec : membres de ses pôles + responsables de ses pôles + admin/direction.
-- Fonction `public.can_start_internal_conv(_a uuid, _b uuid)` appliquée dans un trigger d'insertion sur `internal_conversation_members`.
+Toutes ces fonctions vérifient le rôle en début de handler.
 
-RLS : membre = lecture/écriture messages de la conversation, éditeur = uniquement ses propres messages, admin = tout. GRANTs `authenticated` + `service_role` sur les 3 tables.
+## 3. Frontend — `/admin/direction`
 
-Nouveau bucket privé `internal-chat-files` + policies sur `storage.objects` limitées aux membres de la conversation (chemin `{conversation_id}/…`).
+Refonte de la page en onglets :
 
-Trigger `notify_new_internal_message` → insère dans `notifications` (type `internal_message`) pour chaque membre ≠ sender.
+**Onglet "Aujourd'hui"**
+- Bandeau KPIs : actions totales, messages, documents, dossiers modifiés, relances, clients actifs, staff actif, tâches en retard, alertes.
+- Graphiques : activité par heure (barres), activité par pôle, activité par collaborateur, dossiers par statut, docs déposés/validés/refusés.
+- Top clients actifs, dossiers bloqués/en retard.
+- Bouton **"Générer le rapport du jour"** fonctionnel (invalide les queries et affiche le rapport).
 
----
+**Onglet "Rapport par personne"**
+- Tableau des utilisateurs actifs du jour : nom, rôle, pôle, 1re activité, dernière activité, #actions, #messages, #docs, #dossiers consultés/modifiés, #relances, #notes, temps de connexion.
+- Bouton "Voir le détail" → dialog avec timeline chronologique (heure + action + contexte : dossier/client/message).
 
-## 2. Server functions (`createServerFn`, RLS respectée)
+**Onglet "Messages du jour"**
+- Liste unifiée messages client / interne / groupe avec auteur, destinataire, type, date, dossier lié, contenu, pièces jointes.
+- Filtres : utilisateur, type.
 
-- `src/lib/admin-clients.functions.ts` :
-  - **Retirer** `deleteClient`. Ajouter `archiveClient({ userId, reason })` et `unarchiveClient({ userId })` (admin/direction pour archive, admin pour désarchivage). Vérif rôle via `has_role`.
-  - `inviteClient` inchangé mais refuse si le futur dossier n'appartient pas au périmètre du caller.
-- `src/lib/internal-messages.functions.ts` (nouveau) :
-  - `listInternalConversations`, `createInternalConversation({ memberIds, titre? })`, `sendInternalMessage`, `markInternalConversationRead`, `listAllowedInternalContacts` (renvoie les contacts autorisés selon les pôles du caller).
+**Onglet "Rapports archivés"**
+- Liste des rapports (date, généré par, #actions, #personnes actives).
+- Boutons Voir / Export CSV / Export PDF.
 
-Toutes protégées par `requireSupabaseAuth` + double vérif rôle/pôle.
+**Filtres globaux** en haut : date, pôle, utilisateur, rôle, type d'action, client, dossier.
 
----
+## 4. Sécurité
 
-## 3. UI
+- Gate route `beforeLoad` : redirect si pas admin/direction (déjà partiellement fait).
+- Toutes les server functions revérifient le rôle.
+- RLS sur `daily_direction_reports` scopée à admin/direction via `has_role`.
+- Aucune donnée sensible (contenu messages) ne transite hors des server functions autorisées.
 
-### 3.1 Renommages
-- `/admin/dossiers` : titre "Dossiers de mes pôles" (déjà en place, on garde).
-- `/admin/clients` : titre "Clients de mes pôles" (staff non-direction).
-- `/admin/messages` : titre "Messagerie clients".
-- Nouvelle route `/admin/internal-messages` : "Messagerie interne".
+## 5. Exports
 
-### 3.2 Filtrage frontend (défense en profondeur, pas la seule barrière)
-- `/admin/dossiers` : la requête reste identique — RLS filtre déjà. On enlève le bloc "Sans pôle actif" pour les non-direction.
-- `/admin/clients` : requête filtrée côté serveur (RLS) ; l'UI se contente d'afficher ce que la DB renvoie.
-- `/admin/clients/$id` :
-  - `beforeLoad` appelle une serverFn `assertClientAccess(clientId)` qui throw `notFound()` si hors périmètre → page "Accès refusé".
-  - Section "Zone dangereuse" : bouton **Archiver** (admin/direction) au lieu de Supprimer. Le bouton supprimer disparaît complètement du DOM ; le serverFn `deleteClient` n'existe plus.
-- `/admin/dossiers/$id` (redirect actuel) : ajouter un check côté `/dossiers/$id` : si staff non-direction ET dossier hors périmètre → `notFound()`.
-- `/admin/messages/$clientId` : `beforeLoad` refuse si `client_in_my_scope` est faux.
+- CSV : construit côté server function, retourné en string, téléchargé côté client via Blob.
+- PDF : utiliser `pdf-lib` (compatible Worker) pour générer un PDF simple listant KPIs, tableau par personne, messages. Retour base64.
 
-### 3.3 Menu (`app-shell.tsx`)
-- Cacher "Clients", "Messagerie clients" pour les rôles sans dossier accessible (mais RLS garde le dernier mot).
-- Ajouter l'entrée "Messagerie interne" pour tous les staff.
+## 6. Fichiers touchés
 
-### 3.4 Messagerie interne (nouvelles pages)
-- `/admin/internal-messages` : liste des conversations internes + bouton "Nouvelle conversation" (sélection de contacts filtrée par `listAllowedInternalContacts`).
-- `/admin/internal-messages/$id` : fenêtre de chat (réutilise l'UI de `group-chat-window.tsx` adaptée : nouvelle table + nouveau bucket).
-- Notifications : la cloche existante affiche déjà tout type ; on ajoute le type `internal_message` avec lien.
+**Migrations**
+- `create_daily_direction_reports.sql` (table + RLS + RPC `generer_rapport_direction` + triggers audit manquants).
 
----
+**Backend**
+- `src/lib/direction-report.functions.ts` (nouveau).
 
-## 4. Sécurité & vérifications
+**Frontend**
+- `src/routes/_authenticated/admin.direction.tsx` (refonte complète).
+- `src/components/direction/` : `KpiGrid.tsx`, `UserActivityTable.tsx`, `UserTimelineDialog.tsx`, `MessagesLog.tsx`, `ReportsArchive.tsx`, `DirectionFilters.tsx`.
 
-- Tests manuels via Playwright/preview après migration :
-  - Compte Chanez (BPF) : voit uniquement dossiers BPF, clients BPF, aucun bouton supprimer, URL directe vers un dossier NDA = "Accès refusé".
-  - Admin : accès global inchangé.
-  - Messagerie interne : Chanez peut créer une conversation avec un autre BPF ou admin/direction, pas avec un consultant NDA.
-- Re-scan sécurité après migration.
+## Notes techniques
 
----
+- Timezone : tout calcul quotidien en `Europe/Paris` (tronqué à la date locale).
+- Performance : indexer `audit_logs(user_id, created_at)` et `audit_logs(action, created_at)` si absent.
+- Le rapport JSON garde tout : pas besoin de rejouer les jointures pour l'affichage archivé.
+- Refetch en temps réel toutes les 30s uniquement sur les KPIs live (pas sur le rapport archivé).
 
-## Détails techniques (annexe)
-
-Ordre d'exécution :
-1. Migration DB (helpers + RLS + tables internes + storage bucket via tool). *Une seule migration groupée si possible.*
-2. Suppression du serverFn `deleteClient`, ajout `archiveClient`/`unarchiveClient`.
-3. Ajout des serverFn messagerie interne.
-4. Nouvelles routes + composants UI + guard `beforeLoad`.
-5. Retrait UI du bouton supprimer, remplacé par archiver.
-6. Vérif preview + logs console.
-
-Fichiers principaux touchés :
-- `src/lib/admin-clients.functions.ts`, `src/lib/internal-messages.functions.ts` (nouveau)
-- `src/routes/_authenticated/admin.clients.$id.tsx`, `admin.clients.index.tsx`, `admin.messages.*`
-- `src/routes/_authenticated/admin.internal-messages.index.tsx` + `admin.internal-messages.$id.tsx` (nouveaux)
-- `src/routes/_authenticated/dossiers.$id.tsx` (guard)
-- `src/components/app-shell.tsx`
-- `src/components/internal-chat-window.tsx` (nouveau, fork de `group-chat-window.tsx`)
-
-Points de vigilance :
-- Les triggers existants (`notify_new_message`, `enforce_message_client_update`, etc.) ne doivent pas s'appliquer aux messages internes → tables séparées, pas de partage.
-- `pole_members` reste la source de vérité ; s'assurer que Chanez y figure bien (déjà vérifié précédemment).
-- Le bucket `internal-chat-files` doit rester privé — signed URLs uniquement.
-- Les policies `TO authenticated` doivent utiliser `has_role` / `is_agency_member` pour éviter la récursion.
-
-Une fois validé, j'exécute la migration DB en premier (elle demande votre approbation), puis j'enchaîne le code.
+Attention : je veux un vrai pilotage direction exploitable, pas seulement des statistiques simples.
