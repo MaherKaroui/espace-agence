@@ -524,7 +524,7 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
             </div>
           </div>
         ) : (
-          m.content && <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
+          m.content && <RichMessageContent content={m.content} currentUserId={m.sender_id === undefined ? null : undefined} className="text-sm" />
         )}
         <div className={`text-[10px] mt-1 flex items-center gap-1 flex-wrap ${isMine ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"}`}>
           {format(new Date(m.created_at), "HH:mm", { locale: fr })}
