@@ -205,6 +205,9 @@ export const createInternalGroup = createServerFn({ method: "POST" })
     await seedMembersForConversation(supabaseAdmin, conv.id, callerId, memberList);
 
     return { id: conv.id };
+  });
+
+
 
 export const markInternalConversationRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
