@@ -136,7 +136,7 @@ function Dashboard() {
             )}
             {handled.length > 0 && (
               <div>
-                <h2 className="font-display text-xl mb-3">L'agence s'en occupe</h2>
+                <h2 className="font-display text-lg sm:text-xl mb-3">L'agence s'en occupe</h2>
                 <Card className="p-4 bg-muted/30">
                   <ul className="text-sm space-y-1">
                     {handled.map((d) => (
