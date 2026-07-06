@@ -76,12 +76,22 @@ export const Route = createFileRoute("/_authenticated/admin/dossiers")({
 });
 
 
+type QualityFilter =
+  | "all"
+  | "to_fix"
+  | "missing"
+  | "to_review"
+  | "done_incomplete"
+  | "zero_but_validated";
+
 function AdminDossiers() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
   const [reviewOnly, setReviewOnly] = useState(false);
+  const [quality, setQuality] = useState<QualityFilter>("all");
   const { user } = useAuth();
   const { isDirectionOrAdmin } = useRole();
+
 
 
   const { data: myPoleIds, isLoading: polesLoading } = useQuery({
