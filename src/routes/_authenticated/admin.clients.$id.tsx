@@ -141,16 +141,30 @@ function ClientDetail() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const deleteClientFn = useServerFn(deleteClient);
-  const deleteClientM = useMutation({
-    mutationFn: async () => deleteClientFn({ data: { userId: id } }),
+  const { isAdmin, isDirectionOrAdmin } = useRole();
+  const [archiveReason, setArchiveReason] = useState("");
+  const archiveFn = useServerFn(archiveClient);
+  const unarchiveFn = useServerFn(unarchiveClient);
+  const archiveM = useMutation({
+    mutationFn: async () => archiveFn({ data: { userId: id, reason: archiveReason || undefined } }),
     onSuccess: () => {
-      toast.success("Client supprimé");
+      toast.success("Client archivé");
       qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      qc.invalidateQueries({ queryKey: ["profile", id] });
       nav({ to: "/admin/clients" });
     },
     onError: (e: any) => toast.error(e.message),
   });
+  const unarchiveM = useMutation({
+    mutationFn: async () => unarchiveFn({ data: { userId: id } }),
+    onSuccess: () => {
+      toast.success("Client réactivé");
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      qc.invalidateQueries({ queryKey: ["profile", id] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const isArchived = !!(profile as any)?.archived_at;
 
   const [newNote, setNewNote] = useState("");
   const addNote = useMutation({
