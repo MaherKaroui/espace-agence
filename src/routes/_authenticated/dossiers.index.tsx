@@ -131,7 +131,11 @@ function DossiersPage() {
     if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
     const label = categorieLabel(categorie);
     const organisme = extra?.organisme_nom?.trim();
-    const titre = organisme ? `Demande ${label} - ${organisme}` : `Demande ${label}`;
+    // N'ajoute pas "Demande " si le libellé commence déjà par "Demande"/"Dossier"
+    // (évite "Demande Demande de NDA").
+    const alreadyPrefixed = /^(Demande|Dossier)\b/i.test(label);
+    const base = alreadyPrefixed ? label : `Demande ${label}`;
+    const titre = organisme ? `${base} - ${organisme}` : base;
     const { organisme_nom, ...rest } = extra ?? {};
     create.mutate({ titre, categorie, pole_id, description, ...rest });
   };
