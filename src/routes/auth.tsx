@@ -13,6 +13,9 @@ import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 export const Route = createFileRoute("/auth")({
+  // Page d'auth entièrement client-side : évite un mismatch d'hydratation
+  // React (#418) car la session Supabase n'est disponible que côté client.
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Connexion — IZISuivis" },
@@ -21,6 +24,7 @@ export const Route = createFileRoute("/auth")({
   }),
   component: AuthPage,
 });
+
 
 const signupSchema = z.object({
   prenom: z.string().trim().min(1, "Prénom requis").max(60),

@@ -50,6 +50,19 @@ function computeReviewStats(categorie: string, docs: DocRow[]): ReviewStats {
   };
 }
 
+// Un dossier est "incohérent" si :
+// - marqué terminé alors qu'il reste des pièces à valider
+// - avancement = 0 alors que des documents sont acceptés
+// - documents en attente/à corriger alors qu'aucun n'est encore accepté depuis longtemps (>7j)
+type Inconsistency = "done_incomplete" | "zero_but_validated" | null;
+function detectInconsistency(dossier: any, stats: ReviewStats | undefined): Inconsistency {
+  if (!stats) return null;
+  if (["termine", "valide"].includes(dossier.statut) && stats.needsAction) return "done_incomplete";
+  if ((dossier.avancement ?? 0) === 0 && stats.validated > 0) return "zero_but_validated";
+  return null;
+}
+
+
 export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   head: () => ({ meta: [{ title: "Dossiers — Admin" }] }),
   beforeLoad: async () => {
@@ -63,12 +76,22 @@ export const Route = createFileRoute("/_authenticated/admin/dossiers")({
 });
 
 
+type QualityFilter =
+  | "all"
+  | "to_fix"
+  | "missing"
+  | "to_review"
+  | "done_incomplete"
+  | "zero_but_validated";
+
 function AdminDossiers() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
   const [reviewOnly, setReviewOnly] = useState(false);
+  const [quality, setQuality] = useState<QualityFilter>("all");
   const { user } = useAuth();
   const { isDirectionOrAdmin } = useRole();
+
 
 
   const { data: myPoleIds, isLoading: polesLoading } = useQuery({
@@ -155,12 +178,28 @@ function AdminDossiers() {
     return m;
   }, [rows, docsByDossier]);
 
+  const inconsistencyById = useMemo(() => {
+    const m: Record<string, Inconsistency> = {};
+    for (const d of rows as any[]) {
+      m[d.id] = detectInconsistency(d, statsById[d.id]);
+    }
+    return m;
+  }, [rows, statsById]);
+
   const filtered = (rows as any[]).filter((r: any) => {
     if (cat !== "all" && r.categorie !== cat) return false;
     if (reviewOnly && !statsById[r.id]?.needsAction) return false;
+    const s = statsById[r.id];
+    switch (quality) {
+      case "to_fix": if (!s || s.toFix === 0) return false; break;
+      case "missing": if (!s || s.missing === 0) return false; break;
+      case "to_review": if (!s || s.toReview === 0) return false; break;
+      case "done_incomplete": if (inconsistencyById[r.id] !== "done_incomplete") return false; break;
+      case "zero_but_validated": if (inconsistencyById[r.id] !== "zero_but_validated") return false; break;
+    }
     if (!q.trim()) return true;
-    const s = `${r.titre} ${r.profiles?.email ?? ""} ${r.profiles?.nom ?? ""} ${r.profiles?.prenom ?? ""}`.toLowerCase();
-    return s.includes(q.toLowerCase());
+    const txt = `${r.titre} ${r.profiles?.email ?? ""} ${r.profiles?.nom ?? ""} ${r.profiles?.prenom ?? ""}`.toLowerCase();
+    return txt.includes(q.toLowerCase());
   });
 
 
@@ -180,6 +219,9 @@ function AdminDossiers() {
   const visibleGroups = groups.filter((g) => g.items.length > 0);
 
   const totalToReview = (rows as any[]).reduce((n, d) => n + (statsById[d.id]?.needsAction ? 1 : 0), 0);
+  const inconsistencies = (rows as any[]).filter((d) => inconsistencyById[d.id]);
+  const doneIncompleteCount = inconsistencies.filter((d) => inconsistencyById[d.id] === "done_incomplete").length;
+  const zeroValidatedCount = inconsistencies.filter((d) => inconsistencyById[d.id] === "zero_but_validated").length;
 
   return (
     <div className="space-y-6">
@@ -192,6 +234,34 @@ function AdminDossiers() {
           )}
         </p>
       </div>
+
+      {inconsistencies.length > 0 && (
+        <Card className="p-4 border-destructive/30 bg-destructive/5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-2">
+              <div className="font-medium text-sm">Alertes qualité ({inconsistencies.length})</div>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                {doneIncompleteCount > 0 && (
+                  <li>
+                    <button className="text-destructive hover:underline" onClick={() => setQuality("done_incomplete")}>
+                      {doneIncompleteCount} dossier{doneIncompleteCount > 1 ? "s" : ""} marqué{doneIncompleteCount > 1 ? "s" : ""} terminé{doneIncompleteCount > 1 ? "s" : ""} avec pièces non validées
+                    </button>
+                  </li>
+                )}
+                {zeroValidatedCount > 0 && (
+                  <li>
+                    <button className="text-destructive hover:underline" onClick={() => setQuality("zero_but_validated")}>
+                      {zeroValidatedCount} dossier{zeroValidatedCount > 1 ? "s" : ""} à 0% mais avec documents validés
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-64">
           <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
@@ -200,6 +270,18 @@ function AdminDossiers() {
         <select value={cat} onChange={(e) => setCat(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
           <option value="all">Toutes catégories</option>
           {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+        </select>
+        <select
+          value={quality}
+          onChange={(e) => setQuality(e.target.value as QualityFilter)}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="all">Tous les états</option>
+          <option value="to_fix">Documents à corriger / refusés</option>
+          <option value="missing">Documents manquants</option>
+          <option value="to_review">Documents à vérifier</option>
+          <option value="done_incomplete">Terminés incomplets</option>
+          <option value="zero_but_validated">0% mais validés</option>
         </select>
         <button
           type="button"
@@ -216,6 +298,7 @@ function AdminDossiers() {
           {reviewOnly ? "À revoir uniquement" : "À revoir"}
         </button>
       </div>
+
 
       {polesLoading && !isDirectionOrAdmin ? (
         <Card className="p-12 text-center text-muted-foreground text-sm">Chargement de vos pôles…</Card>
@@ -246,6 +329,7 @@ function AdminDossiers() {
               <Card className="divide-y">
                 {items.map((d: any) => {
                   const stats = statsById[d.id];
+                  const inc = inconsistencyById[d.id];
                   return (
                   <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block p-4 hover:bg-muted/30">
                     <div className="flex items-center justify-between gap-3">
@@ -254,6 +338,16 @@ function AdminDossiers() {
                           <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
                           <StatusBadge statut={d.statut} />
                           <ReviewSummary stats={stats} />
+                          {inc === "done_incomplete" && (
+                            <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
+                              <AlertTriangle className="h-3 w-3" /> Terminé incomplet
+                            </Badge>
+                          )}
+                          {inc === "zero_but_validated" && (
+                            <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
+                              <AlertTriangle className="h-3 w-3" /> 0% mais validés
+                            </Badge>
+                          )}
                         </div>
                         <div className="font-medium truncate">{d.titre}</div>
                         <div className="text-xs text-muted-foreground">
@@ -264,6 +358,7 @@ function AdminDossiers() {
                   </Link>
                   );
                 })}
+
               </Card>
             </section>
             );
