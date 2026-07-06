@@ -285,13 +285,16 @@ export function GroupChatWindow({
             </>
           ) : (
             <>
-              <Input
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onPaste={handlePaste}
-                placeholder="Écrire un message…"
-                className="flex-1"
-              />
+              <div className="flex-1" onPaste={handlePaste}>
+                <MentionTextarea
+                  value={text}
+                  onChange={setText}
+                  onSubmit={() => { if (text.trim()) send.mutate({ content: text.trim() }); }}
+                  conversationId={conversationId}
+                  enableEntities
+                  rows={1}
+                />
+              </div>
 
               {text.trim() ? (
                 <Button type="submit" size="icon" disabled={send.isPending}><Send className="h-4 w-4" /></Button>
