@@ -178,7 +178,7 @@ function DossierDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-2">
-        <button onClick={() => nav({ to: "/dossiers" })} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+        <button onClick={() => nav({ to: "/dossiers" })} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 min-h-11 py-1">
           <ArrowLeft className="h-4 w-4" /> {isAdmin ? "Retour aux dossiers" : "Retour à mes dossiers"}
         </button>
         {isAdmin && dossier.client_id && (
@@ -193,6 +193,18 @@ function DossierDetail() {
         )}
 
       </div>
+
+      {/* Bloc "À faire maintenant" — priorité #1 côté client */}
+      {!isAdmin && (
+        <NextActionCard
+          categorie={dossier.categorie}
+          documents={documents as any}
+          taches={taches as any}
+          dossierStatut={dossier.statut}
+        />
+      )}
+
+
 
 
       <Card className="p-6">
@@ -341,14 +353,6 @@ function DossierDetail() {
 
 
 
-      {!isAdmin && (
-        <NextActionCard
-          categorie={dossier.categorie}
-          documents={documents as any}
-          taches={taches as any}
-          dossierStatut={dossier.statut}
-        />
-      )}
 
       {/* Côté admin : panneau des tâches en haut ; côté client : plus bas, moins prioritaire */}
       {isAdmin && <TasksPanel dossierId={id} />}
