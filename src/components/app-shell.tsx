@@ -102,6 +102,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const staffNav = [
     { to: "/admin", label: "Vue agence", icon: LayoutDashboard },
     { to: "/admin/dossiers", label: "Dossiers de mes pôles", icon: FolderOpen },
+    { to: "/admin/clients", label: "Clients de mes pôles", icon: Users },
     { to: "/admin/messages", label: "Messagerie clients", icon: MessageSquare },
     { to: "/admin/internal-messages", label: "Messagerie interne", icon: Users2 },
     { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
@@ -109,7 +110,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Réservé Direction / Admin
   const directionNav = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
-    { to: "/admin/clients", label: "Clients", icon: Users },
     { to: "/admin/poles", label: "Pôles & équipes", icon: Users2 },
     { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
