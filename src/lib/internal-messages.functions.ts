@@ -135,6 +135,77 @@ export const createInternalConversation = createServerFn({ method: "POST" })
     return { id: conv.id };
   });
 
+/**
+ * Crée un groupe interne, un canal public interne, un canal de pôle ou une annonce direction.
+ * Réservé aux admin/direction.
+ */
+export const createInternalGroup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        titre: z.string().trim().min(1).max(200),
+        description: z.string().trim().max(2000).optional(),
+        type: z.enum(["group", "channel", "pole", "announcement"]),
+        isPrivate: z.boolean().default(false),
+        adminOnlyPosting: z.boolean().default(false),
+        poleId: z.string().uuid().nullable().optional(),
+        memberIds: z.array(z.string().uuid()).max(200).default([]),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    const flags = await ensureAgencyMember(supabase, callerId);
+    if (!flags.isAdmin && !flags.isDirection) {
+      throw new Error("Seuls les admins et la direction peuvent créer un groupe/canal");
+    }
+    if (data.type === "announcement" && !data.adminOnlyPosting) {
+      // annonce = par convention écriture réservée
+      data.adminOnlyPosting = true;
+    }
+    if (data.type === "pole" && !data.poleId) {
+      throw new Error("Le canal de pôle nécessite un pôle");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: conv, error } = await supabaseAdmin
+      .from("internal_conversations")
+      .insert({
+        type: data.type,
+        titre: data.titre,
+        description: data.description ?? null,
+        is_group: true,
+        is_private: data.isPrivate,
+        admin_only_posting: data.adminOnlyPosting,
+        pole_id: data.type === "pole" ? data.poleId ?? null : null,
+        created_by: callerId,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    // Seed membres : créateur owner + admins/direction toujours + membres explicites + pour un canal de pôle, tous les membres du pôle
+    const adminIds = await fetchAdminDirectionIds(supabaseAdmin);
+    let poleMemberIds: string[] = [];
+    if (data.type === "pole" && data.poleId) {
+      const { data: pm } = await supabaseAdmin
+        .from("pole_members")
+        .select("user_id")
+        .eq("pole_id", data.poleId);
+      poleMemberIds = ((pm ?? []) as any[]).map((r) => r.user_id);
+    }
+    const memberList = [
+      { userId: callerId, role: "owner" as const },
+      ...adminIds.map((uid) => ({ userId: uid, role: "member" as const })),
+      ...poleMemberIds.map((uid) => ({ userId: uid, role: "member" as const })),
+      ...data.memberIds.map((uid) => ({ userId: uid, role: "member" as const })),
+    ];
+    await seedMembersForConversation(supabaseAdmin, conv.id, callerId, memberList);
+
+    return { id: conv.id };
+
 export const markInternalConversationRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ conversationId: z.string().uuid() }).parse(data))
