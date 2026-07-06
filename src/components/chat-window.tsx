@@ -292,13 +292,16 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
             </>
           ) : (
             <>
-              <Input
-                value={text}
-                onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
-                onPaste={handlePaste}
-                placeholder="Écrire un message…"
-                className="flex-1"
-              />
+              <div className="flex-1" onPaste={handlePaste}>
+                <MentionTextarea
+                  value={text}
+                  onChange={(v) => { setText(v); broadcastTyping(); }}
+                  onSubmit={() => { if (text.trim()) send.mutate({ content: text.trim() }); }}
+                  enableEntities={isAdmin}
+                  rows={1}
+                  placeholder={isAdmin ? "Écrire… @ pour une personne, # pour un client/dossier/tâche/pôle" : "Écrire un message…"}
+                />
+              </div>
 
               {text.trim() ? (
                 <Button type="submit" size="icon" disabled={send.isPending}><Send className="h-4 w-4" /></Button>
