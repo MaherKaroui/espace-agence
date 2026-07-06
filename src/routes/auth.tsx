@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -92,9 +92,7 @@ function AuthPage() {
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="hidden lg:flex bg-gradient-hero text-white p-12 flex-col justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-gold flex items-center justify-center">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-          </div>
+          <Logo size={40} className="rounded-lg" />
           <span className="font-display text-xl">IZISuivis</span>
         </div>
         <div className="max-w-md">
@@ -113,9 +111,7 @@ function AuthPage() {
       <div className="flex items-center justify-center p-6 sm:p-10">
         <Card className="w-full max-w-md p-8 border-border shadow-sm">
           <div className="mb-6 lg:hidden flex items-center gap-2">
-            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-              <ShieldCheck className="h-5 w-5 text-gold" />
-            </div>
+            <Logo size={36} className="rounded-lg" />
             <span className="font-display text-lg">IZISuivis</span>
           </div>
           <h2 className="font-display text-2xl">Bienvenue</h2>

@@ -211,9 +211,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
         <div className="p-6 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-gold flex items-center justify-center">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-          </div>
+          <Logo size={36} className="rounded-lg" />
           <span className="font-display text-lg">IZISuivis</span>
         </div>
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto"><NavList /></nav>
