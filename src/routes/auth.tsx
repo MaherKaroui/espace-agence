@@ -95,7 +95,7 @@ function AuthPage() {
           <div className="h-10 w-10 rounded-lg bg-gold flex items-center justify-center">
             <ShieldCheck className="h-5 w-5 text-primary" />
           </div>
-          <span className="font-display text-xl">Espace Agence</span>
+          <span className="font-display text-xl">IZISuivis</span>
         </div>
         <div className="max-w-md">
           <h1 className="font-display text-4xl leading-tight">Votre plateforme dédiée aux organismes de formation.</h1>
@@ -116,7 +116,7 @@ function AuthPage() {
             <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
               <ShieldCheck className="h-5 w-5 text-gold" />
             </div>
-            <span className="font-display text-lg">Espace Agence</span>
+            <span className="font-display text-lg">IZISuivis</span>
           </div>
           <h2 className="font-display text-2xl">Bienvenue</h2>
           <p className="text-sm text-muted-foreground mt-1">Accédez à votre espace client sécurisé.</p>
