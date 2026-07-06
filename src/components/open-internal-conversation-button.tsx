@@ -24,7 +24,7 @@ const DEFAULT_LABEL: Record<ContextType, string> = {
 };
 
 export function OpenInternalConversationButton({
-  type,
+  contextType,
   entityId,
   label,
   hideIcon,
@@ -38,7 +38,7 @@ export function OpenInternalConversationButton({
   const openFn = useServerFn(openContextConversation);
 
   const m = useMutation({
-    mutationFn: () => openFn({ data: { type, entityId } }),
+    mutationFn: () => openFn({ data: { type: contextType, entityId } }),
     onSuccess: ({ id }) => nav({ to: "/admin/internal-messages/$id", params: { id } }),
     onError: (e: any) => toast.error(e.message ?? "Impossible d'ouvrir la conversation"),
   });
@@ -57,7 +57,8 @@ export function OpenInternalConversationButton({
       ) : hideIcon ? null : (
         <MessageSquare className="h-4 w-4 mr-2" />
       )}
-      {children ?? label ?? DEFAULT_LABEL[type]}
+      {children ?? label ?? DEFAULT_LABEL[contextType]}
     </Button>
   );
 }
+
