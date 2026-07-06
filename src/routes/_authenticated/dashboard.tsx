@@ -166,9 +166,9 @@ function Dashboard() {
 
 
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-xl">Dossiers récents</h2>
-          <Link to="/dossiers" className="text-sm text-primary hover:underline">Tout voir →</Link>
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <h2 className="font-display text-lg sm:text-xl">Dossiers récents</h2>
+          <Link to="/dossiers" className="text-sm text-primary hover:underline shrink-0">Tout voir →</Link>
         </div>
         {dossiers.length === 0 ? (
           <Card className="p-8 text-center">
@@ -181,9 +181,9 @@ function Dashboard() {
             {dossiers.slice(0, 5).map((d) => (
               <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}>
                 <Card className="p-4 hover:border-primary/40 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
                         <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
                         <StatusBadge statut={d.statut} />
                       </div>
@@ -192,8 +192,8 @@ function Dashboard() {
                         Mis à jour {formatDistanceToNow(new Date(d.updated_at), { addSuffix: true, locale: fr })}
                       </div>
                     </div>
-                    <div className="w-24 shrink-0">
-                      <div className="text-xs text-muted-foreground mb-1 text-right">{d.avancement}%</div>
+                    <div className="w-full sm:w-24 shrink-0">
+                      <div className="text-xs text-muted-foreground mb-1 sm:text-right">{d.avancement}%</div>
                       <Progress value={d.avancement} className="h-1.5" />
                     </div>
                   </div>
