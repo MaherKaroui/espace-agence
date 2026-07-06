@@ -72,10 +72,10 @@ function Dashboard() {
   const activeDossiers = dossiers.filter((d) => !["termine", "annule"].includes(d.statut));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="font-display text-3xl">Bonjour 👋</h1>
-        <p className="text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
+        <h1 className="font-display text-2xl sm:text-3xl">Bonjour 👋</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
       </div>
 
       {!isAdmin && dossiers.length === 0 && (
