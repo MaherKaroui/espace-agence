@@ -182,6 +182,63 @@ export type Database = {
           },
         ]
       }
+      daily_direction_reports: {
+        Row: {
+          actions_count: number
+          active_users_count: number
+          client_reports_json: Json
+          created_at: string
+          documents_count: number
+          dossiers_modified_count: number
+          generated_by: string | null
+          hourly_activity_json: Json
+          id: string
+          messages_count: number
+          pole_reports_json: Json
+          relances_count: number
+          report_date: string
+          summary_json: Json
+          updated_at: string
+          user_reports_json: Json
+        }
+        Insert: {
+          actions_count?: number
+          active_users_count?: number
+          client_reports_json?: Json
+          created_at?: string
+          documents_count?: number
+          dossiers_modified_count?: number
+          generated_by?: string | null
+          hourly_activity_json?: Json
+          id?: string
+          messages_count?: number
+          pole_reports_json?: Json
+          relances_count?: number
+          report_date: string
+          summary_json?: Json
+          updated_at?: string
+          user_reports_json?: Json
+        }
+        Update: {
+          actions_count?: number
+          active_users_count?: number
+          client_reports_json?: Json
+          created_at?: string
+          documents_count?: number
+          dossiers_modified_count?: number
+          generated_by?: string | null
+          hourly_activity_json?: Json
+          id?: string
+          messages_count?: number
+          pole_reports_json?: Json
+          relances_count?: number
+          report_date?: string
+          summary_json?: Json
+          updated_at?: string
+          user_reports_json?: Json
+        }
+        Relationships: []
+      }
       deletion_requests: {
         Row: {
           admin_notes: string | null
@@ -1282,6 +1339,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      generer_rapport_direction: { Args: { _date?: string }; Returns: string }
       generer_rapport_quotidien: { Args: { _date?: string }; Returns: string }
       get_presence: {
         Args: { _ids: string[] }
