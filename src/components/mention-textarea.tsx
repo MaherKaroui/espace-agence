@@ -63,7 +63,7 @@ export function MentionTextarea({
     for (let i = caret - 1; i >= 0; i--) {
       const ch = text[i];
       if (ch === " " || ch === "\n" || ch === "\t") return null;
-      if (ch === "@") return { start: i, query: text.slice(i + 1, caret), type: "user" as const };
+      if (ch === "@" && enableUsers) return { start: i, query: text.slice(i + 1, caret), type: "user" as const };
       if (ch === "#" && enableEntities)
         return { start: i, query: text.slice(i + 1, caret), type: "entity" as const };
     }
