@@ -23,7 +23,15 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isAdmin, isStaff } = useRole();
+  const navigate = useNavigate();
+
+  // Séparation nette admin / client : les membres de l'agence sont
+  // redirigés vers leur vue agence dès l'arrivée sur le dashboard.
+  useEffect(() => {
+    if (isStaff) navigate({ to: "/admin", replace: true });
+  }, [isStaff, navigate]);
+
 
   const { data: dossiers = [], isLoading: dossiersLoading, isFetched: dossiersFetched } = useQuery({
     queryKey: ["dossiers-mine", user?.id],
