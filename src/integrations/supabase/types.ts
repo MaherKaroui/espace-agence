@@ -734,13 +734,16 @@ export type Database = {
       }
       internal_conversations: {
         Row: {
+          admin_only_posting: boolean
           archived_at: string | null
           client_id: string | null
           created_at: string
           created_by: string
+          description: string | null
           dossier_id: string | null
           id: string
           is_group: boolean
+          is_private: boolean
           pole_id: string | null
           task_id: string | null
           titre: string | null
@@ -748,13 +751,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_only_posting?: boolean
           archived_at?: string | null
           client_id?: string | null
           created_at?: string
           created_by: string
+          description?: string | null
           dossier_id?: string | null
           id?: string
           is_group?: boolean
+          is_private?: boolean
           pole_id?: string | null
           task_id?: string | null
           titre?: string | null
@@ -762,13 +768,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_only_posting?: boolean
           archived_at?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string
+          description?: string | null
           dossier_id?: string | null
           id?: string
           is_group?: boolean
+          is_private?: boolean
           pole_id?: string | null
           task_id?: string | null
           titre?: string | null
