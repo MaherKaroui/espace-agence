@@ -23,7 +23,7 @@ function Dashboard() {
   const { user } = useAuth();
   const { isAdmin } = useRole();
 
-  const { data: dossiers = [] } = useQuery({
+  const { data: dossiers = [], isLoading: dossiersLoading, isFetched: dossiersFetched } = useQuery({
     queryKey: ["dossiers-mine", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -78,7 +78,7 @@ function Dashboard() {
         <p className="text-sm sm:text-base text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
       </div>
 
-      {!isAdmin && dossiers.length === 0 && (
+      {!isAdmin && dossiersFetched && !dossiersLoading && dossiers.length === 0 && (
         <Card className="p-6 border-primary/20 bg-primary/5">
           <h2 className="font-display text-xl mb-1">Bienvenue dans votre espace</h2>
           <p className="text-sm text-muted-foreground mb-4">Voici comment ça marche, en 4 étapes simples :</p>
@@ -170,7 +170,9 @@ function Dashboard() {
           <h2 className="font-display text-lg sm:text-xl">Dossiers récents</h2>
           <Link to="/dossiers" className="text-sm text-primary hover:underline shrink-0">Tout voir →</Link>
         </div>
-        {dossiers.length === 0 ? (
+        {dossiersLoading || !dossiersFetched ? (
+          <Card className="p-8 text-center text-sm text-muted-foreground">Chargement…</Card>
+        ) : dossiers.length === 0 ? (
           <Card className="p-8 text-center">
             <AlertCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
             <p className="text-muted-foreground">Aucun dossier pour le moment.</p>
