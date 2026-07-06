@@ -2,18 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { searchMentionCandidates } from "@/lib/mention-search.functions";
 import { Textarea } from "@/components/ui/textarea";
-import { AtSign, Hash, User, Building2, FolderOpen, ClipboardCheck, Users } from "lucide-react";
+import { AtSign, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { MentionEntityType } from "@/lib/mentions";
 
-type Kind = "user" | "client" | "dossier" | "task" | "pole";
-
-const ENTITY_KINDS: { key: Exclude<Kind, "user">; label: string; icon: any; color: string }[] = [
-  { key: "client", label: "Client", icon: Building2, color: "text-blue-600" },
-  { key: "dossier", label: "Dossier", icon: FolderOpen, color: "text-amber-600" },
-  { key: "task", label: "Tâche", icon: ClipboardCheck, color: "text-emerald-600" },
-  { key: "pole", label: "Pôle", icon: Users, color: "text-purple-600" },
-];
+type Kind = "user";
 
 type Candidate = { id: string; label: string; sublabel?: string };
 
