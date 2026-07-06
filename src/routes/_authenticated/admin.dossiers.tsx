@@ -61,14 +61,15 @@ export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   },
   component: AdminDossiers,
 });
-  const [reviewOnly, setReviewOnly] = useState(false);
 
 
 function AdminDossiers() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
+  const [reviewOnly, setReviewOnly] = useState(false);
   const { user } = useAuth();
   const { isDirectionOrAdmin } = useRole();
+
 
   const { data: myPoleIds, isLoading: polesLoading } = useQuery({
     queryKey: ["my-pole-ids", user?.id],
