@@ -170,7 +170,9 @@ function Dashboard() {
           <h2 className="font-display text-lg sm:text-xl">Dossiers récents</h2>
           <Link to="/dossiers" className="text-sm text-primary hover:underline shrink-0">Tout voir →</Link>
         </div>
-        {dossiers.length === 0 ? (
+        {dossiersLoading || !dossiersFetched ? (
+          <Card className="p-8 text-center text-sm text-muted-foreground">Chargement…</Card>
+        ) : dossiers.length === 0 ? (
           <Card className="p-8 text-center">
             <AlertCircle className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
             <p className="text-muted-foreground">Aucun dossier pour le moment.</p>
