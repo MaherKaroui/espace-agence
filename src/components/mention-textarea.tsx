@@ -37,6 +37,7 @@ export function MentionTextarea({
   onChange,
   onSubmit,
   conversationId,
+  scopeClientId,
   placeholder,
   rows = 2,
   disabled,
@@ -47,6 +48,7 @@ export function MentionTextarea({
   onChange: (v: string) => void;
   onSubmit: () => void;
   conversationId?: string;
+  scopeClientId?: string;
   placeholder?: string;
   rows?: number;
   disabled?: boolean;
