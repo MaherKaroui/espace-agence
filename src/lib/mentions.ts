@@ -58,9 +58,9 @@ export function parseMentionSegments(content: string): MentionSegment[] {
       if (eMatch) {
         segs.push({
           kind: "entity",
-          type: eMatch[1] as MentionEntityType,
+          type: eMatch[2] as MentionEntityType,
           id: eMatch[3],
-          label: eMatch[2],
+          label: eMatch[1],
         });
       }
     }

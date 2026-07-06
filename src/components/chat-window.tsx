@@ -17,6 +17,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
+import { MentionTextarea } from "@/components/mention-textarea";
+import { RichMessageContent } from "@/components/rich-message-content";
 
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
@@ -290,13 +292,16 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
             </>
           ) : (
             <>
-              <Input
-                value={text}
-                onChange={(e) => { setText(e.target.value); broadcastTyping(); }}
-                onPaste={handlePaste}
-                placeholder="Écrire un message…"
-                className="flex-1"
-              />
+              <div className="flex-1" onPaste={handlePaste}>
+                <MentionTextarea
+                  value={text}
+                  onChange={(v) => { setText(v); broadcastTyping(); }}
+                  onSubmit={() => { if (text.trim()) send.mutate({ content: text.trim() }); }}
+                  enableEntities={isAdmin}
+                  rows={1}
+                  placeholder={isAdmin ? "Écrire… @ pour une personne, # pour un client/dossier/tâche/pôle" : "Écrire un message…"}
+                />
+              </div>
 
               {text.trim() ? (
                 <Button type="submit" size="icon" disabled={send.isPending}><Send className="h-4 w-4" /></Button>
@@ -519,7 +524,7 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
             </div>
           </div>
         ) : (
-          m.content && <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
+          m.content && <RichMessageContent content={m.content} className="text-sm" />
         )}
         <div className={`text-[10px] mt-1 flex items-center gap-1 flex-wrap ${isMine ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"}`}>
           {format(new Date(m.created_at), "HH:mm", { locale: fr })}

@@ -18,6 +18,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
 import { cn } from "@/lib/utils";
+import { MentionTextarea } from "@/components/mention-textarea";
+import { RichMessageContent } from "@/components/rich-message-content";
 
 export function GroupChatWindow({
   conversationId,
@@ -283,13 +285,15 @@ export function GroupChatWindow({
             </>
           ) : (
             <>
-              <Input
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onPaste={handlePaste}
-                placeholder="Écrire un message…"
-                className="flex-1"
-              />
+              <div className="flex-1" onPaste={handlePaste}>
+                <MentionTextarea
+                  value={text}
+                  onChange={setText}
+                  onSubmit={() => { if (text.trim()) send.mutate({ content: text.trim() }); }}
+                  enableEntities
+                  rows={1}
+                />
+              </div>
 
               {text.trim() ? (
                 <Button type="submit" size="icon" disabled={send.isPending}><Send className="h-4 w-4" /></Button>
@@ -501,7 +505,7 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
             </div>
           </div>
         ) : (
-          m.content && <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
+          m.content && <RichMessageContent content={m.content} className="text-sm" />
         )}
         <div className={`text-[10px] mt-1 ${isMine ? "text-primary-foreground/70 text-right" : "text-muted-foreground"}`}>
           {format(new Date(m.created_at), "HH:mm", { locale: fr })}
