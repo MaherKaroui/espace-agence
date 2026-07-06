@@ -5,10 +5,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { AtSign, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Kind = "user";
-
 type Candidate = { id: string; label: string; sublabel?: string };
 
+/**
+ * Zone de saisie avec autocomplete `@` sur les personnes uniquement.
+ * Volontairement plus de `#` pour lier des clients / dossiers / tâches — la
+ * messagerie interne concerne seulement l'équipe.
+ */
 export function MentionTextarea({
   value,
   onChange,
@@ -28,26 +31,15 @@ export function MentionTextarea({
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const search = useServerFn(searchMentionCandidates);
-  const [trigger, setTrigger] = useState<null | {
-    kind: Kind | "pick-entity";
-    start: number; // index of the trigger char
-    query: string;
-  }>(null);
+  const [trigger, setTrigger] = useState<null | { start: number; query: string }>(null);
   const [items, setItems] = useState<Candidate[]>([]);
   const [active, setActive] = useState(0);
 
-  // Détecter @ ou # devant le curseur
   const detectTrigger = (text: string, caret: number) => {
-    // Cherche le dernier @ ou # non séparé par espace/newline avant caret
     for (let i = caret - 1; i >= 0; i--) {
       const ch = text[i];
       if (ch === " " || ch === "\n" || ch === "\t") return null;
-      if (ch === "@") {
-        return { kind: "user" as Kind, start: i, query: text.slice(i + 1, caret) };
-      }
-      if (ch === "#") {
-        return { kind: "pick-entity" as const, start: i, query: text.slice(i + 1, caret) };
-      }
+      if (ch === "@") return { start: i, query: text.slice(i + 1, caret) };
     }
     return null;
   };
@@ -56,26 +48,17 @@ export function MentionTextarea({
     onChange(v);
     const el = ref.current;
     const caret = el?.selectionStart ?? v.length;
-    const t = detectTrigger(v, caret);
-    setTrigger(t);
+    setTrigger(detectTrigger(v, caret));
     setActive(0);
   };
 
-  // Charger les candidats
   useEffect(() => {
     if (!trigger) {
       setItems([]);
       return;
     }
-    if (trigger.kind === "pick-entity") {
-      // Étape 1 : choix du type d'entité (client / dossier / …)
-      setItems([]);
-      return;
-    }
     let cancelled = false;
-    search({
-      data: { kind: trigger.kind, query: trigger.query, conversationId },
-    })
+    search({ data: { kind: "user", query: trigger.query, conversationId } })
       .then((rows: any) => {
         if (!cancelled) setItems(rows as Candidate[]);
       })
@@ -85,21 +68,17 @@ export function MentionTextarea({
     return () => {
       cancelled = true;
     };
-  }, [trigger?.kind, trigger?.query, conversationId, search]);
+  }, [trigger?.query, conversationId, search]);
 
-  const insertMention = (kind: Exclude<Kind, "user"> | "user", c: Candidate) => {
+  const insertMention = (c: Candidate) => {
     if (!trigger) return;
     const before = value.slice(0, trigger.start);
-    const after = value.slice((ref.current?.selectionStart ?? value.length));
-    const token =
-      kind === "user"
-        ? `@[${c.label}](user:${c.id}) `
-        : `#[${c.label}](${kind}:${c.id}) `;
+    const after = value.slice(ref.current?.selectionStart ?? value.length);
+    const token = `@[${c.label}](user:${c.id}) `;
     const next = `${before}${token}${after}`;
     onChange(next);
     setTrigger(null);
     setItems([]);
-    // Repositionner le curseur en fin de token
     requestAnimationFrame(() => {
       const el = ref.current;
       if (!el) return;
@@ -109,20 +88,8 @@ export function MentionTextarea({
     });
   };
 
-  const pickEntityKind = (k: Exclude<Kind, "user">) => {
-    if (!trigger) return;
-    setTrigger({ kind: k, start: trigger.start, query: trigger.query });
-  };
-
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (trigger && trigger.kind === "pick-entity") {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        setTrigger(null);
-        return;
-      }
-    }
-    if (trigger && trigger.kind !== "pick-entity" && items.length > 0) {
+    if (trigger && items.length > 0) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setActive((a) => (a + 1) % items.length);
@@ -135,7 +102,7 @@ export function MentionTextarea({
       }
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
-        insertMention(trigger.kind as any, items[active]);
+        insertMention(items[active]);
         return;
       }
       if (e.key === "Escape") {
@@ -151,44 +118,11 @@ export function MentionTextarea({
   };
 
   const popover = useMemo(() => {
-    if (!trigger) return null;
-    if (trigger.kind === "pick-entity") {
-      return (
-        <div className="absolute bottom-full mb-1 left-0 z-20 w-64 rounded-lg border bg-popover shadow-lg overflow-hidden">
-          <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b">
-            Mentionner…
-          </div>
-          {ENTITY_KINDS.map((k) => {
-            const Icon = k.icon;
-            return (
-              <button
-                key={k.key}
-                type="button"
-                onClick={() => pickEntityKind(k.key)}
-                className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-muted text-left"
-              >
-                <Icon className={cn("h-4 w-4", k.color)} />
-                <span>{k.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      );
-    }
-    if (items.length === 0) return null;
-    const Icon =
-      trigger.kind === "user"
-        ? User
-        : ENTITY_KINDS.find((k) => k.key === trigger.kind)?.icon ?? Hash;
+    if (!trigger || items.length === 0) return null;
     return (
       <div className="absolute bottom-full mb-1 left-0 z-20 w-80 rounded-lg border bg-popover shadow-lg overflow-hidden">
         <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b flex items-center gap-1">
-          {trigger.kind === "user" ? (
-            <AtSign className="h-3 w-3" />
-          ) : (
-            <Hash className="h-3 w-3" />
-          )}
-          {trigger.kind === "user" ? "Personne" : trigger.kind}
+          <AtSign className="h-3 w-3" /> Mentionner une personne
         </div>
         <div className="max-h-56 overflow-y-auto">
           {items.map((c, i) => (
@@ -196,13 +130,13 @@ export function MentionTextarea({
               key={c.id}
               type="button"
               onMouseEnter={() => setActive(i)}
-              onClick={() => insertMention(trigger.kind as any, c)}
+              onClick={() => insertMention(c)}
               className={cn(
                 "w-full flex items-center gap-2 px-2 py-1.5 text-sm text-left",
                 i === active ? "bg-muted" : "hover:bg-muted/60",
               )}
             >
-              <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+              <User className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="min-w-0 flex-1">
                 <div className="truncate">{c.label}</div>
                 {c.sublabel && (
@@ -223,7 +157,7 @@ export function MentionTextarea({
       <Textarea
         ref={ref}
         rows={rows}
-        placeholder={placeholder ?? "Écrire… @ pour mentionner, # pour lier"}
+        placeholder={placeholder ?? "Écrire… @ pour mentionner une personne"}
         value={value}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={onKeyDown}
