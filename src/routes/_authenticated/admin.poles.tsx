@@ -427,9 +427,19 @@ function PoleCard({
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
+              {pole.actif && (
+                <OpenInternalConversationButton
+                  contextType="pole"
+                  entityId={pole.id}
+                  size="sm"
+                  variant="outline"
+                  label="Canal"
+                />
+              )}
               <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="gap-1">
                 <Pencil className="h-4 w-4" /> Modifier
               </Button>
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="sm" className="text-destructive gap-1">
