@@ -2,15 +2,21 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatWindow } from "@/components/chat-window";
+import { assertClientAccess } from "@/lib/admin-clients.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/messages/$clientId")({
   head: () => ({ meta: [{ title: "Conversation" }] }),
-  beforeLoad: async () => {
+  beforeLoad: async ({ params }) => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw redirect({ to: "/auth" });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.user.id);
     const ok = roles?.some((r) => ["admin","direction","manager","consultant"].includes(r.role));
     if (!ok) throw redirect({ to: "/dashboard" });
+    try {
+      await assertClientAccess({ data: { clientId: params.clientId } });
+    } catch {
+      throw redirect({ to: "/admin/messages" });
+    }
   },
   component: AdminChat,
 });
