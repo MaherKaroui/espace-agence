@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
@@ -87,15 +87,17 @@ export function CreateTaskFromMessageDialog({
     onError: (e: any) => toast.error(e.message ?? "Création impossible"),
   });
 
+  useEffect(() => {
+    if (open && !draft && !extract.isPending) {
+      extract.mutate();
+    }
+    if (!open) setDraft(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        onOpenChange(v);
-        if (v && !draft) extract.mutate();
-        if (!v) setDraft(null);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
