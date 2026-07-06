@@ -36,7 +36,11 @@ function triggerUpload(key: string) {
 export function NextActionCard({ categorie, documents, taches, dossierStatut, compact }: Props) {
   const na = computeNextAction(categorie, documents, taches, dossierStatut);
   const Icon = ICONS[na.kind];
-  const hasCta = !!na.primaryKey && !!na.primaryLabel;
+  // On masque le CTA "Ajouter mon …" quand le document est déjà envoyé
+  // et simplement en attente de validation par l'agence. On propose alors
+  // un bouton secondaire "Remplacer le fichier" plus discret.
+  const pendingValidation = na.kind === "manquant" && na.label.startsWith("En attente de validation");
+  const hasCta = !!na.primaryKey && !!na.primaryLabel && !pendingValidation;
 
   if (compact) {
     return (
@@ -55,7 +59,7 @@ export function NextActionCard({ categorie, documents, taches, dossierStatut, co
       <div className="flex flex-wrap items-start gap-4">
         <Icon className="h-6 w-6 mt-1 shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="text-xs uppercase tracking-wider opacity-70">Prochaine action</div>
+          <div className="text-xs uppercase tracking-wider opacity-70">À faire maintenant</div>
           <div className="font-medium text-lg mt-1">{na.label}</div>
           {na.detail && <div className="text-sm opacity-80 mt-1">{na.detail}</div>}
         </div>
@@ -63,10 +67,20 @@ export function NextActionCard({ categorie, documents, taches, dossierStatut, co
           <Button
             size="lg"
             onClick={() => triggerUpload(na.primaryKey!)}
-            className="shrink-0"
+            className="shrink-0 min-h-11 w-full sm:w-auto"
           >
             <Upload className="h-4 w-4 mr-2" />
             Ajouter mon {na.primaryLabel}
+          </Button>
+        )}
+        {pendingValidation && na.primaryKey && (
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => triggerUpload(na.primaryKey!)}
+            className="shrink-0 min-h-11 w-full sm:w-auto"
+          >
+            Remplacer le fichier
           </Button>
         )}
       </div>
