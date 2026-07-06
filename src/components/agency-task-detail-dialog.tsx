@@ -12,6 +12,8 @@ import { Card } from "@/components/ui/card";
 import { Archive, Pencil, Send } from "lucide-react";
 import { PriorityBadge, StatusBadge } from "./agency-task-badges";
 import { AgencyTaskFormDialog } from "./agency-task-form-dialog";
+import { OpenInternalConversationButton } from "./open-internal-conversation-button";
+
 import type { Database } from "@/integrations/supabase/types";
 
 type Task = Database["public"]["Tables"]["agency_tasks"]["Row"];
@@ -162,7 +164,15 @@ export function AgencyTaskDetailDialog({
                   <Archive className="h-4 w-4 mr-1" /> Archiver
                 </Button>
               )}
+              <OpenInternalConversationButton
+                contextType="task"
+                entityId={task.id}
+                size="sm"
+                variant="outline"
+                label="Discussion interne"
+              />
             </div>
+
 
             <div className="space-y-2 pt-2 border-t">
               <div className="text-sm font-medium">Commentaires ({comments.length})</div>

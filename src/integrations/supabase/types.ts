@@ -698,21 +698,27 @@ export type Database = {
         Row: {
           added_at: string
           conversation_id: string
+          favorite: boolean
           last_read_at: string | null
+          muted: boolean
           role: string
           user_id: string
         }
         Insert: {
           added_at?: string
           conversation_id: string
+          favorite?: boolean
           last_read_at?: string | null
+          muted?: boolean
           role?: string
           user_id: string
         }
         Update: {
           added_at?: string
           conversation_id?: string
+          favorite?: boolean
           last_read_at?: string | null
+          muted?: boolean
           role?: string
           user_id?: string
         }
@@ -728,30 +734,70 @@ export type Database = {
       }
       internal_conversations: {
         Row: {
+          archived_at: string | null
+          client_id: string | null
           created_at: string
           created_by: string
+          dossier_id: string | null
           id: string
           is_group: boolean
+          pole_id: string | null
+          task_id: string | null
           titre: string | null
+          type: string
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          client_id?: string | null
           created_at?: string
           created_by: string
+          dossier_id?: string | null
           id?: string
           is_group?: boolean
+          pole_id?: string | null
+          task_id?: string | null
           titre?: string | null
+          type?: string
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          client_id?: string | null
           created_at?: string
           created_by?: string
+          dossier_id?: string | null
           id?: string
           is_group?: boolean
+          pole_id?: string | null
+          task_id?: string | null
           titre?: string | null
+          type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "internal_conversations_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_conversations_pole_id_fkey"
+            columns: ["pole_id"]
+            isOneToOne: false
+            referencedRelation: "poles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_conversations_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "agency_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       internal_messages: {
         Row: {
@@ -1438,8 +1484,16 @@ export type Database = {
         Args: { _a: string; _b: string }
         Returns: boolean
       }
+      can_post_internal_conv: {
+        Args: { _conv: string; _user: string }
+        Returns: boolean
+      }
       can_view_agency_task: {
         Args: { _task_id: string; _user: string }
+        Returns: boolean
+      }
+      can_view_internal_conv: {
+        Args: { _conv: string; _user: string }
         Returns: boolean
       }
       client_in_scope: {

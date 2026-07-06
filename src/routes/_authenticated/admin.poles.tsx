@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Users, FolderOpen, Save, X, Power } from "lucide-react";
 import { POLE_MEMBER_ROLES, roleLabelFr } from "@/lib/role-labels";
+import { OpenInternalConversationButton } from "@/components/open-internal-conversation-button";
+
 
 export const Route = createFileRoute("/_authenticated/admin/poles")({
   head: () => ({ meta: [{ title: "Pôles — Direction" }] }),
@@ -427,9 +429,19 @@ function PoleCard({
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
+              {pole.actif && (
+                <OpenInternalConversationButton
+                  contextType="pole"
+                  entityId={pole.id}
+                  size="sm"
+                  variant="outline"
+                  label="Canal"
+                />
+              )}
               <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="gap-1">
                 <Pencil className="h-4 w-4" /> Modifier
               </Button>
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="sm" className="text-destructive gap-1">

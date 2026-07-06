@@ -13,6 +13,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
 import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock, Archive, ArchiveRestore } from "lucide-react";
 import { RelanceButton } from "@/components/relance-button";
+import { OpenInternalConversationButton } from "@/components/open-internal-conversation-button";
+
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -230,7 +232,9 @@ function ClientDetail() {
             <Link to="/admin/messages/$clientId" params={{ clientId: id }}>
               <Button variant="outline"><MessageSquare className="h-4 w-4 mr-2" /> Ouvrir la conversation</Button>
             </Link>
+            <OpenInternalConversationButton contextType="client" entityId={id} label="Discuter en interne" />
             <RelanceButton clientId={id} clientEmail={profile?.email} />
+
             {isDirectionOrAdmin && !isArchived && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>

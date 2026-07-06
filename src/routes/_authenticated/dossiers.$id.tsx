@@ -24,6 +24,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { RelanceButton } from "@/components/relance-button";
+import { OpenInternalConversationButton } from "@/components/open-internal-conversation-button";
+
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
@@ -185,11 +187,15 @@ function DossierDetail() {
             dossierTitre={dossier.titre}
           />
         )}
+        {isAdmin && (
+          <OpenInternalConversationButton contextType="dossier" entityId={dossier.id} label="Discuter en interne" />
+        )}
         {isAdmin && !dossier.client_id && (
           <InviteClientToDossier dossierId={dossier.id} onDone={() => qc.invalidateQueries({ queryKey: ["dossier", id] })} />
         )}
 
       </div>
+
 
       <Card className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
