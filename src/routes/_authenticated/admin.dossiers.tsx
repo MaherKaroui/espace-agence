@@ -1,14 +1,54 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, FolderOpen } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, FolderOpen, CheckCircle2, AlertTriangle, Circle, ClipboardCheck } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
-import { categorieLabel, CATEGORIES } from "@/lib/labels";
+import { categorieLabel, CATEGORIES, requiredDocsFor, docMatches } from "@/lib/labels";
+import { cn } from "@/lib/utils";
+
+type DocRow = {
+  id: string;
+  dossier_id: string;
+  nom: string;
+  detected_type: string | null;
+  statut: string | null;
+};
+
+type ReviewStats = {
+  total: number;
+  validated: number;
+  toReview: number; // envoyé, en attente de revue
+  toFix: number;    // refusé ou à corriger
+  missing: number;  // pas de fichier
+  needsAction: boolean; // toReview + toFix + missing > 0
+};
+
+function computeReviewStats(categorie: string, docs: DocRow[]): ReviewStats {
+  const requis = requiredDocsFor(categorie);
+  if (requis.length === 0) {
+    return { total: 0, validated: 0, toReview: 0, toFix: 0, missing: 0, needsAction: false };
+  }
+  let validated = 0, toReview = 0, toFix = 0, missing = 0;
+  for (const r of requis) {
+    const found = docs.find((d) => docMatches(d, r));
+    if (!found) { missing++; continue; }
+    const s = found.statut ?? "en_attente";
+    if (s === "accepte") validated++;
+    else if (s === "a_corriger" || s === "refuse") toFix++;
+    else toReview++;
+  }
+  return {
+    total: requis.length,
+    validated, toReview, toFix, missing,
+    needsAction: toReview + toFix + missing > 0,
+  };
+}
 
 export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   head: () => ({ meta: [{ title: "Dossiers — Admin" }] }),
