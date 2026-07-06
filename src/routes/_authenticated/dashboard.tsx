@@ -62,7 +62,7 @@ function Dashboard() {
 
   const { data: allTaches = [] } = useQuery({
     queryKey: ["dashboard-taches", user?.id, dossierIds.join(",")],
-    enabled: !isAdmin && dossierIds.length > 0,
+    enabled: dossierIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("taches")
