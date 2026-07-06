@@ -231,30 +231,48 @@ function ClientDetail() {
               <Button variant="outline"><MessageSquare className="h-4 w-4 mr-2" /> Ouvrir la conversation</Button>
             </Link>
             <RelanceButton clientId={id} clientEmail={profile?.email} />
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={deleteClientM.isPending}>
-                  {deleteClientM.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
-                  Supprimer le client
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Supprimer ce client&nbsp;?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Cette action est <strong>irréversible</strong>. Le compte, ses dossiers, documents et messages seront supprimés définitivement.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => deleteClientM.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Supprimer définitivement
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            {isDirectionOrAdmin && !isArchived && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={archiveM.isPending}>
+                    {archiveM.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Archive className="h-4 w-4 mr-2" />}
+                    Archiver le client
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Archiver ce client&nbsp;?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Le client sera <strong>archivé</strong> : ses sessions sont fermées et son compte n'apparaît plus dans les listes. Les dossiers et l'historique restent conservés. Seul un administrateur peut le réactiver.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="mt-2">
+                    <label className="text-xs text-muted-foreground">Motif (optionnel)</label>
+                    <Textarea rows={2} value={archiveReason} onChange={(e) => setArchiveReason(e.target.value)} placeholder="Ex. Dossiers clôturés — RGPD" />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => archiveM.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Archiver
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {isAdmin && isArchived && (
+              <Button variant="outline" onClick={() => unarchiveM.mutate()} disabled={unarchiveM.isPending}>
+                {unarchiveM.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArchiveRestore className="h-4 w-4 mr-2" />}
+                Réactiver le client
+              </Button>
+            )}
           </div>
         </div>
+        {isArchived && (
+          <div className="mt-4 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+            Client archivé le {(profile as any)?.archived_at ? format(new Date((profile as any).archived_at), "d MMM yyyy", { locale: fr }) : ""}
+            {(profile as any)?.archive_reason ? ` — ${(profile as any).archive_reason}` : ""}.
+          </div>
+        )}
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
           <Kpi icon={FolderOpen} label="Dossiers" value={String(dossiers.length)} tone="bg-primary/10 text-primary" />
