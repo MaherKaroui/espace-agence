@@ -2,7 +2,8 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Users, FolderOpen, FileText, Clock } from "lucide-react";
+import { Users, FolderOpen, FileText, Clock, ListChecks, AlertTriangle, CalendarCheck, CheckCircle2 } from "lucide-react";
+import { AgencyTasksPriorityBoard } from "@/components/agency-tasks-priority-board";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Admin — Dashboard" }] }),
@@ -38,6 +39,27 @@ function AdminDashboard() {
     },
   });
 
+  const { data: taskKpis } = useQuery({
+    queryKey: ["agency-tasks-kpis"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("agency_tasks")
+        .select("id, status, priority, due_date, completed_at, archived_at")
+        .is("archived_at", null);
+      const rows = data ?? [];
+      const now = new Date();
+      const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
+      const weekAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000);
+      const open = rows.filter((r) => r.status !== "terminee");
+      return {
+        today: open.filter((r) => r.due_date && new Date(r.due_date) <= endOfDay && new Date(r.due_date) >= new Date(new Date().setHours(0,0,0,0))).length,
+        urgent: open.filter((r) => r.priority === "urgente").length,
+        overdue: open.filter((r) => r.due_date && new Date(r.due_date) < now).length,
+        doneWeek: rows.filter((r) => r.status === "terminee" && r.completed_at && new Date(r.completed_at) >= weekAgo).length,
+      };
+    },
+  });
+
   return (
     <div className="space-y-8">
       <div>
@@ -52,6 +74,21 @@ function AdminDashboard() {
         <StatCard label="En attente" value={stats?.enAttente ?? 0} icon={Clock} tone="warning" />
       </div>
 
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <ListChecks className="h-5 w-5 text-gold" />
+          <h2 className="font-display text-xl">Tâches à faire</h2>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="Aujourd'hui" value={taskKpis?.today ?? 0} icon={CalendarCheck} />
+          <StatCard label="Urgentes" value={taskKpis?.urgent ?? 0} icon={AlertTriangle} tone="danger" />
+          <StatCard label="En retard" value={taskKpis?.overdue ?? 0} icon={Clock} tone="warning" />
+          <StatCard label="Terminées 7 j." value={taskKpis?.doneWeek ?? 0} icon={CheckCircle2} tone="success" />
+        </div>
+      </div>
+
+      <AgencyTasksPriorityBoard />
+
       <div className="grid md:grid-cols-2 gap-4">
         <Link to="/admin/clients"><Card className="p-6 hover:border-primary/40 transition"><div className="font-display text-lg">Gérer les clients →</div><p className="text-sm text-muted-foreground mt-1">Rechercher, consulter, contacter.</p></Card></Link>
         <Link to="/admin/dossiers"><Card className="p-6 hover:border-primary/40 transition"><div className="font-display text-lg">Tous les dossiers →</div><p className="text-sm text-muted-foreground mt-1">Suivre, modifier les statuts, valider.</p></Card></Link>
@@ -64,6 +101,8 @@ function StatCard({ label, value, icon: Icon, tone = "default" }: { label: strin
   const colors: Record<string, string> = {
     default: "text-primary bg-primary/10",
     warning: "text-warning-foreground bg-warning/20",
+    danger: "text-red-600 bg-red-500/10",
+    success: "text-emerald-700 bg-emerald-500/10",
   };
   return (
     <Card className="p-4">
