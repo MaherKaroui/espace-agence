@@ -29,6 +29,7 @@ import {
 } from "@/lib/internal-messages.functions";
 import { roleLabelFr } from "@/lib/role-labels";
 import { cn } from "@/lib/utils";
+import { mentionsToPlainText } from "@/lib/mentions";
 
 // Types de conversations affichés dans la messagerie interne.
 // Les anciennes conversations "client", "dossier", "task" sont volontairement exclues :
