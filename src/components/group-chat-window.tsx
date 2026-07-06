@@ -290,7 +290,7 @@ export function GroupChatWindow({
                   value={text}
                   onChange={setText}
                   onSubmit={() => { if (text.trim()) send.mutate({ content: text.trim() }); }}
-                  enableEntities
+                  conversationId={conversationId}
                   rows={1}
                 />
               </div>
