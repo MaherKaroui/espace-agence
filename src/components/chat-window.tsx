@@ -298,8 +298,9 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
                   onChange={(v) => { setText(v); broadcastTyping(); }}
                   onSubmit={() => { if (text.trim()) send.mutate({ content: text.trim() }); }}
                   enableEntities={isAdmin}
+                  enableUsers={false}
                   rows={1}
-                  placeholder={isAdmin ? "Écrire… @ pour une personne, # pour un client/dossier/tâche/pôle" : "Écrire un message…"}
+                  placeholder={isAdmin ? "Écrire… # pour lier un dossier / tâche / pôle" : "Écrire un message…"}
                 />
               </div>
 
