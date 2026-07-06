@@ -385,9 +385,10 @@ export const setInternalConversationFlag = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const patch: Record<string, boolean> = {};
+    const patch: { favorite?: boolean; muted?: boolean } = {};
     if (typeof data.favorite === "boolean") patch.favorite = data.favorite;
     if (typeof data.muted === "boolean") patch.muted = data.muted;
+
     if (Object.keys(patch).length === 0) return { ok: true };
 
     // Si l'utilisateur n'est pas encore explicitement membre (canal de pôle),
