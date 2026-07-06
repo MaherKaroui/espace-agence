@@ -48,7 +48,8 @@ function Dashboard() {
 
   const { data: allDocs = [] } = useQuery({
     queryKey: ["dashboard-docs", user?.id, dossierIds.join(",")],
-    enabled: !isAdmin && dossierIds.length > 0,
+    enabled: dossierIds.length > 0,
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
