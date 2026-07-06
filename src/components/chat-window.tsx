@@ -299,8 +299,9 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
                   onSubmit={() => { if (text.trim()) send.mutate({ content: text.trim() }); }}
                   enableEntities={isAdmin}
                   enableUsers={false}
+                  scopeClientId={clientId}
                   rows={1}
-                  placeholder={isAdmin ? "Écrire… # pour lier un dossier / tâche / pôle" : "Écrire un message…"}
+                  placeholder={isAdmin ? "Écrire… # pour lier un dossier / tâche de ce client" : "Écrire un message…"}
                 />
               </div>
 
