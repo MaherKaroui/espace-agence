@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, Users2, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings, CalendarDays, UserCog,
+  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, Users2, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings, CalendarDays, UserCog, ListChecks,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,6 +30,7 @@ function matchesSection(row: NavUnreadRow, to: string): boolean {
   if (to === "/admin/rendez-vous") return link.startsWith("/rendez-vous") || link.startsWith("/admin/rendez-vous") || row.type.startsWith("rdv");
   if (to === "/dossiers") return link.startsWith("/dossiers") || row.type.startsWith("document") || row.type === "statut_change" || row.type.startsWith("tache");
   if (to === "/rendez-vous") return link.startsWith("/rendez-vous") || row.type.startsWith("rdv");
+  if (to === "/admin/taches-agence") return row.type === "agency_task" || link.startsWith("/admin/taches-agence");
   if (to === "/notifications") return true;
   return false;
 }
@@ -74,7 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user || unreadRows.length === 0) return;
     const path = location.pathname;
-    const sections = ["/admin/dossiers", "/admin/messages", "/admin/internal-messages", "/admin/rendez-vous", "/dossiers", "/messages/groupes", "/messages", "/rendez-vous", "/notifications"];
+    const sections = ["/admin/dossiers", "/admin/messages", "/admin/internal-messages", "/admin/rendez-vous", "/admin/taches-agence", "/dossiers", "/messages/groupes", "/messages", "/rendez-vous", "/notifications"];
     const section = sections.find((s) => path === s || path.startsWith(s + "/"));
     if (!section) return;
     const ids = unreadRows.filter((r) => matchesSection(r, section)).map((r) => r.id);
@@ -104,6 +105,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/admin", label: "Vue agence", icon: LayoutDashboard },
     { to: "/admin/dossiers", label: "Dossiers de mes pôles", icon: FolderOpen },
     { to: "/admin/clients", label: "Clients de mes pôles", icon: Users },
+    { to: "/admin/taches-agence", label: "Tâches agence", icon: ListChecks },
     { to: "/admin/messages", label: "Messagerie clients", icon: MessageSquare },
     { to: "/admin/internal-messages", label: "Messagerie interne", icon: Users2 },
   ];

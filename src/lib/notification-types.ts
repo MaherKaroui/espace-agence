@@ -22,7 +22,7 @@ export const EVENT_CATEGORIES: { key: EventCategory; label: string; description:
 export function categoryOf(type: string): EventCategory {
   if (type === "message" || type === "internal_message") return "chat";
   if (type.startsWith("document")) return "document";
-  if (type.startsWith("tache")) return "tache";
+  if (type === "agency_task" || type.startsWith("tache")) return "tache";
   if (type.startsWith("rdv")) return "rdv";
   if (type === "alerte" || type.startsWith("securite") || type === "rapport_quotidien") return "securite";
   if (type === "statut_change") return "tache";
