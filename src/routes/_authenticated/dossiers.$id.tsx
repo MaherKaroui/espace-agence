@@ -24,6 +24,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { RelanceButton } from "@/components/relance-button";
+import { OpenInternalConversationButton } from "@/components/open-internal-conversation-button";
+
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
