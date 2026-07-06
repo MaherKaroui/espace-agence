@@ -28,6 +28,8 @@ import { RelanceButton } from "@/components/relance-button";
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
+import { computeAvancement } from "@/lib/next-action";
+
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
 import { inviteClient } from "@/lib/admin-clients.functions";
