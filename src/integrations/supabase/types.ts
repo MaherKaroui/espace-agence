@@ -520,6 +520,115 @@ export type Database = {
           },
         ]
       }
+      internal_conversation_members: {
+        Row: {
+          added_at: string
+          conversation_id: string
+          last_read_at: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          conversation_id: string
+          last_read_at?: string | null
+          role?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          conversation_id?: string
+          last_read_at?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_conversation_members_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "internal_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_conversations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_group: boolean
+          titre: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_group?: boolean
+          titre?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_group?: boolean
+          titre?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      internal_messages: {
+        Row: {
+          attachment_mime: string | null
+          attachment_name: string | null
+          attachment_path: string | null
+          content: string | null
+          conversation_id: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          edited_at: string | null
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          edited_at?: string | null
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          attachment_mime?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          edited_at?: string | null
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "internal_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_deletion_log: {
         Row: {
           client_id: string
@@ -731,6 +840,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           avatar_url: string | null
           created_at: string
           email: string
@@ -742,6 +854,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           avatar_url?: string | null
           created_at?: string
           email: string
@@ -753,6 +868,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string
@@ -1138,9 +1256,25 @@ export type Database = {
     }
     Functions: {
       anonymize_user_account: { Args: { _user_id: string }; Returns: undefined }
+      archive_client: {
+        Args: { _reason?: string; _user_id: string }
+        Returns: undefined
+      }
+      can_internal_contact: {
+        Args: { _a: string; _b: string }
+        Returns: boolean
+      }
+      client_in_scope: {
+        Args: { _client: string; _staff: string }
+        Returns: boolean
+      }
       close_stale_sessions: { Args: never; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
+        Returns: boolean
+      }
+      dossier_in_scope: {
+        Args: { _dossier: string; _user: string }
         Returns: boolean
       }
       email_queue_dispatch: { Args: never; Returns: undefined }
@@ -1156,12 +1290,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_agency_member: { Args: { _user: string }; Returns: boolean }
       is_conversation_member: {
         Args: { _conv_id: string; _user_id: string }
         Returns: boolean
       }
       is_conversation_owner: {
         Args: { _conv_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_internal_member: {
+        Args: { _conv: string; _user: string }
+        Returns: boolean
+      }
+      is_internal_owner: {
+        Args: { _conv: string; _user: string }
         Returns: boolean
       }
       is_pole_member: {
@@ -1235,6 +1378,7 @@ export type Database = {
         Args: { _client_id: string; _staff_id: string }
         Returns: boolean
       }
+      unarchive_client: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "client" | "admin" | "direction" | "manager" | "consultant"

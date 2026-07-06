@@ -4,13 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
-import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock, Archive, ArchiveRestore } from "lucide-react";
 import { RelanceButton } from "@/components/relance-button";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -18,18 +19,24 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useServerFn } from "@tanstack/react-start";
-import { deleteClient, updateClientProfile } from "@/lib/admin-clients.functions";
+import { archiveClient, unarchiveClient, assertClientAccess, updateClientProfile } from "@/lib/admin-clients.functions";
 import { formatDistanceToNow, format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/admin/clients/$id")({
   head: () => ({ meta: [{ title: "Client — Admin" }] }),
-  beforeLoad: async () => {
+  beforeLoad: async ({ params }) => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw redirect({ to: "/auth" });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.user.id);
     const staff = roles?.some((r) => ["admin", "direction", "manager", "consultant"].includes(r.role));
     if (!staff) throw redirect({ to: "/dashboard" });
+    // Vérif serveur : ce client est-il dans mon périmètre de pôles ?
+    try {
+      await assertClientAccess({ data: { clientId: params.id } });
+    } catch {
+      throw redirect({ to: "/admin/clients" });
+    }
   },
   component: ClientDetail,
 });
