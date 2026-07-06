@@ -1,4 +1,5 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -8,10 +9,11 @@ import { StatusBadge } from "@/components/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { categorieLabel } from "@/lib/labels";
 import { NextActionCard } from "@/components/next-action-card";
-import { computeNextAction } from "@/lib/next-action";
+import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { FolderOpen, FileText, Clock, CheckCircle2, AlertCircle, Upload, MessageSquare, CalendarDays } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
