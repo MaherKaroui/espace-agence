@@ -17,7 +17,7 @@ function Privacy() {
     <div className="min-h-screen flex flex-col bg-background">
       <div className="border-b bg-card">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="font-display text-lg">Espace Agence</Link>
+          <Link to="/" className="font-display text-lg">IZISuivis</Link>
           <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">Se connecter</Link>
         </div>
       </div>

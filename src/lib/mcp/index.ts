@@ -3,9 +3,9 @@ import echoTool from "./tools/echo";
 
 export default defineMcp({
   name: "espace-agence-mcp",
-  title: "Espace Agence MCP",
+  title: "IZISuivis MCP",
   version: "0.1.0",
   instructions:
-    "Outils MCP pour l'Espace Agence. Utilisez `echo` pour vérifier la connectivité.",
+    "Outils MCP pour IZISuivis. Utilisez `echo` pour vérifier la connectivité.",
   tools: [echoTool],
 });
