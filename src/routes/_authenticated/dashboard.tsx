@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -8,10 +9,11 @@ import { StatusBadge } from "@/components/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { categorieLabel } from "@/lib/labels";
 import { NextActionCard } from "@/components/next-action-card";
-import { computeNextAction } from "@/lib/next-action";
+import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { FolderOpen, FileText, Clock, CheckCircle2, AlertCircle, Upload, MessageSquare, CalendarDays } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -21,7 +23,15 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isAdmin, isStaff } = useRole();
+  const navigate = useNavigate();
+
+  // Séparation nette admin / client : les membres de l'agence sont
+  // redirigés vers leur vue agence dès l'arrivée sur le dashboard.
+  useEffect(() => {
+    if (isStaff) navigate({ to: "/admin", replace: true });
+  }, [isStaff, navigate]);
+
 
   const { data: dossiers = [], isLoading: dossiersLoading, isFetched: dossiersFetched } = useQuery({
     queryKey: ["dossiers-mine", user?.id],
@@ -38,7 +48,8 @@ function Dashboard() {
 
   const { data: allDocs = [] } = useQuery({
     queryKey: ["dashboard-docs", user?.id, dossierIds.join(",")],
-    enabled: !isAdmin && dossierIds.length > 0,
+    enabled: dossierIds.length > 0,
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
@@ -51,7 +62,7 @@ function Dashboard() {
 
   const { data: allTaches = [] } = useQuery({
     queryKey: ["dashboard-taches", user?.id, dossierIds.join(",")],
-    enabled: !isAdmin && dossierIds.length > 0,
+    enabled: dossierIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("taches")
@@ -180,7 +191,12 @@ function Dashboard() {
           </Card>
         ) : (
           <div className="grid gap-3">
-            {dossiers.slice(0, 5).map((d) => (
+            {dossiers.slice(0, 5).map((d) => {
+              const docs = allDocs.filter((doc: any) => doc.dossier_id === d.id) as any;
+              const tks = allTaches.filter((t: any) => t.dossier_id === d.id) as any;
+              // Source unique : même calcul dans le dashboard, la liste et le détail.
+              const av = computeAvancement(d.categorie, docs, tks, d.statut);
+              return (
               <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}>
                 <Card className="p-4 hover:border-primary/40 transition-colors">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
@@ -195,13 +211,15 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="w-full sm:w-24 shrink-0">
-                      <div className="text-xs text-muted-foreground mb-1 sm:text-right">{d.avancement}%</div>
-                      <Progress value={d.avancement} className="h-1.5" />
+                      <div className="text-xs text-muted-foreground mb-1 sm:text-right">{av}%</div>
+                      <Progress value={av} className="h-1.5" />
                     </div>
                   </div>
                 </Card>
               </Link>
-            ))}
+              );
+            })}
+
           </div>
         )}
       </div>

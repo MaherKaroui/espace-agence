@@ -28,6 +28,8 @@ import { RelanceButton } from "@/components/relance-button";
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
+import { computeAvancement } from "@/lib/next-action";
+
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
 import { inviteClient } from "@/lib/admin-clients.functions";
@@ -204,19 +206,29 @@ function DossierDetail() {
             {dossier.description && <p className="text-muted-foreground mt-2 whitespace-pre-line">{dossier.description}</p>}
           </div>
           <div className="w-full md:w-64">
-            {isAdmin ? (
-              <>
-                <div className="text-xs text-muted-foreground mb-1">Avancement</div>
-                <Progress value={dossier.avancement} />
-                <div className="text-sm mt-1">{dossier.avancement}%</div>
-              </>
-            ) : (
-              <ClientProgressSummary
-                avancement={dossier.avancement}
-                taches={taches as any}
-              />
-            )}
+            {(() => {
+              // Source unique de vérité : même calcul que la liste & le dashboard.
+              const av = computeAvancement(dossier.categorie, documents as any, taches as any, dossier.statut);
+              return isAdmin ? (
+                <>
+                  <div className="text-xs text-muted-foreground mb-1">Avancement</div>
+                  <Progress value={av} />
+                  <div className="text-sm mt-1">{av}%</div>
+                  {dossier.avancement !== av && (
+                    <div className="text-[11px] text-warning mt-1">
+                      Saisi manuellement : {dossier.avancement}%
+                    </div>
+                  )}
+                </>
+              ) : (
+                <ClientProgressSummary
+                  avancement={av}
+                  taches={taches as any}
+                />
+              );
+            })()}
           </div>
+
 
         </div>
 

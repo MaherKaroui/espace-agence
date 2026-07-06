@@ -141,7 +141,8 @@ function DossiersPage() {
   const dossierIds = dossiers.map((d) => d.id);
   const { data: allDocs = [] } = useQuery({
     queryKey: ["dossiers-mine-docs", user?.id, dossierIds.join(",")],
-    enabled: !isAdmin && dossierIds.length > 0,
+    enabled: dossierIds.length > 0,
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
@@ -153,7 +154,7 @@ function DossiersPage() {
   });
   const { data: allTaches = [] } = useQuery({
     queryKey: ["dossiers-mine-taches", user?.id, dossierIds.join(",")],
-    enabled: !isAdmin && dossierIds.length > 0,
+    enabled: dossierIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("taches")
@@ -170,9 +171,10 @@ function DossiersPage() {
     const docs = allDocs.filter((doc: any) => doc.dossier_id === d.id) as any;
     const tks = allTaches.filter((t: any) => t.dossier_id === d.id) as any;
     const na = computeNextAction(d.categorie, docs, tks, d.statut);
-    const avancement = isAdmin
-      ? d.avancement
-      : computeAvancement(d.categorie, docs, tks, d.statut);
+    // Toujours calculer côté client pour garantir la cohérence entre
+    // toutes les vues (dashboard, liste, détail, admin). Même formule partout.
+    const avancement = computeAvancement(d.categorie, docs, tks, d.statut);
+
     return { d: { ...d, avancement }, na };
   });
 
