@@ -1,14 +1,54 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, FolderOpen } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, FolderOpen, CheckCircle2, AlertTriangle, Circle, ClipboardCheck } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
-import { categorieLabel, CATEGORIES } from "@/lib/labels";
+import { categorieLabel, CATEGORIES, requiredDocsFor, docMatches } from "@/lib/labels";
+import { cn } from "@/lib/utils";
+
+type DocRow = {
+  id: string;
+  dossier_id: string;
+  nom: string;
+  detected_type: string | null;
+  statut: string | null;
+};
+
+type ReviewStats = {
+  total: number;
+  validated: number;
+  toReview: number; // envoyé, en attente de revue
+  toFix: number;    // refusé ou à corriger
+  missing: number;  // pas de fichier
+  needsAction: boolean; // toReview + toFix + missing > 0
+};
+
+function computeReviewStats(categorie: string, docs: DocRow[]): ReviewStats {
+  const requis = requiredDocsFor(categorie);
+  if (requis.length === 0) {
+    return { total: 0, validated: 0, toReview: 0, toFix: 0, missing: 0, needsAction: false };
+  }
+  let validated = 0, toReview = 0, toFix = 0, missing = 0;
+  for (const r of requis) {
+    const found = docs.find((d) => docMatches(d, r));
+    if (!found) { missing++; continue; }
+    const s = found.statut ?? "en_attente";
+    if (s === "accepte") validated++;
+    else if (s === "a_corriger" || s === "refuse") toFix++;
+    else toReview++;
+  }
+  return {
+    total: requis.length,
+    validated, toReview, toFix, missing,
+    needsAction: toReview + toFix + missing > 0,
+  };
+}
 
 export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   head: () => ({ meta: [{ title: "Dossiers — Admin" }] }),
@@ -22,11 +62,14 @@ export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   component: AdminDossiers,
 });
 
+
 function AdminDossiers() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
+  const [reviewOnly, setReviewOnly] = useState(false);
   const { user } = useAuth();
   const { isDirectionOrAdmin } = useRole();
+
 
   const { data: myPoleIds, isLoading: polesLoading } = useQuery({
     queryKey: ["my-pole-ids", user?.id],
@@ -85,12 +128,41 @@ function AdminDossiers() {
     },
   });
 
-  const filtered = rows.filter((r: any) => {
+  const dossierIds = useMemo(() => (rows as any[]).map((d) => d.id), [rows]);
+
+  const { data: docsByDossier = {} } = useQuery({
+    queryKey: ["admin-dossiers-docs", dossierIds.join(",")],
+    enabled: dossierIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("id, dossier_id, nom, detected_type, statut")
+        .in("dossier_id", dossierIds);
+      if (error) throw error;
+      const m: Record<string, DocRow[]> = {};
+      for (const d of (data ?? []) as DocRow[]) {
+        (m[d.dossier_id] ??= []).push(d);
+      }
+      return m;
+    },
+  });
+
+  const statsById = useMemo(() => {
+    const m: Record<string, ReviewStats> = {};
+    for (const d of rows as any[]) {
+      m[d.id] = computeReviewStats(d.categorie, (docsByDossier as any)[d.id] ?? []);
+    }
+    return m;
+  }, [rows, docsByDossier]);
+
+  const filtered = (rows as any[]).filter((r: any) => {
     if (cat !== "all" && r.categorie !== cat) return false;
+    if (reviewOnly && !statsById[r.id]?.needsAction) return false;
     if (!q.trim()) return true;
     const s = `${r.titre} ${r.profiles?.email ?? ""} ${r.profiles?.nom ?? ""} ${r.profiles?.prenom ?? ""}`.toLowerCase();
     return s.includes(q.toLowerCase());
   });
+
 
   // Regroupement par pôle
   const groups: { pole: any; items: any[] }[] = poles.map((p) => ({
@@ -107,12 +179,17 @@ function AdminDossiers() {
 
   const visibleGroups = groups.filter((g) => g.items.length > 0);
 
+  const totalToReview = (rows as any[]).reduce((n, d) => n + (statsById[d.id]?.needsAction ? 1 : 0), 0);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl">Dossiers de mes pôles</h1>
         <p className="text-muted-foreground mt-1">
           {filtered.length} dossier{filtered.length > 1 ? "s" : ""} · {visibleGroups.length} pôle{visibleGroups.length > 1 ? "s" : ""}
+          {totalToReview > 0 && (
+            <> · <span className="text-warning-foreground font-medium">{totalToReview} à revoir</span></>
+          )}
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
@@ -124,33 +201,59 @@ function AdminDossiers() {
           <option value="all">Toutes catégories</option>
           {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
+        <button
+          type="button"
+          onClick={() => setReviewOnly((v) => !v)}
+          className={cn(
+            "h-10 px-3 rounded-md border text-sm inline-flex items-center gap-2 transition-colors",
+            reviewOnly
+              ? "bg-warning/15 border-warning/30 text-warning-foreground"
+              : "bg-background border-input hover:bg-muted/50",
+          )}
+          aria-pressed={reviewOnly}
+        >
+          <ClipboardCheck className="h-4 w-4" />
+          {reviewOnly ? "À revoir uniquement" : "À revoir"}
+        </button>
       </div>
 
       {polesLoading && !isDirectionOrAdmin ? (
         <Card className="p-12 text-center text-muted-foreground text-sm">Chargement de vos pôles…</Card>
       ) : visibleGroups.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground text-sm">
-          Aucun dossier accessible dans vos pôles pour le moment.
+          {reviewOnly
+            ? "Aucun dossier à revoir — tous les documents requis sont validés."
+            : "Aucun dossier accessible dans vos pôles pour le moment."}
         </Card>
       ) : (
         <div className="space-y-6">
-          {visibleGroups.map(({ pole, items }) => (
+          {visibleGroups.map(({ pole, items }) => {
+            const groupToReview = items.reduce((n: number, d: any) => n + (statsById[d.id]?.needsAction ? 1 : 0), 0);
+            return (
             <section key={pole.id} className="space-y-2">
-              <div className="flex items-center gap-2 px-1">
+              <div className="flex items-center gap-2 px-1 flex-wrap">
                 <FolderOpen className="h-4 w-4 text-gold" />
                 <h2 className="font-display text-lg">{pole.nom}</h2>
                 <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-muted text-xs font-medium text-muted-foreground">
                   {items.length}
                 </span>
+                {groupToReview > 0 && (
+                  <Badge variant="outline" className="bg-warning/15 border-warning/30 text-warning-foreground text-xs">
+                    {groupToReview} à revoir
+                  </Badge>
+                )}
               </div>
               <Card className="divide-y">
-                {items.map((d: any) => (
+                {items.map((d: any) => {
+                  const stats = statsById[d.id];
+                  return (
                   <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block p-4 hover:bg-muted/30">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
                           <StatusBadge statut={d.statut} />
+                          <ReviewSummary stats={stats} />
                         </div>
                         <div className="font-medium truncate">{d.titre}</div>
                         <div className="text-xs text-muted-foreground">
@@ -159,12 +262,50 @@ function AdminDossiers() {
                       </div>
                     </div>
                   </Link>
-                ))}
+                  );
+                })}
               </Card>
             </section>
-          ))}
+            );
+          })}
         </div>
+      )}
+    </div>
+
+  );
+}
+
+function ReviewSummary({ stats }: { stats: ReviewStats | undefined }) {
+  if (!stats || stats.total === 0) return null;
+  const { total, validated, toReview, toFix, missing } = stats;
+  if (validated === total) {
+    return (
+      <Badge variant="outline" className="bg-success/15 text-success border-success/20 text-xs gap-1">
+        <CheckCircle2 className="h-3 w-3" /> {validated}/{total} validés
+      </Badge>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      <Badge variant="outline" className="bg-muted text-muted-foreground text-xs gap-1">
+        {validated}/{total}
+      </Badge>
+      {toReview > 0 && (
+        <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30 text-xs gap-1">
+          <Circle className="h-3 w-3" /> {toReview} à vérifier
+        </Badge>
+      )}
+      {toFix > 0 && (
+        <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/20 text-xs gap-1">
+          <AlertTriangle className="h-3 w-3" /> {toFix} à corriger
+        </Badge>
+      )}
+      {missing > 0 && (
+        <Badge variant="outline" className="bg-warning/15 text-warning-foreground border-warning/30 text-xs gap-1">
+          {missing} manquant{missing > 1 ? "s" : ""}
+        </Badge>
       )}
     </div>
   );
 }
+
