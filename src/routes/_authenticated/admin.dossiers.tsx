@@ -128,12 +128,41 @@ function AdminDossiers() {
     },
   });
 
-  const filtered = rows.filter((r: any) => {
+  const dossierIds = useMemo(() => (rows as any[]).map((d) => d.id), [rows]);
+
+  const { data: docsByDossier = {} } = useQuery({
+    queryKey: ["admin-dossiers-docs", dossierIds.join(",")],
+    enabled: dossierIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("id, dossier_id, nom, detected_type, statut")
+        .in("dossier_id", dossierIds);
+      if (error) throw error;
+      const m: Record<string, DocRow[]> = {};
+      for (const d of (data ?? []) as DocRow[]) {
+        (m[d.dossier_id] ??= []).push(d);
+      }
+      return m;
+    },
+  });
+
+  const statsById = useMemo(() => {
+    const m: Record<string, ReviewStats> = {};
+    for (const d of rows as any[]) {
+      m[d.id] = computeReviewStats(d.categorie, (docsByDossier as any)[d.id] ?? []);
+    }
+    return m;
+  }, [rows, docsByDossier]);
+
+  const filtered = (rows as any[]).filter((r: any) => {
     if (cat !== "all" && r.categorie !== cat) return false;
+    if (reviewOnly && !statsById[r.id]?.needsAction) return false;
     if (!q.trim()) return true;
     const s = `${r.titre} ${r.profiles?.email ?? ""} ${r.profiles?.nom ?? ""} ${r.profiles?.prenom ?? ""}`.toLowerCase();
     return s.includes(q.toLowerCase());
   });
+
 
   // Regroupement par pôle
   const groups: { pole: any; items: any[] }[] = poles.map((p) => ({
