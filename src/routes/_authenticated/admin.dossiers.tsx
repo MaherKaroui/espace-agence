@@ -50,6 +50,19 @@ function computeReviewStats(categorie: string, docs: DocRow[]): ReviewStats {
   };
 }
 
+// Un dossier est "incohérent" si :
+// - marqué terminé alors qu'il reste des pièces à valider
+// - avancement = 0 alors que des documents sont acceptés
+// - documents en attente/à corriger alors qu'aucun n'est encore accepté depuis longtemps (>7j)
+type Inconsistency = "done_incomplete" | "zero_but_validated" | null;
+function detectInconsistency(dossier: any, stats: ReviewStats | undefined): Inconsistency {
+  if (!stats) return null;
+  if (["termine", "valide"].includes(dossier.statut) && stats.needsAction) return "done_incomplete";
+  if ((dossier.avancement ?? 0) === 0 && stats.validated > 0) return "zero_but_validated";
+  return null;
+}
+
+
 export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   head: () => ({ meta: [{ title: "Dossiers — Admin" }] }),
   beforeLoad: async () => {
