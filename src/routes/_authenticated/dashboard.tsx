@@ -115,11 +115,11 @@ function Dashboard() {
           <>
             {actionable.length > 0 && (
               <div>
-                <h2 className="font-display text-xl mb-3">À faire maintenant</h2>
+                <h2 className="font-display text-lg sm:text-xl mb-3">À faire maintenant</h2>
                 <div className="grid gap-2">
                   {actionable.slice(0, 4).map((d) => (
                     <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block">
-                      <div className="grid grid-cols-[1fr_auto] items-center gap-3">
+                      <div className="flex flex-col gap-1 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3">
                         <NextActionCard
                           categorie={d.categorie}
                           documents={allDocs.filter((doc) => doc.dossier_id === d.id) as any}
@@ -127,7 +127,7 @@ function Dashboard() {
                           dossierStatut={d.statut}
                           compact
                         />
-                        <span className="text-xs text-muted-foreground truncate max-w-[180px]">{d.titre}</span>
+                        <span className="text-xs text-muted-foreground truncate sm:max-w-[180px] pl-1 sm:pl-0">{d.titre}</span>
                       </div>
                     </Link>
                   ))}
