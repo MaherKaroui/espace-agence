@@ -30,6 +30,7 @@ function matchesSection(row: NavUnreadRow, to: string): boolean {
   if (to === "/admin/rendez-vous") return link.startsWith("/rendez-vous") || link.startsWith("/admin/rendez-vous") || row.type.startsWith("rdv");
   if (to === "/dossiers") return link.startsWith("/dossiers") || row.type.startsWith("document") || row.type === "statut_change" || row.type.startsWith("tache");
   if (to === "/rendez-vous") return link.startsWith("/rendez-vous") || row.type.startsWith("rdv");
+  if (to === "/admin/taches-agence") return row.type === "agency_task" || link.startsWith("/admin/taches-agence");
   if (to === "/notifications") return true;
   return false;
 }
