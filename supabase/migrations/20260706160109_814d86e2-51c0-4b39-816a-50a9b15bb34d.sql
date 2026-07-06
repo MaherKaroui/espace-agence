@@ -1,0 +1,2 @@
+ALTER TABLE public.internal_conversations DROP CONSTRAINT internal_conversations_type_check;
+ALTER TABLE public.internal_conversations ADD CONSTRAINT internal_conversations_type_check CHECK (type = ANY (ARRAY['direct','pole','client','dossier','task','custom','group','channel','announcement']));
