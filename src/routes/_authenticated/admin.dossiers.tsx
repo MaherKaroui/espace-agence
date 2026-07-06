@@ -179,12 +179,17 @@ function AdminDossiers() {
 
   const visibleGroups = groups.filter((g) => g.items.length > 0);
 
+  const totalToReview = (rows as any[]).reduce((n, d) => n + (statsById[d.id]?.needsAction ? 1 : 0), 0);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl">Dossiers de mes pôles</h1>
         <p className="text-muted-foreground mt-1">
           {filtered.length} dossier{filtered.length > 1 ? "s" : ""} · {visibleGroups.length} pôle{visibleGroups.length > 1 ? "s" : ""}
+          {totalToReview > 0 && (
+            <> · <span className="text-warning-foreground font-medium">{totalToReview} à revoir</span></>
+          )}
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
@@ -196,33 +201,59 @@ function AdminDossiers() {
           <option value="all">Toutes catégories</option>
           {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
+        <button
+          type="button"
+          onClick={() => setReviewOnly((v) => !v)}
+          className={cn(
+            "h-10 px-3 rounded-md border text-sm inline-flex items-center gap-2 transition-colors",
+            reviewOnly
+              ? "bg-warning/15 border-warning/30 text-warning-foreground"
+              : "bg-background border-input hover:bg-muted/50",
+          )}
+          aria-pressed={reviewOnly}
+        >
+          <ClipboardCheck className="h-4 w-4" />
+          {reviewOnly ? "À revoir uniquement" : "À revoir"}
+        </button>
       </div>
 
       {polesLoading && !isDirectionOrAdmin ? (
         <Card className="p-12 text-center text-muted-foreground text-sm">Chargement de vos pôles…</Card>
       ) : visibleGroups.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground text-sm">
-          Aucun dossier accessible dans vos pôles pour le moment.
+          {reviewOnly
+            ? "Aucun dossier à revoir — tous les documents requis sont validés."
+            : "Aucun dossier accessible dans vos pôles pour le moment."}
         </Card>
       ) : (
         <div className="space-y-6">
-          {visibleGroups.map(({ pole, items }) => (
+          {visibleGroups.map(({ pole, items }) => {
+            const groupToReview = items.reduce((n: number, d: any) => n + (statsById[d.id]?.needsAction ? 1 : 0), 0);
+            return (
             <section key={pole.id} className="space-y-2">
-              <div className="flex items-center gap-2 px-1">
+              <div className="flex items-center gap-2 px-1 flex-wrap">
                 <FolderOpen className="h-4 w-4 text-gold" />
                 <h2 className="font-display text-lg">{pole.nom}</h2>
                 <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-muted text-xs font-medium text-muted-foreground">
                   {items.length}
                 </span>
+                {groupToReview > 0 && (
+                  <Badge variant="outline" className="bg-warning/15 border-warning/30 text-warning-foreground text-xs">
+                    {groupToReview} à revoir
+                  </Badge>
+                )}
               </div>
               <Card className="divide-y">
-                {items.map((d: any) => (
+                {items.map((d: any) => {
+                  const stats = statsById[d.id];
+                  return (
                   <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block p-4 hover:bg-muted/30">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
                           <StatusBadge statut={d.statut} />
+                          <ReviewSummary stats={stats} />
                         </div>
                         <div className="font-medium truncate">{d.titre}</div>
                         <div className="text-xs text-muted-foreground">
@@ -231,12 +262,15 @@ function AdminDossiers() {
                       </div>
                     </div>
                   </Link>
-                ))}
+                  );
+                })}
               </Card>
             </section>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
+
   );
 }
