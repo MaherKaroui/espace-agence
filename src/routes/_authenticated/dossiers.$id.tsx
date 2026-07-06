@@ -353,14 +353,6 @@ function DossierDetail() {
 
 
 
-      {!isAdmin && (
-        <NextActionCard
-          categorie={dossier.categorie}
-          documents={documents as any}
-          taches={taches as any}
-          dossierStatut={dossier.statut}
-        />
-      )}
 
       {/* Côté admin : panneau des tâches en haut ; côté client : plus bas, moins prioritaire */}
       {isAdmin && <TasksPanel dossierId={id} />}
