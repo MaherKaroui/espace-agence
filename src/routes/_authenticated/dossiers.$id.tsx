@@ -162,7 +162,13 @@ function DossierDetail() {
 
 
   if (isLoading) return <div className="p-8 text-muted-foreground">Chargement…</div>;
-  if (!dossier) return <div className="p-8">Dossier introuvable.</div>;
+  if (!dossier) return (
+    <div className="p-8 max-w-md mx-auto text-center space-y-3">
+      <div className="font-display text-xl">Accès refusé</div>
+      <p className="text-sm text-muted-foreground">Ce dossier n'existe pas ou ne fait pas partie de vos pôles.</p>
+      <Button variant="outline" onClick={() => nav({ to: "/dashboard" })}>Retour à l'accueil</Button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
