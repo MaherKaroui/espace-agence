@@ -8,24 +8,32 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  Users2, Plus, MessageSquare, Star, Building2, FolderOpen, ClipboardCheck, Users, Search, Archive,
+  Users2, Plus, MessageSquare, Star, Users, Search, Archive, Megaphone, Hash, Lock,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   createInternalConversation,
+  createInternalGroup,
   listAllowedInternalContacts,
-  openContextConversation,
 } from "@/lib/internal-messages.functions";
 import { roleLabelFr } from "@/lib/role-labels";
 import { cn } from "@/lib/utils";
+
+// Types de conversations affichés dans la messagerie interne.
+// Les anciennes conversations "client", "dossier", "task" sont volontairement exclues :
+// la messagerie interne ne concerne QUE l'équipe.
+const INTERNAL_TYPES = ["direct", "group", "channel", "pole", "announcement", "custom"] as const;
 
 export const Route = createFileRoute("/_authenticated/admin/internal-messages/")({
   head: () => ({ meta: [{ title: "Messagerie interne" }] }),
@@ -46,8 +54,8 @@ function InternalMessagesIndex() {
       <Card className="hidden md:flex items-center justify-center p-10 text-center text-sm text-muted-foreground">
         <div>
           <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-60" />
-          <p>Sélectionnez une conversation à gauche, ou démarrez-en une nouvelle.</p>
-          <p className="mt-1 text-xs">Vous pouvez aussi ouvrir une discussion depuis un client, un dossier, une tâche ou un pôle.</p>
+          <p>Sélectionnez une conversation à gauche ou démarrez-en une nouvelle.</p>
+          <p className="mt-1 text-xs">Messagerie interne : uniquement pour l'équipe de l'agence.</p>
         </div>
       </Card>
     </div>
@@ -69,6 +77,7 @@ export function InternalConversationsSidebar({ activeId }: { activeId: string | 
       const { data: conversations } = await supabase
         .from("internal_conversations")
         .select("*")
+        .in("type", INTERNAL_TYPES as unknown as string[])
         .order("updated_at", { ascending: false });
       const ids = (conversations ?? []).map((c: any) => c.id);
       if (ids.length === 0) return [] as any[];
@@ -150,10 +159,9 @@ export function InternalConversationsSidebar({ activeId }: { activeId: string | 
     { key: "unread", label: "Non lus", icon: MessageSquare, items: filtered.filter((c: any) => c.unread && !c.favorite) },
     { key: "direct", label: "Messages directs", icon: Users2, items: filtered.filter((c: any) => c.type === "direct" && !c.favorite && !c.unread) },
     { key: "pole", label: "Pôles", icon: Users, items: filtered.filter((c: any) => c.type === "pole" && !c.favorite && !c.unread) },
-    { key: "client", label: "Clients", icon: Building2, items: filtered.filter((c: any) => c.type === "client" && !c.favorite && !c.unread) },
-    { key: "dossier", label: "Dossiers", icon: FolderOpen, items: filtered.filter((c: any) => c.type === "dossier" && !c.favorite && !c.unread) },
-    { key: "task", label: "Tâches", icon: ClipboardCheck, items: filtered.filter((c: any) => c.type === "task" && !c.favorite && !c.unread) },
-    { key: "custom", label: "Autres", icon: MessageSquare, items: filtered.filter((c: any) => c.type === "custom" && !c.favorite && !c.unread) },
+    { key: "channel", label: "Canaux", icon: Hash, items: filtered.filter((c: any) => c.type === "channel" && !c.favorite && !c.unread) },
+    { key: "group", label: "Groupes internes", icon: Users2, items: filtered.filter((c: any) => (c.type === "group" || c.type === "custom") && !c.favorite && !c.unread) },
+    { key: "announcement", label: "Annonces", icon: Megaphone, items: filtered.filter((c: any) => c.type === "announcement" && !c.favorite && !c.unread) },
   ].filter((g) => g.items.length > 0);
 
   const totalUnread = convs.filter((c: any) => c.unread).length;
@@ -281,9 +289,9 @@ function ConversationRow({
 function ConversationAvatar({ conv }: { conv: any }) {
   const map: Record<string, { icon: any; cls: string }> = {
     pole: { icon: Users, cls: "bg-gold/15 text-gold" },
-    client: { icon: Building2, cls: "bg-blue-500/15 text-blue-600 dark:text-blue-400" },
-    dossier: { icon: FolderOpen, cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
-    task: { icon: ClipboardCheck, cls: "bg-warning/15 text-warning-foreground" },
+    channel: { icon: Hash, cls: "bg-primary/15 text-primary" },
+    group: { icon: Users2, cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
+    announcement: { icon: Megaphone, cls: "bg-warning/15 text-warning-foreground" },
     direct: { icon: Users2, cls: "bg-primary/10 text-primary" },
     custom: { icon: MessageSquare, cls: "bg-muted text-muted-foreground" },
   };
@@ -309,18 +317,29 @@ export function conversationDisplayTitle(conv: any, currentUserId: string | null
   return "Conversation";
 }
 
-// -------- Boîte de dialogue "Nouvelle conversation directe" --------
+// -------- Boîte de dialogue "Nouvelle" : discussion directe / groupe / canal --------
 
 function NewInternalConversationDialog() {
   const qc = useQueryClient();
   const nav = useNavigate();
-  const createFn = useServerFn(createInternalConversation);
+  const { user } = useAuth();
+  const createDirectFn = useServerFn(createInternalConversation);
+  const createGroupFn = useServerFn(createInternalGroup);
   const listFn = useServerFn(listAllowedInternalContacts);
-  const openContextFn = useServerFn(openContextConversation);
+
   const [open, setOpen] = useState(false);
-  const [titre, setTitre] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [q, setQ] = useState("");
+  const [tab, setTab] = useState<"direct" | "group">("direct");
+
+  // Rôle courant
+  const { data: myRoles = [] } = useQuery({
+    queryKey: ["my-roles", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user!.id);
+      return ((data ?? []) as any[]).map((r) => r.role);
+    },
+  });
+  const canCreateGroup = myRoles.includes("admin") || myRoles.includes("direction");
 
   const { data: contacts = [] } = useQuery({
     queryKey: ["internal-contacts"],
@@ -330,46 +349,86 @@ function NewInternalConversationDialog() {
 
   const { data: poles = [] } = useQuery({
     queryKey: ["poles-for-int-msg"],
-    enabled: open,
+    enabled: open && canCreateGroup,
     queryFn: async () => {
       const { data } = await supabase.from("poles").select("id, nom, couleur, actif").eq("actif", true).order("nom");
       return data ?? [];
     },
   });
 
-  const filtered = contacts.filter((c: any) => {
+  // --- Mode "Direct / Groupe rapide" ---
+  const [directTitre, setDirectTitre] = useState("");
+  const [directSelected, setDirectSelected] = useState<Set<string>>(new Set());
+  const [directQuery, setDirectQuery] = useState("");
+
+  const filteredContacts = contacts.filter((c: any) => {
     const s = `${c.prenom} ${c.nom} ${c.email}`.toLowerCase();
-    return s.includes(q.toLowerCase());
+    return s.includes(directQuery.toLowerCase());
   });
 
-  const create = useMutation({
-    mutationFn: async () =>
-      createFn({ data: { memberIds: Array.from(selected), titre: titre || undefined } }),
-    onSuccess: ({ id }) => {
+  const createDirect = useMutation({
+    mutationFn: () =>
+      createDirectFn({ data: { memberIds: Array.from(directSelected), titre: directTitre || undefined } }),
+    onSuccess: (r: any) => {
       toast.success("Conversation créée");
       setOpen(false);
-      setSelected(new Set());
-      setTitre("");
+      setDirectSelected(new Set());
+      setDirectTitre("");
       qc.invalidateQueries({ queryKey: ["internal-conversations-full"] });
-      nav({ to: "/admin/internal-messages/$id", params: { id } });
+      nav({ to: "/admin/internal-messages/$id", params: { id: r.id } });
     },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
 
-  const openPole = useMutation({
-    mutationFn: (poleId: string) => openContextFn({ data: { type: "pole", entityId: poleId } }),
-    onSuccess: ({ id }) => {
+  // --- Mode "Nouveau groupe / canal" ---
+  const [gTitre, setGTitre] = useState("");
+  const [gDescription, setGDescription] = useState("");
+  const [gType, setGType] = useState<"group" | "channel" | "pole" | "announcement">("group");
+  const [gIsPrivate, setGIsPrivate] = useState(false);
+  const [gAdminOnly, setGAdminOnly] = useState(false);
+  const [gPoleId, setGPoleId] = useState<string | null>(null);
+  const [gMembers, setGMembers] = useState<Set<string>>(new Set());
+  const [gQuery, setGQuery] = useState("");
+
+  const gFilteredContacts = contacts.filter((c: any) => {
+    const s = `${c.prenom} ${c.nom} ${c.email}`.toLowerCase();
+    return s.includes(gQuery.toLowerCase());
+  });
+
+  const createGroup = useMutation({
+    mutationFn: () =>
+      createGroupFn({
+        data: {
+          titre: gTitre.trim(),
+          description: gDescription.trim() || undefined,
+          type: gType,
+          isPrivate: gIsPrivate,
+          adminOnlyPosting: gAdminOnly,
+          poleId: gType === "pole" ? gPoleId : null,
+          memberIds: Array.from(gMembers),
+        },
+      }),
+    onSuccess: (r: any) => {
+      toast.success(gType === "announcement" ? "Canal d'annonces créé" : "Groupe créé");
       setOpen(false);
+      setGTitre("");
+      setGDescription("");
+      setGType("group");
+      setGIsPrivate(false);
+      setGAdminOnly(false);
+      setGPoleId(null);
+      setGMembers(new Set());
       qc.invalidateQueries({ queryKey: ["internal-conversations-full"] });
-      nav({ to: "/admin/internal-messages/$id", params: { id } });
+      nav({ to: "/admin/internal-messages/$id", params: { id: r.id } });
     },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
 
-  const toggle = (id: string) => {
-    setSelected((prev) => {
+  const toggle = (setter: (fn: (s: Set<string>) => Set<string>) => void) => (id: string) => {
+    setter((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -385,69 +444,205 @@ function NewInternalConversationDialog() {
         <DialogHeader>
           <DialogTitle>Nouvelle conversation interne</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Ouvrir un canal de pôle</Label>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {poles.map((p: any) => (
-                <Button
-                  key={p.id}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openPole.mutate(p.id)}
-                  disabled={openPole.isPending}
-                  className="h-8"
-                >
-                  <span className="inline-block h-2 w-2 rounded-full mr-2" style={{ backgroundColor: p.couleur }} />
-                  {p.nom}
-                </Button>
-              ))}
-              {poles.length === 0 && (
-                <span className="text-xs text-muted-foreground">Aucun pôle actif accessible.</span>
+
+        {/* Onglets */}
+        <div className="flex gap-1 border-b -mt-2">
+          <button
+            type="button"
+            onClick={() => setTab("direct")}
+            className={cn(
+              "px-3 py-1.5 text-sm border-b-2",
+              tab === "direct" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Message direct / groupe rapide
+          </button>
+          {canCreateGroup && (
+            <button
+              type="button"
+              onClick={() => setTab("group")}
+              className={cn(
+                "px-3 py-1.5 text-sm border-b-2",
+                tab === "group" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Nouveau groupe / canal
+            </button>
+          )}
+        </div>
+
+        {tab === "direct" && (
+          <div className="space-y-2">
+            <Input
+              value={directTitre}
+              onChange={(e) => setDirectTitre(e.target.value)}
+              placeholder="Titre (optionnel — utile pour un groupe)"
+            />
+            <Input
+              placeholder="Rechercher un contact…"
+              value={directQuery}
+              onChange={(e) => setDirectQuery(e.target.value)}
+            />
+            <div className="max-h-60 overflow-y-auto rounded-md border divide-y">
+              {filteredContacts.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground text-center">Aucun contact disponible.</div>
+              ) : (
+                filteredContacts.map((c: any) => {
+                  const label = `${c.prenom ?? ""} ${c.nom ?? ""}`.trim() || c.email;
+                  const roleTags = (c.roles as string[]).map(roleLabelFr).join(", ");
+                  return (
+                    <label key={c.id} className="flex items-center gap-3 p-2 hover:bg-muted/30 cursor-pointer">
+                      <Checkbox
+                        checked={directSelected.has(c.id)}
+                        onCheckedChange={() => toggle(setDirectSelected)(c.id)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{label}</div>
+                        <div className="text-xs text-muted-foreground truncate">{roleTags || c.email}</div>
+                      </div>
+                    </label>
+                  );
+                })
               )}
             </div>
+            {directSelected.size > 0 && (
+              <Badge variant="secondary">
+                {directSelected.size} personne{directSelected.size > 1 ? "s" : ""} sélectionnée{directSelected.size > 1 ? "s" : ""}
+              </Badge>
+            )}
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setOpen(false)}>Annuler</Button>
+              <Button
+                onClick={() => createDirect.mutate()}
+                disabled={directSelected.size === 0 || createDirect.isPending}
+              >
+                {createDirect.isPending ? "Création…" : "Créer la conversation"}
+              </Button>
+            </DialogFooter>
           </div>
+        )}
 
-          <div className="pt-2 border-t">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-              Ou démarrer une discussion directe / groupe
-            </Label>
-            <div className="mt-2 space-y-2">
-              <Input value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Titre (optionnel — utile pour un groupe)" />
-              <Input placeholder="Rechercher un contact…" value={q} onChange={(e) => setQ(e.target.value)} />
-              <div className="max-h-60 overflow-y-auto rounded-md border divide-y">
-                {filtered.length === 0 ? (
-                  <div className="p-4 text-sm text-muted-foreground text-center">Aucun contact disponible.</div>
+        {tab === "group" && canCreateGroup && (
+          <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
+            <div>
+              <Label>Nom du groupe / canal</Label>
+              <Input value={gTitre} onChange={(e) => setGTitre(e.target.value)} placeholder="Ex : Direction, BPF, Annonces internes" />
+            </div>
+            <div>
+              <Label>Description (optionnel)</Label>
+              <Textarea rows={2} value={gDescription} onChange={(e) => setGDescription(e.target.value)} />
+            </div>
+            <div>
+              <Label>Type</Label>
+              <RadioGroup value={gType} onValueChange={(v: any) => setGType(v)} className="grid grid-cols-2 gap-2 mt-1">
+                <label className="flex items-start gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/30">
+                  <RadioGroupItem value="group" className="mt-0.5" />
+                  <div>
+                    <div className="text-sm font-medium flex items-center gap-1"><Users2 className="h-3.5 w-3.5" /> Groupe privé</div>
+                    <div className="text-[11px] text-muted-foreground">Sur invitation</div>
+                  </div>
+                </label>
+                <label className="flex items-start gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/30">
+                  <RadioGroupItem value="channel" className="mt-0.5" />
+                  <div>
+                    <div className="text-sm font-medium flex items-center gap-1"><Hash className="h-3.5 w-3.5" /> Canal public interne</div>
+                    <div className="text-[11px] text-muted-foreground">Ouvert à l'équipe</div>
+                  </div>
+                </label>
+                <label className="flex items-start gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/30">
+                  <RadioGroupItem value="pole" className="mt-0.5" />
+                  <div>
+                    <div className="text-sm font-medium flex items-center gap-1"><Users className="h-3.5 w-3.5" /> Canal de pôle</div>
+                    <div className="text-[11px] text-muted-foreground">Membres du pôle</div>
+                  </div>
+                </label>
+                <label className="flex items-start gap-2 rounded-md border p-2 cursor-pointer hover:bg-muted/30">
+                  <RadioGroupItem value="announcement" className="mt-0.5" />
+                  <div>
+                    <div className="text-sm font-medium flex items-center gap-1"><Megaphone className="h-3.5 w-3.5" /> Annonces direction</div>
+                    <div className="text-[11px] text-muted-foreground">Écriture admin uniquement</div>
+                  </div>
+                </label>
+              </RadioGroup>
+            </div>
+
+            {gType === "pole" && (
+              <div>
+                <Label>Pôle associé</Label>
+                <Select value={gPoleId ?? ""} onValueChange={(v) => setGPoleId(v || null)}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner un pôle" /></SelectTrigger>
+                  <SelectContent>
+                    {poles.map((p: any) => (
+                      <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={gIsPrivate}
+                  onCheckedChange={(v) => setGIsPrivate(!!v)}
+                />
+                <Lock className="h-3.5 w-3.5" />
+                Privé (sur invitation uniquement)
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={gAdminOnly || gType === "announcement"}
+                  disabled={gType === "announcement"}
+                  onCheckedChange={(v) => setGAdminOnly(!!v)}
+                />
+                Écriture réservée aux admins / direction
+              </label>
+            </div>
+
+            <div>
+              <Label>Ajouter des membres</Label>
+              <Input
+                placeholder="Rechercher un contact…"
+                value={gQuery}
+                onChange={(e) => setGQuery(e.target.value)}
+                className="mt-1"
+              />
+              <div className="max-h-40 overflow-y-auto rounded-md border divide-y mt-1">
+                {gFilteredContacts.length === 0 ? (
+                  <div className="p-3 text-xs text-muted-foreground text-center">Aucun contact.</div>
                 ) : (
-                  filtered.map((c: any) => {
+                  gFilteredContacts.map((c: any) => {
                     const label = `${c.prenom ?? ""} ${c.nom ?? ""}`.trim() || c.email;
-                    const roleTags = (c.roles as string[]).map(roleLabelFr).join(", ");
                     return (
                       <label key={c.id} className="flex items-center gap-3 p-2 hover:bg-muted/30 cursor-pointer">
-                        <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggle(c.id)} />
+                        <Checkbox
+                          checked={gMembers.has(c.id)}
+                          onCheckedChange={() => toggle(setGMembers)(c.id)}
+                        />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{label}</div>
-                          <div className="text-xs text-muted-foreground truncate">{roleTags || c.email}</div>
+                          <div className="text-sm truncate">{label}</div>
                         </div>
                       </label>
                     );
                   })
                 )}
               </div>
-              {selected.size > 0 && (
-                <Badge variant="secondary">
-                  {selected.size} personne{selected.size > 1 ? "s" : ""} sélectionnée{selected.size > 1 ? "s" : ""}
-                </Badge>
-              )}
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Les admins et la direction sont ajoutés automatiquement.
+              </p>
             </div>
+
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setOpen(false)}>Annuler</Button>
+              <Button
+                onClick={() => createGroup.mutate()}
+                disabled={!gTitre.trim() || (gType === "pole" && !gPoleId) || createGroup.isPending}
+              >
+                {createGroup.isPending ? "Création…" : "Créer"}
+              </Button>
+            </DialogFooter>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>Annuler</Button>
-          <Button onClick={() => create.mutate()} disabled={selected.size === 0 || create.isPending}>
-            {create.isPending ? "Création…" : "Créer la conversation"}
-          </Button>
-        </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
