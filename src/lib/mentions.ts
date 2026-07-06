@@ -82,3 +82,30 @@ export function entityLink(type: MentionEntityType, id: string): string {
       return `/admin/poles?pole=${id}`;
   }
 }
+
+const ENTITY_PREFIX: Record<MentionEntityType, string> = {
+  client: "Client",
+  dossier: "Dossier",
+  task: "Tâche",
+  pole: "Pôle",
+};
+
+/**
+ * Transforme un contenu contenant des mentions techniques
+ * (`#[Label](client:uuid)`, `@[Label](user:uuid)`) en texte lisible
+ * pour les aperçus, notifications, listes admin, etc.
+ * Ex : `#[gestion admin](client:...)` → `Client : gestion admin`.
+ */
+export function mentionsToPlainText(content: string | null | undefined): string {
+  if (!content) return "";
+  return parseMentionSegments(content)
+    .map((s) => {
+      if (s.kind === "text") return s.value;
+      if (s.kind === "user") return `@${s.label}`;
+      return `${ENTITY_PREFIX[s.type]} : ${s.label}`;
+    })
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+

@@ -6,6 +6,7 @@ import { User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePresence, PresenceAvatar, PresenceLabel } from "@/components/presence-indicator";
+import { mentionsToPlainText } from "@/lib/mentions";
 
 export const Route = createFileRoute("/_authenticated/admin/messages/")({
   head: () => ({ meta: [{ title: "Messagerie clients" }] }),
@@ -57,7 +58,7 @@ function AdminMessages() {
                   <PresenceLabel row={p} />
                 </div>
                 <div className="text-xs text-muted-foreground truncate">
-                  {t.last ? (t.last.from_agence ? "Vous : " : "") + (t.last.content || "Pièce jointe") : "Aucun message"}
+                  {t.last ? (t.last.from_agence ? "Vous : " : "") + (mentionsToPlainText(t.last.content) || "Pièce jointe") : "Aucun message"}
                 </div>
               </div>
               {t.last && <div className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(t.last.created_at), { addSuffix: true, locale: fr })}</div>}

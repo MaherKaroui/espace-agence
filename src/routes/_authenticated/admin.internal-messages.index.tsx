@@ -29,6 +29,7 @@ import {
 } from "@/lib/internal-messages.functions";
 import { roleLabelFr } from "@/lib/role-labels";
 import { cn } from "@/lib/utils";
+import { mentionsToPlainText } from "@/lib/mentions";
 
 // Types de conversations affichés dans la messagerie interne.
 // Les anciennes conversations "client", "dossier", "task" sont volontairement exclues :
@@ -247,8 +248,9 @@ function ConversationRow({
 }: { conv: any; activeId: string | null; currentUserId: string | null }) {
   const isActive = conv.id === activeId;
   const title = conversationDisplayTitle(conv, currentUserId);
-  const preview = conv.lastMsg?.content
-    ? conv.lastMsg.content
+  const previewText = mentionsToPlainText(conv.lastMsg?.content);
+  const preview = previewText
+    ? previewText
     : conv.lastMsg?.attachment_name
     ? `📎 ${conv.lastMsg.attachment_name}`
     : "Aucun message";
