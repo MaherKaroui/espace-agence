@@ -190,7 +190,12 @@ function Dashboard() {
           </Card>
         ) : (
           <div className="grid gap-3">
-            {dossiers.slice(0, 5).map((d) => (
+            {dossiers.slice(0, 5).map((d) => {
+              const docs = allDocs.filter((doc: any) => doc.dossier_id === d.id) as any;
+              const tks = allTaches.filter((t: any) => t.dossier_id === d.id) as any;
+              // Source unique : même calcul dans le dashboard, la liste et le détail.
+              const av = computeAvancement(d.categorie, docs, tks, d.statut);
+              return (
               <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}>
                 <Card className="p-4 hover:border-primary/40 transition-colors">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
@@ -205,13 +210,15 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="w-full sm:w-24 shrink-0">
-                      <div className="text-xs text-muted-foreground mb-1 sm:text-right">{d.avancement}%</div>
-                      <Progress value={d.avancement} className="h-1.5" />
+                      <div className="text-xs text-muted-foreground mb-1 sm:text-right">{av}%</div>
+                      <Progress value={av} className="h-1.5" />
                     </div>
                   </div>
                 </Card>
               </Link>
-            ))}
+              );
+            })}
+
           </div>
         )}
       </div>
