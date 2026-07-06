@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatWindow } from "@/components/chat-window";
 import { assertClientAccess } from "@/lib/admin-clients.functions";
+import { usePresence, PresenceDot, PresenceLabel } from "@/components/presence-indicator";
 
 export const Route = createFileRoute("/_authenticated/admin/messages/$clientId")({
   head: () => ({ meta: [{ title: "Conversation" }] }),
@@ -27,6 +28,17 @@ function AdminChat() {
     queryKey: ["profile", clientId],
     queryFn: async () => (await supabase.from("profiles").select("*").eq("id", clientId).maybeSingle()).data,
   });
-  const title = profile ? `Discussion avec ${profile.prenom} ${profile.nom}` : "Discussion";
-  return <ChatWindow clientId={clientId} title={title} />;
+  const { data: presence } = usePresence([clientId]);
+  const p = presence?.get(clientId);
+  const name = profile ? `${profile.prenom ?? ""} ${profile.nom ?? ""}`.trim() || profile.email : "Discussion";
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <PresenceDot online={p?.online} />
+        <div className="font-medium">{name}</div>
+        <PresenceLabel row={p} />
+      </div>
+      <ChatWindow clientId={clientId} title={`Discussion avec ${name}`} />
+    </div>
+  );
 }
