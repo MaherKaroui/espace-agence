@@ -579,7 +579,7 @@ function TaskContext({ taskId }: { taskId: string }) {
     queryKey: ["ctx-task-assignee", t?.assigned_to],
     enabled: !!t?.assigned_to,
     queryFn: async () =>
-      (await supabase.from("profiles").select("prenom, nom, email").eq("id", t!.assigned_to).maybeSingle()).data,
+      (await supabase.from("profiles").select("prenom, nom, email").eq("id", t!.assigned_to as string).maybeSingle()).data,
   });
   if (!t) return null;
   return (
