@@ -28,7 +28,7 @@ function AdminDossiers() {
   const { user } = useAuth();
   const { isDirectionOrAdmin } = useRole();
 
-  const { data: myPoleIds = [] } = useQuery({
+  const { data: myPoleIds, isLoading: polesLoading } = useQuery({
     queryKey: ["my-pole-ids", user?.id],
     enabled: !!user,
     queryFn: async () => {
