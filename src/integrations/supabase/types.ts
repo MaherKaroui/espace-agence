@@ -14,6 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "agency_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_tasks: {
+        Row: {
+          archived_at: string | null
+          assigned_to: string | null
+          attachment_name: string | null
+          attachment_path: string | null
+          client_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          dossier_id: string | null
+          due_date: string | null
+          id: string
+          internal_comment: string | null
+          pole_id: string | null
+          priority: Database["public"]["Enums"]["agency_task_priority"]
+          status: Database["public"]["Enums"]["agency_task_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          assigned_to?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          dossier_id?: string | null
+          due_date?: string | null
+          id?: string
+          internal_comment?: string | null
+          pole_id?: string | null
+          priority?: Database["public"]["Enums"]["agency_task_priority"]
+          status?: Database["public"]["Enums"]["agency_task_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          assigned_to?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          dossier_id?: string | null
+          due_date?: string | null
+          id?: string
+          internal_comment?: string | null
+          pole_id?: string | null
+          priority?: Database["public"]["Enums"]["agency_task_priority"]
+          status?: Database["public"]["Enums"]["agency_task_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_tasks_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_tasks_pole_id_fkey"
+            columns: ["pole_id"]
+            isOneToOne: false
+            referencedRelation: "poles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -1321,6 +1438,10 @@ export type Database = {
         Args: { _a: string; _b: string }
         Returns: boolean
       }
+      can_view_agency_task: {
+        Args: { _task_id: string; _user: string }
+        Returns: boolean
+      }
       client_in_scope: {
         Args: { _client: string; _staff: string }
         Returns: boolean
@@ -1447,6 +1568,8 @@ export type Database = {
       unarchive_client: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
+      agency_task_priority: "basse" | "normale" | "haute" | "urgente"
+      agency_task_status: "a_faire" | "en_cours" | "bloquee" | "terminee"
       app_role: "client" | "admin" | "direction" | "manager" | "consultant"
       dossier_categorie:
         | "qualiopi"
@@ -1482,6 +1605,7 @@ export type Database = {
         | "rdv"
         | "alerte_securite"
         | "internal_message"
+        | "agency_task"
       pole_role: "manager" | "consultant"
       tache_statut:
         | "a_faire"
@@ -1617,6 +1741,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agency_task_priority: ["basse", "normale", "haute", "urgente"],
+      agency_task_status: ["a_faire", "en_cours", "bloquee", "terminee"],
       app_role: ["client", "admin", "direction", "manager", "consultant"],
       dossier_categorie: [
         "qualiopi",
@@ -1654,6 +1780,7 @@ export const Constants = {
         "rdv",
         "alerte_securite",
         "internal_message",
+        "agency_task",
       ],
       pole_role: ["manager", "consultant"],
       tache_statut: [
