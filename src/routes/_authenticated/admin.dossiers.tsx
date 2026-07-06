@@ -329,6 +329,7 @@ function AdminDossiers() {
               <Card className="divide-y">
                 {items.map((d: any) => {
                   const stats = statsById[d.id];
+                  const inc = inconsistencyById[d.id];
                   return (
                   <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block p-4 hover:bg-muted/30">
                     <div className="flex items-center justify-between gap-3">
@@ -337,6 +338,16 @@ function AdminDossiers() {
                           <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
                           <StatusBadge statut={d.statut} />
                           <ReviewSummary stats={stats} />
+                          {inc === "done_incomplete" && (
+                            <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
+                              <AlertTriangle className="h-3 w-3" /> Terminé incomplet
+                            </Badge>
+                          )}
+                          {inc === "zero_but_validated" && (
+                            <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
+                              <AlertTriangle className="h-3 w-3" /> 0% mais validés
+                            </Badge>
+                          )}
                         </div>
                         <div className="font-medium truncate">{d.titre}</div>
                         <div className="text-xs text-muted-foreground">
@@ -347,6 +358,7 @@ function AdminDossiers() {
                   </Link>
                   );
                 })}
+
               </Card>
             </section>
             );
