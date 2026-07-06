@@ -291,7 +291,6 @@ export function GroupChatWindow({
                   onChange={setText}
                   onSubmit={() => { if (text.trim()) send.mutate({ content: text.trim() }); }}
                   enableEntities
-                  enableEntities
                   rows={1}
                 />
               </div>
