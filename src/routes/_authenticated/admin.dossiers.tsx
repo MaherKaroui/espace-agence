@@ -274,3 +274,38 @@ function AdminDossiers() {
 
   );
 }
+
+function ReviewSummary({ stats }: { stats: ReviewStats | undefined }) {
+  if (!stats || stats.total === 0) return null;
+  const { total, validated, toReview, toFix, missing } = stats;
+  if (validated === total) {
+    return (
+      <Badge variant="outline" className="bg-success/15 text-success border-success/20 text-xs gap-1">
+        <CheckCircle2 className="h-3 w-3" /> {validated}/{total} validés
+      </Badge>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      <Badge variant="outline" className="bg-muted text-muted-foreground text-xs gap-1">
+        {validated}/{total}
+      </Badge>
+      {toReview > 0 && (
+        <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30 text-xs gap-1">
+          <Circle className="h-3 w-3" /> {toReview} à vérifier
+        </Badge>
+      )}
+      {toFix > 0 && (
+        <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/20 text-xs gap-1">
+          <AlertTriangle className="h-3 w-3" /> {toFix} à corriger
+        </Badge>
+      )}
+      {missing > 0 && (
+        <Badge variant="outline" className="bg-warning/15 text-warning-foreground border-warning/30 text-xs gap-1">
+          {missing} manquant{missing > 1 ? "s" : ""}
+        </Badge>
+      )}
+    </div>
+  );
+}
+
