@@ -41,6 +41,7 @@ export function MentionTextarea({
   rows = 2,
   disabled,
   enableEntities = false,
+  enableUsers = true,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -50,6 +51,7 @@ export function MentionTextarea({
   rows?: number;
   disabled?: boolean;
   enableEntities?: boolean;
+  enableUsers?: boolean;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const search = useServerFn(searchMentionCandidates);
@@ -61,7 +63,7 @@ export function MentionTextarea({
     for (let i = caret - 1; i >= 0; i--) {
       const ch = text[i];
       if (ch === " " || ch === "\n" || ch === "\t") return null;
-      if (ch === "@") return { start: i, query: text.slice(i + 1, caret), type: "user" as const };
+      if (ch === "@" && enableUsers) return { start: i, query: text.slice(i + 1, caret), type: "user" as const };
       if (ch === "#" && enableEntities)
         return { start: i, query: text.slice(i + 1, caret), type: "entity" as const };
     }
