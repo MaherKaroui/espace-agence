@@ -28,7 +28,7 @@ function AdminDossiers() {
   const { user } = useAuth();
   const { isDirectionOrAdmin } = useRole();
 
-  const { data: myPoleIds = [] } = useQuery({
+  const { data: myPoleIds, isLoading: polesLoading } = useQuery({
     queryKey: ["my-pole-ids", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -57,7 +57,7 @@ function AdminDossiers() {
   // Direction/Admin voient tous les pôles ; le reste du staff : uniquement leurs pôles.
   const poles = isDirectionOrAdmin
     ? allPoles
-    : allPoles.filter((p) => myPoleIds.includes(p.id));
+    : allPoles.filter((p) => (myPoleIds ?? []).includes(p.id));
 
   const { data: rows = [] } = useQuery({
     queryKey: ["admin-dossiers"],
@@ -109,7 +109,9 @@ function AdminDossiers() {
         </select>
       </div>
 
-      {visibleGroups.length === 0 ? (
+      {polesLoading && !isDirectionOrAdmin ? (
+        <Card className="p-12 text-center text-muted-foreground text-sm">Chargement de vos pôles…</Card>
+      ) : visibleGroups.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground text-sm">
           Aucun dossier accessible dans vos pôles pour le moment.
         </Card>
