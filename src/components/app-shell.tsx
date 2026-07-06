@@ -15,6 +15,7 @@ import { AdminFlaggedAlert } from "@/components/admin-flagged-alert";
 import { ConsentBanner } from "@/components/consent-banner";
 import { LegalFooter } from "@/components/legal-footer";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/logo";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
