@@ -185,11 +185,15 @@ function DossierDetail() {
             dossierTitre={dossier.titre}
           />
         )}
+        {isAdmin && (
+          <OpenInternalConversationButton contextType="dossier" entityId={dossier.id} label="Discuter en interne" />
+        )}
         {isAdmin && !dossier.client_id && (
           <InviteClientToDossier dossierId={dossier.id} onDone={() => qc.invalidateQueries({ queryKey: ["dossier", id] })} />
         )}
 
       </div>
+
 
       <Card className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
