@@ -102,7 +102,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const staffNav = [
     { to: "/admin", label: "Vue agence", icon: LayoutDashboard },
     { to: "/admin/dossiers", label: "Dossiers de mes pôles", icon: FolderOpen },
-    { to: "/admin/messages", label: "Messagerie agence", icon: MessageSquare },
+    { to: "/admin/messages", label: "Messagerie clients", icon: MessageSquare },
+    { to: "/admin/internal-messages", label: "Messagerie interne", icon: Users2 },
     { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
   ];
   // Réservé Direction / Admin
