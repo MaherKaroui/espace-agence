@@ -7,7 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/admin/messages/")({
-  head: () => ({ meta: [{ title: "Messagerie agence" }] }),
+  head: () => ({ meta: [{ title: "Messagerie clients" }] }),
   beforeLoad: async () => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw redirect({ to: "/auth" });
@@ -39,7 +39,7 @@ function AdminMessages() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Messagerie agence</h1>
+      <h1 className="font-display text-3xl">Messagerie clients</h1>
       <Card className="divide-y">
         {threads.map((t: any) => (
           <Link key={t.id} to="/admin/messages/$clientId" params={{ clientId: t.id }} className="flex items-center gap-3 p-4 hover:bg-muted/30">

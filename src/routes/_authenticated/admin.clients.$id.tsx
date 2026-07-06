@@ -4,13 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
-import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock, Archive, ArchiveRestore } from "lucide-react";
 import { RelanceButton } from "@/components/relance-button";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -18,18 +19,24 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useServerFn } from "@tanstack/react-start";
-import { deleteClient, updateClientProfile } from "@/lib/admin-clients.functions";
+import { archiveClient, unarchiveClient, assertClientAccess, updateClientProfile } from "@/lib/admin-clients.functions";
 import { formatDistanceToNow, format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/admin/clients/$id")({
   head: () => ({ meta: [{ title: "Client — Admin" }] }),
-  beforeLoad: async () => {
+  beforeLoad: async ({ params }) => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw redirect({ to: "/auth" });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.user.id);
     const staff = roles?.some((r) => ["admin", "direction", "manager", "consultant"].includes(r.role));
     if (!staff) throw redirect({ to: "/dashboard" });
+    // Vérif serveur : ce client est-il dans mon périmètre de pôles ?
+    try {
+      await assertClientAccess({ data: { clientId: params.id } });
+    } catch {
+      throw redirect({ to: "/admin/clients" });
+    }
   },
   component: ClientDetail,
 });
@@ -134,16 +141,30 @@ function ClientDetail() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const deleteClientFn = useServerFn(deleteClient);
-  const deleteClientM = useMutation({
-    mutationFn: async () => deleteClientFn({ data: { userId: id } }),
+  const { isAdmin, isDirectionOrAdmin } = useRole();
+  const [archiveReason, setArchiveReason] = useState("");
+  const archiveFn = useServerFn(archiveClient);
+  const unarchiveFn = useServerFn(unarchiveClient);
+  const archiveM = useMutation({
+    mutationFn: async () => archiveFn({ data: { userId: id, reason: archiveReason || undefined } }),
     onSuccess: () => {
-      toast.success("Client supprimé");
+      toast.success("Client archivé");
       qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      qc.invalidateQueries({ queryKey: ["profile", id] });
       nav({ to: "/admin/clients" });
     },
     onError: (e: any) => toast.error(e.message),
   });
+  const unarchiveM = useMutation({
+    mutationFn: async () => unarchiveFn({ data: { userId: id } }),
+    onSuccess: () => {
+      toast.success("Client réactivé");
+      qc.invalidateQueries({ queryKey: ["admin-clients"] });
+      qc.invalidateQueries({ queryKey: ["profile", id] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const isArchived = !!(profile as any)?.archived_at;
 
   const [newNote, setNewNote] = useState("");
   const addNote = useMutation({
@@ -210,30 +231,48 @@ function ClientDetail() {
               <Button variant="outline"><MessageSquare className="h-4 w-4 mr-2" /> Ouvrir la conversation</Button>
             </Link>
             <RelanceButton clientId={id} clientEmail={profile?.email} />
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={deleteClientM.isPending}>
-                  {deleteClientM.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
-                  Supprimer le client
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Supprimer ce client&nbsp;?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Cette action est <strong>irréversible</strong>. Le compte, ses dossiers, documents et messages seront supprimés définitivement.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => deleteClientM.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Supprimer définitivement
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            {isDirectionOrAdmin && !isArchived && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={archiveM.isPending}>
+                    {archiveM.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Archive className="h-4 w-4 mr-2" />}
+                    Archiver le client
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Archiver ce client&nbsp;?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Le client sera <strong>archivé</strong> : ses sessions sont fermées et son compte n'apparaît plus dans les listes. Les dossiers et l'historique restent conservés. Seul un administrateur peut le réactiver.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="mt-2">
+                    <label className="text-xs text-muted-foreground">Motif (optionnel)</label>
+                    <Textarea rows={2} value={archiveReason} onChange={(e) => setArchiveReason(e.target.value)} placeholder="Ex. Dossiers clôturés — RGPD" />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => archiveM.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Archiver
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {isAdmin && isArchived && (
+              <Button variant="outline" onClick={() => unarchiveM.mutate()} disabled={unarchiveM.isPending}>
+                {unarchiveM.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArchiveRestore className="h-4 w-4 mr-2" />}
+                Réactiver le client
+              </Button>
+            )}
           </div>
         </div>
+        {isArchived && (
+          <div className="mt-4 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm">
+            Client archivé le {(profile as any)?.archived_at ? format(new Date((profile as any).archived_at), "d MMM yyyy", { locale: fr }) : ""}
+            {(profile as any)?.archive_reason ? ` — ${(profile as any).archive_reason}` : ""}.
+          </div>
+        )}
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
           <Kpi icon={FolderOpen} label="Dossiers" value={String(dossiers.length)} tone="bg-primary/10 text-primary" />

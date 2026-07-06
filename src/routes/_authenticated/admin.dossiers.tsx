@@ -97,9 +97,12 @@ function AdminDossiers() {
     pole: p,
     items: filtered.filter((d: any) => d.pole_id === p.id),
   }));
-  const orphelins = filtered.filter((d: any) => !poles.some((p) => p.id === d.pole_id));
-  if (orphelins.length > 0) {
-    groups.push({ pole: { id: "_orphelins", nom: "Sans pôle actif", couleur: "gray" }, items: orphelins });
+  // Les dossiers "orphelins" (sans pôle actif) ne sont montrés qu'aux direction/admin.
+  if (isDirectionOrAdmin) {
+    const orphelins = filtered.filter((d: any) => !poles.some((p) => p.id === d.pole_id));
+    if (orphelins.length > 0) {
+      groups.push({ pole: { id: "_orphelins", nom: "Sans pôle actif", couleur: "gray" }, items: orphelins });
+    }
   }
 
   const visibleGroups = groups.filter((g) => g.items.length > 0);

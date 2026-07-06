@@ -39,10 +39,12 @@ import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authentic
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AuthenticatedMessagesGroupesIndexRouteImport } from './routes/_authenticated/messages.groupes.index'
 import { Route as AuthenticatedAdminMessagesIndexRouteImport } from './routes/_authenticated/admin.messages.index'
+import { Route as AuthenticatedAdminInternalMessagesIndexRouteImport } from './routes/_authenticated/admin.internal-messages.index'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin.clients.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as AuthenticatedMessagesGroupesIdRouteImport } from './routes/_authenticated/messages.groupes.$id'
 import { Route as AuthenticatedAdminMessagesClientIdRouteImport } from './routes/_authenticated/admin.messages.$clientId'
+import { Route as AuthenticatedAdminInternalMessagesIdRouteImport } from './routes/_authenticated/admin.internal-messages.$id'
 import { Route as AuthenticatedAdminDossiersIdRouteImport } from './routes/_authenticated/admin.dossiers.$id'
 import { Route as AuthenticatedAdminClientsIdRouteImport } from './routes/_authenticated/admin.clients.$id'
 
@@ -210,6 +212,12 @@ const AuthenticatedAdminMessagesIndexRoute =
     path: '/admin/messages/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminInternalMessagesIndexRoute =
+  AuthenticatedAdminInternalMessagesIndexRouteImport.update({
+    id: '/admin/internal-messages/',
+    path: '/admin/internal-messages/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminClientsIndexRoute =
   AuthenticatedAdminClientsIndexRouteImport.update({
     id: '/admin/clients/',
@@ -232,6 +240,12 @@ const AuthenticatedAdminMessagesClientIdRoute =
   AuthenticatedAdminMessagesClientIdRouteImport.update({
     id: '/admin/messages/$clientId',
     path: '/admin/messages/$clientId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminInternalMessagesIdRoute =
+  AuthenticatedAdminInternalMessagesIdRouteImport.update({
+    id: '/admin/internal-messages/$id',
+    path: '/admin/internal-messages/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminDossiersIdRoute =
@@ -277,10 +291,12 @@ export interface FileRoutesByFullPath {
   '/messages/': typeof AuthenticatedMessagesIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/dossiers/$id': typeof AuthenticatedAdminDossiersIdRoute
+  '/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
+  '/admin/internal-messages/': typeof AuthenticatedAdminInternalMessagesIndexRoute
   '/admin/messages/': typeof AuthenticatedAdminMessagesIndexRoute
   '/messages/groupes/': typeof AuthenticatedMessagesGroupesIndexRoute
 }
@@ -314,10 +330,12 @@ export interface FileRoutesByTo {
   '/messages': typeof AuthenticatedMessagesIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/dossiers/$id': typeof AuthenticatedAdminDossiersIdRoute
+  '/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
+  '/admin/internal-messages': typeof AuthenticatedAdminInternalMessagesIndexRoute
   '/admin/messages': typeof AuthenticatedAdminMessagesIndexRoute
   '/messages/groupes': typeof AuthenticatedMessagesGroupesIndexRoute
 }
@@ -353,10 +371,12 @@ export interface FileRoutesById {
   '/_authenticated/messages/': typeof AuthenticatedMessagesIndexRoute
   '/_authenticated/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/_authenticated/admin/dossiers/$id': typeof AuthenticatedAdminDossiersIdRoute
+  '/_authenticated/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
   '/_authenticated/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/_authenticated/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
+  '/_authenticated/admin/internal-messages/': typeof AuthenticatedAdminInternalMessagesIndexRoute
   '/_authenticated/admin/messages/': typeof AuthenticatedAdminMessagesIndexRoute
   '/_authenticated/messages/groupes/': typeof AuthenticatedMessagesGroupesIndexRoute
 }
@@ -392,10 +412,12 @@ export interface FileRouteTypes {
     | '/messages/'
     | '/admin/clients/$id'
     | '/admin/dossiers/$id'
+    | '/admin/internal-messages/$id'
     | '/admin/messages/$clientId'
     | '/messages/groupes/$id'
     | '/lovable/email/queue/process'
     | '/admin/clients/'
+    | '/admin/internal-messages/'
     | '/admin/messages/'
     | '/messages/groupes/'
   fileRoutesByTo: FileRoutesByTo
@@ -429,10 +451,12 @@ export interface FileRouteTypes {
     | '/messages'
     | '/admin/clients/$id'
     | '/admin/dossiers/$id'
+    | '/admin/internal-messages/$id'
     | '/admin/messages/$clientId'
     | '/messages/groupes/$id'
     | '/lovable/email/queue/process'
     | '/admin/clients'
+    | '/admin/internal-messages'
     | '/admin/messages'
     | '/messages/groupes'
   id:
@@ -467,10 +491,12 @@ export interface FileRouteTypes {
     | '/_authenticated/messages/'
     | '/_authenticated/admin/clients/$id'
     | '/_authenticated/admin/dossiers/$id'
+    | '/_authenticated/admin/internal-messages/$id'
     | '/_authenticated/admin/messages/$clientId'
     | '/_authenticated/messages/groupes/$id'
     | '/lovable/email/queue/process'
     | '/_authenticated/admin/clients/'
+    | '/_authenticated/admin/internal-messages/'
     | '/_authenticated/admin/messages/'
     | '/_authenticated/messages/groupes/'
   fileRoutesById: FileRoutesById
@@ -702,6 +728,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMessagesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/internal-messages/': {
+      id: '/_authenticated/admin/internal-messages/'
+      path: '/admin/internal-messages'
+      fullPath: '/admin/internal-messages/'
+      preLoaderRoute: typeof AuthenticatedAdminInternalMessagesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/clients/': {
       id: '/_authenticated/admin/clients/'
       path: '/admin/clients'
@@ -728,6 +761,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/messages/$clientId'
       fullPath: '/admin/messages/$clientId'
       preLoaderRoute: typeof AuthenticatedAdminMessagesClientIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/internal-messages/$id': {
+      id: '/_authenticated/admin/internal-messages/$id'
+      path: '/admin/internal-messages/$id'
+      fullPath: '/admin/internal-messages/$id'
+      preLoaderRoute: typeof AuthenticatedAdminInternalMessagesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/dossiers/$id': {
@@ -780,9 +820,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDossiersIndexRoute: typeof AuthenticatedDossiersIndexRoute
   AuthenticatedMessagesIndexRoute: typeof AuthenticatedMessagesIndexRoute
   AuthenticatedAdminClientsIdRoute: typeof AuthenticatedAdminClientsIdRoute
+  AuthenticatedAdminInternalMessagesIdRoute: typeof AuthenticatedAdminInternalMessagesIdRoute
   AuthenticatedAdminMessagesClientIdRoute: typeof AuthenticatedAdminMessagesClientIdRoute
   AuthenticatedMessagesGroupesIdRoute: typeof AuthenticatedMessagesGroupesIdRoute
   AuthenticatedAdminClientsIndexRoute: typeof AuthenticatedAdminClientsIndexRoute
+  AuthenticatedAdminInternalMessagesIndexRoute: typeof AuthenticatedAdminInternalMessagesIndexRoute
   AuthenticatedAdminMessagesIndexRoute: typeof AuthenticatedAdminMessagesIndexRoute
   AuthenticatedMessagesGroupesIndexRoute: typeof AuthenticatedMessagesGroupesIndexRoute
 }
@@ -806,10 +848,14 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDossiersIndexRoute: AuthenticatedDossiersIndexRoute,
   AuthenticatedMessagesIndexRoute: AuthenticatedMessagesIndexRoute,
   AuthenticatedAdminClientsIdRoute: AuthenticatedAdminClientsIdRoute,
+  AuthenticatedAdminInternalMessagesIdRoute:
+    AuthenticatedAdminInternalMessagesIdRoute,
   AuthenticatedAdminMessagesClientIdRoute:
     AuthenticatedAdminMessagesClientIdRoute,
   AuthenticatedMessagesGroupesIdRoute: AuthenticatedMessagesGroupesIdRoute,
   AuthenticatedAdminClientsIndexRoute: AuthenticatedAdminClientsIndexRoute,
+  AuthenticatedAdminInternalMessagesIndexRoute:
+    AuthenticatedAdminInternalMessagesIndexRoute,
   AuthenticatedAdminMessagesIndexRoute: AuthenticatedAdminMessagesIndexRoute,
   AuthenticatedMessagesGroupesIndexRoute:
     AuthenticatedMessagesGroupesIndexRoute,

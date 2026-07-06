@@ -25,6 +25,7 @@ function matchesSection(row: NavUnreadRow, to: string): boolean {
   if (to === "/messages/groupes") return link.startsWith("/messages/groupes");
   if (to === "/messages") return link.startsWith("/messages") && !link.startsWith("/messages/groupes");
   if (to === "/admin/messages") return row.type === "message" || link.startsWith("/admin/messages") || (link.startsWith("/messages") && !link.startsWith("/messages/groupes"));
+  if (to === "/admin/internal-messages") return row.type === "internal_message" || link.startsWith("/admin/internal-messages");
   if (to === "/admin/dossiers") return link.startsWith("/dossiers") || link.startsWith("/admin/dossiers") || row.type.startsWith("document") || row.type === "statut_change" || row.type.startsWith("tache");
   if (to === "/admin/rendez-vous") return link.startsWith("/rendez-vous") || link.startsWith("/admin/rendez-vous") || row.type.startsWith("rdv");
   if (to === "/dossiers") return link.startsWith("/dossiers") || row.type.startsWith("document") || row.type === "statut_change" || row.type.startsWith("tache");
@@ -102,13 +103,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const staffNav = [
     { to: "/admin", label: "Vue agence", icon: LayoutDashboard },
     { to: "/admin/dossiers", label: "Dossiers de mes pôles", icon: FolderOpen },
-    { to: "/admin/messages", label: "Messagerie agence", icon: MessageSquare },
+    { to: "/admin/clients", label: "Clients de mes pôles", icon: Users },
+    { to: "/admin/messages", label: "Messagerie clients", icon: MessageSquare },
+    { to: "/admin/internal-messages", label: "Messagerie interne", icon: Users2 },
     { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
   ];
   // Réservé Direction / Admin
   const directionNav = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
-    { to: "/admin/clients", label: "Clients", icon: Users },
     { to: "/admin/poles", label: "Pôles & équipes", icon: Users2 },
     { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },

@@ -2,22 +2,59 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-export const deleteClient = createServerFn({ method: "POST" })
+async function callerIsAdminOrDirection(supabase: any, callerId: string) {
+  const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", callerId);
+  return {
+    isAdmin: !!roles?.some((r: any) => r.role === "admin"),
+    isDirection: !!roles?.some((r: any) => r.role === "direction"),
+    isStaff: !!roles?.some((r: any) => ["admin", "direction", "manager", "consultant"].includes(r.role)),
+  };
+}
+
+/**
+ * Archive un client (admin/direction) — remplace la suppression.
+ * Utilise la fonction SQL public.archive_client qui verrouille les sessions et journalise.
+ */
+export const archiveClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z.object({ userId: z.string().uuid(), reason: z.string().trim().max(500).optional() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    const perms = await callerIsAdminOrDirection(supabase, callerId);
+    if (!perms.isAdmin && !perms.isDirection) throw new Error("Réservé à la direction / administration");
+    if (data.userId === callerId) throw new Error("Vous ne pouvez pas archiver votre propre compte");
+    const { error } = await supabase.rpc("archive_client", { _user_id: data.userId, _reason: data.reason });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const unarchiveClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { supabase, userId: callerId } = context;
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", callerId);
-    const isAdmin = roles?.some((r: any) => r.role === "admin");
-    if (!isAdmin) throw new Error("Réservé aux administrateurs");
-    if (data.userId === callerId) throw new Error("Vous ne pouvez pas supprimer votre propre compte");
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    const { supabase } = context;
+    const { error } = await supabase.rpc("unarchive_client", { _user_id: data.userId });
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Vérifie qu'un membre de l'agence a bien accès à un client dans son périmètre de pôle.
+ * Utilisé par les routes admin.clients.$id et admin.messages.$clientId comme garde-fou serveur.
+ */
+export const assertClientAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ clientId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+    const { data: allowed, error } = await supabase.rpc("client_in_scope", {
+      _staff: callerId,
+      _client: data.clientId,
+    });
+    if (error) throw new Error(error.message);
+    if (!allowed) throw new Error("Accès refusé : ce client n'est pas dans vos pôles");
     return { ok: true };
   });
 
@@ -35,12 +72,8 @@ export const updateClientProfile = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId: callerId } = context;
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", callerId);
-    const isAdmin = roles?.some((r: any) => r.role === "admin");
-    if (!isAdmin) throw new Error("Réservé aux administrateurs");
+    const perms = await callerIsAdminOrDirection(supabase, callerId);
+    if (!perms.isAdmin) throw new Error("Réservé aux administrateurs");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const patch: { prenom?: string; nom?: string; email?: string } = {};
@@ -75,17 +108,12 @@ export const inviteClient = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId: callerId } = context;
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", callerId);
-    const staff = roles?.some((r: any) => ["admin", "direction"].includes(r.role));
-    if (!staff) throw new Error("Réservé à la direction / administration");
+    const perms = await callerIsAdminOrDirection(supabase, callerId);
+    if (!perms.isAdmin && !perms.isDirection) throw new Error("Réservé à la direction / administration");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.toLowerCase();
 
-    // 1) Chercher un profil existant par email
     let userId: string | null = null;
     const { data: existing } = await supabaseAdmin
       .from("profiles")
@@ -96,7 +124,6 @@ export const inviteClient = createServerFn({ method: "POST" })
 
     let invited = false;
     if (!userId) {
-      // 2) Envoyer une invitation e-mail Supabase
       const { data: inv, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
         data: { prenom: data.prenom ?? "", nom: data.nom ?? "" },
       });
@@ -104,7 +131,6 @@ export const inviteClient = createServerFn({ method: "POST" })
       userId = inv.user?.id ?? null;
       invited = true;
       if (!userId) throw new Error("L'invitation a échoué (aucun identifiant utilisateur retourné)");
-      // Le trigger handle_new_user crée le profil ; on complète les champs saisis.
       await supabaseAdmin
         .from("profiles")
         .update({
@@ -115,7 +141,6 @@ export const inviteClient = createServerFn({ method: "POST" })
         .eq("id", userId);
     }
 
-    // 3) Rattacher au dossier si demandé
     if (data.dossier_id) {
       const { error: dErr } = await supabaseAdmin
         .from("dossiers")
@@ -126,4 +151,3 @@ export const inviteClient = createServerFn({ method: "POST" })
 
     return { ok: true, user_id: userId, invited };
   });
-
