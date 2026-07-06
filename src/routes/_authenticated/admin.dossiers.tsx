@@ -271,6 +271,18 @@ function AdminDossiers() {
           <option value="all">Toutes catégories</option>
           {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
+        <select
+          value={quality}
+          onChange={(e) => setQuality(e.target.value as QualityFilter)}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="all">Tous les états</option>
+          <option value="to_fix">Documents à corriger / refusés</option>
+          <option value="missing">Documents manquants</option>
+          <option value="to_review">Documents à vérifier</option>
+          <option value="done_incomplete">Terminés incomplets</option>
+          <option value="zero_but_validated">0% mais validés</option>
+        </select>
         <button
           type="button"
           onClick={() => setReviewOnly((v) => !v)}
@@ -286,6 +298,7 @@ function AdminDossiers() {
           {reviewOnly ? "À revoir uniquement" : "À revoir"}
         </button>
       </div>
+
 
       {polesLoading && !isDirectionOrAdmin ? (
         <Card className="p-12 text-center text-muted-foreground text-sm">Chargement de vos pôles…</Card>
