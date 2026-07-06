@@ -232,7 +232,6 @@ function ClientDetail() {
             <Link to="/admin/messages/$clientId" params={{ clientId: id }}>
               <Button variant="outline"><MessageSquare className="h-4 w-4 mr-2" /> Ouvrir la conversation</Button>
             </Link>
-            <OpenInternalConversationButton contextType="client" entityId={id} label="Discuter en interne" />
             <RelanceButton clientId={id} clientEmail={profile?.email} />
 
             {isDirectionOrAdmin && !isArchived && (
