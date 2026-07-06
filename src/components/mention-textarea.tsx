@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { searchMentionCandidates } from "@/lib/mention-search.functions";
 import { Textarea } from "@/components/ui/textarea";
-import { AtSign, Hash, User, Building2, FolderOpen, ClipboardCheck, Users } from "lucide-react";
+import { AtSign, Hash, User, Building2, FolderOpen, ClipboardCheck, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseMentionSegments } from "@/lib/mentions";
 
 type EntityKind = "client" | "dossier" | "task" | "pole";
 type Kind = "user" | EntityKind;
