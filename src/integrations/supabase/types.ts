@@ -1283,6 +1283,14 @@ export type Database = {
         Returns: number
       }
       generer_rapport_quotidien: { Args: { _date?: string }; Returns: string }
+      get_presence: {
+        Args: { _ids: string[] }
+        Returns: {
+          last_seen_at: string
+          online: boolean
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
