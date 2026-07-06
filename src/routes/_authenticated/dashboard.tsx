@@ -78,7 +78,7 @@ function Dashboard() {
         <p className="text-sm sm:text-base text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
       </div>
 
-      {!isAdmin && dossiers.length === 0 && (
+      {!isAdmin && dossiersFetched && !dossiersLoading && dossiers.length === 0 && (
         <Card className="p-6 border-primary/20 bg-primary/5">
           <h2 className="font-display text-xl mb-1">Bienvenue dans votre espace</h2>
           <p className="text-sm text-muted-foreground mb-4">Voici comment ça marche, en 4 étapes simples :</p>
