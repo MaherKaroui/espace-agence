@@ -17,6 +17,7 @@ export const searchMentionCandidates = createServerFn({ method: "POST" })
         kind: z.enum(["user", "client", "dossier", "task", "pole"]),
         query: z.string().max(80),
         conversationId: z.string().uuid().optional(),
+        scopeClientId: z.string().uuid().optional(),
       })
       .parse(data),
   )
