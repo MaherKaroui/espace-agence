@@ -288,9 +288,9 @@ function ConversationRow({
 function ConversationAvatar({ conv }: { conv: any }) {
   const map: Record<string, { icon: any; cls: string }> = {
     pole: { icon: Users, cls: "bg-gold/15 text-gold" },
-    client: { icon: Building2, cls: "bg-blue-500/15 text-blue-600 dark:text-blue-400" },
-    dossier: { icon: FolderOpen, cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
-    task: { icon: ClipboardCheck, cls: "bg-warning/15 text-warning-foreground" },
+    channel: { icon: Hash, cls: "bg-primary/15 text-primary" },
+    group: { icon: Users2, cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
+    announcement: { icon: Megaphone, cls: "bg-warning/15 text-warning-foreground" },
     direct: { icon: Users2, cls: "bg-primary/10 text-primary" },
     custom: { icon: MessageSquare, cls: "bg-muted text-muted-foreground" },
   };
