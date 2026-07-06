@@ -61,6 +61,8 @@ export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   },
   component: AdminDossiers,
 });
+  const [reviewOnly, setReviewOnly] = useState(false);
+
 
 function AdminDossiers() {
   const [q, setQ] = useState("");
