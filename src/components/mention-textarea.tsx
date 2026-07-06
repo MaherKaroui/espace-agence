@@ -37,6 +37,7 @@ export function MentionTextarea({
   onChange,
   onSubmit,
   conversationId,
+  scopeClientId,
   placeholder,
   rows = 2,
   disabled,
@@ -47,6 +48,7 @@ export function MentionTextarea({
   onChange: (v: string) => void;
   onSubmit: () => void;
   conversationId?: string;
+  scopeClientId?: string;
   placeholder?: string;
   rows?: number;
   disabled?: boolean;
@@ -87,7 +89,7 @@ export function MentionTextarea({
     const kinds: Kind[] = trigger.type === "user" ? ["user"] : ENTITY_KINDS;
     Promise.all(
       kinds.map((k) =>
-        search({ data: { kind: k, query: trigger.query, conversationId } })
+        search({ data: { kind: k, query: trigger.query, conversationId, scopeClientId } })
           .then((rows: any) => (rows as any[]).map((r) => ({ ...r, kind: k })))
           .catch(() => [] as Candidate[]),
       ),
@@ -99,7 +101,7 @@ export function MentionTextarea({
     return () => {
       cancelled = true;
     };
-  }, [trigger?.query, trigger?.type, conversationId, search]);
+  }, [trigger?.query, trigger?.type, conversationId, scopeClientId, search]);
 
   const insertMention = (c: Candidate) => {
     if (!trigger) return;

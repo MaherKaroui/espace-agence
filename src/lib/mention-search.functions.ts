@@ -17,6 +17,7 @@ export const searchMentionCandidates = createServerFn({ method: "POST" })
         kind: z.enum(["user", "client", "dossier", "task", "pole"]),
         query: z.string().max(80),
         conversationId: z.string().uuid().optional(),
+        scopeClientId: z.string().uuid().optional(),
       })
       .parse(data),
   )
@@ -85,12 +86,14 @@ export const searchMentionCandidates = createServerFn({ method: "POST" })
     }
 
     if (data.kind === "dossier") {
-      const { data } = await supabaseAdmin
+      let qd = supabaseAdmin
         .from("dossiers")
-        .select("id, titre, statut")
-        .ilike("titre", like)
+        .select("id, titre, statut, client_id")
         .limit(8);
-      return ((data ?? []) as any[]).map((d) => ({
+      if (data.scopeClientId) qd = qd.eq("client_id", data.scopeClientId);
+      if (q) qd = qd.ilike("titre", like);
+      const { data: rows } = await qd;
+      return ((rows ?? []) as any[]).map((d) => ({
         id: d.id,
         label: d.titre,
         sublabel: d.statut ?? "",
@@ -98,12 +101,14 @@ export const searchMentionCandidates = createServerFn({ method: "POST" })
     }
 
     if (data.kind === "task") {
-      const { data } = await supabaseAdmin
+      let qt = supabaseAdmin
         .from("agency_tasks")
-        .select("id, title, statut")
-        .ilike("title", like)
+        .select("id, title, statut, client_id")
         .limit(8);
-      return ((data ?? []) as any[]).map((t) => ({
+      if (data.scopeClientId) qt = qt.eq("client_id", data.scopeClientId);
+      if (q) qt = qt.ilike("title", like);
+      const { data: rows } = await qt;
+      return ((rows ?? []) as any[]).map((t) => ({
         id: t.id,
         label: t.title,
         sublabel: t.statut ?? "",
