@@ -4,7 +4,7 @@ import { LegalFooter } from "@/components/legal-footer";
 export const Route = createFileRoute("/politique-confidentialite")({
   head: () => ({
     meta: [
-      { title: "Politique de confidentialité — Espace Client" },
+      { title: "Politique de confidentialité — IZISuivis" },
       { name: "description", content: "Politique de confidentialité et traitement des données personnelles — FD CERTIF EXPERT." },
       { name: "robots", content: "index,follow" },
     ],

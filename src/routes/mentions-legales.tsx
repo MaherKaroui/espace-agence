@@ -4,7 +4,7 @@ import { LegalFooter } from "@/components/legal-footer";
 export const Route = createFileRoute("/mentions-legales")({
   head: () => ({
     meta: [
-      { title: "Mentions légales — Espace Client" },
+      { title: "Mentions légales — IZISuivis" },
       { name: "description", content: "Mentions légales de la plateforme FD CERTIF EXPERT." },
       { name: "robots", content: "index,follow" },
     ],

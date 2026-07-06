@@ -14,7 +14,7 @@ import { ShieldCheck, Loader2 } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Connexion — Espace Client" },
+      { title: "Connexion — IZISuivis" },
       { name: "description", content: "Connectez-vous ou créez votre compte pour accéder à votre espace client." },
     ],
   }),
@@ -107,7 +107,7 @@ function AuthPage() {
             <li>• Documents et pièces justificatives centralisés</li>
           </ul>
         </div>
-        <p className="text-xs text-white/40">© {new Date().getFullYear()} — Agence</p>
+        <p className="text-xs text-white/40">© {new Date().getFullYear()} — IZISuivis</p>
       </div>
 
       <div className="flex items-center justify-center p-6 sm:p-10">
