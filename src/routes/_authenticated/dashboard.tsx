@@ -23,7 +23,7 @@ function Dashboard() {
   const { user } = useAuth();
   const { isAdmin } = useRole();
 
-  const { data: dossiers = [] } = useQuery({
+  const { data: dossiers = [], isLoading: dossiersLoading, isFetched: dossiersFetched } = useQuery({
     queryKey: ["dossiers-mine", user?.id],
     enabled: !!user,
     queryFn: async () => {
