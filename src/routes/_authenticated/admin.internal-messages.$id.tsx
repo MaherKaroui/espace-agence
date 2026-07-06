@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, Send, Paperclip, Loader2, Download, Star, Bell, BellOff, Archive, ArchiveRestore,
@@ -24,6 +24,9 @@ import { InternalConversationsSidebar, conversationDisplayTitle } from "./admin.
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
+import { MentionTextarea } from "@/components/mention-textarea";
+import { RichMessageContent } from "@/components/rich-message-content";
+import { extractMentions } from "@/lib/mentions";
 
 export const Route = createFileRoute("/_authenticated/admin/internal-messages/$id")({
   head: () => ({ meta: [{ title: "Conversation interne" }] }),
@@ -152,13 +155,19 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
         attachment_name = payload.file.name;
         attachment_mime = payload.file.type;
       }
+      const text = payload.content?.trim() || null;
+      const { users, entities } = text
+        ? extractMentions(text)
+        : { users: [], entities: [] };
       const { error } = await supabase.from("internal_messages").insert({
         conversation_id: id,
         sender_id: userId!,
-        content: payload.content?.trim() || null,
+        content: text,
         attachment_path,
         attachment_name,
         attachment_mime,
+        mentions_users: users.map((u) => u.id),
+        mentions_entities: entities as any,
       });
       if (error) throw error;
     },
@@ -283,7 +292,9 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
                 )}
               >
                 {!mine && <div className="text-[10px] font-medium opacity-80 mb-0.5">{authorLabel}</div>}
-                {m.content && <div className="whitespace-pre-wrap break-words">{m.content}</div>}
+                {m.content && (
+                  <RichMessageContent content={m.content} currentUserId={userId} />
+                )}
                 {m.attachment_path && (
                   <button
                     onClick={() => openAttachment(m.attachment_path)}
@@ -302,17 +313,12 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
       </div>
 
       <div className="border-t p-3 space-y-2">
-        <Textarea
-          rows={2}
-          placeholder="Écrire un message…"
+        <MentionTextarea
           value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && content.trim()) {
-              e.preventDefault();
-              send.mutate({ content });
-            }
-          }}
+          onChange={setContent}
+          onSubmit={() => send.mutate({ content })}
+          conversationId={id}
+          placeholder="Écrire un message…  @ pour mentionner  ·  # pour lier un client / dossier / tâche"
         />
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
