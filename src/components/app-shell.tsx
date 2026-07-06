@@ -214,7 +214,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="h-9 w-9 rounded-lg bg-gold flex items-center justify-center">
             <ShieldCheck className="h-5 w-5 text-primary" />
           </div>
-          <span className="font-display text-lg">Espace Agence</span>
+          <span className="font-display text-lg">IZISuivis</span>
         </div>
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto"><NavList /></nav>
         <div className="p-3 border-t border-sidebar-border">
