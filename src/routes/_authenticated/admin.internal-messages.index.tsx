@@ -8,24 +8,32 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  Users2, Plus, MessageSquare, Star, Building2, FolderOpen, ClipboardCheck, Users, Search, Archive,
+  Users2, Plus, MessageSquare, Star, Users, Search, Archive, Megaphone, Hash, Lock,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
   createInternalConversation,
+  createInternalGroup,
   listAllowedInternalContacts,
-  openContextConversation,
 } from "@/lib/internal-messages.functions";
 import { roleLabelFr } from "@/lib/role-labels";
 import { cn } from "@/lib/utils";
+
+// Types de conversations affichés dans la messagerie interne.
+// Les anciennes conversations "client", "dossier", "task" sont volontairement exclues :
+// la messagerie interne ne concerne QUE l'équipe.
+const INTERNAL_TYPES = ["direct", "group", "channel", "pole", "announcement", "custom"] as const;
 
 export const Route = createFileRoute("/_authenticated/admin/internal-messages/")({
   head: () => ({ meta: [{ title: "Messagerie interne" }] }),
@@ -46,8 +54,8 @@ function InternalMessagesIndex() {
       <Card className="hidden md:flex items-center justify-center p-10 text-center text-sm text-muted-foreground">
         <div>
           <MessageSquare className="h-8 w-8 mx-auto mb-3 opacity-60" />
-          <p>Sélectionnez une conversation à gauche, ou démarrez-en une nouvelle.</p>
-          <p className="mt-1 text-xs">Vous pouvez aussi ouvrir une discussion depuis un client, un dossier, une tâche ou un pôle.</p>
+          <p>Sélectionnez une conversation à gauche ou démarrez-en une nouvelle.</p>
+          <p className="mt-1 text-xs">Messagerie interne : uniquement pour l'équipe de l'agence.</p>
         </div>
       </Card>
     </div>
