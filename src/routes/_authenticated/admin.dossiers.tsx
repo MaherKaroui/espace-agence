@@ -109,7 +109,9 @@ function AdminDossiers() {
         </select>
       </div>
 
-      {visibleGroups.length === 0 ? (
+      {polesLoading && !isDirectionOrAdmin ? (
+        <Card className="p-12 text-center text-muted-foreground text-sm">Chargement de vos pôles…</Card>
+      ) : visibleGroups.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground text-sm">
           Aucun dossier accessible dans vos pôles pour le moment.
         </Card>
