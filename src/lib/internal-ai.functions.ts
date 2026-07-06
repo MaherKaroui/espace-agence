@@ -17,7 +17,9 @@ async function callLovableAi(messages: any[], model = "google/gemini-2.5-flash")
   if (!key) throw new Error("LOVABLE_API_KEY manquant");
   const gateway = createLovableAiGatewayProvider(key);
   const { generateText } = await import("ai");
-  const { text } = await generateText({ model: gateway(model), messages });
+  const system = messages.find((m) => m.role === "system")?.content;
+  const rest = messages.filter((m) => m.role !== "system");
+  const { text } = await generateText({ model: gateway(model), system, messages: rest });
   return text;
 }
 
