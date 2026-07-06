@@ -178,12 +178,28 @@ function AdminDossiers() {
     return m;
   }, [rows, docsByDossier]);
 
+  const inconsistencyById = useMemo(() => {
+    const m: Record<string, Inconsistency> = {};
+    for (const d of rows as any[]) {
+      m[d.id] = detectInconsistency(d, statsById[d.id]);
+    }
+    return m;
+  }, [rows, statsById]);
+
   const filtered = (rows as any[]).filter((r: any) => {
     if (cat !== "all" && r.categorie !== cat) return false;
     if (reviewOnly && !statsById[r.id]?.needsAction) return false;
+    const s = statsById[r.id];
+    switch (quality) {
+      case "to_fix": if (!s || s.toFix === 0) return false; break;
+      case "missing": if (!s || s.missing === 0) return false; break;
+      case "to_review": if (!s || s.toReview === 0) return false; break;
+      case "done_incomplete": if (inconsistencyById[r.id] !== "done_incomplete") return false; break;
+      case "zero_but_validated": if (inconsistencyById[r.id] !== "zero_but_validated") return false; break;
+    }
     if (!q.trim()) return true;
-    const s = `${r.titre} ${r.profiles?.email ?? ""} ${r.profiles?.nom ?? ""} ${r.profiles?.prenom ?? ""}`.toLowerCase();
-    return s.includes(q.toLowerCase());
+    const txt = `${r.titre} ${r.profiles?.email ?? ""} ${r.profiles?.nom ?? ""} ${r.profiles?.prenom ?? ""}`.toLowerCase();
+    return txt.includes(q.toLowerCase());
   });
 
 
@@ -203,6 +219,9 @@ function AdminDossiers() {
   const visibleGroups = groups.filter((g) => g.items.length > 0);
 
   const totalToReview = (rows as any[]).reduce((n, d) => n + (statsById[d.id]?.needsAction ? 1 : 0), 0);
+  const inconsistencies = (rows as any[]).filter((d) => inconsistencyById[d.id]);
+  const doneIncompleteCount = inconsistencies.filter((d) => inconsistencyById[d.id] === "done_incomplete").length;
+  const zeroValidatedCount = inconsistencies.filter((d) => inconsistencyById[d.id] === "zero_but_validated").length;
 
   return (
     <div className="space-y-6">
@@ -215,6 +234,34 @@ function AdminDossiers() {
           )}
         </p>
       </div>
+
+      {inconsistencies.length > 0 && (
+        <Card className="p-4 border-destructive/30 bg-destructive/5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-2">
+              <div className="font-medium text-sm">Alertes qualité ({inconsistencies.length})</div>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                {doneIncompleteCount > 0 && (
+                  <li>
+                    <button className="text-destructive hover:underline" onClick={() => setQuality("done_incomplete")}>
+                      {doneIncompleteCount} dossier{doneIncompleteCount > 1 ? "s" : ""} marqué{doneIncompleteCount > 1 ? "s" : ""} terminé{doneIncompleteCount > 1 ? "s" : ""} avec pièces non validées
+                    </button>
+                  </li>
+                )}
+                {zeroValidatedCount > 0 && (
+                  <li>
+                    <button className="text-destructive hover:underline" onClick={() => setQuality("zero_but_validated")}>
+                      {zeroValidatedCount} dossier{zeroValidatedCount > 1 ? "s" : ""} à 0% mais avec documents validés
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-64">
           <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
