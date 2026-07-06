@@ -37,10 +37,9 @@ export function RichMessageContent({
             <span
               key={i}
               className={cn(
-                "inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-xs font-medium mx-0.5 align-baseline",
-                me
-                  ? "bg-warning/20 text-warning-foreground"
-                  : "bg-primary/15 text-primary",
+                "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-semibold mx-0.5 align-baseline ring-1 ring-current/30",
+                "bg-current/15",
+                me && "underline decoration-2 underline-offset-2",
               )}
             >
               <AtSign className="h-3 w-3" />
