@@ -13,10 +13,12 @@ export const Route = createFileRoute("/_authenticated/admin/messages/$clientId")
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.user.id);
     const ok = roles?.some((r) => ["admin","direction","manager","consultant"].includes(r.role));
     if (!ok) throw redirect({ to: "/dashboard" });
+    // Accès fin géré par RLS (client_in_scope) : on n'empêche plus l'accès
+    // à la page ici pour éviter un redirect silencieux vers /admin/messages.
     try {
       await assertClientAccess({ data: { clientId: params.clientId } });
     } catch {
-      throw redirect({ to: "/admin/messages" });
+      // no-op : la page s'affichera et RLS filtrera les messages si hors périmètre.
     }
   },
   component: AdminChat,
