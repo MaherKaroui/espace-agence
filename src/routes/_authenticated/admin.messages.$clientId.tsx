@@ -2,7 +2,6 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatWindow } from "@/components/chat-window";
-import { ChatWindow } from "@/components/chat-window";
 import { usePresence, PresenceDot, PresenceLabel } from "@/components/presence-indicator";
 
 export const Route = createFileRoute("/_authenticated/admin/messages/$clientId")({
