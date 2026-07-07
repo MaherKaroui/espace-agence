@@ -17,6 +17,7 @@ import { Route as CguRouteImport } from './routes/cgu'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedRendezVousRouteImport } from './routes/_authenticated/rendez-vous'
 import { Route as AuthenticatedPreferencesRouteImport } from './routes/_authenticated/preferences'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -27,6 +28,7 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
 import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
 import { Route as AuthenticatedAdminTachesAgenceRouteImport } from './routes/_authenticated/admin.taches-agence'
 import { Route as AuthenticatedAdminSessionsRouteImport } from './routes/_authenticated/admin.sessions'
@@ -42,6 +44,8 @@ import { Route as AuthenticatedMessagesGroupesIndexRouteImport } from './routes/
 import { Route as AuthenticatedAdminMessagesIndexRouteImport } from './routes/_authenticated/admin.messages.index'
 import { Route as AuthenticatedAdminInternalMessagesIndexRouteImport } from './routes/_authenticated/admin.internal-messages.index'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin.clients.index'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as AuthenticatedMessagesGroupesIdRouteImport } from './routes/_authenticated/messages.groupes.$id'
 import { Route as AuthenticatedAdminMessagesClientIdRouteImport } from './routes/_authenticated/admin.messages.$clientId'
@@ -87,6 +91,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRendezVousRoute = AuthenticatedRendezVousRouteImport.update({
@@ -144,6 +153,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDossiersIdRoute = AuthenticatedDossiersIdRouteImport.update({
   id: '/dossiers/$id',
@@ -231,6 +245,18 @@ const AuthenticatedAdminClientsIndexRoute =
     path: '/admin/clients/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -283,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
   '/rendez-vous': typeof AuthenticatedRendezVousRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
@@ -294,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/dossiers/': typeof AuthenticatedDossiersIndexRoute
   '/messages/': typeof AuthenticatedMessagesIndexRoute
@@ -303,6 +331,8 @@ export interface FileRoutesByFullPath {
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
   '/admin/internal-messages/': typeof AuthenticatedAdminInternalMessagesIndexRoute
   '/admin/messages/': typeof AuthenticatedAdminMessagesIndexRoute
@@ -323,6 +353,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
   '/rendez-vous': typeof AuthenticatedRendezVousRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
@@ -334,6 +365,7 @@ export interface FileRoutesByTo {
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/dossiers': typeof AuthenticatedDossiersIndexRoute
   '/messages': typeof AuthenticatedMessagesIndexRoute
@@ -343,6 +375,8 @@ export interface FileRoutesByTo {
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
   '/admin/internal-messages': typeof AuthenticatedAdminInternalMessagesIndexRoute
   '/admin/messages': typeof AuthenticatedAdminMessagesIndexRoute
@@ -365,6 +399,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/preferences': typeof AuthenticatedPreferencesRoute
   '/_authenticated/rendez-vous': typeof AuthenticatedRendezVousRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/direction': typeof AuthenticatedAdminDirectionRoute
@@ -376,6 +411,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/_authenticated/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/dossiers/': typeof AuthenticatedDossiersIndexRoute
   '/_authenticated/messages/': typeof AuthenticatedMessagesIndexRoute
@@ -385,6 +421,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/_authenticated/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
   '/_authenticated/admin/internal-messages/': typeof AuthenticatedAdminInternalMessagesIndexRoute
   '/_authenticated/admin/messages/': typeof AuthenticatedAdminMessagesIndexRoute
@@ -407,6 +445,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/preferences'
     | '/rendez-vous'
+    | '/email/unsubscribe'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/audit'
     | '/admin/direction'
@@ -418,6 +457,7 @@ export interface FileRouteTypes {
     | '/admin/sessions'
     | '/admin/taches-agence'
     | '/dossiers/$id'
+    | '/lovable/email/suppression'
     | '/admin/'
     | '/dossiers/'
     | '/messages/'
@@ -427,6 +467,8 @@ export interface FileRouteTypes {
     | '/admin/messages/$clientId'
     | '/messages/groupes/$id'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/admin/clients/'
     | '/admin/internal-messages/'
     | '/admin/messages/'
@@ -447,6 +489,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/preferences'
     | '/rendez-vous'
+    | '/email/unsubscribe'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/audit'
     | '/admin/direction'
@@ -458,6 +501,7 @@ export interface FileRouteTypes {
     | '/admin/sessions'
     | '/admin/taches-agence'
     | '/dossiers/$id'
+    | '/lovable/email/suppression'
     | '/admin'
     | '/dossiers'
     | '/messages'
@@ -467,6 +511,8 @@ export interface FileRouteTypes {
     | '/admin/messages/$clientId'
     | '/messages/groupes/$id'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/admin/clients'
     | '/admin/internal-messages'
     | '/admin/messages'
@@ -488,6 +534,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/preferences'
     | '/_authenticated/rendez-vous'
+    | '/email/unsubscribe'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/direction'
@@ -499,6 +546,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/sessions'
     | '/_authenticated/admin/taches-agence'
     | '/_authenticated/dossiers/$id'
+    | '/lovable/email/suppression'
     | '/_authenticated/admin/'
     | '/_authenticated/dossiers/'
     | '/_authenticated/messages/'
@@ -508,6 +556,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/messages/$clientId'
     | '/_authenticated/messages/groupes/$id'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/_authenticated/admin/clients/'
     | '/_authenticated/admin/internal-messages/'
     | '/_authenticated/admin/messages/'
@@ -525,8 +575,12 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -585,6 +639,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/rendez-vous': {
@@ -656,6 +717,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dossiers/$id': {
       id: '/_authenticated/dossiers/$id'
@@ -761,6 +829,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/clients/'
       preLoaderRoute: typeof AuthenticatedAdminClientsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -898,8 +980,12 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
