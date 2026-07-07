@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +17,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
-  Users2, Plus, MessageSquare, Star, Users, Search, Archive, Megaphone, Hash, Lock,
+  Users2, Plus, MessageSquare, Star, Users, Search, Archive, Megaphone, Hash, Lock, Trash2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -30,6 +35,7 @@ import {
 import { roleLabelFr } from "@/lib/role-labels";
 import { cn } from "@/lib/utils";
 import { mentionsToPlainText } from "@/lib/mentions";
+
 
 // Types de conversations affichés dans la messagerie interne.
 // Les anciennes conversations "client", "dossier", "task" sont volontairement exclues :
