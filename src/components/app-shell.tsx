@@ -137,10 +137,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     navigate({ to: "/auth", replace: true });
   };
 
-  const NavList = () => (
+  const NavList = () => {
+    const clientNav = isStaff ? nav.filter((n) => n.to === "/mes-donnees") : nav;
+    return (
     <>
-      <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/50">Espace client</div>
-      {nav.map((n) => {
+      {!isStaff && (
+        <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/50">Espace client</div>
+      )}
+      {!isStaff && clientNav.map((n) => {
         const c = countFor(n.to);
         return (
           <Link
@@ -160,8 +164,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       })}
       {isStaff && (
         <>
-          <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Agence</div>
-          {staffNav.map((n) => {
+          <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Agence</div>
+          {[...staffNav, { to: "/mes-donnees", label: "Mes données", icon: UserCog }].map((n) => {
             const c = countFor(n.to);
             return (
               <Link
@@ -196,7 +200,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </>
       )}
     </>
-  );
+    );
+  };
 
   const displayName = profile?.prenom || profile?.nom
     ? `${profile?.prenom ?? ""} ${profile?.nom ?? ""}`.trim()
