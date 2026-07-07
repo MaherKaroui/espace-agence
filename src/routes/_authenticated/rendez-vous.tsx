@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, CalendarCheck, CalendarCog } from "lucide-react";
+import { sendTransactionalEmail } from "@/lib/email/send";
+
 
 const RDV_TYPES = [
   "Certification (30m)",
