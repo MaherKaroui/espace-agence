@@ -62,7 +62,7 @@ function AuthPage() {
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setLoading(true);
     const { email, password, nom, prenom } = parsed.data;
-    const { error } = await supabase.auth.signUp({
+    const { data: sud, error } = await supabase.auth.signUp({
       email, password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
@@ -72,7 +72,25 @@ function AuthPage() {
     setLoading(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Compte créé. Vérifiez votre e-mail pour l'activer.");
+    // Notifications (fire-and-forget) — nécessitent une session (auto-confirm activé
+    // ou email de confirmation désactivé). Sinon les emails sont envoyés à la 1re connexion.
+    const clientName = `${prenom} ${nom}`.trim();
+    const appUrl = window.location.origin;
+    if (sud.session) {
+      sendTransactionalEmail({
+        templateName: "admin-new-client",
+        idempotencyKey: `admin-new-client-${sud.user?.id}`,
+        templateData: { clientName, clientEmail: email, appUrl },
+      });
+      sendTransactionalEmail({
+        templateName: "welcome-client",
+        recipientEmail: email,
+        idempotencyKey: `welcome-client-${sud.user?.id}`,
+        templateData: { prenom, appUrl },
+      });
+    }
     setTab("login");
+
   };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
