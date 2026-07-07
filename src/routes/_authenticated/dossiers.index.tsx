@@ -19,6 +19,9 @@ import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { sendTransactionalEmail } from "@/lib/email/send";
+import { categorieLabel as catLabel } from "@/lib/labels";
+
 
 export const Route = createFileRoute("/_authenticated/dossiers/")({
   head: () => ({ meta: [{ title: "Mes dossiers" }] }),
