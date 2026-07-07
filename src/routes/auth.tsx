@@ -11,6 +11,8 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { sendTransactionalEmail } from "@/lib/email/send";
+
 
 export const Route = createFileRoute("/auth")({
   // Page d'auth entièrement client-side : évite un mismatch d'hydratation
