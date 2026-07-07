@@ -200,7 +200,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </>
       )}
     </>
-  );
+    );
+  };
 
   const displayName = profile?.prenom || profile?.nom
     ? `${profile?.prenom ?? ""} ${profile?.nom ?? ""}`.trim()
