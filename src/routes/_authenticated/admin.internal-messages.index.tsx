@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +17,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
-  Users2, Plus, MessageSquare, Star, Users, Search, Archive, Megaphone, Hash, Lock,
+  Users2, Plus, MessageSquare, Star, Users, Search, Archive, Megaphone, Hash, Lock, Trash2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -30,6 +35,7 @@ import {
 import { roleLabelFr } from "@/lib/role-labels";
 import { cn } from "@/lib/utils";
 import { mentionsToPlainText } from "@/lib/mentions";
+
 
 // Types de conversations affichés dans la messagerie interne.
 // Les anciennes conversations "client", "dossier", "task" sont volontairement exclues :
@@ -254,39 +260,81 @@ function ConversationRow({
     : conv.lastMsg?.attachment_name
     ? `📎 ${conv.lastMsg.attachment_name}`
     : "Aucun message";
+  const { isAdmin } = useRole();
+  const qc = useQueryClient();
+  const nav = useNavigate();
+
+  const deleteConv = async () => {
+    const { error } = await supabase.from("internal_conversations").delete().eq("id", conv.id);
+    if (error) return toast.error(error.message);
+    toast.success("Conversation supprimée");
+    qc.invalidateQueries({ queryKey: ["internal-conversations-full"] });
+    if (activeId === conv.id) nav({ to: "/admin/internal-messages" });
+  };
 
   return (
     <li>
-      <Link
-        to="/admin/internal-messages/$id"
-        params={{ id: conv.id }}
+      <div
         className={cn(
-          "flex items-start gap-2.5 px-3 py-2.5 border-b last:border-b-0 hover:bg-muted/40 transition-colors",
+          "group flex items-start gap-2.5 px-3 py-2.5 border-b last:border-b-0 hover:bg-muted/40 transition-colors",
           isActive && "bg-primary/5 border-l-2 border-l-primary",
         )}
       >
-        <ConversationAvatar conv={conv} />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <div className={cn("text-sm truncate", conv.unread ? "font-semibold" : "font-medium")}>
-              {title}
+        <Link
+          to="/admin/internal-messages/$id"
+          params={{ id: conv.id }}
+          className="flex items-start gap-2.5 flex-1 min-w-0"
+        >
+          <ConversationAvatar conv={conv} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <div className={cn("text-sm truncate", conv.unread ? "font-semibold" : "font-medium")}>
+                {title}
+              </div>
+              {conv.favorite && <Star className="h-3 w-3 fill-warning text-warning shrink-0" />}
             </div>
-            {conv.favorite && <Star className="h-3 w-3 fill-warning text-warning shrink-0" />}
+            <div className="text-xs text-muted-foreground truncate">{preview}</div>
           </div>
-          <div className="text-xs text-muted-foreground truncate">{preview}</div>
-        </div>
-        <div className="flex flex-col items-end gap-1 shrink-0">
-          {conv.lastAt && (
-            <div className="text-[10px] text-muted-foreground">
-              {formatDistanceToNow(new Date(conv.lastAt), { addSuffix: true, locale: fr })}
-            </div>
-          )}
-          {conv.unread && <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />}
-        </div>
-      </Link>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            {conv.lastAt && (
+              <div className="text-[10px] text-muted-foreground">
+                {formatDistanceToNow(new Date(conv.lastAt), { addSuffix: true, locale: fr })}
+              </div>
+            )}
+            {conv.unread && <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />}
+          </div>
+        </Link>
+        {isAdmin && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                type="button"
+                className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-destructive p-1 -mr-1 shrink-0"
+                aria-label="Supprimer la conversation"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Supprimer cette conversation ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tous les messages et fils associés seront supprimés définitivement.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction onClick={deleteConv}>Supprimer</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
     </li>
   );
 }
+
 
 function ConversationAvatar({ conv }: { conv: any }) {
   const map: Record<string, { icon: any; cls: string }> = {
