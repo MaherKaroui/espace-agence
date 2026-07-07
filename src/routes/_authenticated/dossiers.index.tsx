@@ -19,6 +19,9 @@ import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { sendTransactionalEmail } from "@/lib/email/send";
+
+
 
 export const Route = createFileRoute("/_authenticated/dossiers/")({
   head: () => ({ meta: [{ title: "Mes dossiers" }] }),
@@ -87,12 +90,27 @@ function DossiersPage() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, payload) => {
       toast.success("Demande créée. Déposez vos documents puis l'agence prendra le relais.");
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["dossiers-mine"] });
+      // Notifier l'admin (fire-and-forget)
+      const clientName = `${user?.user_metadata?.prenom ?? ""} ${user?.user_metadata?.nom ?? ""}`.trim() || user?.email || "Client";
+      sendTransactionalEmail({
+        templateName: "admin-new-dossier",
+        idempotencyKey: `admin-new-dossier-${data?.id}`,
+        templateData: {
+          clientName,
+          clientEmail: user?.email,
+          dossierTitre: (payload as any)?.titre,
+          categorie: categorieLabel((payload as any)?.categorie),
+          dossierId: data?.id,
+          appUrl: window.location.origin,
+        },
+      });
       if (data?.id) navigate({ to: "/dossiers/$id", params: { id: data.id } });
     },
+
     onError: (e: any) => toast.error(e.message),
   });
 

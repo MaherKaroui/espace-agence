@@ -13,6 +13,8 @@ import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { FolderOpen, FileText, Clock, CheckCircle2, AlertCircle, Upload, MessageSquare, CalendarDays } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { sendTransactionalEmail } from "@/lib/email/send";
+
 
 
 
@@ -31,6 +33,38 @@ function Dashboard() {
   useEffect(() => {
     if (isStaff) navigate({ to: "/admin", replace: true });
   }, [isStaff, navigate]);
+
+  // Envoi des e-mails de bienvenue au 1er accès (fallback si l'inscription
+  // s'est faite sans session — cas confirmation e-mail).
+  useEffect(() => {
+    if (!user || isStaff) return;
+    const flagKey = `welcome-sent-${user.id}`;
+    if (localStorage.getItem(flagKey)) return;
+    const createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+    if (!createdAt || Date.now() - createdAt > 1000 * 60 * 60 * 24 * 7) {
+      // Utilisateur existant : ne pas renvoyer
+      localStorage.setItem(flagKey, "1");
+      return;
+    }
+    const prenom = (user.user_metadata as any)?.prenom ?? "";
+    const nom = (user.user_metadata as any)?.nom ?? "";
+    const clientName = `${prenom} ${nom}`.trim() || user.email || "Client";
+    const appUrl = window.location.origin;
+    Promise.all([
+      sendTransactionalEmail({
+        templateName: "admin-new-client",
+        idempotencyKey: `admin-new-client-${user.id}`,
+        templateData: { clientName, clientEmail: user.email, appUrl },
+      }),
+      sendTransactionalEmail({
+        templateName: "welcome-client",
+        recipientEmail: user.email,
+        idempotencyKey: `welcome-client-${user.id}`,
+        templateData: { prenom, appUrl },
+      }),
+    ]).finally(() => localStorage.setItem(flagKey, "1"));
+  }, [user, isStaff]);
+
 
 
   const { data: dossiers = [], isLoading: dossiersLoading, isFetched: dossiersFetched } = useQuery({

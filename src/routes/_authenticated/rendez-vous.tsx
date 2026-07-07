@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, CalendarCheck, CalendarCog } from "lucide-react";
+import { sendTransactionalEmail } from "@/lib/email/send";
+
 
 const RDV_TYPES = [
   "Certification (30m)",
@@ -132,14 +134,27 @@ function RendezVousPage() {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       toast.success("Demande envoyée — en attente de validation par l'agence");
       qc.invalidateQueries({ queryKey: ["rendez_vous"] });
       qc.invalidateQueries({ queryKey: ["rendez_vous-mine"] });
+      const clientName = `${user?.user_metadata?.prenom ?? ""} ${user?.user_metadata?.nom ?? ""}`.trim() || user?.email || "Client";
+      sendTransactionalEmail({
+        templateName: "admin-new-rdv",
+        idempotencyKey: `admin-new-rdv-${user?.id}-${vars.start.toISOString()}`,
+        templateData: {
+          clientName,
+          clientEmail: user?.email,
+          startsAt: vars.start.toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }),
+          notes: vars.notes || undefined,
+          appUrl: window.location.origin,
+        },
+      });
       setSelected(null);
       setRdvType("");
       setNotes("");
     },
+
     onError: (e: any) => {
       const msg = e?.message?.includes("rendez_vous_slot_unique")
         ? "Ce créneau vient d'être demandé, choisissez-en un autre."
