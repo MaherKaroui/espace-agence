@@ -13,6 +13,8 @@ import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { FolderOpen, FileText, Clock, CheckCircle2, AlertCircle, Upload, MessageSquare, CalendarDays } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { sendTransactionalEmail } from "@/lib/email/send";
+
 
 
 
