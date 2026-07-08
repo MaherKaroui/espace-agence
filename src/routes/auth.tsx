@@ -167,14 +167,27 @@ function AuthPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="l-password">Mot de passe</Label>
-                  <Input
-                    id="l-password"
-                    name="password"
-                    type="password"
-                    required
-                    autoComplete="current-password"
-                    aria-required="true"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="l-password"
+                      name="password"
+                      type={showLoginPwd ? "text" : "password"}
+                      required
+                      autoComplete="current-password"
+                      aria-required="true"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPwd((v) => !v)}
+                      aria-label={showLoginPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      aria-pressed={showLoginPwd}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+                      tabIndex={0}
+                    >
+                      {showLoginPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <div className="pt-1 text-right">
                     <Link
                       to="/reset-password"
