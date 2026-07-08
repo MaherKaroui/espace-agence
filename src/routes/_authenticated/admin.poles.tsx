@@ -235,9 +235,10 @@ function AdminPoles() {
 }
 
 function PoleCard({
-  pole, members, profileById, profiles, counts,
+  pole, allPoles, members, profileById, profiles, counts,
 }: {
   pole: any;
+  allPoles: any[];
   members: any[];
   profileById: Record<string, any>;
   profiles: any[];
