@@ -126,6 +126,10 @@ function AdminRdv() {
     setNewDate(toLocalInput(r.starts_at));
   };
 
+  const clientName = (r: Rdv) =>
+    r.profiles ? `${r.profiles.prenom ?? ""} ${r.profiles.nom ?? ""}`.trim() || r.profiles.email || r.client_id
+      : r.client_id;
+
   const matches = (r: Rdv) => {
     if (statusFilter !== "all" && r.status !== statusFilter) return false;
     if (!q.trim()) return true;
@@ -147,9 +151,6 @@ function AdminRdv() {
   const fmtDay = (iso: string) =>
     new Date(iso).toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
 
-  const clientName = (r: Rdv) =>
-    r.profiles ? `${r.profiles.prenom ?? ""} ${r.profiles.nom ?? ""}`.trim() || r.profiles.email || r.client_id
-      : r.client_id;
 
   const statusLabel = (s: string) =>
     s === "en_attente" ? "En attente" :
