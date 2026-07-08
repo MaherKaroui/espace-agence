@@ -9,11 +9,13 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Check, X, CalendarClock, CalendarCog } from "lucide-react";
+import { Check, X, CalendarClock, CalendarCog, Search } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/admin/rendez-vous")({
   head: () => ({ meta: [{ title: "Rendez-vous — Admin" }] }),
@@ -47,6 +49,9 @@ function AdminRdv() {
   const qc = useQueryClient();
   const [reschedule, setReschedule] = useState<Rdv | null>(null);
   const [newDate, setNewDate] = useState("");
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "en_attente" | "confirme" | "refuse" | "annule">("all");
+
 
   const { data: rdvs = [], isLoading } = useQuery({
     queryKey: ["admin-rendez-vous"],
@@ -121,9 +126,19 @@ function AdminRdv() {
     setNewDate(toLocalInput(r.starts_at));
   };
 
-  const pending = rdvs.filter((r) => r.status === "en_attente");
-  const upcoming = rdvs.filter((r) => r.status === "confirme" && new Date(r.starts_at) >= new Date());
-  const history = rdvs.filter((r) => !(r.status === "en_attente") && !(r.status === "confirme" && new Date(r.starts_at) >= new Date()));
+  const matches = (r: Rdv) => {
+    if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    if (!q.trim()) return true;
+    const name = clientName(r).toLowerCase();
+    const email = (r.profiles?.email ?? "").toLowerCase();
+    const s = q.toLowerCase();
+    return name.includes(s) || email.includes(s);
+  };
+
+  const pending = rdvs.filter((r) => r.status === "en_attente").filter(matches);
+  const upcoming = rdvs.filter((r) => r.status === "confirme" && new Date(r.starts_at) >= new Date()).filter(matches);
+  const history = rdvs.filter((r) => !(r.status === "en_attente") && !(r.status === "confirme" && new Date(r.starts_at) >= new Date())).filter(matches);
+
 
   const fmt = (iso: string) =>
     new Date(iso).toLocaleString("fr-FR", { weekday: "short", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" });
