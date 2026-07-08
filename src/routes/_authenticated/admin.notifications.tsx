@@ -244,12 +244,17 @@ function AdminNotifications() {
             </div>
             <div className="space-y-3">
               {adminTemplates.map(([key, tpl]) => (
-                <div key={key} className="flex items-center justify-between border-b pb-3 last:border-0">
+                <div key={key} className="flex items-center justify-between border-b pb-3 last:border-0 gap-3">
                   <div className="min-w-0">
                     <div className="font-medium text-sm">{tpl.displayName ?? key}</div>
-                    <div className="text-xs text-muted-foreground font-mono">{key}</div>
+                    <div className="text-xs text-muted-foreground font-mono truncate">{key}</div>
                   </div>
-                  <Switch checked={!disabled.has(key)} onCheckedChange={(v) => toggleTemplate(key, v)} />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button variant="ghost" size="sm" onClick={() => openPreview(key)} className="gap-1">
+                      <Eye className="h-3.5 w-3.5" /> Aperçu
+                    </Button>
+                    <Switch checked={!disabled.has(key)} onCheckedChange={(v) => toggleTemplate(key, v)} />
+                  </div>
                 </div>
               ))}
             </div>
