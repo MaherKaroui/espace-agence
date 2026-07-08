@@ -179,6 +179,25 @@ function AdminRdv() {
         <p className="text-muted-foreground mt-1">Acceptez, refusez ou replanifiez les créneaux demandés par vos clients.</p>
       </div>
 
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-64">
+          <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Rechercher un client (nom, e-mail)…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les statuts</SelectItem>
+            <SelectItem value="en_attente">En attente</SelectItem>
+            <SelectItem value="confirme">Confirmés</SelectItem>
+            <SelectItem value="refuse">Refusés</SelectItem>
+            <SelectItem value="annule">Annulés</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+
+
       <section>
         <h2 className="font-medium mb-3">En attente ({pending.length})</h2>
         {isLoading ? (
