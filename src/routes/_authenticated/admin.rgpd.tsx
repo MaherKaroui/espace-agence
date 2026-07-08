@@ -263,14 +263,32 @@ function AdminRgpdPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="consents" className="mt-4">
+          <TabsContent value="consents" className="mt-4 space-y-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative flex-1 min-w-[220px] max-w-md">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchCons}
+                  onChange={(e) => setSearchCons(e.target.value)}
+                  placeholder="Rechercher (nom, e-mail, document)…"
+                  className="pl-9"
+                />
+              </div>
+              <Button variant="outline" size="sm" onClick={exportConsentsCSV} disabled={filteredConsents.length === 0}>
+                <Download className="h-4 w-4 mr-2" /> Exporter CSV
+              </Button>
+            </div>
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="h-4 w-4 text-primary" />
-                <h2 className="font-display text-lg">50 derniers consentements</h2>
+                <h2 className="font-display text-lg">
+                  {searchCons ? `Résultats (${filteredConsents.length})` : "50 derniers consentements"}
+                </h2>
               </div>
-              {!recentConsents || recentConsents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun consentement enregistré.</p>
+              {filteredConsents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {searchCons ? "Aucun résultat." : "Aucun consentement enregistré."}
+                </p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -284,15 +302,22 @@ function AdminRgpdPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {recentConsents.map((c) => (
-                        <tr key={c.id} className="border-b last:border-0">
-                          <td className="py-2 pr-2 font-mono text-xs">{c.user_id.slice(0, 8)}…</td>
-                          <td className="py-2 pr-2">{LEGAL_LABELS[c.document_type as keyof typeof LEGAL_LABELS] ?? c.document_type}</td>
-                          <td className="py-2 pr-2">{c.version}</td>
-                          <td className="py-2 pr-2">{new Date(c.accepted_at).toLocaleString("fr-FR")}</td>
-                          <td className="py-2 pr-2 text-xs text-muted-foreground">{c.ip ?? "—"}</td>
-                        </tr>
-                      ))}
+                      {filteredConsents.map((c: any) => {
+                        const p = profilesMap?.[c.user_id];
+                        const name = p ? `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email : c.user_id.slice(0, 8) + "…";
+                        return (
+                          <tr key={c.id} className="border-b last:border-0">
+                            <td className="py-2 pr-2">
+                              <div className="text-sm">{name}</div>
+                              {p?.email && <div className="text-xs text-muted-foreground">{p.email}</div>}
+                            </td>
+                            <td className="py-2 pr-2">{LEGAL_LABELS[c.document_type as keyof typeof LEGAL_LABELS] ?? c.document_type}</td>
+                            <td className="py-2 pr-2">{c.version}</td>
+                            <td className="py-2 pr-2">{new Date(c.accepted_at).toLocaleString("fr-FR")}</td>
+                            <td className="py-2 pr-2 text-xs text-muted-foreground">{c.ip ?? "—"}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
