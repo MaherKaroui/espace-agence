@@ -113,6 +113,68 @@ function ClientDetail() {
     return a ? `${a.prenom} ${a.nom}`.trim() || "Membre agence" : "Membre agence";
   };
 
+  const dossierIds = (dossiers ?? []).map((d: any) => d.id);
+  const { data: timeline = [] } = useQuery({
+    queryKey: ["client-timeline", id, dossierIds.join(",")],
+    enabled: !!profile,
+    queryFn: async () => {
+      const events: Array<{ type: "message" | "document" | "tache" | "rdv"; at: string; label: string; sub?: string; dossierId?: string }> = [];
+      const { data: msgs } = await supabase
+        .from("messages")
+        .select("id, contenu, created_at, from_agence, dossier_id")
+        .eq("client_id", id)
+        .order("created_at", { ascending: false })
+        .limit(15);
+      for (const m of (msgs ?? []) as any[]) {
+        events.push({
+          type: "message",
+          at: m.created_at,
+          label: m.from_agence ? "Message agence" : "Message client",
+          sub: (m.contenu ?? "").slice(0, 140),
+          dossierId: m.dossier_id ?? undefined,
+        });
+      }
+      if (dossierIds.length > 0) {
+        const { data: docs } = await supabase
+          .from("documents")
+          .select("id, nom, created_at, dossier_id")
+          .in("dossier_id", dossierIds)
+          .order("created_at", { ascending: false })
+          .limit(15);
+        for (const d of (docs ?? []) as any[]) {
+          events.push({ type: "document", at: d.created_at, label: "Document déposé", sub: d.nom, dossierId: d.dossier_id });
+        }
+        const { data: tks } = await supabase
+          .from("taches")
+          .select("id, titre, completed_at, dossier_id")
+          .in("dossier_id", dossierIds)
+          .not("completed_at", "is", null)
+          .order("completed_at", { ascending: false })
+          .limit(15);
+        for (const t of (tks ?? []) as any[]) {
+          events.push({ type: "tache", at: t.completed_at, label: "Tâche terminée", sub: t.titre, dossierId: t.dossier_id });
+        }
+      }
+      const { data: rdvs } = await supabase
+        .from("rendez_vous")
+        .select("id, starts_at, status, notes, dossier_id")
+        .eq("client_id", id)
+        .order("starts_at", { ascending: false })
+        .limit(10);
+      for (const r of (rdvs ?? []) as any[]) {
+        events.push({
+          type: "rdv",
+          at: r.starts_at,
+          label: `Rendez-vous ${r.status === "confirmed" ? "confirmé" : r.status === "cancelled" ? "annulé" : "proposé"}`,
+          sub: r.notes ?? undefined,
+          dossierId: r.dossier_id ?? undefined,
+        });
+      }
+      return events.filter((e) => e.at).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, 20);
+    },
+  });
+
+
   const [telephone, setTelephone] = useState<string | null>(null);
   const [entreprise, setEntreprise] = useState<string | null>(null);
   const [prenom, setPrenom] = useState<string | null>(null);
