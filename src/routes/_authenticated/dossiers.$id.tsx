@@ -13,7 +13,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, STATUTS } from "@/lib/labels";
-import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2, LifeBuoy, MessageSquare, Eye } from "lucide-react";
+import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2, LifeBuoy, MessageSquare, Eye, Link2, Send } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -36,6 +36,7 @@ import { inviteClient } from "@/lib/admin-clients.functions";
 
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { notifyEmail, STATUT_LABELS } from "@/lib/email/notify";
 
 export const Route = createFileRoute("/_authenticated/dossiers/$id")({
   head: () => ({ meta: [{ title: "Dossier" }] }),
@@ -123,8 +124,35 @@ function DossierDetail() {
 
   const updateDossier = useMutation({
     mutationFn: async (patch: any) => {
+      const oldStatut = dossier?.statut as string | undefined;
       const { error } = await supabase.from("dossiers").update(patch).eq("id", id);
       if (error) throw error;
+      // Send client email when statut changes (deduped via idempotency key: dossier + new statut)
+      if (isAdmin && patch.statut && patch.statut !== oldStatut && dossier) {
+        const info = STATUT_LABELS[patch.statut as string] ?? { label: patch.statut, explication: "" };
+        const { data: prof } = await supabase
+          .from("profiles").select("prenom, nom, email").eq("id", dossier.client_id).maybeSingle();
+        if (prof?.email) {
+          const templateName = patch.statut === "termine"
+            ? "client-dossier-termine"
+            : patch.statut === "a_completer" || patch.statut === "documents_manquants"
+              ? "client-dossier-attente"
+              : "client-dossier-statut";
+          notifyEmail({
+            templateName,
+            recipientEmail: prof.email,
+            idempotencyKey: `dossier-${id}-statut-${patch.statut}`,
+            templateData: {
+              prenom: prof.prenom || "",
+              dossierTitre: dossier.titre,
+              statutLabel: info.label,
+              explication: info.explication,
+              message: info.explication,
+              dossierId: id,
+            },
+          });
+        }
+      }
     },
     onSuccess: () => { toast.success("Mis à jour"); qc.invalidateQueries({ queryKey: ["dossier", id] }); qc.invalidateQueries({ queryKey: ["dossiers-mine"] }); },
     onError: (e: any) => toast.error(e.message),
@@ -177,21 +205,64 @@ function DossierDetail() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <button onClick={() => nav({ to: "/dossiers" })} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 min-h-11 py-1">
           <ArrowLeft className="h-4 w-4" /> {isAdmin ? "Retour aux dossiers" : "Retour à mes dossiers"}
         </button>
-        {isAdmin && dossier.client_id && (
-          <RelanceButton
-            clientId={dossier.client_id}
-            dossierId={dossier.id}
-            dossierTitre={dossier.titre}
-          />
-        )}
-        {isAdmin && !dossier.client_id && (
-          <InviteClientToDossier dossierId={dossier.id} onDone={() => qc.invalidateQueries({ queryKey: ["dossier", id] })} />
-        )}
-
+        <div className="flex items-center gap-2 flex-wrap">
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const url = `${window.location.origin}/dossiers/${id}`;
+                try {
+                  await navigator.clipboard.writeText(url);
+                  toast.success("Lien copié");
+                } catch { toast.error("Impossible de copier"); }
+              }}
+            >
+              <Link2 className="h-4 w-4 mr-1.5" /> Copier le lien
+            </Button>
+          )}
+          {isAdmin && dossier.client_id && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const { data: prof } = await supabase
+                  .from("profiles").select("prenom, email").eq("id", dossier.client_id).maybeSingle();
+                if (!prof?.email) return toast.error("Email client introuvable");
+                const info = STATUT_LABELS[dossier.statut as string] ?? { label: dossier.statut, explication: "" };
+                const ok = await notifyEmail({
+                  templateName: "client-dossier-statut",
+                  recipientEmail: prof.email,
+                  idempotencyKey: `manual-resend-${id}-${Date.now()}`,
+                  templateData: {
+                    prenom: prof.prenom || "",
+                    dossierTitre: dossier.titre,
+                    statutLabel: info.label,
+                    explication: info.explication,
+                    dossierId: id,
+                  },
+                });
+                toast[ok ? "success" : "error"](ok ? "Email renvoyé au client" : "Envoi impossible (template désactivé ?)");
+              }}
+            >
+              <Send className="h-4 w-4 mr-1.5" /> Renvoyer email au client
+            </Button>
+          )}
+          {isAdmin && dossier.client_id && (
+            <RelanceButton
+              clientId={dossier.client_id}
+              dossierId={dossier.id}
+              dossierTitre={dossier.titre}
+            />
+          )}
+          {isAdmin && !dossier.client_id && (
+            <InviteClientToDossier dossierId={dossier.id} onDone={() => qc.invalidateQueries({ queryKey: ["dossier", id] })} />
+          )}
+        </div>
       </div>
 
       {/* Bloc "À faire maintenant" — priorité #1 côté client */}

@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { cn } from "@/lib/utils";
+import { notifyEmail } from "@/lib/email/notify";
 
 
 type Doc = {
@@ -186,8 +187,36 @@ function RequiredRow({
   const setStatus = useMutation({
     mutationFn: async (patch: { statut?: string; commentaire?: string }) => {
       if (!doc) return;
+      const oldStatut = doc.statut;
       const { error } = await supabase.from("documents").update(patch).eq("id", doc.id);
       if (error) throw error;
+      // Notify client when agence transitions the document status
+      if (isAdmin && patch.statut && patch.statut !== oldStatut) {
+        const { data: dossierRow } = await supabase
+          .from("dossiers").select("titre, client_id").eq("id", dossierId).maybeSingle();
+        if (dossierRow?.client_id) {
+          const { data: prof } = await supabase
+            .from("profiles").select("prenom, email").eq("id", dossierRow.client_id).maybeSingle();
+          if (prof?.email) {
+            const isValide = patch.statut === "accepte";
+            const isRefuse = patch.statut === "refuse" || patch.statut === "a_corriger";
+            if (isValide || isRefuse) {
+              notifyEmail({
+                templateName: isValide ? "client-document-valide" : "client-document-refuse",
+                recipientEmail: prof.email,
+                idempotencyKey: `doc-${doc.id}-${patch.statut}`,
+                templateData: {
+                  prenom: prof.prenom || "",
+                  dossierTitre: dossierRow.titre,
+                  documentNom: doc.nom,
+                  commentaire: patch.commentaire || doc.commentaire || "",
+                  dossierId,
+                },
+              });
+            }
+          }
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Revue enregistrée");
