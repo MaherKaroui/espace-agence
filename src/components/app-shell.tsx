@@ -112,13 +112,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/messages/groupes", label: "Groupes", icon: Users2 },
   ];
   // Réservé Direction / Admin
-  const directionNav = [
+  const directionPilotage = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
-    { to: "/admin/equipe", label: "Équipe", icon: Users },
     { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
-    { to: "/admin/poles", label: "Pôles & équipes", icon: Users2 },
     { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
+  ];
+  const directionOrganisation = [
+    { to: "/admin/equipe", label: "Équipe", icon: Users },
+    { to: "/admin/poles", label: "Pôles & équipes", icon: Users2 },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
     { to: "/admin/notifications", label: "Notifications & emails", icon: Mail },
     { to: "/admin/rgpd", label: "RGPD", icon: UserCog },
