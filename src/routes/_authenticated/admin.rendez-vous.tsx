@@ -174,12 +174,17 @@ function AdminRdv() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[{ label: "Administration" }, { label: "Rendez-vous" }]} />
       <div>
         <h1 className="font-display text-3xl flex items-center gap-2">
           <CalendarClock className="h-7 w-7 text-gold" /> Demandes de rendez-vous
         </h1>
         <p className="text-muted-foreground mt-1">Acceptez, refusez ou replanifiez les créneaux demandés par vos clients.</p>
       </div>
+
+      {isError && (
+        <ErrorState description="Impossible de charger les rendez-vous." onRetry={() => refetch()} />
+      )}
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-64">
