@@ -46,7 +46,7 @@ export const listTeam = createServerFn({ method: "GET" })
     const { data: staffRoles, error: rolesErr } = await supabaseAdmin
       .from("user_roles")
       .select("user_id, role")
-      .in("role", STAFF_ROLES as unknown as string[]);
+      .in("role", [...STAFF_ROLES]);
     if (rolesErr) throw new Error(rolesErr.message);
 
     const staffIds = [...new Set((staffRoles ?? []).map((r) => r.user_id))];
@@ -177,12 +177,13 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
       .upsert({ user_id: targetId, role: data.role }, { onConflict: "user_id,role" });
     if (rErr) throw new Error(rErr.message);
 
-    // Pôles
-    if (data.pole_ids && data.pole_ids.length > 0) {
+    // Pôles — seuls manager/consultant sont membres de pôles
+    if (data.pole_ids && data.pole_ids.length > 0 && (data.role === "manager" || data.role === "consultant")) {
+      const poleRole: "manager" | "consultant" = data.role;
       const rows = data.pole_ids.map((pole_id) => ({
         pole_id,
         user_id: targetId!,
-        role: data.role === "manager" ? "manager" : "member",
+        role: poleRole,
       }));
       const { error: pErr } = await supabaseAdmin
         .from("pole_members")
@@ -246,7 +247,7 @@ export const disableTeamMember = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { error } = await supabase.rpc("disable_team_member", {
       _user_id: data.userId,
-      _reason: data.reason ?? null,
+      _reason: data.reason ?? undefined,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
