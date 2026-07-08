@@ -101,10 +101,29 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           )
         }
 
+        // 1b. Check admin-controlled per-template toggle (defense in depth)
+        const { data: settings } = await supabase
+          .from('email_settings')
+          .select('disabled_templates, admin_email')
+          .eq('id', 1)
+          .maybeSingle()
+        if (settings?.disabled_templates?.includes(templateName)) {
+          await supabase.from('email_send_log').insert({
+            message_id: messageId,
+            template_name: templateName,
+            recipient_email: recipientEmail || template.to || 'unknown',
+            status: 'suppressed',
+            error_message: 'Template disabled by admin',
+          })
+          return Response.json({ success: false, reason: 'template_disabled' })
+        }
+
         // Resolve effective recipient: template-level `to` takes precedence over
-        // the caller-provided recipientEmail. This allows notification templates
-        // to always send to a fixed address (e.g., site owner from env var).
-        const effectiveRecipient = template.to || recipientEmail
+        // the caller-provided recipientEmail. Admin templates route to the
+        // configured admin_email when set, falling back to their hardcoded `to`.
+        const isAdminTemplate = templateName.startsWith('admin-')
+        const adminOverride = isAdminTemplate && settings?.admin_email ? settings.admin_email : null
+        const effectiveRecipient = adminOverride || template.to || recipientEmail
 
         if (!effectiveRecipient) {
           return Response.json(

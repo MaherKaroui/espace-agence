@@ -108,6 +108,21 @@ function DossiersPage() {
           appUrl: window.location.origin,
         },
       });
+      // Confirmer au client la création du dossier
+      if (user?.email) {
+        sendTransactionalEmail({
+          templateName: "client-dossier-cree",
+          recipientEmail: user.email,
+          idempotencyKey: `client-dossier-cree-${data?.id}`,
+          templateData: {
+            prenom: user?.user_metadata?.prenom || "",
+            dossierTitre: (payload as any)?.titre,
+            categorie: categorieLabel((payload as any)?.categorie),
+            dossierId: data?.id,
+            appUrl: window.location.origin,
+          },
+        });
+      }
       if (data?.id) navigate({ to: "/dossiers/$id", params: { id: data.id } });
     },
 

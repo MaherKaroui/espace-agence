@@ -591,6 +591,30 @@ export type Database = {
         }
         Relationships: []
       }
+      email_settings: {
+        Row: {
+          admin_email: string
+          disabled_templates: string[]
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          admin_email?: string
+          disabled_templates?: string[]
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          admin_email?: string
+          disabled_templates?: string[]
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       email_unsubscribe_tokens: {
         Row: {
           created_at: string
@@ -1571,6 +1595,10 @@ export type Database = {
         Returns: boolean
       }
       email_queue_dispatch: { Args: never; Returns: undefined }
+      email_template_enabled: {
+        Args: { _template_name: string }
+        Returns: boolean
+      }
       enable_team_member: { Args: { _user_id: string }; Returns: undefined }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
@@ -1578,6 +1606,7 @@ export type Database = {
       }
       generer_rapport_direction: { Args: { _date?: string }; Returns: string }
       generer_rapport_quotidien: { Args: { _date?: string }; Returns: string }
+      get_admin_email: { Args: never; Returns: string }
       get_last_activity: { Args: { _user_id: string }; Returns: string }
       get_presence: {
         Args: { _ids: string[] }

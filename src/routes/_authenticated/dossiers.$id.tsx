@@ -36,6 +36,7 @@ import { inviteClient } from "@/lib/admin-clients.functions";
 
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { notifyEmail, STATUT_LABELS } from "@/lib/email/notify";
 
 export const Route = createFileRoute("/_authenticated/dossiers/$id")({
   head: () => ({ meta: [{ title: "Dossier" }] }),
@@ -123,8 +124,35 @@ function DossierDetail() {
 
   const updateDossier = useMutation({
     mutationFn: async (patch: any) => {
+      const oldStatut = dossier?.statut as string | undefined;
       const { error } = await supabase.from("dossiers").update(patch).eq("id", id);
       if (error) throw error;
+      // Send client email when statut changes (deduped via idempotency key: dossier + new statut)
+      if (isAdmin && patch.statut && patch.statut !== oldStatut && dossier) {
+        const info = STATUT_LABELS[patch.statut as string] ?? { label: patch.statut, explication: "" };
+        const { data: prof } = await supabase
+          .from("profiles").select("prenom, nom, email").eq("id", dossier.client_id).maybeSingle();
+        if (prof?.email) {
+          const templateName = patch.statut === "termine"
+            ? "client-dossier-termine"
+            : patch.statut === "a_completer" || patch.statut === "documents_manquants"
+              ? "client-dossier-attente"
+              : "client-dossier-statut";
+          notifyEmail({
+            templateName,
+            recipientEmail: prof.email,
+            idempotencyKey: `dossier-${id}-statut-${patch.statut}`,
+            templateData: {
+              prenom: prof.prenom || "",
+              dossierTitre: dossier.titre,
+              statutLabel: info.label,
+              explication: info.explication,
+              message: info.explication,
+              dossierId: id,
+            },
+          });
+        }
+      }
     },
     onSuccess: () => { toast.success("Mis à jour"); qc.invalidateQueries({ queryKey: ["dossier", id] }); qc.invalidateQueries({ queryKey: ["dossiers-mine"] }); },
     onError: (e: any) => toast.error(e.message),
