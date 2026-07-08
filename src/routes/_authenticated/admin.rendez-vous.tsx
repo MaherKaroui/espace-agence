@@ -55,7 +55,7 @@ function AdminRdv() {
   const [statusFilter, setStatusFilter] = useState<"all" | "en_attente" | "confirme" | "refuse" | "annule">("all");
 
 
-  const { data: rdvs = [], isLoading } = useQuery({
+  const { data: rdvs = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-rendez-vous"],
     queryFn: async () => {
       const { data, error } = await supabase
