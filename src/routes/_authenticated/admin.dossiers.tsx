@@ -302,13 +302,36 @@ function AdminDossiers() {
       </div>
 
 
-      {polesLoading && !isDirectionOrAdmin ? (
-        <Card className="p-12 text-center text-muted-foreground text-sm">Chargement de vos pôles…</Card>
+      {dossiersError ? (
+        <Card className="p-8 text-center border-destructive/30 bg-destructive/5">
+          <AlertTriangle className="h-6 w-6 mx-auto text-destructive mb-2" />
+          <div className="font-medium text-sm">Impossible de charger les dossiers.</div>
+          <div className="text-xs text-muted-foreground mt-1">{(dossiersError as any)?.message ?? "Erreur inconnue"}</div>
+        </Card>
+      ) : dossiersLoading || (polesLoading && !isDirectionOrAdmin) ? (
+        <Card className="p-12 text-center text-muted-foreground text-sm">Chargement des dossiers…</Card>
+      ) : (rows as any[]).length === 0 ? (
+        <Card className="p-12 text-center space-y-3">
+          <FolderOpen className="h-8 w-8 mx-auto text-muted-foreground" />
+          <div className="font-display text-lg">Aucun dossier créé pour le moment</div>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            {isDirectionOrAdmin
+              ? "La plateforme ne contient encore aucun dossier client. Les dossiers sont créés par les clients depuis leur espace, ou peuvent être créés manuellement depuis la fiche d'un client."
+              : "Aucun dossier n'a encore été créé dans vos pôles. Contactez la direction si vous pensez que des dossiers devraient être visibles ici."}
+          </p>
+          {isDirectionOrAdmin && (
+            <Link to="/admin/clients" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+              Ouvrir la liste des clients →
+            </Link>
+          )}
+        </Card>
       ) : visibleGroups.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground text-sm">
           {reviewOnly
             ? "Aucun dossier à revoir — tous les documents requis sont validés."
-            : "Aucun dossier accessible dans vos pôles pour le moment."}
+            : isDirectionOrAdmin
+              ? "Aucun dossier ne correspond à ces filtres."
+              : "Aucun dossier accessible dans vos pôles pour ces filtres."}
         </Card>
       ) : (
         <div className="space-y-6">
