@@ -162,10 +162,15 @@ function ClientDetail() {
         .order("starts_at", { ascending: false })
         .limit(10);
       for (const r of (rdvs ?? []) as any[]) {
+        const label =
+          r.status === "confirme" ? "Rendez-vous confirmé" :
+          r.status === "annule" ? "Rendez-vous annulé" :
+          r.status === "refuse" ? "Rendez-vous refusé" :
+          "Rendez-vous demandé";
         events.push({
           type: "rdv",
           at: r.starts_at,
-          label: `Rendez-vous ${r.status === "confirmed" ? "confirmé" : r.status === "cancelled" ? "annulé" : "proposé"}`,
+          label,
           sub: r.notes ?? undefined,
           dossierId: r.dossier_id ?? undefined,
         });
