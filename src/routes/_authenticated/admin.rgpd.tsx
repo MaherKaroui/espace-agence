@@ -24,6 +24,8 @@ function AdminRgpdPage() {
   const qc = useQueryClient();
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [searchReq, setSearchReq] = useState("");
+  const [searchCons, setSearchCons] = useState("");
 
   const { data: requests } = useQuery({
     queryKey: ["admin-deletion-requests"],
