@@ -125,7 +125,7 @@ function AdminDossiers() {
     ? allPoles
     : allPoles.filter((p) => (myPoleIds ?? []).includes(p.id));
 
-  const { data: rows = [] } = useQuery({
+  const { data: rows = [], isLoading: dossiersLoading, error: dossiersError } = useQuery({
     queryKey: ["admin-dossiers"],
     queryFn: async () => {
       const { data: dossiers, error } = await supabase
