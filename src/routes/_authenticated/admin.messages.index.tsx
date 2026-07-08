@@ -1,9 +1,12 @@
-import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Search, Trash2, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePresence, PresenceAvatar, PresenceLabel } from "@/components/presence-indicator";
@@ -32,23 +35,34 @@ function AdminMessages() {
   const qc = useQueryClient();
   const { isAdmin } = useRole();
   const { user } = useAuth();
+  const [q, setQ] = useState("");
+  const [onlyUnread, setOnlyUnread] = useState(false);
+
   const { data: threads = [] } = useQuery({
     queryKey: ["admin-threads"],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from("profiles").select("*");
-      const { data: msgs } = await supabase.from("messages").select("client_id, content, created_at, from_agence, read_at, deleted_at").is("deleted_at", null).order("created_at", { ascending: false });
-      const map = new Map<string, any>();
-      (msgs ?? []).forEach((m) => { if (!map.has(m.client_id)) map.set(m.client_id, m); });
+      const { data: profiles } = await supabase.from("profiles").select("*").is("archived_at", null);
+      const { data: msgs } = await supabase
+        .from("messages")
+        .select("client_id, content, created_at, from_agence, read_at, deleted_at")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+      const last = new Map<string, any>();
+      const unread = new Map<string, number>();
+      for (const m of (msgs ?? []) as any[]) {
+        if (!last.has(m.client_id)) last.set(m.client_id, m);
+        // Message client vers agence, non lu = à traiter
+        if (!m.from_agence && !m.read_at) {
+          unread.set(m.client_id, (unread.get(m.client_id) ?? 0) + 1);
+        }
+      }
       return (profiles ?? [])
-        .map((p) => ({ ...p, last: map.get(p.id) }))
-        .filter((t) => !!t.last)
-        .sort((a, b) => {
-          const at = a.last?.created_at ?? "";
-          const bt = b.last?.created_at ?? "";
-          return bt.localeCompare(at);
-        });
+        .map((p: any) => ({ ...p, last: last.get(p.id), unread: unread.get(p.id) ?? 0 }))
+        .filter((t: any) => !!t.last)
+        .sort((a: any, b: any) => (b.last?.created_at ?? "").localeCompare(a.last?.created_at ?? ""));
     },
   });
+
 
   const { data: presence } = usePresence(threads.map((t: any) => t.id));
 
@@ -63,11 +77,57 @@ function AdminMessages() {
     qc.invalidateQueries({ queryKey: ["admin-threads"] });
   };
 
+  const totalUnread = useMemo(
+    () => (threads as any[]).reduce((sum, t) => sum + (t.unread ?? 0), 0),
+    [threads],
+  );
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return (threads as any[]).filter((t) => {
+      if (onlyUnread && !(t.unread > 0)) return false;
+      if (!term) return true;
+      const s = `${t.prenom ?? ""} ${t.nom ?? ""} ${t.email ?? ""} ${t.entreprise ?? ""}`.toLowerCase();
+      return s.includes(term);
+    });
+  }, [threads, q, onlyUnread]);
+
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-3xl">Messagerie clients</h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl">Messagerie clients</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {threads.length} discussion{threads.length > 1 ? "s" : ""}
+            {totalUnread > 0 && <> · <span className="text-primary font-medium">{totalUnread} non lu{totalUnread > 1 ? "s" : ""}</span></>}
+          </p>
+        </div>
+        <Button
+          variant={onlyUnread ? "default" : "outline"}
+          size="sm"
+          onClick={() => setOnlyUnread((v) => !v)}
+          className="gap-2"
+        >
+          Non lus {totalUnread > 0 && <Badge variant="secondary" className="ml-1">{totalUnread}</Badge>}
+        </Button>
+      </div>
+
+      <div className="relative max-w-md">
+        <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+        <Input
+          placeholder="Rechercher un client…"
+          className="pl-9"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </div>
+
       <Card className="divide-y">
-        {threads.map((t: any) => {
+        {filtered.length === 0 && (
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            {onlyUnread ? "Aucune discussion non lue." : "Aucune discussion."}
+          </div>
+        )}
+        {filtered.map((t: any) => {
           const p = presence?.get(t.id);
           const name = `${t.prenom ?? ""} ${t.nom ?? ""}`.trim() || t.email || "Client sans nom";
           return (
@@ -78,10 +138,13 @@ function AdminMessages() {
                 </PresenceAvatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="font-medium truncate">{name}</div>
+                    <div className={`truncate ${t.unread > 0 ? "font-semibold" : "font-medium"}`}>{name}</div>
                     <PresenceLabel row={p} />
+                    {t.unread > 0 && (
+                      <Badge className="h-5 min-w-5 px-1.5 rounded-full text-xs">{t.unread}</Badge>
+                    )}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">
+                  <div className={`text-xs truncate ${t.unread > 0 ? "text-foreground" : "text-muted-foreground"}`}>
                     {t.last ? (t.last.from_agence ? "Vous : " : "") + (mentionsToPlainText(t.last.content) || "Pièce jointe") : "Aucun message"}
                   </div>
                 </div>
