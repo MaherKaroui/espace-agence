@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { sendTransactionalEmail } from "@/lib/email/send";
 
@@ -43,6 +43,8 @@ function AuthPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
+  const [showLoginPwd, setShowLoginPwd] = useState(false);
+  const [showSignupPwd, setShowSignupPwd] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -165,14 +167,27 @@ function AuthPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="l-password">Mot de passe</Label>
-                  <Input
-                    id="l-password"
-                    name="password"
-                    type="password"
-                    required
-                    autoComplete="current-password"
-                    aria-required="true"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="l-password"
+                      name="password"
+                      type={showLoginPwd ? "text" : "password"}
+                      required
+                      autoComplete="current-password"
+                      aria-required="true"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPwd((v) => !v)}
+                      aria-label={showLoginPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      aria-pressed={showLoginPwd}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+                      tabIndex={0}
+                    >
+                      {showLoginPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <div className="pt-1 text-right">
                     <Link
                       to="/reset-password"
@@ -207,7 +222,26 @@ function AuthPage() {
                 </div>
                 <div>
                   <Label htmlFor="s-password">Mot de passe</Label>
-                  <Input id="s-password" name="password" type="password" required minLength={8} autoComplete="new-password" />
+                  <div className="relative">
+                    <Input
+                      id="s-password"
+                      name="password"
+                      type={showSignupPwd ? "text" : "password"}
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupPwd((v) => !v)}
+                      aria-label={showSignupPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      aria-pressed={showSignupPwd}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+                    >
+                      {showSignupPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">8 caractères minimum. Un e-mail de vérification vous sera envoyé.</p>
                 </div>
                 <label className="flex items-start gap-2 text-xs text-muted-foreground">
