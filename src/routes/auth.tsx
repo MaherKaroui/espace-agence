@@ -222,7 +222,26 @@ function AuthPage() {
                 </div>
                 <div>
                   <Label htmlFor="s-password">Mot de passe</Label>
-                  <Input id="s-password" name="password" type="password" required minLength={8} autoComplete="new-password" />
+                  <div className="relative">
+                    <Input
+                      id="s-password"
+                      name="password"
+                      type={showSignupPwd ? "text" : "password"}
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignupPwd((v) => !v)}
+                      aria-label={showSignupPwd ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      aria-pressed={showSignupPwd}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+                    >
+                      {showSignupPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">8 caractères minimum. Un e-mail de vérification vous sera envoyé.</p>
                 </div>
                 <label className="flex items-start gap-2 text-xs text-muted-foreground">
