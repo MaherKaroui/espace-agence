@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRole } from "@/hooks/use-role";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LEGAL_LABELS } from "@/lib/legal-versions";
-import { ShieldAlert, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { ShieldAlert, FileText, Loader2, CheckCircle2, Search, Download } from "lucide-react";
 import { Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/admin/rgpd")({
