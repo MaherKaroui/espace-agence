@@ -472,6 +472,41 @@ function ClientDetail() {
         )}
       </Card>
 
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-3">
+          <Activity className="h-5 w-5 text-primary" />
+          <h2 className="font-display text-xl">Historique récent</h2>
+          <span className="text-xs text-muted-foreground">— 20 dernières activités tous dossiers</span>
+        </div>
+        {timeline.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">Aucune activité pour l'instant.</p>
+        ) : (
+          <ul className="divide-y">
+            {timeline.map((e, i) => {
+              const Icon = e.type === "message" ? MessageSquare : e.type === "document" ? FileText : e.type === "tache" ? ListChecks : CalendarCheck;
+              const tone = e.type === "message" ? "bg-primary/10 text-primary" : e.type === "document" ? "bg-info/15 text-info" : e.type === "tache" ? "bg-success/15 text-success" : "bg-warning/15 text-warning";
+              return (
+                <li key={`${e.type}-${i}-${e.at}`} className="py-3 flex items-start gap-3">
+                  <div className={`h-8 w-8 rounded-md flex items-center justify-center shrink-0 ${tone}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium">{e.label}</div>
+                    {e.sub && <div className="text-xs text-muted-foreground truncate">{e.sub}</div>}
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {formatDistanceToNow(new Date(e.at), { addSuffix: true, locale: fr })}
+                      {e.dossierId && (
+                        <> · <Link to="/dossiers/$id" params={{ id: e.dossierId }} className="underline hover:text-foreground">voir le dossier</Link></>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+
       <div>
         <h2 className="font-display text-xl mb-3">Dossiers ({dossiers.length})</h2>
         {dossiers.length === 0 ? (
