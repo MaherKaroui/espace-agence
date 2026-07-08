@@ -33,7 +33,7 @@ type Conv = {
 
 function GroupesIndex() {
   const { user } = useAuth();
-  const { isStaff } = useRole();
+  const { isStaff, isAdmin } = useRole();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
 
@@ -78,7 +78,7 @@ function GroupesIndex() {
               : "Retrouvez ici les groupes auxquels l'agence vous a ajouté."}
           </p>
         </div>
-        {isStaff ? (
+        {isAdmin ? (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-1" /> Nouveau groupe</Button>
@@ -87,11 +87,11 @@ function GroupesIndex() {
               onCreated={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["my-conv-memberships"] }); qc.invalidateQueries({ queryKey: ["conversations-list"] }); }}
             />
           </Dialog>
-        ) : (
+        ) : !isStaff ? (
           <Button asChild variant="outline">
             <Link to="/messages"><MessageSquare className="h-4 w-4 mr-1" /> Contacter l'agence</Link>
           </Button>
-        )}
+        ) : null}
       </div>
 
 
