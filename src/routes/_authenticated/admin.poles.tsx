@@ -465,14 +465,35 @@ function PoleCard({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Supprimer le pôle « {pole.nom} » ?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Cette action est définitive. Si des dossiers y sont encore rattachés, la suppression échouera —
-                      pensez plutôt à désactiver le pôle.
+                      {counts.total > 0
+                        ? `Ce pôle contient ${counts.total} dossier${counts.total > 1 ? "s" : ""}. Choisissez un pôle de destination : ils y seront transférés avant la suppression.`
+                        : "Aucun dossier n'est rattaché à ce pôle. Cette action est définitive."}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
+                  {counts.total > 0 && (
+                    <div className="mt-2">
+                      <Label className="text-xs">Transférer les dossiers vers</Label>
+                      <Select value={transferTargetId} onValueChange={setTransferTargetId}>
+                        <SelectTrigger><SelectValue placeholder="Choisir un pôle actif…" /></SelectTrigger>
+                        <SelectContent>
+                          {allPoles.filter((p) => p.id !== pole.id && p.actif).map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>
+                          ))}
+                          {allPoles.filter((p) => p.id !== pole.id && p.actif).length === 0 && (
+                            <div className="p-2 text-xs text-muted-foreground">Aucun autre pôle actif disponible.</div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <AlertDialogFooter>
                     <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => remove.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Supprimer
+                    <AlertDialogAction
+                      onClick={(e) => { e.preventDefault(); remove.mutate(); }}
+                      disabled={remove.isPending || (counts.total > 0 && !transferTargetId)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {counts.total > 0 ? "Transférer & supprimer" : "Supprimer"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
