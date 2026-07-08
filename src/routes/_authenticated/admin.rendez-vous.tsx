@@ -208,9 +208,9 @@ function AdminRdv() {
       <section>
         <h2 className="font-medium mb-3">En attente ({pending.length})</h2>
         {isLoading ? (
-          <div className="text-muted-foreground text-sm">Chargement…</div>
+          <LoadingState label="Chargement des rendez-vous…" />
         ) : pending.length === 0 ? (
-          <Card className="p-6 text-sm text-muted-foreground">Aucune demande en attente.</Card>
+          <EmptyState icon={CalendarClock} title="Aucune demande en attente" description="Les nouvelles demandes de vos clients apparaîtront ici." />
         ) : (
           <div className="grid gap-2">
             {pending.map((r) => (
