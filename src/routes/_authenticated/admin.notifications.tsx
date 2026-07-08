@@ -12,9 +12,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { TEMPLATES } from "@/lib/email-templates/registry";
 import { sendTransactionalEmail } from "@/lib/email/send";
-import { Mail, Send, CheckCircle2, AlertCircle, XCircle, Clock, Search } from "lucide-react";
+import { Mail, Send, CheckCircle2, AlertCircle, XCircle, Clock, Search, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { previewEmailTemplate } from "@/lib/preview-email.functions";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const Route = createFileRoute("/_authenticated/admin/notifications")({
   head: () => ({ meta: [{ title: "Notifications & emails — Admin" }] }),
