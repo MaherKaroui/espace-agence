@@ -31,7 +31,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "espace-agence"
+const SITE_NAME = "IZISuivis"
 const SENDER_DOMAIN = "notify.izibusiness.com"
 const ROOT_DOMAIN = "izibusiness.com"
 const FROM_DOMAIN = "notify.izibusiness.com"
