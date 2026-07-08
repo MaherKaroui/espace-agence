@@ -222,6 +222,7 @@ function AdminPoles() {
           <PoleCard
             key={pole.id}
             pole={pole}
+            allPoles={poles as any[]}
             members={membersByPole[pole.id] ?? []}
             profileById={profileById}
             profiles={profiles as any[]}
