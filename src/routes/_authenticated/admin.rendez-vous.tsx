@@ -258,7 +258,7 @@ function AdminRdv() {
       <section>
         <h2 className="font-medium mb-3">Rendez-vous confirmés à venir ({upcoming.length})</h2>
         {upcoming.length === 0 ? (
-          <Card className="p-6 text-sm text-muted-foreground">Aucun rendez-vous à venir.</Card>
+          <EmptyState icon={CalendarClock} title="Aucun rendez-vous à venir" description="Les rendez-vous acceptés apparaîtront ici, groupés par jour." />
         ) : (
           <div className="space-y-4">
             {upcomingByDay.map((g) => (
