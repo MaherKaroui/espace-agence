@@ -353,7 +353,7 @@ function SwipeableList({
 
   return (
     <div
-      className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-2 sm:space-y-3 bg-muted/20 select-none"
+      className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-2 sm:space-y-3 bg-muted/20"
       {...containerProps}
     >
       {filtered.length === 0 && (
