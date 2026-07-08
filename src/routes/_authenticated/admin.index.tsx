@@ -67,18 +67,22 @@ function AdminDashboard() {
         <p className="text-muted-foreground mt-1">Vue d'ensemble de la plateforme.</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Clients" value={stats?.clients ?? 0} icon={Users} />
-        <StatCard label="Dossiers" value={stats?.dossiers ?? 0} icon={FolderOpen} />
-        <StatCard label="Documents" value={stats?.documents ?? 0} icon={FileText} />
-        <StatCard label="En attente" value={stats?.enAttente ?? 0} icon={Clock} tone="warning" />
+      <div>
+        <h2 className="font-display text-xl mb-3">Dossiers clients</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="Clients" value={stats?.clients ?? 0} icon={Users} />
+          <StatCard label="Dossiers ouverts" value={stats?.dossiers ?? 0} icon={FolderOpen} />
+          <StatCard label="Documents" value={stats?.documents ?? 0} icon={FileText} />
+          <StatCard label="Dossiers en attente" value={stats?.enAttente ?? 0} icon={Clock} tone="warning" />
+        </div>
       </div>
 
       <div>
         <div className="mb-3 flex items-center gap-2">
           <ListChecks className="h-5 w-5 text-gold" />
-          <h2 className="font-display text-xl">Tâches à faire</h2>
+          <h2 className="font-display text-xl">Tâches internes de l'agence</h2>
         </div>
+        <p className="text-xs text-muted-foreground mb-3">Todos d'équipe — indépendants des dossiers clients.</p>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Aujourd'hui" value={taskKpis?.today ?? 0} icon={CalendarCheck} />
           <StatCard label="Urgentes" value={taskKpis?.urgent ?? 0} icon={AlertTriangle} tone="danger" />
@@ -96,6 +100,7 @@ function AdminDashboard() {
     </div>
   );
 }
+
 
 function StatCard({ label, value, icon: Icon, tone = "default" }: { label: string; value: number; icon: any; tone?: string }) {
   const colors: Record<string, string> = {

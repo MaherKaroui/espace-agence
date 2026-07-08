@@ -59,11 +59,12 @@ export function AgencyTasksPriorityBoard() {
 
   return (
     <Card className="p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div>
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <div className="min-w-0">
           <h2 className="font-display text-lg">Priorités du jour</h2>
-          <p className="text-xs text-muted-foreground">Tâches internes agence triées par urgence</p>
+          <p className="text-xs text-muted-foreground">Tâches internes agence · triées par urgence</p>
         </div>
+
         <div className="flex gap-2">
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-1" /> Créer une tâche
@@ -82,24 +83,28 @@ export function AgencyTasksPriorityBoard() {
               <button
                 key={t.id}
                 onClick={() => setDetailId(t.id)}
-                className="w-full py-3 flex items-center gap-3 text-left hover:bg-muted/40 transition rounded px-2"
+                className="w-full py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 text-left hover:bg-muted/40 transition rounded px-2"
               >
-                <div className="flex-shrink-0 flex gap-1">
+                <div className="flex-shrink-0 flex gap-1 pt-0.5">
                   <PriorityBadge value={t.priority} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate flex items-center gap-2">
-                    {t.title}
-                    {overdue && <AlertTriangle className="h-3.5 w-3.5 text-red-600" />}
+                <div className="min-w-0">
+                  <div className="font-medium text-sm flex items-start gap-2">
+                    <span className="line-clamp-2 break-words">{t.title}</span>
+                    {overdue && <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />}
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">
+                  <div className="text-xs text-muted-foreground truncate mt-0.5">
                     {t.assigned_to ? profilesMap[t.assigned_to] ?? "…" : "Non assigné"}
                     {" · "}
-                    <span className={overdue ? "text-red-600 font-medium" : ""}>{overdue ? "En retard : " : "Échéance : "}{fmtDue(t.due_date)}</span>
+                    <span className={overdue ? "text-red-600 font-medium" : ""}>
+                      {t.due_date ? (overdue ? "En retard : " : "Échéance : ") : ""}
+                      {t.due_date ? fmtDue(t.due_date) : "Aucune échéance"}
+                    </span>
                   </div>
                 </div>
-                <StatusBadge value={t.status} />
+                <div className="shrink-0"><StatusBadge value={t.status} /></div>
               </button>
+
             );
           })}
         </div>
