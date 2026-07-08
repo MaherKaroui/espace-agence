@@ -86,8 +86,51 @@ function AdminRgpdPage() {
   if (loading) return null;
   if (!isAdmin) return <Navigate to="/dashboard" />;
 
-  const pending = (requests ?? []).filter((r: any) => r.status === "pending");
-  const processed = (requests ?? []).filter((r: any) => r.status !== "pending");
+  const matchReq = (r: any) => {
+    if (!searchReq.trim()) return true;
+    const s = searchReq.toLowerCase();
+    const p = profilesMap?.[r.user_id];
+    const name = p ? `${p.prenom ?? ""} ${p.nom ?? ""} ${p.email ?? ""}`.toLowerCase() : "";
+    return name.includes(s) || (r.reason ?? "").toLowerCase().includes(s);
+  };
+  const pending = (requests ?? []).filter((r: any) => r.status === "pending").filter(matchReq);
+  const processed = (requests ?? []).filter((r: any) => r.status !== "pending").filter(matchReq);
+
+  const filteredConsents = (recentConsents ?? []).filter((c: any) => {
+    if (!searchCons.trim()) return true;
+    const s = searchCons.toLowerCase();
+    const p = profilesMap?.[c.user_id];
+    const name = p ? `${p.prenom ?? ""} ${p.nom ?? ""} ${p.email ?? ""}`.toLowerCase() : "";
+    return name.includes(s)
+      || (LEGAL_LABELS[c.document_type as keyof typeof LEGAL_LABELS] ?? c.document_type).toLowerCase().includes(s)
+      || (c.version ?? "").toLowerCase().includes(s);
+  });
+
+  const exportConsentsCSV = () => {
+    const rows = [
+      ["date", "utilisateur", "email", "document", "version", "ip"],
+      ...filteredConsents.map((c: any) => {
+        const p = profilesMap?.[c.user_id];
+        const name = p ? `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() : c.user_id;
+        return [
+          c.accepted_at,
+          name,
+          p?.email ?? "",
+          LEGAL_LABELS[c.document_type as keyof typeof LEGAL_LABELS] ?? c.document_type,
+          c.version ?? "",
+          c.ip ?? "",
+        ];
+      }),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `consentements-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleProcess = async (req: any) => {
     if (!confirm("Confirmer l'anonymisation du compte ? Cette action est irréversible.")) return;
