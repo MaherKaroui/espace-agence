@@ -109,6 +109,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/admin/taches-agence", label: "Tâches agence", icon: ListChecks },
     { to: "/admin/messages", label: "Messagerie clients", icon: MessageSquare },
     { to: "/admin/internal-messages", label: "Messagerie interne", icon: Users2 },
+    { to: "/messages/groupes", label: "Groupes", icon: Users2 },
   ];
   // Réservé Direction / Admin
   const directionNav = [
