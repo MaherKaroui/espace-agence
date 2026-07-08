@@ -24,5 +24,6 @@ export const previewEmailTemplate = createServerFn({ method: "POST" })
     if (!entry) throw new Error("Template introuvable");
     const props = entry.previewData ?? {};
     const html = await render(React.createElement(entry.component as any, props));
-    return { html, subject: entry.subject, displayName: entry.displayName ?? data.templateName };
+    const subject = typeof entry.subject === "function" ? entry.subject(props as any) : entry.subject;
+    return { html, subject, displayName: entry.displayName ?? data.templateName };
   });
