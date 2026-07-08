@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/messages/groupes/$id")({
 function GroupePage() {
   const { id } = Route.useParams();
   const { user } = useAuth();
-  const { isAdmin, isStaff } = useRole();
+  const { isAdmin } = useRole();
   const qc = useQueryClient();
   const nav = useNavigate();
   const [openSub, setOpenSub] = useState(false);
