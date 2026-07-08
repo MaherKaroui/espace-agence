@@ -127,10 +127,32 @@ function AdminRdv() {
 
   const fmt = (iso: string) =>
     new Date(iso).toLocaleString("fr-FR", { weekday: "short", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" });
+  const fmtHour = (iso: string) =>
+    new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const fmtDay = (iso: string) =>
+    new Date(iso).toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
 
   const clientName = (r: Rdv) =>
     r.profiles ? `${r.profiles.prenom ?? ""} ${r.profiles.nom ?? ""}`.trim() || r.profiles.email || r.client_id
       : r.client_id;
+
+  const statusLabel = (s: string) =>
+    s === "en_attente" ? "En attente" :
+    s === "confirme" ? "Confirmé" :
+    s === "refuse" ? "Refusé" :
+    s === "annule" ? "Annulé" : s;
+
+  // Regroupement par jour pour les RDV à venir
+  const upcomingByDay = (() => {
+    const groups = new Map<string, Rdv[]>();
+    for (const r of upcoming) {
+      const key = new Date(r.starts_at).toDateString();
+      const arr = groups.get(key) ?? [];
+      arr.push(r);
+      groups.set(key, arr);
+    }
+    return Array.from(groups.entries()).map(([key, items]) => ({ key, day: items[0].starts_at, items }));
+  })();
 
   return (
     <div className="space-y-6">
