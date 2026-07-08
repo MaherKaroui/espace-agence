@@ -323,6 +323,24 @@ function AdminNotifications() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{previewData?.displayName ?? "Aperçu email"}</DialogTitle>
+            <DialogDescription>
+              {previewData ? <>Objet : <span className="font-medium text-foreground">{previewData.subject}</span></> : "Chargement de l'aperçu…"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto border rounded-md bg-white">
+            {previewLoading ? (
+              <div className="p-8 text-center text-sm text-muted-foreground">Génération de l'aperçu…</div>
+            ) : previewData ? (
+              <iframe title="Aperçu email" srcDoc={previewData.html} className="w-full h-[70vh]" sandbox="" />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
