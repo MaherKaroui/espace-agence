@@ -33,7 +33,7 @@ type Conv = {
 
 function GroupesIndex() {
   const { user } = useAuth();
-  const { isStaff } = useRole();
+  const { isStaff, isAdmin } = useRole();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
 
