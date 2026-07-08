@@ -55,6 +55,25 @@ function AdminNotifications() {
   const [testEmail, setTestEmail] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<{ html: string; subject: string; displayName: string } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const runPreview = useServerFn(previewEmailTemplate);
+
+  const openPreview = async (templateName: string) => {
+    setPreviewOpen(true);
+    setPreviewLoading(true);
+    setPreviewData(null);
+    try {
+      const res = await runPreview({ data: { templateName } });
+      setPreviewData(res);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Impossible de générer l'aperçu");
+      setPreviewOpen(false);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const { data: settings, isLoading: loadingSettings } = useQuery({
     queryKey: ["email-settings"],
