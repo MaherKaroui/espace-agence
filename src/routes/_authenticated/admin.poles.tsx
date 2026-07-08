@@ -275,16 +275,27 @@ function PoleCard({
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
 
+  const [transferTargetId, setTransferTargetId] = useState<string>("");
   const remove = useMutation({
     mutationFn: async () => {
+      if (counts.total > 0) {
+        if (!transferTargetId) throw new Error("Choisissez un pôle de destination pour transférer les dossiers");
+        const { error: te } = await supabase
+          .from("dossiers")
+          .update({ pole_id: transferTargetId })
+          .eq("pole_id", pole.id);
+        if (te) throw te;
+      }
       const { error } = await supabase.from("poles").delete().eq("id", pole.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Pôle supprimé");
+      toast.success(counts.total > 0 ? "Dossiers transférés puis pôle supprimé" : "Pôle supprimé");
+      setTransferTargetId("");
       qc.invalidateQueries({ queryKey: ["admin-poles"] });
+      qc.invalidateQueries({ queryKey: ["admin-pole-dossier-counts"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Suppression impossible (des dossiers y sont peut-être encore rattachés)"),
+    onError: (e: any) => toast.error(e.message ?? "Suppression impossible"),
   });
 
   // Ajout membre
