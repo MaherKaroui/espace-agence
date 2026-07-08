@@ -1,9 +1,12 @@
-import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Search, Trash2, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePresence, PresenceAvatar, PresenceLabel } from "@/components/presence-indicator";
@@ -32,23 +35,34 @@ function AdminMessages() {
   const qc = useQueryClient();
   const { isAdmin } = useRole();
   const { user } = useAuth();
+  const [q, setQ] = useState("");
+  const [onlyUnread, setOnlyUnread] = useState(false);
+
   const { data: threads = [] } = useQuery({
     queryKey: ["admin-threads"],
     queryFn: async () => {
-      const { data: profiles } = await supabase.from("profiles").select("*");
-      const { data: msgs } = await supabase.from("messages").select("client_id, content, created_at, from_agence, read_at, deleted_at").is("deleted_at", null).order("created_at", { ascending: false });
-      const map = new Map<string, any>();
-      (msgs ?? []).forEach((m) => { if (!map.has(m.client_id)) map.set(m.client_id, m); });
+      const { data: profiles } = await supabase.from("profiles").select("*").is("archived_at", null);
+      const { data: msgs } = await supabase
+        .from("messages")
+        .select("client_id, content, created_at, from_agence, read_at, deleted_at")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+      const last = new Map<string, any>();
+      const unread = new Map<string, number>();
+      for (const m of (msgs ?? []) as any[]) {
+        if (!last.has(m.client_id)) last.set(m.client_id, m);
+        // Message client vers agence, non lu = à traiter
+        if (!m.from_agence && !m.read_at) {
+          unread.set(m.client_id, (unread.get(m.client_id) ?? 0) + 1);
+        }
+      }
       return (profiles ?? [])
-        .map((p) => ({ ...p, last: map.get(p.id) }))
-        .filter((t) => !!t.last)
-        .sort((a, b) => {
-          const at = a.last?.created_at ?? "";
-          const bt = b.last?.created_at ?? "";
-          return bt.localeCompare(at);
-        });
+        .map((p: any) => ({ ...p, last: last.get(p.id), unread: unread.get(p.id) ?? 0 }))
+        .filter((t: any) => !!t.last)
+        .sort((a: any, b: any) => (b.last?.created_at ?? "").localeCompare(a.last?.created_at ?? ""));
     },
   });
+
 
   const { data: presence } = usePresence(threads.map((t: any) => t.id));
 
