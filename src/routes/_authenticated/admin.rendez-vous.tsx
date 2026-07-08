@@ -15,6 +15,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Check, X, CalendarClock, CalendarCog, Search } from "lucide-react";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { LoadingState, EmptyState, ErrorState } from "@/components/state-views";
 
 
 export const Route = createFileRoute("/_authenticated/admin/rendez-vous")({
@@ -53,7 +55,7 @@ function AdminRdv() {
   const [statusFilter, setStatusFilter] = useState<"all" | "en_attente" | "confirme" | "refuse" | "annule">("all");
 
 
-  const { data: rdvs = [], isLoading } = useQuery({
+  const { data: rdvs = [], isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-rendez-vous"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -172,12 +174,17 @@ function AdminRdv() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[{ label: "Administration" }, { label: "Rendez-vous" }]} />
       <div>
         <h1 className="font-display text-3xl flex items-center gap-2">
           <CalendarClock className="h-7 w-7 text-gold" /> Demandes de rendez-vous
         </h1>
         <p className="text-muted-foreground mt-1">Acceptez, refusez ou replanifiez les créneaux demandés par vos clients.</p>
       </div>
+
+      {isError && (
+        <ErrorState description="Impossible de charger les rendez-vous." onRetry={() => refetch()} />
+      )}
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-64">
@@ -201,9 +208,9 @@ function AdminRdv() {
       <section>
         <h2 className="font-medium mb-3">En attente ({pending.length})</h2>
         {isLoading ? (
-          <div className="text-muted-foreground text-sm">Chargement…</div>
+          <LoadingState label="Chargement des rendez-vous…" />
         ) : pending.length === 0 ? (
-          <Card className="p-6 text-sm text-muted-foreground">Aucune demande en attente.</Card>
+          <EmptyState icon={CalendarClock} title="Aucune demande en attente" description="Les nouvelles demandes de vos clients apparaîtront ici." />
         ) : (
           <div className="grid gap-2">
             {pending.map((r) => (
@@ -251,7 +258,7 @@ function AdminRdv() {
       <section>
         <h2 className="font-medium mb-3">Rendez-vous confirmés à venir ({upcoming.length})</h2>
         {upcoming.length === 0 ? (
-          <Card className="p-6 text-sm text-muted-foreground">Aucun rendez-vous à venir.</Card>
+          <EmptyState icon={CalendarClock} title="Aucun rendez-vous à venir" description="Les rendez-vous acceptés apparaîtront ici, groupés par jour." />
         ) : (
           <div className="space-y-4">
             {upcomingByDay.map((g) => (

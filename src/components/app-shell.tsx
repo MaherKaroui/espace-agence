@@ -112,13 +112,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/messages/groupes", label: "Groupes", icon: Users2 },
   ];
   // Réservé Direction / Admin
-  const directionNav = [
+  const directionPilotage = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
-    { to: "/admin/equipe", label: "Équipe", icon: Users },
     { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
-    { to: "/admin/poles", label: "Pôles & équipes", icon: Users2 },
     { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
+  ];
+  const directionOrganisation = [
+    { to: "/admin/equipe", label: "Équipe", icon: Users },
+    { to: "/admin/poles", label: "Pôles & équipes", icon: Users2 },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
     { to: "/admin/notifications", label: "Notifications & emails", icon: Mail },
     { to: "/admin/rgpd", label: "RGPD", icon: UserCog },
@@ -190,8 +192,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
       {isDirectionOrAdmin && (
         <>
-          <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Direction</div>
-          {directionNav.map((n) => (
+          <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Pilotage</div>
+          {directionPilotage.map((n) => (
+            <Link
+              key={n.to} to={n.to}
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
+            >
+              <n.icon className="h-4 w-4" /> {n.label}
+            </Link>
+          ))}
+          <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Organisation</div>
+          {directionOrganisation.map((n) => (
             <Link
               key={n.to} to={n.to}
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
