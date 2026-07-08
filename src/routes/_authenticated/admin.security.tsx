@@ -24,9 +24,13 @@ export const Route = createFileRoute("/_authenticated/admin/security")({
 
 function SecurityPage() {
   const qc = useQueryClient();
-  const { data: settings } = useQuery({
+  const { data: settings, isLoading, error } = useQuery({
     queryKey: ["security-settings"],
-    queryFn: async () => (await supabase.from("security_settings").select("*").eq("id", 1).maybeSingle()).data,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("security_settings").select("*").eq("id", 1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
   });
 
   const [form, setForm] = useState<any>(null);
@@ -40,6 +44,50 @@ function SecurityPage() {
     onSuccess: () => { toast.success("Paramètres enregistrés"); qc.invalidateQueries({ queryKey: ["security-settings"] }); },
     onError: (e: any) => toast.error(e.message),
   });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 max-w-3xl">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center"><ShieldCheck className="h-5 w-5 text-primary" /></div>
+          <div>
+            <h1 className="font-display text-3xl">Sécurité anti-détournement</h1>
+            <p className="text-muted-foreground text-sm">Chargement des paramètres…</p>
+          </div>
+        </div>
+        <Card className="p-12 text-center text-sm text-muted-foreground">Chargement…</Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 max-w-3xl">
+        <h1 className="font-display text-3xl">Sécurité anti-détournement</h1>
+        <Card className="p-8 border-destructive/30 bg-destructive/5 space-y-2">
+          <div className="font-medium">Impossible de charger les paramètres de sécurité.</div>
+          <div className="text-xs text-muted-foreground">{(error as any)?.message ?? "Erreur inconnue"}</div>
+          <Button size="sm" variant="secondary" onClick={() => qc.invalidateQueries({ queryKey: ["security-settings"] })}>
+            Réessayer
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <div className="space-y-6 max-w-3xl">
+        <h1 className="font-display text-3xl">Sécurité anti-détournement</h1>
+        <Card className="p-8 space-y-2">
+          <div className="font-medium">Paramètres de sécurité non initialisés.</div>
+          <p className="text-sm text-muted-foreground">
+            La configuration par défaut n'a pas encore été créée. Contactez un administrateur technique pour initialiser la table <code>security_settings</code>.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   if (!form) return <div className="p-8 text-muted-foreground">Chargement…</div>;
 
