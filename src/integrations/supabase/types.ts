@@ -1562,17 +1562,23 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      disable_team_member: {
+        Args: { _reason?: string; _user_id: string }
+        Returns: undefined
+      }
       dossier_in_scope: {
         Args: { _dossier: string; _user: string }
         Returns: boolean
       }
       email_queue_dispatch: { Args: never; Returns: undefined }
+      enable_team_member: { Args: { _user_id: string }; Returns: undefined }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
       generer_rapport_direction: { Args: { _date?: string }; Returns: string }
       generer_rapport_quotidien: { Args: { _date?: string }; Returns: string }
+      get_last_activity: { Args: { _user_id: string }; Returns: string }
       get_presence: {
         Args: { _ids: string[] }
         Returns: {
