@@ -167,6 +167,15 @@ function AdminRgpdPage() {
           </TabsList>
 
           <TabsContent value="requests" className="mt-4 space-y-4">
+            <div className="relative max-w-md">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchReq}
+                onChange={(e) => setSearchReq(e.target.value)}
+                placeholder="Rechercher (nom, e-mail, motif)…"
+                className="pl-9"
+              />
+            </div>
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <ShieldAlert className="h-4 w-4 text-destructive" />
