@@ -226,7 +226,9 @@ function AdminDossiers() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl">Dossiers de mes pôles</h1>
+        <h1 className="font-display text-3xl">
+          {isDirectionOrAdmin ? "Tous les dossiers" : "Dossiers de mes pôles"}
+        </h1>
         <p className="text-muted-foreground mt-1">
           {filtered.length} dossier{filtered.length > 1 ? "s" : ""} · {visibleGroups.length} pôle{visibleGroups.length > 1 ? "s" : ""}
           {totalToReview > 0 && (
