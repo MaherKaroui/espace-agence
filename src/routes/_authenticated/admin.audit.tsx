@@ -98,18 +98,45 @@ function AuditPage() {
         <Button onClick={exportCSV}><Download className="h-4 w-4 mr-2" /> Exporter CSV</Button>
       </div>
 
-      <Card className="p-4 flex flex-wrap gap-3">
-        <Input placeholder="Rechercher (action, utilisateur, contenu)…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-md" />
-        <Select value={severity} onValueChange={setSeverity}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes sévérités</SelectItem>
-            <SelectItem value="info">Info</SelectItem>
-            <SelectItem value="warning">Avertissement</SelectItem>
-            <SelectItem value="critical">Critique</SelectItem>
-          </SelectContent>
-        </Select>
+      <Card className="p-4 flex flex-wrap gap-3 items-end">
+        <div className="flex-1 min-w-[220px]">
+          <label className="text-xs text-muted-foreground">Rechercher</label>
+          <Input placeholder="Action, utilisateur, contenu…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground block">Sévérité</label>
+          <Select value={severity} onValueChange={setSeverity}>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes sévérités</SelectItem>
+              <SelectItem value="info">Info</SelectItem>
+              <SelectItem value="warning">Avertissement</SelectItem>
+              <SelectItem value="critical">Critique</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label htmlFor="date-from" className="text-xs text-muted-foreground block">Du</label>
+          <Input id="date-from" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
+        </div>
+        <div>
+          <label htmlFor="date-to" className="text-xs text-muted-foreground block">Au</label>
+          <Input id="date-to" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
+        </div>
+        {(dateFrom || dateTo || search || severity !== "all") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { setDateFrom(""); setDateTo(""); setSearch(""); setSeverity("all"); }}
+          >
+            Réinitialiser
+          </Button>
+        )}
       </Card>
+
+      <div className="text-xs text-muted-foreground">
+        {filtered.length} entrée{filtered.length > 1 ? "s" : ""} affichée{filtered.length > 1 ? "s" : ""}
+      </div>
 
       <Card className="divide-y">
         {filtered.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">Aucune entrée.</div>}
