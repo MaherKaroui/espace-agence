@@ -149,19 +149,40 @@ function AuthPage() {
             </TabsList>
 
             <TabsContent value="login" className="mt-6">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
+              <form onSubmit={handleLogin} className="space-y-5" aria-label="Formulaire de connexion" noValidate>
+                <div className="space-y-1.5">
                   <Label htmlFor="l-email">E-mail</Label>
-                  <Input id="l-email" name="email" type="email" required autoComplete="email" />
+                  <Input
+                    id="l-email"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    autoFocus
+                    inputMode="email"
+                    aria-required="true"
+                  />
                 </div>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="l-password">Mot de passe</Label>
-                    <Link to="/reset-password" className="text-xs text-muted-foreground hover:text-foreground">Mot de passe oublié ?</Link>
+                <div className="space-y-1.5">
+                  <Label htmlFor="l-password">Mot de passe</Label>
+                  <Input
+                    id="l-password"
+                    name="password"
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    aria-required="true"
+                  />
+                  <div className="pt-1 text-right">
+                    <Link
+                      to="/reset-password"
+                      className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+                    >
+                      Mot de passe oublié ?
+                    </Link>
                   </div>
-                  <Input id="l-password" name="password" type="password" required autoComplete="current-password" />
                 </div>
-                <Button className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   Se connecter
                 </Button>

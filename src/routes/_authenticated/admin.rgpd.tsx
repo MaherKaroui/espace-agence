@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRole } from "@/hooks/use-role";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LEGAL_LABELS } from "@/lib/legal-versions";
-import { ShieldAlert, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { ShieldAlert, FileText, Loader2, CheckCircle2, Search, Download } from "lucide-react";
 import { Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/admin/rgpd")({
@@ -23,6 +24,8 @@ function AdminRgpdPage() {
   const qc = useQueryClient();
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [searchReq, setSearchReq] = useState("");
+  const [searchCons, setSearchCons] = useState("");
 
   const { data: requests } = useQuery({
     queryKey: ["admin-deletion-requests"],
@@ -83,8 +86,51 @@ function AdminRgpdPage() {
   if (loading) return null;
   if (!isAdmin) return <Navigate to="/dashboard" />;
 
-  const pending = (requests ?? []).filter((r: any) => r.status === "pending");
-  const processed = (requests ?? []).filter((r: any) => r.status !== "pending");
+  const matchReq = (r: any) => {
+    if (!searchReq.trim()) return true;
+    const s = searchReq.toLowerCase();
+    const p = profilesMap?.[r.user_id];
+    const name = p ? `${p.prenom ?? ""} ${p.nom ?? ""} ${p.email ?? ""}`.toLowerCase() : "";
+    return name.includes(s) || (r.reason ?? "").toLowerCase().includes(s);
+  };
+  const pending = (requests ?? []).filter((r: any) => r.status === "pending").filter(matchReq);
+  const processed = (requests ?? []).filter((r: any) => r.status !== "pending").filter(matchReq);
+
+  const filteredConsents = (recentConsents ?? []).filter((c: any) => {
+    if (!searchCons.trim()) return true;
+    const s = searchCons.toLowerCase();
+    const p = profilesMap?.[c.user_id];
+    const name = p ? `${p.prenom ?? ""} ${p.nom ?? ""} ${p.email ?? ""}`.toLowerCase() : "";
+    return name.includes(s)
+      || (LEGAL_LABELS[c.document_type as keyof typeof LEGAL_LABELS] ?? c.document_type).toLowerCase().includes(s)
+      || (c.version ?? "").toLowerCase().includes(s);
+  });
+
+  const exportConsentsCSV = () => {
+    const rows = [
+      ["date", "utilisateur", "email", "document", "version", "ip"],
+      ...filteredConsents.map((c: any) => {
+        const p = profilesMap?.[c.user_id];
+        const name = p ? `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() : c.user_id;
+        return [
+          c.accepted_at,
+          name,
+          p?.email ?? "",
+          LEGAL_LABELS[c.document_type as keyof typeof LEGAL_LABELS] ?? c.document_type,
+          c.version ?? "",
+          c.ip ?? "",
+        ];
+      }),
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `consentements-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleProcess = async (req: any) => {
     if (!confirm("Confirmer l'anonymisation du compte ? Cette action est irréversible.")) return;
@@ -121,6 +167,15 @@ function AdminRgpdPage() {
           </TabsList>
 
           <TabsContent value="requests" className="mt-4 space-y-4">
+            <div className="relative max-w-md">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchReq}
+                onChange={(e) => setSearchReq(e.target.value)}
+                placeholder="Rechercher (nom, e-mail, motif)…"
+                className="pl-9"
+              />
+            </div>
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <ShieldAlert className="h-4 w-4 text-destructive" />
@@ -208,14 +263,32 @@ function AdminRgpdPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="consents" className="mt-4">
+          <TabsContent value="consents" className="mt-4 space-y-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative flex-1 min-w-[220px] max-w-md">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchCons}
+                  onChange={(e) => setSearchCons(e.target.value)}
+                  placeholder="Rechercher (nom, e-mail, document)…"
+                  className="pl-9"
+                />
+              </div>
+              <Button variant="outline" size="sm" onClick={exportConsentsCSV} disabled={filteredConsents.length === 0}>
+                <Download className="h-4 w-4 mr-2" /> Exporter CSV
+              </Button>
+            </div>
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="h-4 w-4 text-primary" />
-                <h2 className="font-display text-lg">50 derniers consentements</h2>
+                <h2 className="font-display text-lg">
+                  {searchCons ? `Résultats (${filteredConsents.length})` : "50 derniers consentements"}
+                </h2>
               </div>
-              {!recentConsents || recentConsents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun consentement enregistré.</p>
+              {filteredConsents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  {searchCons ? "Aucun résultat." : "Aucun consentement enregistré."}
+                </p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -229,15 +302,22 @@ function AdminRgpdPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {recentConsents.map((c) => (
-                        <tr key={c.id} className="border-b last:border-0">
-                          <td className="py-2 pr-2 font-mono text-xs">{c.user_id.slice(0, 8)}…</td>
-                          <td className="py-2 pr-2">{LEGAL_LABELS[c.document_type as keyof typeof LEGAL_LABELS] ?? c.document_type}</td>
-                          <td className="py-2 pr-2">{c.version}</td>
-                          <td className="py-2 pr-2">{new Date(c.accepted_at).toLocaleString("fr-FR")}</td>
-                          <td className="py-2 pr-2 text-xs text-muted-foreground">{c.ip ?? "—"}</td>
-                        </tr>
-                      ))}
+                      {filteredConsents.map((c: any) => {
+                        const p = profilesMap?.[c.user_id];
+                        const name = p ? `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email : c.user_id.slice(0, 8) + "…";
+                        return (
+                          <tr key={c.id} className="border-b last:border-0">
+                            <td className="py-2 pr-2">
+                              <div className="text-sm">{name}</div>
+                              {p?.email && <div className="text-xs text-muted-foreground">{p.email}</div>}
+                            </td>
+                            <td className="py-2 pr-2">{LEGAL_LABELS[c.document_type as keyof typeof LEGAL_LABELS] ?? c.document_type}</td>
+                            <td className="py-2 pr-2">{c.version}</td>
+                            <td className="py-2 pr-2">{new Date(c.accepted_at).toLocaleString("fr-FR")}</td>
+                            <td className="py-2 pr-2 text-xs text-muted-foreground">{c.ip ?? "—"}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
