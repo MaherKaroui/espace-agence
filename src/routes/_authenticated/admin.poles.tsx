@@ -222,6 +222,7 @@ function AdminPoles() {
           <PoleCard
             key={pole.id}
             pole={pole}
+            allPoles={poles as any[]}
             members={membersByPole[pole.id] ?? []}
             profileById={profileById}
             profiles={profiles as any[]}
@@ -234,9 +235,10 @@ function AdminPoles() {
 }
 
 function PoleCard({
-  pole, members, profileById, profiles, counts,
+  pole, allPoles, members, profileById, profiles, counts,
 }: {
   pole: any;
+  allPoles: any[];
   members: any[];
   profileById: Record<string, any>;
   profiles: any[];
@@ -275,16 +277,27 @@ function PoleCard({
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
 
+  const [transferTargetId, setTransferTargetId] = useState<string>("");
   const remove = useMutation({
     mutationFn: async () => {
+      if (counts.total > 0) {
+        if (!transferTargetId) throw new Error("Choisissez un pôle de destination pour transférer les dossiers");
+        const { error: te } = await supabase
+          .from("dossiers")
+          .update({ pole_id: transferTargetId })
+          .eq("pole_id", pole.id);
+        if (te) throw te;
+      }
       const { error } = await supabase.from("poles").delete().eq("id", pole.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Pôle supprimé");
+      toast.success(counts.total > 0 ? "Dossiers transférés puis pôle supprimé" : "Pôle supprimé");
+      setTransferTargetId("");
       qc.invalidateQueries({ queryKey: ["admin-poles"] });
+      qc.invalidateQueries({ queryKey: ["admin-pole-dossier-counts"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Suppression impossible (des dossiers y sont peut-être encore rattachés)"),
+    onError: (e: any) => toast.error(e.message ?? "Suppression impossible"),
   });
 
   // Ajout membre
@@ -452,14 +465,35 @@ function PoleCard({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Supprimer le pôle « {pole.nom} » ?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Cette action est définitive. Si des dossiers y sont encore rattachés, la suppression échouera —
-                      pensez plutôt à désactiver le pôle.
+                      {counts.total > 0
+                        ? `Ce pôle contient ${counts.total} dossier${counts.total > 1 ? "s" : ""}. Choisissez un pôle de destination : ils y seront transférés avant la suppression.`
+                        : "Aucun dossier n'est rattaché à ce pôle. Cette action est définitive."}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
+                  {counts.total > 0 && (
+                    <div className="mt-2">
+                      <Label className="text-xs">Transférer les dossiers vers</Label>
+                      <Select value={transferTargetId} onValueChange={setTransferTargetId}>
+                        <SelectTrigger><SelectValue placeholder="Choisir un pôle actif…" /></SelectTrigger>
+                        <SelectContent>
+                          {allPoles.filter((p) => p.id !== pole.id && p.actif).map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>
+                          ))}
+                          {allPoles.filter((p) => p.id !== pole.id && p.actif).length === 0 && (
+                            <div className="p-2 text-xs text-muted-foreground">Aucun autre pôle actif disponible.</div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <AlertDialogFooter>
                     <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => remove.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Supprimer
+                    <AlertDialogAction
+                      onClick={(e) => { e.preventDefault(); remove.mutate(); }}
+                      disabled={remove.isPending || (counts.total > 0 && !transferTargetId)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {counts.total > 0 ? "Transférer & supprimer" : "Supprimer"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
