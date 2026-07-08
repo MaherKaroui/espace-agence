@@ -26,12 +26,20 @@ export const Route = createFileRoute("/_authenticated/admin/audit")({
 function AuditPage() {
   const [severity, setSeverity] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
   const { data: logs = [] } = useQuery({
-    queryKey: ["audit-logs", severity],
+    queryKey: ["audit-logs", severity, dateFrom, dateTo],
     queryFn: async () => {
       let q = supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(500);
       if (severity !== "all") q = q.eq("severity", severity);
+      if (dateFrom) q = q.gte("created_at", new Date(dateFrom).toISOString());
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        q = q.lte("created_at", end.toISOString());
+      }
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
