@@ -178,11 +178,12 @@ function AdminNotifications() {
 
   return (
     <div className="container max-w-6xl py-8 space-y-6">
+      <Breadcrumbs items={[{ label: "Organisation" }, { label: "Notifications & emails" }]} />
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-primary/10 p-2.5"><Mail className="h-5 w-5 text-primary" /></div>
         <div>
           <h1 className="font-display text-2xl">Notifications & emails</h1>
-          <p className="text-sm text-muted-foreground">Réglez les emails automatiques et suivez leur historique.</p>
+          <p className="text-sm text-muted-foreground">Réglez les emails automatiques, prévisualisez chaque template et suivez leur historique.</p>
         </div>
       </div>
 
