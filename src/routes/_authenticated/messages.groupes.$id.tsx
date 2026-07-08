@@ -230,7 +230,7 @@ function GroupePage() {
               </SheetContent>
             </Sheet>
           </div>
-          {isStaff && (
+          {isAdmin && (
             <Dialog open={openSub} onOpenChange={setOpenSub}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="icon" className="sm:h-9 sm:px-3 sm:w-auto">
