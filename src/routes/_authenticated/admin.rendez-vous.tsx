@@ -179,9 +179,27 @@ function AdminRdv() {
                   {r.notes && <div className="text-sm mt-1 text-muted-foreground">« {r.notes} »</div>}
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  <Button size="sm" variant="outline" onClick={() => decide.mutate({ id: r.id, status: "refuse" })} disabled={decide.isPending}>
-                    <X className="h-4 w-4 mr-1" /> Refuser
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="outline" disabled={decide.isPending}>
+                        <X className="h-4 w-4 mr-1" /> Refuser
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Refuser ce rendez-vous ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {clientName(r)} sera notifié·e que le créneau du {fmt(r.starts_at)} n'a pas été retenu.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => decide.mutate({ id: r.id, status: "refuse" })}>
+                          Refuser
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                   <Button size="sm" variant="outline" onClick={() => openReschedule(r)}>
                     <CalendarCog className="h-4 w-4 mr-1" /> Replanifier
                   </Button>
@@ -200,22 +218,52 @@ function AdminRdv() {
         {upcoming.length === 0 ? (
           <Card className="p-6 text-sm text-muted-foreground">Aucun rendez-vous à venir.</Card>
         ) : (
-          <div className="grid gap-2">
-            {upcoming.map((r) => (
-              <Card key={r.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <div className="font-medium">{fmt(r.starts_at)}</div>
-                  <div className="text-xs text-muted-foreground">Client : {clientName(r)}</div>
+          <div className="space-y-4">
+            {upcomingByDay.map((g) => (
+              <div key={g.key} className="space-y-2">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+                  {fmtDay(g.day)} · {g.items.length} RDV
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  <Button size="sm" variant="outline" onClick={() => openReschedule(r)}>
-                    <CalendarCog className="h-4 w-4 mr-1" /> Replanifier
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => decide.mutate({ id: r.id, status: "annule" })} disabled={decide.isPending}>
-                    Annuler
-                  </Button>
-                </div>
-              </Card>
+                {g.items.map((r) => (
+                  <Card key={r.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="rounded-md bg-primary/10 text-primary px-3 py-2 text-sm font-semibold shrink-0">
+                        {fmtHour(r.starts_at)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{clientName(r)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          → {fmtHour(r.ends_at)} {r.notes && <>· « {r.notes} »</>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button size="sm" variant="outline" onClick={() => openReschedule(r)}>
+                        <CalendarCog className="h-4 w-4 mr-1" /> Replanifier
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="outline" disabled={decide.isPending}>Annuler</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Annuler ce rendez-vous ?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {clientName(r)} sera notifié·e de l'annulation du {fmt(r.starts_at)}.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Ne pas annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => decide.mutate({ id: r.id, status: "annule" })}>
+                              Confirmer l'annulation
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             ))}
           </div>
         )}
@@ -228,7 +276,7 @@ function AdminRdv() {
             {history.map((r) => (
               <Card key={r.id} className="p-3 flex items-center justify-between text-sm">
                 <span>{fmt(r.starts_at)} — {clientName(r)}</span>
-                <span className="text-xs text-muted-foreground">{r.status}</span>
+                <Badge variant="outline" className="text-xs">{statusLabel(r.status)}</Badge>
               </Card>
             ))}
           </div>
