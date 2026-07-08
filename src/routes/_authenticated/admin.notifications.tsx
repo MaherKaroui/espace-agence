@@ -12,9 +12,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { TEMPLATES } from "@/lib/email-templates/registry";
 import { sendTransactionalEmail } from "@/lib/email/send";
-import { Mail, Send, CheckCircle2, AlertCircle, XCircle, Clock, Search } from "lucide-react";
+import { Mail, Send, CheckCircle2, AlertCircle, XCircle, Clock, Search, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { previewEmailTemplate } from "@/lib/preview-email.functions";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export const Route = createFileRoute("/_authenticated/admin/notifications")({
   head: () => ({ meta: [{ title: "Notifications & emails — Admin" }] }),
@@ -51,6 +55,25 @@ function AdminNotifications() {
   const [testEmail, setTestEmail] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewData, setPreviewData] = useState<{ html: string; subject: string; displayName: string } | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const runPreview = useServerFn(previewEmailTemplate);
+
+  const openPreview = async (templateName: string) => {
+    setPreviewOpen(true);
+    setPreviewLoading(true);
+    setPreviewData(null);
+    try {
+      const res = await runPreview({ data: { templateName } });
+      setPreviewData(res);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Impossible de générer l'aperçu");
+      setPreviewOpen(false);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const { data: settings, isLoading: loadingSettings } = useQuery({
     queryKey: ["email-settings"],
@@ -155,11 +178,12 @@ function AdminNotifications() {
 
   return (
     <div className="container max-w-6xl py-8 space-y-6">
+      <Breadcrumbs items={[{ label: "Organisation" }, { label: "Notifications & emails" }]} />
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-primary/10 p-2.5"><Mail className="h-5 w-5 text-primary" /></div>
         <div>
           <h1 className="font-display text-2xl">Notifications & emails</h1>
-          <p className="text-sm text-muted-foreground">Réglez les emails automatiques et suivez leur historique.</p>
+          <p className="text-sm text-muted-foreground">Réglez les emails automatiques, prévisualisez chaque template et suivez leur historique.</p>
         </div>
       </div>
 
@@ -197,12 +221,17 @@ function AdminNotifications() {
             </div>
             <div className="space-y-3">
               {clientTemplates.map(([key, tpl]) => (
-                <div key={key} className="flex items-center justify-between border-b pb-3 last:border-0">
+                <div key={key} className="flex items-center justify-between border-b pb-3 last:border-0 gap-3">
                   <div className="min-w-0">
                     <div className="font-medium text-sm">{tpl.displayName ?? key}</div>
-                    <div className="text-xs text-muted-foreground font-mono">{key}</div>
+                    <div className="text-xs text-muted-foreground font-mono truncate">{key}</div>
                   </div>
-                  <Switch checked={!disabled.has(key)} onCheckedChange={(v) => toggleTemplate(key, v)} />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button variant="ghost" size="sm" onClick={() => openPreview(key)} className="gap-1">
+                      <Eye className="h-3.5 w-3.5" /> Aperçu
+                    </Button>
+                    <Switch checked={!disabled.has(key)} onCheckedChange={(v) => toggleTemplate(key, v)} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -215,12 +244,17 @@ function AdminNotifications() {
             </div>
             <div className="space-y-3">
               {adminTemplates.map(([key, tpl]) => (
-                <div key={key} className="flex items-center justify-between border-b pb-3 last:border-0">
+                <div key={key} className="flex items-center justify-between border-b pb-3 last:border-0 gap-3">
                   <div className="min-w-0">
                     <div className="font-medium text-sm">{tpl.displayName ?? key}</div>
-                    <div className="text-xs text-muted-foreground font-mono">{key}</div>
+                    <div className="text-xs text-muted-foreground font-mono truncate">{key}</div>
                   </div>
-                  <Switch checked={!disabled.has(key)} onCheckedChange={(v) => toggleTemplate(key, v)} />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button variant="ghost" size="sm" onClick={() => openPreview(key)} className="gap-1">
+                      <Eye className="h-3.5 w-3.5" /> Aperçu
+                    </Button>
+                    <Switch checked={!disabled.has(key)} onCheckedChange={(v) => toggleTemplate(key, v)} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -289,6 +323,24 @@ function AdminNotifications() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{previewData?.displayName ?? "Aperçu email"}</DialogTitle>
+            <DialogDescription>
+              {previewData ? <>Objet : <span className="font-medium text-foreground">{previewData.subject}</span></> : "Chargement de l'aperçu…"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto border rounded-md bg-white">
+            {previewLoading ? (
+              <div className="p-8 text-center text-sm text-muted-foreground">Génération de l'aperçu…</div>
+            ) : previewData ? (
+              <iframe title="Aperçu email" srcDoc={previewData.html} className="w-full h-[70vh]" sandbox="" />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
