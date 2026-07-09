@@ -49,6 +49,27 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
     },
   });
 
+  const senderIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const m of messages) if (m.sender_id) s.add(m.sender_id);
+    return Array.from(s).sort();
+  }, [messages]);
+
+  const { data: senderMap } = useQuery({
+    queryKey: ["chat-senders", senderIds.join(",")],
+    enabled: senderIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("id, prenom, nom, email").in("id", senderIds);
+      const map = new Map<string, { name: string; initials: string }>();
+      for (const p of data ?? []) {
+        const full = `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email || "Utilisateur";
+        const initials = (((p.prenom?.[0] ?? "") + (p.nom?.[0] ?? "")) || (p.email?.[0] ?? "?")).toUpperCase();
+        map.set(p.id, { name: full, initials });
+      }
+      return map;
+    },
+  });
+
   // Realtime messages + typing
   useEffect(() => {
     if (!user) return;
