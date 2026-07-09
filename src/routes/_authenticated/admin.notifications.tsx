@@ -51,6 +51,19 @@ const STATUS_META: Record<string, { label: string; cls: string; Icon: any }> = {
   suppressed: { label: "Bloqué", cls: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30", Icon: AlertCircle },
 };
 
+function displayRecipient(email: string | null) {
+  if (!email) return "—";
+  return email.replace(/@izi-business\.com$/i, "@izisuivis.com").replace(/@izibusiness\.com$/i, "@izisuivis.com");
+}
+
+function displayError(message: string | null) {
+  if (!message) return null;
+  if (message.includes("domain_not_verified") || message.includes("no_matching_sender")) {
+    return "Ancienne erreur de domaine email avant correction.";
+  }
+  return message;
+}
+
 function AdminNotifications() {
   const qc = useQueryClient();
   const [testEmail, setTestEmail] = useState("");
@@ -297,10 +310,10 @@ function AdminNotifications() {
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{l.template_name || "—"}</div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {l.recipient_email || "—"} · {formatDistanceToNow(new Date(l.created_at), { addSuffix: true, locale: fr })}
+                        {displayRecipient(l.recipient_email)} · {formatDistanceToNow(new Date(l.created_at), { addSuffix: true, locale: fr })}
                       </div>
-                      {l.error_message && (
-                        <div className="text-xs text-red-600 mt-1 truncate">{l.error_message}</div>
+                      {displayError(l.error_message) && (
+                        <div className="text-xs text-red-600 mt-1 truncate">{displayError(l.error_message)}</div>
                       )}
                     </div>
                   </div>
