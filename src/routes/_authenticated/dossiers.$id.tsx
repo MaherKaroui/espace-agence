@@ -486,7 +486,7 @@ function DossierDetail() {
                   {isVid ? (
                     <VideoPlayer
                       documentId={d.id}
-                      storagePath={d.storage_path}
+                      storagePath={d.storage_path ?? ""}
                       fileName={d.nom}
                       thumbnailPath={d.thumbnail_path}
                     />
