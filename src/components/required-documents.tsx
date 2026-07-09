@@ -415,9 +415,22 @@ function RequiredRow({
               )}
             </>
           ) : isAdmin ? (
-            <Button size="sm" onClick={() => fileInput.current?.click()} disabled={busy}>
-              <Upload className="h-4 w-4 mr-1" /> Déposer
-            </Button>
+            <>
+              <Button size="sm" onClick={() => fileInput.current?.click()} disabled={busy}>
+                <Upload className="h-4 w-4 mr-1" /> Déposer
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => acceptWithoutFile.mutate()}
+                disabled={acceptWithoutFile.isPending}
+                className="border-success/40 text-success hover:bg-success/10"
+                title="Accepter ce document sans fichier (dispense)"
+              >
+                <CheckCircle2 className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Accepter quand même</span>
+              </Button>
+            </>
           ) : (
             <>
               <Button size="sm" onClick={() => setUploadDialog(true)} disabled={busy}>
