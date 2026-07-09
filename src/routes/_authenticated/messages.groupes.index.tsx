@@ -51,17 +51,40 @@ function GroupesIndex() {
   });
 
   const { data: conversations = [] } = useQuery({
-    queryKey: ["conversations-list", myMemberships],
-    enabled: myMemberships.length >= 0,
+    queryKey: ["conversations-list", isAdmin ? "all" : myMemberships.join(",")],
+    enabled: isAdmin || myMemberships.length >= 0,
     queryFn: async () => {
-      if (myMemberships.length === 0) return [] as Conv[];
-      const { data, error } = await supabase
+      let q = supabase
         .from("conversations")
         .select("id, titre, parent_id, created_by, updated_at")
-        .in("id", myMemberships)
         .order("updated_at", { ascending: false });
+      if (!isAdmin) {
+        if (myMemberships.length === 0) return [] as Conv[];
+        q = q.in("id", myMemberships);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Conv[];
+    },
+  });
+
+  // Unread counts per conversation (based on notifications table)
+  const { data: unreadByConv = {} } = useQuery({
+    queryKey: ["group-unread-per-conv", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notifications")
+        .select("link")
+        .eq("user_id", user!.id)
+        .is("read_at", null)
+        .like("link", "/messages/groupes/%");
+      const map: Record<string, number> = {};
+      for (const n of (data ?? []) as { link: string | null }[]) {
+        const id = (n.link ?? "").split("/messages/groupes/")[1];
+        if (id) map[id] = (map[id] ?? 0) + 1;
+      }
+      return map;
     },
   });
 
@@ -103,7 +126,7 @@ function GroupesIndex() {
           </div>
         ) : (
           <ul className="space-y-1">
-            {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} />)}
+            {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} unreadByConv={unreadByConv} />)}
           </ul>
         )}
       </Card>
@@ -112,6 +135,14 @@ function GroupesIndex() {
 }
 
 type Node = Conv & { children: Node[] };
+
+// Sum unread count for a subtree (this node + descendants) so a parent
+// badge signals activity in any sub-group.
+function subtreeUnread(node: Node, map: Record<string, number>): number {
+  let s = map[node.id] ?? 0;
+  for (const c of node.children) s += subtreeUnread(c, map);
+  return s;
+}
 
 function buildTree(list: Conv[]): Node[] {
   const map = new Map<string, Node>();
@@ -124,9 +155,11 @@ function buildTree(list: Conv[]): Node[] {
   return roots;
 }
 
-function TreeNode({ node, depth }: { node: Node; depth: number }) {
+function TreeNode({ node, depth, unreadByConv }: { node: Node; depth: number; unreadByConv: Record<string, number> }) {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.children.length > 0;
+  const ownUnread = unreadByConv[node.id] ?? 0;
+  const subUnread = hasChildren ? subtreeUnread(node, unreadByConv) - ownUnread : 0;
   return (
     <li>
       <div className="flex items-center gap-1 rounded-md hover:bg-muted/50" style={{ paddingLeft: depth * 20 }}>
@@ -142,18 +175,31 @@ function TreeNode({ node, depth }: { node: Node; depth: number }) {
           params={{ id: node.id }}
           className="flex-1 flex items-center justify-between px-2 py-2 text-sm"
         >
-          <span className="flex items-center gap-2">
-            <Users2 className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">{node.titre}</span>
+          <span className="flex items-center gap-2 min-w-0">
+            <Users2 className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className={`truncate ${ownUnread > 0 ? "font-semibold" : "font-medium"}`}>{node.titre}</span>
+            {ownUnread > 0 && (
+              <span className="h-5 min-w-5 px-1.5 rounded-full bg-gold text-[10px] font-semibold text-primary flex items-center justify-center">
+                {ownUnread > 99 ? "99+" : ownUnread}
+              </span>
+            )}
+            {!expanded && subUnread > 0 && (
+              <span
+                title={`${subUnread} non lu${subUnread > 1 ? "s" : ""} dans les sous-groupes`}
+                className="h-5 min-w-5 px-1.5 rounded-full bg-muted text-[10px] font-semibold text-foreground flex items-center justify-center"
+              >
+                +{subUnread}
+              </span>
+            )}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground shrink-0 ml-2">
             {formatDistanceToNow(new Date(node.updated_at), { locale: fr, addSuffix: true })}
           </span>
         </Link>
       </div>
       {hasChildren && expanded && (
         <ul>
-          {node.children.map((c) => <TreeNode key={c.id} node={c} depth={depth + 1} />)}
+          {node.children.map((c) => <TreeNode key={c.id} node={c} depth={depth + 1} unreadByConv={unreadByConv} />)}
         </ul>
       )}
     </li>
