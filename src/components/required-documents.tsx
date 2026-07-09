@@ -25,7 +25,7 @@ import { notifyEmail } from "@/lib/email/notify";
 type Doc = {
   id: string;
   nom: string;
-  storage_path: string;
+  storage_path: string | null;
   detected_type?: string | null;
   statut?: string | null;
   commentaire?: string | null;
