@@ -478,7 +478,7 @@ function DossierDetail() {
           </div>
         ) : (
           <div className="divide-y">
-            {documents.map((d) => {
+            {documents.filter((d) => !!d.storage_path).map((d) => {
               const isImg = d.mime_type?.startsWith("image/");
               const isVid = isVideoMime(d.mime_type);
               return (
