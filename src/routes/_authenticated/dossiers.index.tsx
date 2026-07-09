@@ -505,6 +505,9 @@ function ClientRequestWizard({
       has_stagiaires?: boolean;
       stagiaires?: any[];
       organisme_nom?: string;
+      organisme_email?: string;
+      organisme_telephone?: string;
+      site_web?: string;
     },
   ) => void;
   pending: boolean;
@@ -513,8 +516,13 @@ function ClientRequestWizard({
   const [categorie, setCategorie] = useState<string>("");
   const [description, setDescription] = useState("");
 
-  // Champs spécifiques Qualiopi
+  // Coordonnées de l'organisme (partagées entre toutes les catégories)
   const [organismeNom, setOrganismeNom] = useState<string>("");
+  const [organismeEmail, setOrganismeEmail] = useState<string>("");
+  const [organismeTelephone, setOrganismeTelephone] = useState<string>("");
+  const [siteWeb, setSiteWeb] = useState<string>("");
+
+  // Champs spécifiques Qualiopi
   const [auditType, setAuditType] = useState<string>("");
   const [scopes, setScopes] = useState<string[]>([]);
   const [nbStagiaires, setNbStagiaires] = useState<string>("");
@@ -538,6 +546,38 @@ function ClientRequestWizard({
 
   const canSubmitQualiopi = isQualiopi && organismeNom.trim().length > 0 && auditType && scopes.length > 0;
 
+  const ofContact = {
+    organisme_email: organismeEmail.trim() || undefined,
+    organisme_telephone: organismeTelephone.trim() || undefined,
+    site_web: siteWeb.trim() || undefined,
+  };
+
+  const OFContactFields = (
+    <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
+      <div>
+        <div className="font-medium text-sm">Coordonnées de l'organisme de formation</div>
+        <p className="text-xs text-muted-foreground">Nous permet de vous joindre plus rapidement.</p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <Label htmlFor="of-email">E-mail de l'OF</Label>
+          <Input id="of-email" type="email" value={organismeEmail}
+            onChange={(e) => setOrganismeEmail(e.target.value)} placeholder="contact@monorganisme.fr" />
+        </div>
+        <div>
+          <Label htmlFor="of-tel">Téléphone de l'OF</Label>
+          <Input id="of-tel" type="tel" value={organismeTelephone}
+            onChange={(e) => setOrganismeTelephone(e.target.value)} placeholder="06 12 34 56 78" />
+        </div>
+        <div className="sm:col-span-2">
+          <Label htmlFor="of-site">Site web</Label>
+          <Input id="of-site" type="url" value={siteWeb}
+            onChange={(e) => setSiteWeb(e.target.value)} placeholder="https://monorganisme.fr" />
+        </div>
+      </div>
+    </div>
+  );
+
   const submitQualiopi = () => {
     const toInt = (s: string) => {
       const n = parseInt(s, 10);
@@ -552,6 +592,7 @@ function ClientRequestWizard({
       has_stagiaires: hasStagiaires,
       stagiaires: hasStagiaires ? stagiaires : [],
       organisme_nom: organismeNom.trim(),
+      ...ofContact,
     });
   };
 
