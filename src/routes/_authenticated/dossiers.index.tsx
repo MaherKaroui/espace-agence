@@ -633,6 +633,7 @@ function ClientRequestWizard({
 
       {step === 2 && isQualiopi && (
         <div className="space-y-4">
+          {OFContactFields}
           <div>
             <Label htmlFor="organisme-nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
             <Input
