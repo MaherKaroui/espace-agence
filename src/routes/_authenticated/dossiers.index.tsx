@@ -148,8 +148,11 @@ function DossiersPage() {
     const categorie = fd.get("categorie") as string;
     const pole_id = fd.get("pole_id") as string;
     const description = (fd.get("description") as string)?.trim() ?? "";
+    const organisme_email = ((fd.get("organisme_email") as string) ?? "").trim() || undefined;
+    const organisme_telephone = ((fd.get("organisme_telephone") as string) ?? "").trim() || undefined;
+    const site_web = ((fd.get("site_web") as string) ?? "").trim() || undefined;
     if (!titre || !categorie || !pole_id) { toast.error("Champs requis" ); return; }
-    create.mutate({ titre, categorie, pole_id, description });
+    create.mutate({ titre, categorie, pole_id, description, organisme_email, organisme_telephone, site_web });
   };
 
   const submitClient = (
