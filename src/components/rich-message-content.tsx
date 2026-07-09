@@ -21,16 +21,18 @@ export function RichMessageContent({
   content,
   currentUserId,
   className,
+  inverse,
 }: {
   content: string;
   currentUserId?: string | null;
   className?: string;
+  inverse?: boolean;
 }) {
   const segs = parseMentionSegments(content);
   return (
     <div className={cn("whitespace-pre-wrap break-words", className)}>
       {segs.map((s, i) => {
-        if (s.kind === "text") return <LinkifiedText key={i} text={s.value} />;
+        if (s.kind === "text") return <LinkifiedText key={i} text={s.value} inverse={inverse} />;
         if (s.kind === "user") {
           const me = s.id === currentUserId;
           return (
@@ -54,7 +56,7 @@ export function RichMessageContent({
             to={entityLink(s.type, s.id)}
             className={cn(
               "inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-xs font-medium mx-0.5 align-baseline hover:underline",
-              ENTITY_TONE[s.type],
+              inverse ? "text-primary-foreground bg-primary-foreground/15" : ENTITY_TONE[s.type],
             )}
           >
             <Icon className="h-3 w-3" />
@@ -69,7 +71,7 @@ export function RichMessageContent({
 // Auto-linkify URLs, emails, and www.* inside plain text segments.
 const URL_RE = /(\bhttps?:\/\/[^\s<>()]+[^\s<>().,;:!?"'])|(\bwww\.[^\s<>()]+[^\s<>().,;:!?"'])|([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
 
-function LinkifiedText({ text }: { text: string }) {
+function LinkifiedText({ text, inverse }: { text: string; inverse?: boolean }) {
   const nodes: React.ReactNode[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
@@ -85,7 +87,10 @@ function LinkifiedText({ text }: { text: string }) {
         href={href}
         target={isEmail ? undefined : "_blank"}
         rel={isEmail ? undefined : "noopener noreferrer"}
-        className="text-primary underline underline-offset-2 hover:opacity-80 break-all"
+        className={cn(
+          "underline underline-offset-2 hover:opacity-80 break-all",
+          inverse ? "text-primary-foreground" : "text-primary",
+        )}
         onClick={(e) => e.stopPropagation()}
       >
         {raw}
