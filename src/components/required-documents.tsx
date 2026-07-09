@@ -113,7 +113,7 @@ function RequiredRow({
   const { user } = useAuth();
   const { isAdmin } = useRole();
   const qc = useQueryClient();
-  const nav = useNavigate();
+  
   const fileInput = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLLIElement>(null);
   const [busy, setBusy] = useState(false);
