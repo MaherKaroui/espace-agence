@@ -121,23 +121,32 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     setLoading(false);
     if (error) { toast.error(error.message); return; }
-    navigate({ to: "/dashboard" });
+    if (nextPath) window.location.replace(nextPath);
+    else navigate({ to: "/dashboard" });
   };
 
   const handleGoogle = async () => {
     setLoading(true);
-    const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const redirectUri = nextPath
+      ? `${window.location.origin}/auth?next=${encodeURIComponent(nextPath)}`
+      : window.location.origin;
+    const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: redirectUri });
     if (res.error) { setLoading(false); toast.error("Connexion Google impossible"); return; }
     if (res.redirected) return;
-    navigate({ to: "/dashboard" });
+    if (nextPath) window.location.replace(nextPath);
+    else navigate({ to: "/dashboard" });
   };
 
   const handleApple = async () => {
     setLoading(true);
-    const res = await lovable.auth.signInWithOAuth("apple", { redirect_uri: window.location.origin });
+    const redirectUri = nextPath
+      ? `${window.location.origin}/auth?next=${encodeURIComponent(nextPath)}`
+      : window.location.origin;
+    const res = await lovable.auth.signInWithOAuth("apple", { redirect_uri: redirectUri });
     if (res.error) { setLoading(false); toast.error("Connexion Apple impossible"); return; }
     if (res.redirected) return;
-    navigate({ to: "/dashboard" });
+    if (nextPath) window.location.replace(nextPath);
+    else navigate({ to: "/dashboard" });
   };
 
   return (
