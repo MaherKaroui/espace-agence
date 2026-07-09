@@ -806,6 +806,7 @@ function ClientRequestWizard({
 
       {step === 2 && !isQualiopi && (
         <div className="space-y-3">
+          {OFContactFields}
           <div>
             <div className="font-medium">Expliquez votre demande en une phrase</div>
             <p className="text-sm text-muted-foreground">Ex : « Je souhaite obtenir mon NDA pour mon organisme. »</p>
@@ -823,7 +824,7 @@ function ClientRequestWizard({
               type="button"
               className="flex-1"
               disabled={pending}
-              onClick={() => onSubmit(categorie, description.trim())}
+              onClick={() => onSubmit(categorie, description.trim(), ofContact)}
             >
               {pending ? "Création…" : "Créer la demande"}
             </Button>
