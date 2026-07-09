@@ -18,6 +18,9 @@ export const Route = createFileRoute("/auth")({
   // Page d'auth entièrement client-side : évite un mismatch d'hydratation
   // React (#418) car la session Supabase n'est disponible que côté client.
   ssr: false,
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Connexion — IZISuivis" },
@@ -26,6 +29,13 @@ export const Route = createFileRoute("/auth")({
   }),
   component: AuthPage,
 });
+
+// Validate `next` as a same-origin relative path before using it as a redirect.
+function safeNext(next: string | undefined): string | null {
+  if (!next || typeof next !== "string") return null;
+  if (!next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+}
 
 
 const signupSchema = z.object({
@@ -41,6 +51,9 @@ const loginSchema = z.object({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const nextPath = safeNext(next);
+  
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
   const [showLoginPwd, setShowLoginPwd] = useState(false);
@@ -48,9 +61,13 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) {
+        if (nextPath) window.location.replace(nextPath);
+        else navigate({ to: "/dashboard" });
+      }
     });
-  }, [navigate]);
+  }, [navigate, nextPath]);
+
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -67,7 +84,7 @@ function AuthPage() {
     const { data: sud, error } = await supabase.auth.signUp({
       email, password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}${nextPath ?? "/"}`,
         data: { nom, prenom },
       },
     });
@@ -104,23 +121,32 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     setLoading(false);
     if (error) { toast.error(error.message); return; }
-    navigate({ to: "/dashboard" });
+    if (nextPath) window.location.replace(nextPath);
+    else navigate({ to: "/dashboard" });
   };
 
   const handleGoogle = async () => {
     setLoading(true);
-    const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const redirectUri = nextPath
+      ? `${window.location.origin}/auth?next=${encodeURIComponent(nextPath)}`
+      : window.location.origin;
+    const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: redirectUri });
     if (res.error) { setLoading(false); toast.error("Connexion Google impossible"); return; }
     if (res.redirected) return;
-    navigate({ to: "/dashboard" });
+    if (nextPath) window.location.replace(nextPath);
+    else navigate({ to: "/dashboard" });
   };
 
   const handleApple = async () => {
     setLoading(true);
-    const res = await lovable.auth.signInWithOAuth("apple", { redirect_uri: window.location.origin });
+    const redirectUri = nextPath
+      ? `${window.location.origin}/auth?next=${encodeURIComponent(nextPath)}`
+      : window.location.origin;
+    const res = await lovable.auth.signInWithOAuth("apple", { redirect_uri: redirectUri });
     if (res.error) { setLoading(false); toast.error("Connexion Apple impossible"); return; }
     if (res.redirected) return;
-    navigate({ to: "/dashboard" });
+    if (nextPath) window.location.replace(nextPath);
+    else navigate({ to: "/dashboard" });
   };
 
   return (
