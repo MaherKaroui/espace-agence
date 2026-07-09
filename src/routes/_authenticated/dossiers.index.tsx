@@ -62,6 +62,9 @@ function DossiersPage() {
       categorie: string;
       pole_id: string;
       description: string;
+      site_web?: string | null;
+      organisme_email?: string | null;
+      organisme_telephone?: string | null;
       qualiopi_audit_type?: string | null;
       qualiopi_scopes?: string[];
       nb_stagiaires?: number | null;
@@ -76,6 +79,9 @@ function DossiersPage() {
         categorie: payload.categorie as any,
         pole_id: payload.pole_id,
         description: payload.description || null,
+        site_web: payload.site_web?.trim() || null,
+        organisme_email: payload.organisme_email?.trim() || null,
+        organisme_telephone: payload.organisme_telephone?.trim() || null,
       };
       if (payload.categorie === "qualiopi") {
         row.qualiopi_audit_type = payload.qualiopi_audit_type ?? null;
@@ -142,8 +148,11 @@ function DossiersPage() {
     const categorie = fd.get("categorie") as string;
     const pole_id = fd.get("pole_id") as string;
     const description = (fd.get("description") as string)?.trim() ?? "";
+    const organisme_email = ((fd.get("organisme_email") as string) ?? "").trim() || undefined;
+    const organisme_telephone = ((fd.get("organisme_telephone") as string) ?? "").trim() || undefined;
+    const site_web = ((fd.get("site_web") as string) ?? "").trim() || undefined;
     if (!titre || !categorie || !pole_id) { toast.error("Champs requis" ); return; }
-    create.mutate({ titre, categorie, pole_id, description });
+    create.mutate({ titre, categorie, pole_id, description, organisme_email, organisme_telephone, site_web });
   };
 
   const submitClient = (
@@ -158,14 +167,15 @@ function DossiersPage() {
       has_stagiaires?: boolean;
       stagiaires?: any[];
       organisme_nom?: string;
+      organisme_email?: string;
+      organisme_telephone?: string;
+      site_web?: string;
     },
   ) => {
     const pole_id = poleForCategorie(categorie);
     if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
     const label = categorieLabel(categorie);
     const organisme = extra?.organisme_nom?.trim();
-    // N'ajoute pas "Demande " si le libellé commence déjà par "Demande"/"Dossier"
-    // (évite "Demande Demande de NDA").
     const alreadyPrefixed = /^(Demande|Dossier)\b/i.test(label);
     const base = alreadyPrefixed ? label : `Demande ${label}`;
     const titre = organisme ? `${base} - ${organisme}` : base;
@@ -291,6 +301,23 @@ function DossiersPage() {
                 <div>
                   <Label htmlFor="description">Description (optionnel)</Label>
                   <Textarea id="description" name="description" rows={3} maxLength={500} />
+                </div>
+                <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
+                  <div className="font-medium text-sm">Organisme de formation (optionnel)</div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="of-email-admin">E-mail de l'OF</Label>
+                      <Input id="of-email-admin" name="organisme_email" type="email" />
+                    </div>
+                    <div>
+                      <Label htmlFor="of-tel-admin">Téléphone de l'OF</Label>
+                      <Input id="of-tel-admin" name="organisme_telephone" type="tel" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="of-site-admin">Site web</Label>
+                      <Input id="of-site-admin" name="site_web" type="url" />
+                    </div>
+                  </div>
                 </div>
                 <Button type="submit" disabled={create.isPending} className="w-full">Créer le dossier</Button>
               </form>
@@ -498,6 +525,9 @@ function ClientRequestWizard({
       has_stagiaires?: boolean;
       stagiaires?: any[];
       organisme_nom?: string;
+      organisme_email?: string;
+      organisme_telephone?: string;
+      site_web?: string;
     },
   ) => void;
   pending: boolean;
@@ -506,8 +536,13 @@ function ClientRequestWizard({
   const [categorie, setCategorie] = useState<string>("");
   const [description, setDescription] = useState("");
 
-  // Champs spécifiques Qualiopi
+  // Coordonnées de l'organisme (partagées entre toutes les catégories)
   const [organismeNom, setOrganismeNom] = useState<string>("");
+  const [organismeEmail, setOrganismeEmail] = useState<string>("");
+  const [organismeTelephone, setOrganismeTelephone] = useState<string>("");
+  const [siteWeb, setSiteWeb] = useState<string>("");
+
+  // Champs spécifiques Qualiopi
   const [auditType, setAuditType] = useState<string>("");
   const [scopes, setScopes] = useState<string[]>([]);
   const [nbStagiaires, setNbStagiaires] = useState<string>("");
@@ -531,6 +566,38 @@ function ClientRequestWizard({
 
   const canSubmitQualiopi = isQualiopi && organismeNom.trim().length > 0 && auditType && scopes.length > 0;
 
+  const ofContact = {
+    organisme_email: organismeEmail.trim() || undefined,
+    organisme_telephone: organismeTelephone.trim() || undefined,
+    site_web: siteWeb.trim() || undefined,
+  };
+
+  const OFContactFields = (
+    <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
+      <div>
+        <div className="font-medium text-sm">Coordonnées de l'organisme de formation</div>
+        <p className="text-xs text-muted-foreground">Nous permet de vous joindre plus rapidement.</p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <Label htmlFor="of-email">E-mail de l'OF</Label>
+          <Input id="of-email" type="email" value={organismeEmail}
+            onChange={(e) => setOrganismeEmail(e.target.value)} placeholder="contact@monorganisme.fr" />
+        </div>
+        <div>
+          <Label htmlFor="of-tel">Téléphone de l'OF</Label>
+          <Input id="of-tel" type="tel" value={organismeTelephone}
+            onChange={(e) => setOrganismeTelephone(e.target.value)} placeholder="06 12 34 56 78" />
+        </div>
+        <div className="sm:col-span-2">
+          <Label htmlFor="of-site">Site web</Label>
+          <Input id="of-site" type="url" value={siteWeb}
+            onChange={(e) => setSiteWeb(e.target.value)} placeholder="https://monorganisme.fr" />
+        </div>
+      </div>
+    </div>
+  );
+
   const submitQualiopi = () => {
     const toInt = (s: string) => {
       const n = parseInt(s, 10);
@@ -545,6 +612,7 @@ function ClientRequestWizard({
       has_stagiaires: hasStagiaires,
       stagiaires: hasStagiaires ? stagiaires : [],
       organisme_nom: organismeNom.trim(),
+      ...ofContact,
     });
   };
 
@@ -585,6 +653,7 @@ function ClientRequestWizard({
 
       {step === 2 && isQualiopi && (
         <div className="space-y-4">
+          {OFContactFields}
           <div>
             <Label htmlFor="organisme-nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
             <Input
@@ -757,6 +826,7 @@ function ClientRequestWizard({
 
       {step === 2 && !isQualiopi && (
         <div className="space-y-3">
+          {OFContactFields}
           <div>
             <div className="font-medium">Expliquez votre demande en une phrase</div>
             <p className="text-sm text-muted-foreground">Ex : « Je souhaite obtenir mon NDA pour mon organisme. »</p>
@@ -774,7 +844,7 @@ function ClientRequestWizard({
               type="button"
               className="flex-1"
               disabled={pending}
-              onClick={() => onSubmit(categorie, description.trim())}
+              onClick={() => onSubmit(categorie, description.trim(), ofContact)}
             >
               {pending ? "Création…" : "Créer la demande"}
             </Button>

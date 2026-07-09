@@ -436,7 +436,7 @@ export type Database = {
           mime_type: string | null
           nom: string
           statut: string
-          storage_path: string
+          storage_path: string | null
           taille: number | null
           thumbnail_path: string | null
           uploader_id: string
@@ -454,7 +454,7 @@ export type Database = {
           mime_type?: string | null
           nom: string
           statut?: string
-          storage_path: string
+          storage_path?: string | null
           taille?: number | null
           thumbnail_path?: string | null
           uploader_id: string
@@ -472,7 +472,7 @@ export type Database = {
           mime_type?: string | null
           nom?: string
           statut?: string
-          storage_path?: string
+          storage_path?: string | null
           taille?: number | null
           thumbnail_path?: string | null
           uploader_id?: string
@@ -500,6 +500,8 @@ export type Database = {
           nb_formateurs: number | null
           nb_formations: number | null
           nb_stagiaires: number | null
+          organisme_email: string | null
+          organisme_telephone: string | null
           pole_id: string
           qualiopi_audit_type: string | null
           qualiopi_scopes: string[]
@@ -521,6 +523,8 @@ export type Database = {
           nb_formateurs?: number | null
           nb_formations?: number | null
           nb_stagiaires?: number | null
+          organisme_email?: string | null
+          organisme_telephone?: string | null
           pole_id: string
           qualiopi_audit_type?: string | null
           qualiopi_scopes?: string[]
@@ -542,6 +546,8 @@ export type Database = {
           nb_formateurs?: number | null
           nb_formations?: number | null
           nb_stagiaires?: number | null
+          organisme_email?: string | null
+          organisme_telephone?: string | null
           pole_id?: string
           qualiopi_audit_type?: string | null
           qualiopi_scopes?: string[]

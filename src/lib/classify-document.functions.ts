@@ -37,6 +37,9 @@ export const classifyDocument = createServerFn({ method: "POST" })
     if (docErr) throw new Error(docErr.message);
     if (!doc) throw new Error("Document introuvable");
 
+    if (!doc.storage_path) {
+      return { skipped: true, reason: "aucun fichier joint (déclaré manquant)" };
+    }
     const mime = doc.mime_type ?? "";
     const isImage = mime.startsWith("image/");
     const isPdf = mime === "application/pdf";

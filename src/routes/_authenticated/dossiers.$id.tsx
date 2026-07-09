@@ -417,7 +417,33 @@ function DossierDetail() {
           {!isAdmin && (
             <p className="text-xs text-muted-foreground mt-1">Renseignez l'adresse de votre site (facultatif).</p>
           )}
+        </div>
 
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="text-xs text-muted-foreground">E-mail de l'OF</label>
+            <Input
+              type="email"
+              placeholder="contact@monorganisme.fr"
+              defaultValue={(dossier as any).organisme_email ?? ""}
+              onBlur={(e) => {
+                const v = e.target.value.trim() || null;
+                if (v !== ((dossier as any).organisme_email ?? null)) updateDossier.mutate({ organisme_email: v } as any);
+              }}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Téléphone de l'OF</label>
+            <Input
+              type="tel"
+              placeholder="06 12 34 56 78"
+              defaultValue={(dossier as any).organisme_telephone ?? ""}
+              onBlur={(e) => {
+                const v = e.target.value.trim() || null;
+                if (v !== ((dossier as any).organisme_telephone ?? null)) updateDossier.mutate({ organisme_telephone: v } as any);
+              }}
+            />
+          </div>
         </div>
 
       </Card>
@@ -478,7 +504,7 @@ function DossierDetail() {
           </div>
         ) : (
           <div className="divide-y">
-            {documents.map((d) => {
+            {documents.filter((d) => !!d.storage_path).map((d) => {
               const isImg = d.mime_type?.startsWith("image/");
               const isVid = isVideoMime(d.mime_type);
               return (
@@ -486,7 +512,7 @@ function DossierDetail() {
                   {isVid ? (
                     <VideoPlayer
                       documentId={d.id}
-                      storagePath={d.storage_path}
+                      storagePath={d.storage_path ?? ""}
                       fileName={d.nom}
                       thumbnailPath={d.thumbnail_path}
                     />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -25,7 +25,7 @@ import { notifyEmail } from "@/lib/email/notify";
 type Doc = {
   id: string;
   nom: string;
-  storage_path: string;
+  storage_path: string | null;
   detected_type?: string | null;
   statut?: string | null;
   commentaire?: string | null;
@@ -42,6 +42,7 @@ const REVIEW_STATUSES = [
   { value: "accepte", label: "Accepté", tone: "success" as const, icon: CheckCircle2 },
   { value: "a_corriger", label: "À corriger", tone: "warning" as const, icon: AlertTriangle },
   { value: "refuse", label: "Refusé", tone: "destructive" as const, icon: XCircle },
+  { value: "client_manquant", label: "Déclaré manquant par le client", tone: "warning" as const, icon: XCircle },
 ];
 
 export function reviewStatusMeta(v?: string | null) {
@@ -49,13 +50,13 @@ export function reviewStatusMeta(v?: string | null) {
 }
 
 // Statut affiché au client, plus rassurant qu'un enum technique.
-// 🟡 À envoyer · 🔵 Envoyé, en attente de vérification · 🟢 Validé · 🔴 À corriger
 function friendlyClientStatus(doc: Doc | null) {
   if (!doc) return { label: "À envoyer", dot: "bg-amber-500", cls: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30" };
   const s = doc.statut ?? "en_attente";
   if (s === "accepte") return { label: "Validé", dot: "bg-emerald-500", cls: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" };
   if (s === "a_corriger") return { label: "À corriger", dot: "bg-red-500", cls: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30" };
   if (s === "refuse") return { label: "À corriger", dot: "bg-red-500", cls: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30" };
+  if (s === "client_manquant") return { label: "Vous avez indiqué ne pas l'avoir", dot: "bg-orange-500", cls: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/30" };
   return { label: "Envoyé, en attente", dot: "bg-blue-500", cls: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30" };
 }
 
@@ -112,7 +113,7 @@ function RequiredRow({
   const { user } = useAuth();
   const { isAdmin } = useRole();
   const qc = useQueryClient();
-  const nav = useNavigate();
+  
   const fileInput = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLLIElement>(null);
   const [busy, setBusy] = useState(false);
@@ -139,7 +140,7 @@ function RequiredRow({
   const AdminIcon = doc ? adminMeta.icon : Circle;
 
   const download = async () => {
-    if (!doc) return;
+    if (!doc || !doc.storage_path) return;
     const { data, error } = await supabase.storage
       .from("documents")
       .createSignedUrl(doc.storage_path, 60, { download: doc.nom });
@@ -152,7 +153,9 @@ function RequiredRow({
     mutationFn: async (file: File) => {
       setBusy(true);
       if (doc) {
-        await supabase.storage.from("documents").remove([doc.storage_path]);
+        if (doc.storage_path) {
+          await supabase.storage.from("documents").remove([doc.storage_path]);
+        }
         await supabase.from("documents").delete().eq("id", doc.id);
       }
       const ext = file.name.includes(".") ? file.name.split(".").pop()!.toLowerCase() : "bin";
@@ -231,15 +234,44 @@ function RequiredRow({
     e.target.value = "";
   };
 
-  const askAgence = () => {
-    try {
-      sessionStorage.setItem(
-        "chat-prefill",
-        `Bonjour, je n'ai pas le document suivant : ${req.label}. Pouvez-vous m'aider ?`,
-      );
-    } catch {}
-    nav({ to: "/messages" });
-  };
+  // Marque un document comme "déclaré manquant par le client".
+  // L'agence recevra la déclaration et pourra ensuite valider (dispense)
+  // ou demander malgré tout au client de fournir le document.
+  const [missingDialog, setMissingDialog] = useState(false);
+  const [missingReason, setMissingReason] = useState("");
+  const declareMissing = useMutation({
+    mutationFn: async () => {
+      // Si un doc existait déjà (ex : ancien fichier), on le remplace par un
+      // placeholder "manquant".
+      if (doc) {
+        if (doc.storage_path) {
+          await supabase.storage.from("documents").remove([doc.storage_path]);
+        }
+        await supabase.from("documents").delete().eq("id", doc.id);
+      }
+      const { error } = await supabase.from("documents").insert({
+        dossier_id: dossierId,
+        uploader_id: user!.id,
+        nom: `${req.label} — non détenu`,
+        storage_path: null,
+        from_agence: false,
+        detected_type: req.key,
+        statut: "client_manquant",
+        commentaire: missingReason.trim() || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("L'agence a été informée. Elle reviendra vers vous.");
+      qc.invalidateQueries({ queryKey: ["documents", dossierId] });
+      setMissingDialog(false);
+      setMissingReason("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const askAgence = () => setMissingDialog(true);
+
 
   const badgeClass: Record<string, string> = {
     success: "bg-success/15 text-success border-success/20",
@@ -306,7 +338,39 @@ function RequiredRow({
         <input ref={fileInput} type="file" hidden onChange={onPick} />
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          {doc ? (
+          {doc && doc.statut === "client_manquant" ? (
+            isAdmin ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setStatus.mutate({ statut: "accepte", commentaire: "Le client ne dispose pas de ce document — dispensé par l'agence." })}
+                  title="Le client est dispensé de ce document"
+                  className="border-success/40 text-success hover:bg-success/10"
+                >
+                  <CheckCircle2 className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Ça passe</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setStatus.mutate({ statut: "a_corriger", commentaire: "Ce document reste nécessaire — merci de nous le fournir." })}
+                  title="Le client doit malgré tout fournir ce document"
+                  className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                >
+                  <XCircle className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">À fournir</span>
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowComment((v) => !v)} title="Ajouter un commentaire">
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => setUploadDialog(true)} disabled={busy}>
+                <Upload className="h-4 w-4 mr-1" /> Finalement, je l'ai
+              </Button>
+            )
+          ) : doc ? (
             <>
               <Button size="sm" variant="outline" onClick={download} title="Télécharger">
                 <Download className="h-4 w-4" />
@@ -344,6 +408,7 @@ function RequiredRow({
           )}
         </div>
       </div>
+
 
       {isAdmin && doc && showComment && (
         <div className="mt-3 ml-8 grid gap-2 sm:grid-cols-[180px_1fr] items-start">
@@ -407,6 +472,44 @@ function RequiredRow({
           </DialogContent>
         </Dialog>
       )}
+
+      {!isAdmin && (
+        <Dialog open={missingDialog} onOpenChange={setMissingDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Vous n'avez pas : {req.label}&nbsp;?</DialogTitle>
+              <DialogDescription className="pt-2 text-sm leading-relaxed">
+                Aucun souci. Nous marquons ce document comme <strong>non détenu</strong> puis
+                l'agence vérifiera si vous pouvez en être dispensé ou si nous devons trouver
+                une solution ensemble.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Précision (facultatif)</label>
+              <Textarea
+                rows={3}
+                placeholder="Ex : je n'ai jamais eu de KBIS, je suis auto-entrepreneur…"
+                value={missingReason}
+                onChange={(e) => setMissingReason(e.target.value)}
+                maxLength={500}
+              />
+            </div>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="ghost" onClick={() => setMissingDialog(false)}>Annuler</Button>
+              <Button
+                variant="outline"
+                onClick={() => declareMissing.mutate()}
+                disabled={declareMissing.isPending}
+              >
+                <XCircle className="h-4 w-4 mr-1" />
+                {declareMissing.isPending ? "Envoi…" : "Confirmer : je ne l'ai pas"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+
 
     </li>
   );
