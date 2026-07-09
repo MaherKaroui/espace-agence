@@ -51,17 +51,40 @@ function GroupesIndex() {
   });
 
   const { data: conversations = [] } = useQuery({
-    queryKey: ["conversations-list", myMemberships],
-    enabled: myMemberships.length >= 0,
+    queryKey: ["conversations-list", isAdmin ? "all" : myMemberships.join(",")],
+    enabled: isAdmin || myMemberships.length >= 0,
     queryFn: async () => {
-      if (myMemberships.length === 0) return [] as Conv[];
-      const { data, error } = await supabase
+      let q = supabase
         .from("conversations")
         .select("id, titre, parent_id, created_by, updated_at")
-        .in("id", myMemberships)
         .order("updated_at", { ascending: false });
+      if (!isAdmin) {
+        if (myMemberships.length === 0) return [] as Conv[];
+        q = q.in("id", myMemberships);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Conv[];
+    },
+  });
+
+  // Unread counts per conversation (based on notifications table)
+  const { data: unreadByConv = {} } = useQuery({
+    queryKey: ["group-unread-per-conv", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notifications")
+        .select("link")
+        .eq("user_id", user!.id)
+        .is("read_at", null)
+        .like("link", "/messages/groupes/%");
+      const map: Record<string, number> = {};
+      for (const n of (data ?? []) as { link: string | null }[]) {
+        const id = (n.link ?? "").split("/messages/groupes/")[1];
+        if (id) map[id] = (map[id] ?? 0) + 1;
+      }
+      return map;
     },
   });
 
