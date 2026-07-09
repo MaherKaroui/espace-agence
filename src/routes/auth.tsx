@@ -18,6 +18,9 @@ export const Route = createFileRoute("/auth")({
   // Page d'auth entièrement client-side : évite un mismatch d'hydratation
   // React (#418) car la session Supabase n'est disponible que côté client.
   ssr: false,
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Connexion — IZISuivis" },
@@ -26,6 +29,13 @@ export const Route = createFileRoute("/auth")({
   }),
   component: AuthPage,
 });
+
+// Validate `next` as a same-origin relative path before using it as a redirect.
+function safeNext(next: string | undefined): string | null {
+  if (!next || typeof next !== "string") return null;
+  if (!next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+}
 
 
 const signupSchema = z.object({
