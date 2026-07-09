@@ -417,7 +417,33 @@ function DossierDetail() {
           {!isAdmin && (
             <p className="text-xs text-muted-foreground mt-1">Renseignez l'adresse de votre site (facultatif).</p>
           )}
+        </div>
 
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="text-xs text-muted-foreground">E-mail de l'OF</label>
+            <Input
+              type="email"
+              placeholder="contact@monorganisme.fr"
+              defaultValue={(dossier as any).organisme_email ?? ""}
+              onBlur={(e) => {
+                const v = e.target.value.trim() || null;
+                if (v !== ((dossier as any).organisme_email ?? null)) updateDossier.mutate({ organisme_email: v } as any);
+              }}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Téléphone de l'OF</label>
+            <Input
+              type="tel"
+              placeholder="06 12 34 56 78"
+              defaultValue={(dossier as any).organisme_telephone ?? ""}
+              onBlur={(e) => {
+                const v = e.target.value.trim() || null;
+                if (v !== ((dossier as any).organisme_telephone ?? null)) updateDossier.mutate({ organisme_telephone: v } as any);
+              }}
+            />
+          </div>
         </div>
 
       </Card>
