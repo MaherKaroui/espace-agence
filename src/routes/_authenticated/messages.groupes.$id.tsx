@@ -216,6 +216,10 @@ function GroupePage() {
           <div className="font-display text-base truncate">{conv.titre}</div>
         </div>
         <div className="flex gap-2 shrink-0">
+          <EphemeralSettingsButton
+            scope={{ kind: "group", conversationId: id }}
+            isGroupOwner={isOwner}
+          />
           <div className="lg:hidden">
             <Sheet>
               <SheetTrigger asChild>

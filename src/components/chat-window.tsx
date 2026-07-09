@@ -19,6 +19,7 @@ import { fr } from "date-fns/locale";
 import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
 import { MentionTextarea } from "@/components/mention-textarea";
 import { RichMessageContent } from "@/components/rich-message-content";
+import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
 
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
@@ -235,16 +236,20 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
               {otherTyping ? <span className="text-primary animate-pulse">L'agence est en train d'écrire…</span> : "Messagerie sécurisée"}
             </div>
           </div>
-          <div className="relative shrink-0">
-            <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground pointer-events-none" />
-            <Input
-              className="pl-8 h-9 w-36 sm:w-48"
-              placeholder="Rechercher…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <EphemeralSettingsButton scope={{ kind: "client", clientId }} />
+            <div className="relative">
+              <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground pointer-events-none" />
+              <Input
+                className="pl-8 h-9 w-36 sm:w-48"
+                placeholder="Rechercher…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
         </div>
+        <EphemeralBanner scope={{ kind: "client", clientId }} />
 
         <SwipeableList
           filtered={filtered}
