@@ -299,6 +299,23 @@ function DossiersPage() {
                   <Label htmlFor="description">Description (optionnel)</Label>
                   <Textarea id="description" name="description" rows={3} maxLength={500} />
                 </div>
+                <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
+                  <div className="font-medium text-sm">Organisme de formation (optionnel)</div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="of-email-admin">E-mail de l'OF</Label>
+                      <Input id="of-email-admin" name="organisme_email" type="email" />
+                    </div>
+                    <div>
+                      <Label htmlFor="of-tel-admin">Téléphone de l'OF</Label>
+                      <Input id="of-tel-admin" name="organisme_telephone" type="tel" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="of-site-admin">Site web</Label>
+                      <Input id="of-site-admin" name="site_web" type="url" />
+                    </div>
+                  </div>
+                </div>
                 <Button type="submit" disabled={create.isPending} className="w-full">Créer le dossier</Button>
               </form>
             ) : (
