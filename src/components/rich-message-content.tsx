@@ -30,7 +30,7 @@ export function RichMessageContent({
   return (
     <div className={cn("whitespace-pre-wrap break-words", className)}>
       {segs.map((s, i) => {
-        if (s.kind === "text") return <span key={i}>{s.value}</span>;
+        if (s.kind === "text") return <LinkifiedText key={i} text={s.value} />;
         if (s.kind === "user") {
           const me = s.id === currentUserId;
           return (
