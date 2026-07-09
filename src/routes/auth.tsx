@@ -53,7 +53,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const { next } = Route.useSearch();
   const nextPath = safeNext(next);
-  const redirectTarget = nextPath ?? "/dashboard";
+  
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
   const [showLoginPwd, setShowLoginPwd] = useState(false);
