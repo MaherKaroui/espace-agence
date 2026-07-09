@@ -164,14 +164,15 @@ function DossiersPage() {
       has_stagiaires?: boolean;
       stagiaires?: any[];
       organisme_nom?: string;
+      organisme_email?: string;
+      organisme_telephone?: string;
+      site_web?: string;
     },
   ) => {
     const pole_id = poleForCategorie(categorie);
     if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
     const label = categorieLabel(categorie);
     const organisme = extra?.organisme_nom?.trim();
-    // N'ajoute pas "Demande " si le libellé commence déjà par "Demande"/"Dossier"
-    // (évite "Demande Demande de NDA").
     const alreadyPrefixed = /^(Demande|Dossier)\b/i.test(label);
     const base = alreadyPrefixed ? label : `Demande ${label}`;
     const titre = organisme ? `${base} - ${organisme}` : base;
