@@ -153,7 +153,9 @@ function RequiredRow({
     mutationFn: async (file: File) => {
       setBusy(true);
       if (doc) {
-        await supabase.storage.from("documents").remove([doc.storage_path]);
+        if (doc.storage_path) {
+          await supabase.storage.from("documents").remove([doc.storage_path]);
+        }
         await supabase.from("documents").delete().eq("id", doc.id);
       }
       const ext = file.name.includes(".") ? file.name.split(".").pop()!.toLowerCase() : "bin";
