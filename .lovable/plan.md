@@ -1,82 +1,81 @@
-# Système de gestion des tâches internes — Tableau de bord agence
+## Mode éphémère — plan d'implémentation
 
-## Objectif
-Ajouter un vrai module de gestion des tâches internes à `/admin` (Vue agence) : création, priorités, assignation, échéances, notifications, RLS. Distinct des `taches` existantes (qui sont liées au workflow client d'un dossier).
+Fonctionnalité type Instagram/WhatsApp : les messages disparaissent automatiquement après une durée choisie par conversation.
 
-## 1. Base de données (migration)
+### 1. Portée
 
-### Nouveaux enums
-- `agency_task_priority` : `basse` | `normale` | `haute` | `urgente`
-- `agency_task_status` : `a_faire` | `en_cours` | `bloquee` | `terminee`
+L'app a 3 systèmes de messagerie. Le mode éphémère sera ajouté aux 3 pour rester cohérent :
 
-### Table `agency_tasks`
-Champs métier : `title`, `description`, `priority` (défaut `normale`), `status` (défaut `a_faire`), `due_date`, `created_by`, `assigned_to`, `pole_id`, `client_id` (optionnel), `dossier_id` (optionnel), `attachment_path`, `attachment_name`, `internal_comment`, `completed_at`, `archived_at`.
+- **`messages`** — conversation client ↔ agence (1:1 privée)
+- **`conversations` / `group_messages`** — groupes de discussion
+- **`internal_conversations` / `internal_messages`** — messagerie interne staff (directs + groupes)
 
-### Table `agency_task_comments`
-`task_id`, `user_id`, `content`.
+### 2. Schéma base de données
 
-### Type de notification
-Ajouter `agency_task` à l'enum `notification_type`.
+Ajout sur les 3 tables de conversations :
+- `ephemeral_enabled boolean default false`
+- `ephemeral_duration_seconds int` (nullable)
+- `ephemeral_members_can_edit boolean default false` (groupes uniquement — sinon seul l'admin/owner modifie)
 
-### Grants + RLS (règles)
-- **Voir** : admin/direction voient tout. Manager/consultant voient les tâches de leurs pôles OU assignées à eux OU créées par eux. Client : rien.
-- **Créer** : admin/direction partout. Manager uniquement dans ses pôles.
-- **Modifier** : admin/direction, créateur, assigné, ou membre du pôle (manager).
-- **Archiver/supprimer définitivement** : admin/direction uniquement.
-- **Commentaires** : lisibles/écrits par qui peut voir la tâche.
+Ajout sur les 3 tables de messages :
+- `expires_at timestamptz` (nullable, indexé)
+- `is_system boolean default false` (pour les messages système "Mode éphémère activé…")
 
-### Triggers
-- `updated_at` auto.
-- Notification à l'assigné à la création/réassignation (type `agency_task`, lien `/admin/taches-agence`).
-- Audit log : `agency_task.created`, `.updated`, `.status_changed`, `.completed`, `.archived`.
-- `completed_at` auto à la transition vers `terminee`.
+Pour `messages` (client↔agence) qui n'a pas de table conversation dédiée : stockage des réglages éphémères dans une nouvelle table `client_ephemeral_settings(client_id, enabled, duration_seconds)` — la "conversation" est identifiée par `client_id`.
 
-## 2. Backend server functions
-`src/lib/agency-tasks.functions.ts` (protégées `requireSupabaseAuth`) :
-- `listAgencyTasks` (filtres : bucket, priority, status, assigned_to, pole_id)
-- `createAgencyTask`
-- `updateAgencyTask` (statut, priorité, assigné, échéance, contenu)
-- `archiveAgencyTask`
-- `addTaskComment` / `listTaskComments`
-- `getAgencyTaskKpis` (compteurs jour/urgentes/retard/terminées semaine, par collaborateur, par pôle)
+Trigger `BEFORE INSERT` sur chaque table de messages : si le mode est activé sur la conversation, calcule `expires_at = now() + duration`.
 
-Le RLS fait le vrai gardiennage ; les server fns exposent juste les requêtes typées.
+### 3. Suppression automatique
 
-## 3. UI
+Cron job pg_cron toutes les minutes qui :
+1. Sélectionne les messages où `expires_at < now()`.
+2. Récupère les `attachment_path` associés.
+3. Supprime les fichiers du bucket `chat-files` (via `net.http_post` vers une route TSS `/api/public/hooks/purge-ephemeral` qui utilise `supabaseAdmin` + Storage API).
+4. `DELETE` en cascade les messages (les réponses/threads sont déjà supprimées via `ON DELETE CASCADE` sur `parent_message_id`).
 
-### `/admin` (Vue agence) — ajouts
-- 4 nouvelles cartes KPI : Aujourd'hui · Urgentes · En retard · Terminées cette semaine.
-- Nouveau bloc **« Priorités du jour »** : tableau trié (urgente+retard > urgente > haute > échéance proche > normale > basse), badge couleur priorité (rouge/orange/bleu/gris), badge statut, personne assignée, pôle, échéance. Actions rapides : changer statut, ouvrir détail.
-- Bouton **« Créer une tâche »** (admin/direction/manager) → dialog.
+### 4. Interface utilisateur
 
-### Nouvelle route `/admin/taches-agence`
-Vue complète avec onglets : Urgentes · Aujourd'hui · En retard · Mes tâches · Mon équipe · Terminées · Archivées. Filtres pôle / assigné / priorité / statut. Tableau + drawer détail (commentaires, historique, actions).
+- **Header conversation** : bandeau discret "🔥 Mode éphémère · 24 h" quand actif.
+- **Icône ⏳** à côté des messages éphémères + tooltip "Disparaît dans XX".
+- **Bouton "Paramètres"** ouvrant un `Sheet`/`Dialog` avec :
+  - Switch Activé / Désactivé
+  - Select durée : 5 min, 30 min, 1 h, 6 h, 12 h, 24 h, 3 j, 7 j, 30 j, Personnalisé
+  - (Groupes) Checkbox admin : "Les membres peuvent modifier"
+- **Message système** inséré à chaque changement : "Mode éphémère activé — messages supprimés après 24 h."
 
-### Composants
-- `agency-task-badge.tsx` (priorité + statut, couleurs sémantiques via tokens)
-- `agency-task-form-dialog.tsx` (création/édition)
-- `agency-task-detail-drawer.tsx` (détail + commentaires + actions)
-- `agency-tasks-priority-board.tsx` (bloc dashboard)
+Utilisation des composants existants : `Sheet`, `Switch`, `Select`, `Dialog`, `Badge` (shadcn déjà installés).
 
-### Navigation
-Ajouter « Tâches agence » dans `staffNav` (visible manager+, badge nombre à faire assignées à moi).
+### 5. Permissions
 
-## 4. Notifications
-- À la création avec `assigned_to` : row dans `notifications` (type `agency_task`, lien vers la route).
-- À la réassignation : notif au nouvel assigné.
-- Badge sur l'entrée de nav utilise le count via `notifications` (déjà géré par `app-shell`).
-- Alerte visuelle « en retard » calculée côté client (`due_date < now()` et statut non terminé).
+- **1:1 privé** (client↔agence, direct interne) : chaque participant peut modifier.
+- **Groupe** : owner + admin toujours ; membres seulement si `ephemeral_members_can_edit = true`.
+- Enforcement via RLS `UPDATE` policies sur les tables conversations.
 
-## 5. Sécurité
-- RLS strictes basées sur `has_role` + `is_pole_member` (déjà existants).
-- Tous les server fns passent par `requireSupabaseAuth`.
-- Client : aucune policy ne les inclut → tables invisibles.
-- Attachements : réutiliser le bucket `documents` avec un préfixe `agency-tasks/<task_id>/`.
+### 6. Fichiers modifiés / créés
 
-## 6. Détails techniques
-- Enum `notification_type` étendu via `ALTER TYPE ... ADD VALUE` dans migration.
-- Index : `(assigned_to, status)`, `(pole_id, status)`, `(due_date) WHERE archived_at IS NULL`.
-- Tri « priorité du jour » côté SQL via CASE.
+**Migration** (1 fichier) : colonnes, index sur `expires_at`, table `client_ephemeral_settings`, triggers `set_expires_at`, RLS policies, pg_cron.
 
-## Critères de validation
-Admin crée/assigne une tâche, elle apparaît chez l'assigné, priorités colorées, tâches urgentes/retard en tête, RLS bloque les non-autorisés, notifications reçues, workflow jusqu'à `terminee` fonctionne, archivage OK.
+**Backend** :
+- `src/routes/api/public/hooks/purge-ephemeral.ts` — route appelée par le cron, supprime fichiers Storage + messages.
+
+**Frontend** — nouveau composant réutilisable :
+- `src/components/ephemeral-settings-dialog.tsx` — le Sheet de réglages
+- `src/components/ephemeral-header-badge.tsx` — bandeau header + icône message
+
+**Intégration** dans les 3 fenêtres de chat existantes :
+- `src/components/chat-window.tsx`
+- `src/components/group-chat-window.tsx`
+- `src/components/internal-chat-window.tsx` (si présent, sinon dans `admin.internal-messages.$id.tsx`)
+- `src/routes/_authenticated/messages.groupes.$id.tsx` — ajout du bouton dans le header
+
+### 7. UX
+
+- Suppression invisible côté utilisateur (le message disparaît juste de la liste au rafraîchissement realtime).
+- Fonctionne sur texte, images, vidéos, documents, messages vocaux (tous stockés via `attachment_path`).
+- Realtime déjà en place : les DELETE sont propagés automatiquement.
+
+### Notes techniques
+
+- Les fichiers supprimés du bucket sont retirés définitivement (pas de corbeille).
+- Les threads/réactions/reads : `ON DELETE CASCADE` déjà configuré sur les FK.
+- Le cron traite max 500 messages par exécution pour éviter les timeouts.
