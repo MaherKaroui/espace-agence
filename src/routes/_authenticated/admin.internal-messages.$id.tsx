@@ -32,6 +32,7 @@ import { CreateTaskFromMessageDialog } from "@/components/create-task-from-messa
 import { MessageReactions } from "@/components/message-reactions";
 import { ThreadPane } from "@/components/thread-pane";
 import { MessageSquareReply, Sparkles as SparklesIcon } from "lucide-react";
+import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
 
 export const Route = createFileRoute("/_authenticated/admin/internal-messages/$id")({
   head: () => ({ meta: [{ title: "Conversation interne" }] }),
