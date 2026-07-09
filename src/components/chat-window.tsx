@@ -396,12 +396,14 @@ function SwipeableList({
   isAdmin,
   otherTyping,
   bottomRef,
+  senderMap,
 }: {
   filtered: any[];
   user: any;
   isAdmin: boolean;
   otherTyping: boolean;
   bottomRef: React.RefObject<HTMLDivElement | null>;
+  senderMap?: Map<string, { name: string; initials: string }>;
 }) {
   const { dragX, dragging, max, containerProps } = useSwipeReveal(120);
   const shift = { transform: `translateX(-${dragX}px)`, transition: dragging ? "none" : "transform 0.25s ease" };
