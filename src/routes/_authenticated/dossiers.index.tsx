@@ -62,6 +62,9 @@ function DossiersPage() {
       categorie: string;
       pole_id: string;
       description: string;
+      site_web?: string | null;
+      organisme_email?: string | null;
+      organisme_telephone?: string | null;
       qualiopi_audit_type?: string | null;
       qualiopi_scopes?: string[];
       nb_stagiaires?: number | null;
@@ -76,6 +79,9 @@ function DossiersPage() {
         categorie: payload.categorie as any,
         pole_id: payload.pole_id,
         description: payload.description || null,
+        site_web: payload.site_web?.trim() || null,
+        organisme_email: payload.organisme_email?.trim() || null,
+        organisme_telephone: payload.organisme_telephone?.trim() || null,
       };
       if (payload.categorie === "qualiopi") {
         row.qualiopi_audit_type = payload.qualiopi_audit_type ?? null;
