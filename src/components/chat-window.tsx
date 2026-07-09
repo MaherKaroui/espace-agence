@@ -434,7 +434,7 @@ function SwipeableList({
         return (
           <div key={m.id} className="relative">
             <div style={shift}>
-              <MessageBubble m={m} isMine={isMine} isAdmin={isAdmin} />
+              <MessageBubble m={m} isMine={isMine} isAdmin={isAdmin} sender={senderMap?.get(m.sender_id)} />
             </div>
             <div
               className="absolute top-0 h-full flex items-center text-[11px] text-muted-foreground pl-2 pointer-events-none"
