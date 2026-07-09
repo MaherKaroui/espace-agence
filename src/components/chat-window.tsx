@@ -24,7 +24,7 @@ import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isAdmin, isStaff } = useRole();
   const qc = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -258,7 +258,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <EphemeralSettingsButton scope={{ kind: "client", clientId }} />
+            {isStaff && <EphemeralSettingsButton scope={{ kind: "client", clientId }} />}
             <div className="relative">
               <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground pointer-events-none" />
               <Input
