@@ -24,7 +24,7 @@ import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isAdmin, isStaff } = useRole();
   const qc = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
