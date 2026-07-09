@@ -338,7 +338,39 @@ function RequiredRow({
         <input ref={fileInput} type="file" hidden onChange={onPick} />
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          {doc ? (
+          {doc && doc.statut === "client_manquant" ? (
+            isAdmin ? (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setStatus.mutate({ statut: "accepte", commentaire: "Le client ne dispose pas de ce document — dispensé par l'agence." })}
+                  title="Le client est dispensé de ce document"
+                  className="border-success/40 text-success hover:bg-success/10"
+                >
+                  <CheckCircle2 className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Ça passe</span>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setStatus.mutate({ statut: "a_corriger", commentaire: "Ce document reste nécessaire — merci de nous le fournir." })}
+                  title="Le client doit malgré tout fournir ce document"
+                  className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                >
+                  <XCircle className="h-4 w-4 sm:mr-1" />
+                  <span className="hidden sm:inline">À fournir</span>
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowComment((v) => !v)} title="Ajouter un commentaire">
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => setUploadDialog(true)} disabled={busy}>
+                <Upload className="h-4 w-4 mr-1" /> Finalement, je l'ai
+              </Button>
+            )
+          ) : doc ? (
             <>
               <Button size="sm" variant="outline" onClick={download} title="Télécharger">
                 <Download className="h-4 w-4" />
@@ -376,6 +408,7 @@ function RequiredRow({
           )}
         </div>
       </div>
+
 
       {isAdmin && doc && showComment && (
         <div className="mt-3 ml-8 grid gap-2 sm:grid-cols-[180px_1fr] items-start">
