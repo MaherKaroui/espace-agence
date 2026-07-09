@@ -519,7 +519,7 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
             </div>
           </div>
         ) : (
-          m.content && <RichMessageContent content={m.content} className="text-sm" />
+          m.content && <RichMessageContent content={m.content} className="text-sm" inverse={isMine} />
         )}
         <div className={`text-[10px] mt-1 ${isMine ? "text-primary-foreground/70 text-right" : "text-muted-foreground"}`}>
           {format(new Date(m.created_at), "HH:mm", { locale: fr })}

@@ -610,7 +610,7 @@ function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean
             </div>
           </div>
         ) : (
-          m.content && <RichMessageContent content={m.content} className="text-sm" />
+          m.content && <RichMessageContent content={m.content} className="text-sm" inverse={isMine} />
         )}
         <div className={`text-[10px] mt-1 flex items-center gap-1 flex-wrap ${isMine ? "text-primary-foreground/70 justify-end" : "text-muted-foreground"}`}>
           {format(new Date(m.created_at), "HH:mm", { locale: fr })}

@@ -126,7 +126,7 @@ export function ThreadPane({
             <div className="text-[11px] font-medium text-muted-foreground mb-1">
               {nameFor(parent.sender_id)} · {formatDistanceToNow(new Date(parent.created_at), { addSuffix: true, locale: fr })}
             </div>
-            {parent.content && <RichMessageContent content={parent.content} currentUserId={userId} className="text-sm" />}
+            {parent.content && <RichMessageContent content={parent.content} currentUserId={userId} className="text-sm" inverse={parent.sender_id === userId} />}
             <div className="mt-2">
               <MessageReactions messageId={parent.id} currentUserId={userId} />
             </div>
@@ -148,7 +148,7 @@ export function ThreadPane({
                   )}
                 >
                   {!mine && <div className="text-[10px] font-medium opacity-80 mb-0.5">{nameFor(m.sender_id)}</div>}
-                  {m.content && <RichMessageContent content={m.content} currentUserId={userId} />}
+                  {m.content && <RichMessageContent content={m.content} currentUserId={userId} inverse={mine} />}
                   <div className={cn("text-[10px] mt-0.5", mine ? "opacity-80" : "text-muted-foreground")}>
                     {formatDistanceToNow(new Date(m.created_at), { addSuffix: true, locale: fr })}
                   </div>
