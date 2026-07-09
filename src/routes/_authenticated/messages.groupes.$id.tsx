@@ -251,6 +251,8 @@ function GroupePage() {
         </div>
       </div>
 
+      <EphemeralBanner scope={{ kind: "group", conversationId: id }} />
+
       <div className="flex-1 min-h-0 flex flex-col">
         <div className="hidden lg:grid grid-cols-[1fr_18rem] gap-4 flex-1 min-h-0">
           <GroupChatWindow conversationId={id} title={conv.titre} memberNames={memberNames} className="h-full" />
