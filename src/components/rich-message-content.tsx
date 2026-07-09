@@ -30,7 +30,7 @@ export function RichMessageContent({
   return (
     <div className={cn("whitespace-pre-wrap break-words", className)}>
       {segs.map((s, i) => {
-        if (s.kind === "text") return <span key={i}>{s.value}</span>;
+        if (s.kind === "text") return <LinkifiedText key={i} text={s.value} />;
         if (s.kind === "user") {
           const me = s.id === currentUserId;
           return (
@@ -64,4 +64,35 @@ export function RichMessageContent({
       })}
     </div>
   );
+}
+
+// Auto-linkify URLs, emails, and www.* inside plain text segments.
+const URL_RE = /(\bhttps?:\/\/[^\s<>()]+[^\s<>().,;:!?"'])|(\bwww\.[^\s<>()]+[^\s<>().,;:!?"'])|([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
+
+function LinkifiedText({ text }: { text: string }) {
+  const nodes: React.ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  URL_RE.lastIndex = 0;
+  while ((m = URL_RE.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    const raw = m[0];
+    const isEmail = !!m[3];
+    const href = isEmail ? `mailto:${raw}` : raw.startsWith("http") ? raw : `https://${raw}`;
+    nodes.push(
+      <a
+        key={`${m.index}-${raw}`}
+        href={href}
+        target={isEmail ? undefined : "_blank"}
+        rel={isEmail ? undefined : "noopener noreferrer"}
+        className="text-primary underline underline-offset-2 hover:opacity-80 break-all"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {raw}
+      </a>,
+    );
+    last = m.index + raw.length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return <>{nodes.map((n, i) => <span key={i}>{n}</span>)}</>;
 }
