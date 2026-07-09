@@ -111,7 +111,7 @@ function RequiredRow({
   doc: Doc | null;
 }) {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isStaff: isAdmin } = useRole();
   const qc = useQueryClient();
   
   const fileInput = useRef<HTMLInputElement>(null);
