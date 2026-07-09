@@ -234,15 +234,44 @@ function RequiredRow({
     e.target.value = "";
   };
 
-  const askAgence = () => {
-    try {
-      sessionStorage.setItem(
-        "chat-prefill",
-        `Bonjour, je n'ai pas le document suivant : ${req.label}. Pouvez-vous m'aider ?`,
-      );
-    } catch {}
-    nav({ to: "/messages" });
-  };
+  // Marque un document comme "déclaré manquant par le client".
+  // L'agence recevra la déclaration et pourra ensuite valider (dispense)
+  // ou demander malgré tout au client de fournir le document.
+  const [missingDialog, setMissingDialog] = useState(false);
+  const [missingReason, setMissingReason] = useState("");
+  const declareMissing = useMutation({
+    mutationFn: async () => {
+      // Si un doc existait déjà (ex : ancien fichier), on le remplace par un
+      // placeholder "manquant".
+      if (doc) {
+        if (doc.storage_path) {
+          await supabase.storage.from("documents").remove([doc.storage_path]);
+        }
+        await supabase.from("documents").delete().eq("id", doc.id);
+      }
+      const { error } = await supabase.from("documents").insert({
+        dossier_id: dossierId,
+        uploader_id: user!.id,
+        nom: `${req.label} — non détenu`,
+        storage_path: null,
+        from_agence: false,
+        detected_type: req.key,
+        statut: "client_manquant",
+        commentaire: missingReason.trim() || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("L'agence a été informée. Elle reviendra vers vous.");
+      qc.invalidateQueries({ queryKey: ["documents", dossierId] });
+      setMissingDialog(false);
+      setMissingReason("");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const askAgence = () => setMissingDialog(true);
+
 
   const badgeClass: Record<string, string> = {
     success: "bg-success/15 text-success border-success/20",
