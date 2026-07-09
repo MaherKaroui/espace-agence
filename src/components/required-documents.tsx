@@ -473,6 +473,44 @@ function RequiredRow({
         </Dialog>
       )}
 
+      {!isAdmin && (
+        <Dialog open={missingDialog} onOpenChange={setMissingDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Vous n'avez pas : {req.label}&nbsp;?</DialogTitle>
+              <DialogDescription className="pt-2 text-sm leading-relaxed">
+                Aucun souci. Nous marquons ce document comme <strong>non détenu</strong> puis
+                l'agence vérifiera si vous pouvez en être dispensé ou si nous devons trouver
+                une solution ensemble.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Précision (facultatif)</label>
+              <Textarea
+                rows={3}
+                placeholder="Ex : je n'ai jamais eu de KBIS, je suis auto-entrepreneur…"
+                value={missingReason}
+                onChange={(e) => setMissingReason(e.target.value)}
+                maxLength={500}
+              />
+            </div>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="ghost" onClick={() => setMissingDialog(false)}>Annuler</Button>
+              <Button
+                variant="outline"
+                onClick={() => declareMissing.mutate()}
+                disabled={declareMissing.isPending}
+              >
+                <XCircle className="h-4 w-4 mr-1" />
+                {declareMissing.isPending ? "Envoi…" : "Confirmer : je ne l'ai pas"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+
+
     </li>
   );
 }
