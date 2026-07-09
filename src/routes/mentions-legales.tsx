@@ -31,7 +31,7 @@ function MentionsLegales() {
           RCS Nanterre n° 988 018 479<br />
           TVA intracommunautaire : FR65988018479<br />
           Siège social : 15 rue Auguste Gervais, 92130 Issy-les-Moulineaux, France<br />
-          E-mail : <a href="mailto:admin@izi-business.com">admin@izi-business.com</a>
+          E-mail : <a href="mailto:admin@izisuivis.com">admin@izisuivis.com</a>
         </p>
 
         <h2 className="font-display text-xl mt-8">Directrice de la publication</h2>
@@ -51,7 +51,7 @@ function MentionsLegales() {
         </p>
 
         <h2 className="font-display text-xl mt-8">Contact</h2>
-        <p>Pour toute question relative au site : <a href="mailto:admin@izi-business.com">admin@izi-business.com</a>.</p>
+        <p>Pour toute question relative au site : <a href="mailto:admin@izisuivis.com">admin@izisuivis.com</a>.</p>
       </main>
       <LegalFooter />
     </div>

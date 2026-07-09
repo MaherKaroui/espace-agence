@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client'
+import { APP_URL } from '@/lib/app-url'
 
 export interface SendEmailArgs {
   templateName: string
@@ -22,7 +23,10 @@ export async function sendTransactionalEmail(args: SendEmailArgs): Promise<boole
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(args),
+      body: JSON.stringify({
+        ...args,
+        templateData: { ...(args.templateData || {}), appUrl: APP_URL },
+      }),
     })
     if (!res.ok) {
       console.warn('sendTransactionalEmail failed', res.status, await res.text().catch(() => ''))

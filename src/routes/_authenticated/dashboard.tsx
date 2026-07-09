@@ -14,6 +14,7 @@ import { FolderOpen, FileText, Clock, CheckCircle2, AlertCircle, Upload, Message
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { APP_URL } from "@/lib/app-url";
 
 
 
@@ -49,7 +50,7 @@ function Dashboard() {
     const prenom = (user.user_metadata as any)?.prenom ?? "";
     const nom = (user.user_metadata as any)?.nom ?? "";
     const clientName = `${prenom} ${nom}`.trim() || user.email || "Client";
-    const appUrl = window.location.origin;
+    const appUrl = APP_URL;
     Promise.all([
       sendTransactionalEmail({
         templateName: "admin-new-client",

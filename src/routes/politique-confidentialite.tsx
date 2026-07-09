@@ -28,7 +28,7 @@ function Privacy() {
         <h2 className="font-display text-xl mt-8">1. Responsable du traitement</h2>
         <p>
           <strong>FD CERTIF EXPERT</strong>, 15 rue Auguste Gervais, 92130 Issy-les-Moulineaux.<br />
-          Contact : <a href="mailto:admin@izi-business.com">admin@izi-business.com</a>.
+          Contact : <a href="mailto:admin@izisuivis.com">admin@izisuivis.com</a>.
         </p>
 
         <h2 className="font-display text-xl mt-8">2. Données collectées</h2>
@@ -76,7 +76,7 @@ function Privacy() {
         <p>
           Vous disposez d'un droit d'accès, de rectification, d'effacement, de portabilité, de limitation et d'opposition. Vous pouvez les
           exercer via l'espace <Link to="/mes-donnees" className="text-primary underline">Mes données</Link> une fois connecté, ou en écrivant à
-          <a href="mailto:admin@izi-business.com"> admin@izi-business.com</a>. Vous pouvez également introduire une réclamation auprès de la
+          <a href="mailto:admin@izisuivis.com"> admin@izisuivis.com</a>. Vous pouvez également introduire une réclamation auprès de la
           <a href="https://www.cnil.fr" target="_blank" rel="noreferrer"> CNIL</a>.
         </p>
 

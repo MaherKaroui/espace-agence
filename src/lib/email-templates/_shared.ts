@@ -1,4 +1,4 @@
-// Shared inline styles for all IZI Business email templates.
+// Shared inline styles for all IZISuivis email templates.
 // Keep dark-safe (Body always white); brand accent = slate/indigo.
 export const styles = {
   main: { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' },

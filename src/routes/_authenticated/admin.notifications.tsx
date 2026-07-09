@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useServerFn } from "@tanstack/react-start";
 import { previewEmailTemplate } from "@/lib/preview-email.functions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { APP_URL } from "@/lib/app-url";
 
 export const Route = createFileRoute("/_authenticated/admin/notifications")({
   head: () => ({ meta: [{ title: "Notifications & emails — Admin" }] }),
@@ -50,6 +51,19 @@ const STATUS_META: Record<string, { label: string; cls: string; Icon: any }> = {
   suppressed: { label: "Bloqué", cls: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30", Icon: AlertCircle },
 };
 
+function displayRecipient(email: string | null) {
+  if (!email) return "—";
+  return email.replace(/@izi-business\.com$/i, "@izisuivis.com").replace(/@izibusiness\.com$/i, "@izisuivis.com");
+}
+
+function displayError(message: string | null) {
+  if (!message) return null;
+  if (message.includes("domain_not_verified") || message.includes("no_matching_sender")) {
+    return "Ancienne erreur de domaine email avant correction.";
+  }
+  return message;
+}
+
 function AdminNotifications() {
   const qc = useQueryClient();
   const [testEmail, setTestEmail] = useState("");
@@ -80,7 +94,7 @@ function AdminNotifications() {
     queryFn: async () => {
       const { data, error } = await supabase.from("email_settings").select("*").eq("id", 1).maybeSingle();
       if (error) throw error;
-      return data ?? { id: 1, admin_email: "admin@izi-business.com", disabled_templates: [] as string[] };
+      return data ?? { id: 1, admin_email: "admin@izisuivis.com", disabled_templates: [] as string[] };
     },
   });
 
@@ -163,7 +177,7 @@ function AdminNotifications() {
       templateName: "welcome-client",
       recipientEmail: testEmail,
       idempotencyKey: `test-${Date.now()}`,
-      templateData: { prenom: "Test", appUrl: window.location.origin },
+      templateData: { prenom: "Test", appUrl: APP_URL },
     });
     if (ok) {
       toast.success("Email de test envoyé (voir historique)");
@@ -203,7 +217,7 @@ function AdminNotifications() {
             <div className="flex gap-2 max-w-md">
               <Input
                 type="email"
-                defaultValue={settings?.admin_email ?? "admin@izi-business.com"}
+                defaultValue={settings?.admin_email ?? "admin@izisuivis.com"}
                 onBlur={(e) => {
                   const v = e.target.value.trim();
                   if (v && v !== settings?.admin_email) saveSettings.mutate({ admin_email: v });
@@ -296,10 +310,10 @@ function AdminNotifications() {
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{l.template_name || "—"}</div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {l.recipient_email || "—"} · {formatDistanceToNow(new Date(l.created_at), { addSuffix: true, locale: fr })}
+                        {displayRecipient(l.recipient_email)} · {formatDistanceToNow(new Date(l.created_at), { addSuffix: true, locale: fr })}
                       </div>
-                      {l.error_message && (
-                        <div className="text-xs text-red-600 mt-1 truncate">{l.error_message}</div>
+                      {displayError(l.error_message) && (
+                        <div className="text-xs text-red-600 mt-1 truncate">{displayError(l.error_message)}</div>
                       )}
                     </div>
                   </div>

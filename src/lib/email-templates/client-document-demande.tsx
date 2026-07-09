@@ -35,7 +35,7 @@ const Email = ({ prenom, dossierTitre, documentLabel, message, dossierId, appUrl
           </Section>
         )}
         <Hr style={s.hr} />
-        <Text style={s.footer}>IZISuivis · IZI Business</Text>
+        <Text style={s.footer}>IZISuivis</Text>
       </Container>
     </Body>
   </Html>

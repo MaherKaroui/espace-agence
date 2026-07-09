@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, MailCheck, MailX, MailMinus } from 'lucide-react'
 
 export const Route = createFileRoute('/unsubscribe')({
-  head: () => ({ meta: [{ title: 'Désabonnement — IZI Business' }] }),
+  head: () => ({ meta: [{ title: 'Désabonnement — IZISuivis' }] }),
   component: UnsubscribePage,
 })
 
@@ -62,7 +62,7 @@ function UnsubscribePage() {
         {state.kind === 'confirm' && <>
           <MailMinus className="h-10 w-10 mx-auto text-primary" />
           <h1 className="font-display text-xl">Confirmer le désabonnement</h1>
-          <p className="text-sm text-muted-foreground">Vous ne recevrez plus d'e-mails de la part d'IZI Business.</p>
+          <p className="text-sm text-muted-foreground">Vous ne recevrez plus d'e-mails de la part d'IZISuivis.</p>
           <Button onClick={confirm} className="w-full">Me désabonner</Button>
         </>}
         {state.kind === 'submitting' && <><Loader2 className="h-8 w-8 mx-auto animate-spin text-muted-foreground" /><p>Traitement…</p></>}

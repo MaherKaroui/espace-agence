@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client'
 import { sendTransactionalEmail, type SendEmailArgs } from './send'
+import { APP_URL } from '@/lib/app-url'
 
 /**
  * Human labels for dossier statuts + short explanations for the client email.
@@ -33,9 +34,8 @@ export async function isTemplateEnabled(templateName: string): Promise<boolean> 
 export async function notifyEmail(args: SendEmailArgs & { templateData?: Record<string, any> }): Promise<boolean> {
   const enabled = await isTemplateEnabled(args.templateName)
   if (!enabled) return false
-  const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
   return sendTransactionalEmail({
     ...args,
-    templateData: { appUrl, ...(args.templateData || {}) },
+    templateData: { ...(args.templateData || {}), appUrl: APP_URL },
   })
 }
