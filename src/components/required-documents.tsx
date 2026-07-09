@@ -42,6 +42,7 @@ const REVIEW_STATUSES = [
   { value: "accepte", label: "Accepté", tone: "success" as const, icon: CheckCircle2 },
   { value: "a_corriger", label: "À corriger", tone: "warning" as const, icon: AlertTriangle },
   { value: "refuse", label: "Refusé", tone: "destructive" as const, icon: XCircle },
+  { value: "client_manquant", label: "Déclaré manquant par le client", tone: "warning" as const, icon: XCircle },
 ];
 
 export function reviewStatusMeta(v?: string | null) {
@@ -49,13 +50,13 @@ export function reviewStatusMeta(v?: string | null) {
 }
 
 // Statut affiché au client, plus rassurant qu'un enum technique.
-// 🟡 À envoyer · 🔵 Envoyé, en attente de vérification · 🟢 Validé · 🔴 À corriger
 function friendlyClientStatus(doc: Doc | null) {
   if (!doc) return { label: "À envoyer", dot: "bg-amber-500", cls: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30" };
   const s = doc.statut ?? "en_attente";
   if (s === "accepte") return { label: "Validé", dot: "bg-emerald-500", cls: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" };
   if (s === "a_corriger") return { label: "À corriger", dot: "bg-red-500", cls: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30" };
   if (s === "refuse") return { label: "À corriger", dot: "bg-red-500", cls: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30" };
+  if (s === "client_manquant") return { label: "Vous avez indiqué ne pas l'avoir", dot: "bg-orange-500", cls: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/30" };
   return { label: "Envoyé, en attente", dot: "bg-blue-500", cls: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30" };
 }
 
