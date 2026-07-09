@@ -147,7 +147,7 @@ function RendezVousPage() {
           clientEmail: user?.email,
           startsAt: vars.start.toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }),
           notes: vars.notes || undefined,
-          appUrl: window.location.origin,
+          appUrl: "https://izisuivis.com",
         },
       });
       setSelected(null);

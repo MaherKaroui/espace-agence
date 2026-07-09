@@ -29,7 +29,7 @@ const Email = ({ prenom, dossierTitre, message, dossierId, appUrl }: Props) => (
           </Section>
         )}
         <Hr style={s.hr} />
-        <Text style={s.footer}>IZISuivis · IZI Business</Text>
+        <Text style={s.footer}>IZISuivis</Text>
       </Container>
     </Body>
   </Html>

@@ -11,7 +11,7 @@ interface Props {
 const Email = ({ clientName, clientEmail, appUrl }: Props) => (
   <Html lang="fr">
     <Head />
-    <Preview>Nouveau client inscrit sur IZI Business</Preview>
+    <Preview>Nouveau client inscrit sur IZISuivis</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Nouveau client</Heading>
@@ -28,7 +28,7 @@ const Email = ({ clientName, clientEmail, appUrl }: Props) => (
           </Section>
         )}
         <Hr style={hr} />
-        <Text style={footer}>IZI Business — notification automatique</Text>
+        <Text style={footer}>IZISuivis — notification automatique</Text>
       </Container>
     </Body>
   </Html>
@@ -38,7 +38,7 @@ export const template = {
   component: Email,
   subject: 'Nouveau client inscrit',
   displayName: 'Admin — Nouveau client',
-  to: 'admin@izi-business.com',
+  to: 'admin@izisuivis.com',
   previewData: { clientName: 'Marie Dupont', clientEmail: 'marie@example.com' },
 } satisfies TemplateEntry
 

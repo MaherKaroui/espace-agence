@@ -31,7 +31,7 @@ const Email = ({ clientName, clientEmail, startsAt, notes, appUrl }: Props) => (
           </Section>
         )}
         <Hr style={hr} />
-        <Text style={footer}>IZI Business — notification automatique</Text>
+        <Text style={footer}>IZISuivis — notification automatique</Text>
       </Container>
     </Body>
   </Html>
@@ -41,7 +41,7 @@ export const template = {
   component: Email,
   subject: 'Nouvelle demande de rendez-vous',
   displayName: 'Admin — Nouveau RDV',
-  to: 'admin@izi-business.com',
+  to: 'admin@izisuivis.com',
   previewData: { clientName: 'Marie Dupont', clientEmail: 'marie@example.com', startsAt: '15/07/2026 à 10h00', notes: 'Souhaite discuter de son projet Qualiopi.' },
 } satisfies TemplateEntry
 

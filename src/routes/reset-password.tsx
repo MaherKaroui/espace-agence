@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { APP_URL } from "@/lib/app-url";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({ meta: [{ title: "Réinitialiser le mot de passe" }] }),
@@ -31,7 +32,7 @@ function ResetPage() {
     if (!email) return;
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${APP_URL}/reset-password`,
     });
     setLoading(false);
     if (error) toast.error(error.message);

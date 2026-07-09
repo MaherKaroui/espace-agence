@@ -10,12 +10,12 @@ interface Props {
 const Email = ({ prenom, appUrl }: Props) => (
   <Html lang="fr">
     <Head />
-    <Preview>Bienvenue sur IZI Business</Preview>
+    <Preview>Bienvenue sur IZISuivis</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Bienvenue{prenom ? ` ${prenom}` : ''} 👋</Heading>
         <Text style={text}>
-          Nous sommes ravis de vous accueillir sur votre espace IZI Business. Vous pouvez dès à présent créer vos dossiers, échanger avec l'équipe et prendre rendez-vous en quelques clics.
+          Nous sommes ravis de vous accueillir sur votre espace IZISuivis. Vous pouvez dès à présent créer vos dossiers, échanger avec l'équipe et prendre rendez-vous en quelques clics.
         </Text>
         <Section style={card}>
           <Text style={value}>Prochaines étapes :</Text>
@@ -29,7 +29,7 @@ const Email = ({ prenom, appUrl }: Props) => (
           </Section>
         )}
         <Hr style={hr} />
-        <Text style={footer}>L'équipe IZI Business est à vos côtés à chaque étape.</Text>
+        <Text style={footer}>L'équipe IZISuivis est à vos côtés à chaque étape.</Text>
       </Container>
     </Body>
   </Html>
@@ -37,7 +37,7 @@ const Email = ({ prenom, appUrl }: Props) => (
 
 export const template = {
   component: Email,
-  subject: 'Bienvenue sur IZI Business',
+  subject: 'Bienvenue sur IZISuivis',
   displayName: 'Client — Bienvenue',
   previewData: { prenom: 'Marie', appUrl: 'https://izisuivis.com' },
 } satisfies TemplateEntry

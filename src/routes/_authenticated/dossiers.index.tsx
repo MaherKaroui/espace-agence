@@ -105,7 +105,7 @@ function DossiersPage() {
           dossierTitre: (payload as any)?.titre,
           categorie: categorieLabel((payload as any)?.categorie),
           dossierId: data?.id,
-          appUrl: window.location.origin,
+          appUrl: "https://izisuivis.com",
         },
       });
       // Confirmer au client la création du dossier
@@ -119,7 +119,7 @@ function DossiersPage() {
             dossierTitre: (payload as any)?.titre,
             categorie: categorieLabel((payload as any)?.categorie),
             dossierId: data?.id,
-            appUrl: window.location.origin,
+            appUrl: "https://izisuivis.com",
           },
         });
       }

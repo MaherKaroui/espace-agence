@@ -36,7 +36,7 @@ const Email = ({ prenom, dossierTitre, categorie, dossierId, appUrl }: Props) =>
           </Section>
         )}
         <Hr style={s.hr} />
-        <Text style={s.footer}>IZISuivis · IZI Business — l'équipe est à vos côtés à chaque étape.</Text>
+        <Text style={s.footer}>IZISuivis — l'équipe est à vos côtés à chaque étape.</Text>
       </Container>
     </Body>
   </Html>

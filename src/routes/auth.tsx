@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { APP_URL } from "@/lib/app-url";
 
 
 export const Route = createFileRoute("/auth")({
@@ -84,7 +85,7 @@ function AuthPage() {
     const { data: sud, error } = await supabase.auth.signUp({
       email, password,
       options: {
-        emailRedirectTo: `${window.location.origin}${nextPath ?? "/"}`,
+        emailRedirectTo: `${APP_URL}${nextPath ?? "/"}`,
         data: { nom, prenom },
       },
     });
@@ -94,7 +95,7 @@ function AuthPage() {
     // Notifications (fire-and-forget) — nécessitent une session (auto-confirm activé
     // ou email de confirmation désactivé). Sinon les emails sont envoyés à la 1re connexion.
     const clientName = `${prenom} ${nom}`.trim();
-    const appUrl = window.location.origin;
+    const appUrl = APP_URL;
     if (sud.session) {
       sendTransactionalEmail({
         templateName: "admin-new-client",
