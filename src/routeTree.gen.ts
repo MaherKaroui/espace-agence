@@ -53,6 +53,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksPurgeEphemeralRouteImport } from './routes/api/public/hooks/purge-ephemeral'
 import { Route as AuthenticatedMessagesGroupesIdRouteImport } from './routes/_authenticated/messages.groupes.$id'
 import { Route as AuthenticatedAdminMessagesClientIdRouteImport } from './routes/_authenticated/admin.messages.$clientId'
 import { Route as AuthenticatedAdminInternalMessagesIdRouteImport } from './routes/_authenticated/admin.internal-messages.$id'
@@ -301,6 +302,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksPurgeEphemeralRoute =
+  ApiPublicHooksPurgeEphemeralRouteImport.update({
+    id: '/api/public/hooks/purge-ephemeral',
+    path: '/api/public/hooks/purge-ephemeral',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedMessagesGroupesIdRoute =
   AuthenticatedMessagesGroupesIdRouteImport.update({
     id: '/messages/groupes/$id',
@@ -372,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
+  '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -422,6 +430,7 @@ export interface FileRoutesByTo {
   '/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
+  '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -474,6 +483,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
   '/_authenticated/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/_authenticated/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
+  '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -526,6 +536,7 @@ export interface FileRouteTypes {
     | '/admin/internal-messages/$id'
     | '/admin/messages/$clientId'
     | '/messages/groupes/$id'
+    | '/api/public/hooks/purge-ephemeral'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -576,6 +587,7 @@ export interface FileRouteTypes {
     | '/admin/internal-messages/$id'
     | '/admin/messages/$clientId'
     | '/messages/groupes/$id'
+    | '/api/public/hooks/purge-ephemeral'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -627,6 +639,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/internal-messages/$id'
     | '/_authenticated/admin/messages/$clientId'
     | '/_authenticated/messages/groupes/$id'
+    | '/api/public/hooks/purge-ephemeral'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -654,6 +667,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHooksPurgeEphemeralRoute: typeof ApiPublicHooksPurgeEphemeralRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -971,6 +985,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/purge-ephemeral': {
+      id: '/api/public/hooks/purge-ephemeral'
+      path: '/api/public/hooks/purge-ephemeral'
+      fullPath: '/api/public/hooks/purge-ephemeral'
+      preLoaderRoute: typeof ApiPublicHooksPurgeEphemeralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/messages/groupes/$id': {
       id: '/_authenticated/messages/groupes/$id'
       path: '/messages/groupes/$id'
@@ -1109,6 +1130,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHooksPurgeEphemeralRoute: ApiPublicHooksPurgeEphemeralRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,

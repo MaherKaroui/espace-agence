@@ -32,6 +32,7 @@ import { CreateTaskFromMessageDialog } from "@/components/create-task-from-messa
 import { MessageReactions } from "@/components/message-reactions";
 import { ThreadPane } from "@/components/thread-pane";
 import { MessageSquareReply, Sparkles as SparklesIcon } from "lucide-react";
+import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
 
 export const Route = createFileRoute("/_authenticated/admin/internal-messages/$id")({
   head: () => ({ meta: [{ title: "Conversation interne" }] }),
@@ -278,10 +279,16 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
           >
             {conv?.archived_at ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
           </Button>
+          <EphemeralSettingsButton
+            scope={{ kind: "internal", conversationId: id }}
+            isGroupOwner={myMembership?.role === "owner"}
+          />
         </div>
       </div>
+      <EphemeralBanner scope={{ kind: "internal", conversationId: id }} />
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+
         {messages.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-8">
             Aucun message pour l'instant — soyez la première à écrire.

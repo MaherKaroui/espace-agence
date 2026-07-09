@@ -170,6 +170,30 @@ export type Database = {
         }
         Relationships: []
       }
+      client_ephemeral_settings: {
+        Row: {
+          client_id: string
+          ephemeral_duration_seconds: number | null
+          ephemeral_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_id: string
+          ephemeral_duration_seconds?: number | null
+          ephemeral_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_id?: string
+          ephemeral_duration_seconds?: number | null
+          ephemeral_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       client_notes: {
         Row: {
           author_id: string
@@ -268,6 +292,9 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          ephemeral_duration_seconds: number | null
+          ephemeral_enabled: boolean
+          ephemeral_members_can_edit: boolean
           id: string
           parent_id: string | null
           titre: string
@@ -276,6 +303,9 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          ephemeral_duration_seconds?: number | null
+          ephemeral_enabled?: boolean
+          ephemeral_members_can_edit?: boolean
           id?: string
           parent_id?: string | null
           titre: string
@@ -284,6 +314,9 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          ephemeral_duration_seconds?: number | null
+          ephemeral_enabled?: boolean
+          ephemeral_members_can_edit?: boolean
           id?: string
           parent_id?: string | null
           titre?: string
@@ -677,7 +710,9 @@ export type Database = {
           deleted_by: string | null
           edited_at: string | null
           edited_by: string | null
+          expires_at: string | null
           id: string
+          is_system: boolean
           sender_id: string
         }
         Insert: {
@@ -691,7 +726,9 @@ export type Database = {
           deleted_by?: string | null
           edited_at?: string | null
           edited_by?: string | null
+          expires_at?: string | null
           id?: string
+          is_system?: boolean
           sender_id: string
         }
         Update: {
@@ -705,7 +742,9 @@ export type Database = {
           deleted_by?: string | null
           edited_at?: string | null
           edited_by?: string | null
+          expires_at?: string | null
           id?: string
+          is_system?: boolean
           sender_id?: string
         }
         Relationships: [
@@ -765,6 +804,9 @@ export type Database = {
           created_by: string
           description: string | null
           dossier_id: string | null
+          ephemeral_duration_seconds: number | null
+          ephemeral_enabled: boolean
+          ephemeral_members_can_edit: boolean
           id: string
           is_group: boolean
           is_private: boolean
@@ -782,6 +824,9 @@ export type Database = {
           created_by: string
           description?: string | null
           dossier_id?: string | null
+          ephemeral_duration_seconds?: number | null
+          ephemeral_enabled?: boolean
+          ephemeral_members_can_edit?: boolean
           id?: string
           is_group?: boolean
           is_private?: boolean
@@ -799,6 +844,9 @@ export type Database = {
           created_by?: string
           description?: string | null
           dossier_id?: string | null
+          ephemeral_duration_seconds?: number | null
+          ephemeral_enabled?: boolean
+          ephemeral_members_can_edit?: boolean
           id?: string
           is_group?: boolean
           is_private?: boolean
@@ -875,7 +923,9 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           edited_at: string | null
+          expires_at: string | null
           id: string
+          is_system: boolean
           mentions_entities: Json
           mentions_users: string[]
           parent_message_id: string | null
@@ -891,7 +941,9 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           edited_at?: string | null
+          expires_at?: string | null
           id?: string
+          is_system?: boolean
           mentions_entities?: Json
           mentions_users?: string[]
           parent_message_id?: string | null
@@ -907,7 +959,9 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           edited_at?: string | null
+          expires_at?: string | null
           id?: string
+          is_system?: boolean
           mentions_entities?: Json
           mentions_users?: string[]
           parent_message_id?: string | null
@@ -975,8 +1029,10 @@ export type Database = {
           deleted_by: string | null
           edited_at: string | null
           edited_by: string | null
+          expires_at: string | null
           from_agence: boolean
           id: string
+          is_system: boolean
           read_at: string | null
           sender_id: string
         }
@@ -991,8 +1047,10 @@ export type Database = {
           deleted_by?: string | null
           edited_at?: string | null
           edited_by?: string | null
+          expires_at?: string | null
           from_agence?: boolean
           id?: string
+          is_system?: boolean
           read_at?: string | null
           sender_id: string
         }
@@ -1007,8 +1065,10 @@ export type Database = {
           deleted_by?: string | null
           edited_at?: string | null
           edited_by?: string | null
+          expires_at?: string | null
           from_agence?: boolean
           id?: string
+          is_system?: boolean
           read_at?: string | null
           sender_id?: string
         }
@@ -1645,6 +1705,14 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      list_expired_ephemeral: {
+        Args: { _limit?: number }
+        Returns: {
+          attachment_path: string
+          id: string
+          source: string
+        }[]
+      }
       log_document_download: {
         Args: { _document_id: string }
         Returns: undefined

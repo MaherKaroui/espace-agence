@@ -14,6 +14,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, UserMinus, UserPlus, Trash2, Users } from "lucide-react";
+import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
 import { GroupChatWindow } from "@/components/group-chat-window";
 import { CreateGroupDialog } from "./messages.groupes.index";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -215,6 +216,10 @@ function GroupePage() {
           <div className="font-display text-base truncate">{conv.titre}</div>
         </div>
         <div className="flex gap-2 shrink-0">
+          <EphemeralSettingsButton
+            scope={{ kind: "group", conversationId: id }}
+            isGroupOwner={isOwner}
+          />
           <div className="lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -245,6 +250,8 @@ function GroupePage() {
           )}
         </div>
       </div>
+
+      <EphemeralBanner scope={{ kind: "group", conversationId: id }} />
 
       <div className="flex-1 min-h-0 flex flex-col">
         <div className="hidden lg:grid grid-cols-[1fr_18rem] gap-4 flex-1 min-h-0">
