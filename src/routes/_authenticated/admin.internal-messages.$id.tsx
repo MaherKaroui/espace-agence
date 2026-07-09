@@ -318,7 +318,7 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
                       )}
                     >
                       {!mine && <div className="text-[10px] font-medium opacity-80 mb-0.5">{authorLabel}</div>}
-                      {m.content && <RichMessageContent content={m.content} currentUserId={userId} />}
+                      {m.content && <RichMessageContent content={m.content} currentUserId={userId} inverse={mine} />}
                       {m.attachment_path && (
                         <button
                           onClick={() => openAttachment(m.attachment_path)}
