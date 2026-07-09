@@ -272,6 +272,29 @@ function RequiredRow({
 
   const askAgence = () => setMissingDialog(true);
 
+  // Staff : accepter un document requis sans qu'un fichier n'ait été envoyé
+  // (dispense proactive). Crée une ligne placeholder avec statut = accepte.
+  const acceptWithoutFile = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("documents").insert({
+        dossier_id: dossierId,
+        uploader_id: user!.id,
+        nom: `${req.label} — dispensé par l'agence`,
+        storage_path: null,
+        from_agence: true,
+        detected_type: req.key,
+        statut: "accepte",
+        commentaire: "Document dispensé par l'agence (aucun fichier requis).",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Document marqué comme accepté (dispense).");
+      qc.invalidateQueries({ queryKey: ["documents", dossierId] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
 
   const badgeClass: Record<string, string> = {
     success: "bg-success/15 text-success border-success/20",
