@@ -126,7 +126,7 @@ function GroupesIndex() {
           </div>
         ) : (
           <ul className="space-y-1">
-            {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} />)}
+            {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} unreadByConv={unreadByConv} />)}
           </ul>
         )}
       </Card>
@@ -135,6 +135,14 @@ function GroupesIndex() {
 }
 
 type Node = Conv & { children: Node[] };
+
+// Sum unread count for a subtree (this node + descendants) so a parent
+// badge signals activity in any sub-group.
+function subtreeUnread(node: Node, map: Record<string, number>): number {
+  let s = map[node.id] ?? 0;
+  for (const c of node.children) s += subtreeUnread(c, map);
+  return s;
+}
 
 function buildTree(list: Conv[]): Node[] {
   const map = new Map<string, Node>();
