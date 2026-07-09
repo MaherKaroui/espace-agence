@@ -51,6 +51,9 @@ const loginSchema = z.object({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const nextPath = safeNext(next);
+  const redirectTarget = nextPath ?? "/dashboard";
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
   const [showLoginPwd, setShowLoginPwd] = useState(false);
@@ -58,9 +61,13 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) {
+        if (nextPath) window.location.replace(nextPath);
+        else navigate({ to: "/dashboard" });
+      }
     });
-  }, [navigate]);
+  }, [navigate, nextPath]);
+
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
