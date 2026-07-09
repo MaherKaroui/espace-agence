@@ -14,6 +14,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { ArrowLeft, Plus, UserMinus, UserPlus, Trash2, Users } from "lucide-react";
+import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
 import { GroupChatWindow } from "@/components/group-chat-window";
 import { CreateGroupDialog } from "./messages.groupes.index";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
