@@ -61,7 +61,7 @@ function friendlyClientStatus(doc: Doc | null) {
 }
 
 export function RequiredDocuments({ dossierId, categorie, documents }: Props) {
-  const { isAdmin } = useRole();
+  const { isStaff: isAdmin } = useRole();
   const requis = requiredDocsFor(categorie);
   if (requis.length === 0) return null;
 
@@ -111,7 +111,7 @@ function RequiredRow({
   doc: Doc | null;
 }) {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isStaff: isAdmin } = useRole();
   const qc = useQueryClient();
   
   const fileInput = useRef<HTMLInputElement>(null);
@@ -272,6 +272,29 @@ function RequiredRow({
 
   const askAgence = () => setMissingDialog(true);
 
+  // Staff : accepter un document requis sans qu'un fichier n'ait été envoyé
+  // (dispense proactive). Crée une ligne placeholder avec statut = accepte.
+  const acceptWithoutFile = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("documents").insert({
+        dossier_id: dossierId,
+        uploader_id: user!.id,
+        nom: `${req.label} — dispensé par l'agence`,
+        storage_path: null,
+        from_agence: true,
+        detected_type: req.key,
+        statut: "accepte",
+        commentaire: "Document dispensé par l'agence (aucun fichier requis).",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Document marqué comme accepté (dispense).");
+      qc.invalidateQueries({ queryKey: ["documents", dossierId] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
 
   const badgeClass: Record<string, string> = {
     success: "bg-success/15 text-success border-success/20",
@@ -392,9 +415,22 @@ function RequiredRow({
               )}
             </>
           ) : isAdmin ? (
-            <Button size="sm" onClick={() => fileInput.current?.click()} disabled={busy}>
-              <Upload className="h-4 w-4 mr-1" /> Déposer
-            </Button>
+            <>
+              <Button size="sm" onClick={() => fileInput.current?.click()} disabled={busy}>
+                <Upload className="h-4 w-4 mr-1" /> Déposer
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => acceptWithoutFile.mutate()}
+                disabled={acceptWithoutFile.isPending}
+                className="border-success/40 text-success hover:bg-success/10"
+                title="Accepter ce document sans fichier (dispense)"
+              >
+                <CheckCircle2 className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Accepter quand même</span>
+              </Button>
+            </>
           ) : (
             <>
               <Button size="sm" onClick={() => setUploadDialog(true)} disabled={busy}>
