@@ -49,26 +49,18 @@ export function RelanceButton({
       let emailStatus: "sent" | "skipped" | "not_configured" = "skipped";
       if (sendEmail && clientEmail) {
         try {
-          const { data: sess } = await supabase.auth.getSession();
-          const res = await fetch("/lovable/email/transactional/send", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${sess.session?.access_token ?? ""}`,
+          const { sendTransactionalEmail } = await import("@/lib/email/send");
+          const ok = await sendTransactionalEmail({
+            templateName: "relance-client",
+            recipientEmail: clientEmail,
+            idempotencyKey: `relance-${dossierId ?? clientId}-${Date.now()}`,
+            templateData: {
+              prenom: undefined,
+              dossierTitre: dossierTitre ?? "votre dossier",
+              message: content,
             },
-            body: JSON.stringify({
-              templateName: "relance-client",
-              recipientEmail: clientEmail,
-              idempotencyKey: `relance-${dossierId ?? clientId}-${Date.now()}`,
-              templateData: {
-                dossierTitre: dossierTitre ?? "votre dossier",
-                message: content,
-              },
-            }),
           });
-          if (res.ok) emailStatus = "sent";
-          else if (res.status === 404) emailStatus = "not_configured";
-          else emailStatus = "skipped";
+          emailStatus = ok ? "sent" : "not_configured";
         } catch {
           emailStatus = "not_configured";
         }
