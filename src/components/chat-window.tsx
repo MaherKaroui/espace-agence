@@ -457,7 +457,7 @@ function SwipeableList({
   );
 }
 
-function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmin: boolean }) {
+function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean; isAdmin: boolean; sender?: { name: string; initials: string } }) {
   const qc = useQueryClient();
   const [url, setUrl] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
