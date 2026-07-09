@@ -140,7 +140,7 @@ function RequiredRow({
   const AdminIcon = doc ? adminMeta.icon : Circle;
 
   const download = async () => {
-    if (!doc) return;
+    if (!doc || !doc.storage_path) return;
     const { data, error } = await supabase.storage
       .from("documents")
       .createSignedUrl(doc.storage_path, 60, { download: doc.nom });
