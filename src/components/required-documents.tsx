@@ -61,7 +61,7 @@ function friendlyClientStatus(doc: Doc | null) {
 }
 
 export function RequiredDocuments({ dossierId, categorie, documents }: Props) {
-  const { isAdmin } = useRole();
+  const { isStaff: isAdmin } = useRole();
   const requis = requiredDocsFor(categorie);
   if (requis.length === 0) return null;
 
