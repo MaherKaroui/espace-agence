@@ -190,20 +190,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </>
       )}
-      {isDirectionOrAdmin && (
+      {isAdmin && (
         <>
-          <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Pilotage</div>
-          {directionPilotage.map((n) => (
-            <Link
-              key={n.to} to={n.to}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
-            >
-              <n.icon className="h-4 w-4" /> {n.label}
-            </Link>
-          ))}
-          <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Organisation</div>
-          {directionOrganisation.map((n) => (
+          <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Administration</div>
+          {[...directionPilotage, ...directionOrganisation].map((n) => (
             <Link
               key={n.to} to={n.to}
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
