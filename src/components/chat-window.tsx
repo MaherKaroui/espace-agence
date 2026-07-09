@@ -524,6 +524,14 @@ function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean
 
   return (
     <div className={`group flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}>
+      {!isMine && (
+        <div
+          className="h-7 w-7 shrink-0 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center border"
+          title={sender?.name || "Agence"}
+        >
+          {sender?.initials || (m.from_agence ? "AG" : "?")}
+        </div>
+      )}
       {isAdmin && !isMine && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
