@@ -33,4 +33,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'client-document-refuse': clientDocumentRefuse,
   'client-dossier-termine': clientDossierTermine,
   'client-dossier-attente': clientDossierAttente,
+  'relance-client': relanceClient,
 }
