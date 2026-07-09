@@ -115,6 +115,14 @@ function AuthPage() {
     navigate({ to: "/dashboard" });
   };
 
+  const handleApple = async () => {
+    setLoading(true);
+    const res = await lovable.auth.signInWithOAuth("apple", { redirect_uri: window.location.origin });
+    if (res.error) { setLoading(false); toast.error("Connexion Apple impossible"); return; }
+    if (res.redirected) return;
+    navigate({ to: "/dashboard" });
+  };
+
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="hidden lg:flex bg-gradient-hero text-white p-12 flex-col justify-between">
