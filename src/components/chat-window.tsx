@@ -49,6 +49,27 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
     },
   });
 
+  const senderIds = useMemo(() => {
+    const s = new Set<string>();
+    for (const m of messages) if (m.sender_id) s.add(m.sender_id);
+    return Array.from(s).sort();
+  }, [messages]);
+
+  const { data: senderMap } = useQuery({
+    queryKey: ["chat-senders", senderIds.join(",")],
+    enabled: senderIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("id, prenom, nom, email").in("id", senderIds);
+      const map = new Map<string, { name: string; initials: string }>();
+      for (const p of data ?? []) {
+        const full = `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email || "Utilisateur";
+        const initials = (((p.prenom?.[0] ?? "") + (p.nom?.[0] ?? "")) || (p.email?.[0] ?? "?")).toUpperCase();
+        map.set(p.id, { name: full, initials });
+      }
+      return map;
+    },
+  });
+
   // Realtime messages + typing
   useEffect(() => {
     if (!user) return;
@@ -257,7 +278,9 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
           isAdmin={isAdmin}
           otherTyping={otherTyping}
           bottomRef={bottomRef}
+          senderMap={senderMap}
         />
+
 
 
         {uploading && (
@@ -373,12 +396,14 @@ function SwipeableList({
   isAdmin,
   otherTyping,
   bottomRef,
+  senderMap,
 }: {
   filtered: any[];
   user: any;
   isAdmin: boolean;
   otherTyping: boolean;
   bottomRef: React.RefObject<HTMLDivElement | null>;
+  senderMap?: Map<string, { name: string; initials: string }>;
 }) {
   const { dragX, dragging, max, containerProps } = useSwipeReveal(120);
   const shift = { transform: `translateX(-${dragX}px)`, transition: dragging ? "none" : "transform 0.25s ease" };
@@ -409,7 +434,7 @@ function SwipeableList({
         return (
           <div key={m.id} className="relative">
             <div style={shift}>
-              <MessageBubble m={m} isMine={isMine} isAdmin={isAdmin} />
+              <MessageBubble m={m} isMine={isMine} isAdmin={isAdmin} sender={senderMap?.get(m.sender_id)} />
             </div>
             <div
               className="absolute top-0 h-full flex items-center text-[11px] text-muted-foreground pl-2 pointer-events-none"
@@ -432,7 +457,7 @@ function SwipeableList({
   );
 }
 
-function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmin: boolean }) {
+function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean; isAdmin: boolean; sender?: { name: string; initials: string } }) {
   const qc = useQueryClient();
   const [url, setUrl] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -499,6 +524,14 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
 
   return (
     <div className={`group flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}>
+      {!isMine && (
+        <div
+          className="h-7 w-7 shrink-0 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center border"
+          title={sender?.name || "Agence"}
+        >
+          {sender?.initials || (m.from_agence ? "AG" : "?")}
+        </div>
+      )}
       {isAdmin && !isMine && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -523,6 +556,11 @@ function MessageBubble({ m, isMine, isAdmin }: { m: any; isMine: boolean; isAdmi
         </AlertDialog>
       )}
       <div className={`max-w-[82%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 shadow-sm break-words ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
+        {!isMine && (
+          <div className="text-[11px] font-semibold text-primary mb-0.5 truncate">
+            {sender?.name || (m.from_agence ? "Agence" : "Utilisateur")}
+          </div>
+        )}
         {m.attachment_path && (
           <div className="mb-2 space-y-1">
             {isImg && url ? (
