@@ -278,7 +278,9 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
           isAdmin={isAdmin}
           otherTyping={otherTyping}
           bottomRef={bottomRef}
+          senderMap={senderMap}
         />
+
 
 
         {uploading && (
