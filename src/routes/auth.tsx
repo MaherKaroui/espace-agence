@@ -276,10 +276,16 @@ function AuthPage() {
             </div>
           </div>
 
-          <Button variant="outline" className="w-full" onClick={handleGoogle} disabled={loading}>
-            <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.5-1.6 4.3-5.4 4.3-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.9 14.6 3 12 3 6.9 3 2.8 7.1 2.8 12S6.9 21 12 21c7 0 9.3-4.9 9.3-7.4 0-.5-.1-.9-.1-1.4H12z"/></svg>
-            Continuer avec Google
-          </Button>
+          <div className="space-y-2">
+            <Button variant="outline" className="w-full" onClick={handleGoogle} disabled={loading}>
+              <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.5-1.6 4.3-5.4 4.3-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.9 14.6 3 12 3 6.9 3 2.8 7.1 2.8 12S6.9 21 12 21c7 0 9.3-4.9 9.3-7.4 0-.5-.1-.9-.1-1.4H12z"/></svg>
+              Continuer avec Google
+            </Button>
+            <Button variant="outline" className="w-full" onClick={handleApple} disabled={loading}>
+              <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor"><path d="M16.365 1.43c0 1.14-.42 2.22-1.13 3.02-.85.97-2.24 1.72-3.36 1.63-.14-1.12.42-2.28 1.15-3.02.83-.86 2.26-1.5 3.34-1.63zM20.5 17.28c-.55 1.27-.82 1.84-1.53 2.96-.99 1.56-2.38 3.5-4.1 3.51-1.53.01-1.92-1-4-.99-2.08.01-2.51 1.01-4.04 1-1.72-.01-3.04-1.76-4.03-3.32C.05 16.6-.24 11.5 1.42 8.79c1.18-1.92 3.04-3.05 4.79-3.05 1.78 0 2.9 1.01 4.37 1.01 1.43 0 2.3-1.01 4.36-1.01 1.56 0 3.21.85 4.39 2.31-3.86 2.12-3.23 7.63.17 9.23z"/></svg>
+              Continuer avec Apple
+            </Button>
+          </div>
           <div className="mt-6 pt-4 border-t text-center text-xs text-muted-foreground space-x-3">
             <Link to="/mentions-legales" className="hover:underline">Mentions légales</Link>
             <Link to="/politique-confidentialite" className="hover:underline">Confidentialité</Link>
