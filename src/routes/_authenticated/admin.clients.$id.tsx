@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,9 +9,22 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/status-badge";
-import { categorieLabel } from "@/lib/labels";
-import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock, Archive, ArchiveRestore, Activity, FileText, CalendarCheck, ListChecks } from "lucide-react";
+import { categorieLabel, REQUIRED_DOCUMENTS } from "@/lib/labels";
+import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock, Archive, ArchiveRestore, Activity, FileText, CalendarCheck, ListChecks, Eye, Download, Lock, ShieldCheck } from "lucide-react";
+
+function docTypeLabel(key: string | null | undefined): string | null {
+  if (!key) return null;
+  for (const list of Object.values(REQUIRED_DOCUMENTS)) {
+    const found = list.find((d) => d.key === key);
+    if (found) return found.label;
+  }
+  return null;
+}
+
+
 import { RelanceButton } from "@/components/relance-button";
 
 
@@ -73,6 +86,49 @@ function ClientDetail() {
     },
     enabled: dossiers.length > 0,
   });
+
+  const dossierIdList = (dossiers ?? []).map((d: any) => d.id);
+  const { data: clientDocs = [] } = useQuery({
+    queryKey: ["client-documents", id, dossierIdList.join(",")],
+    enabled: dossierIdList.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("id, dossier_id, nom, storage_path, mime_type, taille, detected_type, statut, from_agence, created_at")
+        .in("dossier_id", dossierIdList)
+        .eq("from_agence", false)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const docsByDossier = useMemo(() => {
+    const dossierMap = new Map((dossiers as any[]).map((d) => [d.id, d]));
+    const m = new Map<string, { dossier: any; items: any[] }>();
+    for (const d of clientDocs as any[]) {
+      const dossier = dossierMap.get(d.dossier_id);
+      if (!dossier) continue;
+      if (!m.has(d.dossier_id)) m.set(d.dossier_id, { dossier, items: [] });
+      m.get(d.dossier_id)!.items.push(d);
+    }
+    return Array.from(m.values());
+  }, [dossiers, clientDocs]);
+
+  const [previewDoc, setPreviewDoc] = useState<{ doc: any; url: string } | null>(null);
+  const openPreview = async (doc: any) => {
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(doc.storage_path, 600);
+    if (error) { toast.error(error.message); return; }
+    setPreviewDoc({ doc, url: data.signedUrl });
+  };
+  const downloadDoc = async (doc: any) => {
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(doc.storage_path, 60);
+    if (error) { toast.error(error.message); return; }
+    await supabase.rpc("log_document_download", { _document_id: doc.id }).then(() => {}, () => {});
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
+
+
 
   const { data: lastMsg } = useQuery({
     queryKey: ["last-msg-client", id],
@@ -538,8 +594,111 @@ function ClientDetail() {
           </div>
         )}
       </div>
+
+      <Card className="p-6">
+        <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-xl">Documents transmis par le client ({(clientDocs as any[]).length})</h2>
+          </div>
+          <Badge variant="outline" className="gap-1 text-xs">
+            <Lock className="h-3 w-3" /> Accès sécurisé
+          </Badge>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5">
+          <ShieldCheck className="h-3.5 w-3.5 text-success" />
+          Chiffré au repos. Chaque aperçu génère un lien temporaire signé (10 min) et est journalisé.
+        </p>
+        {docsByDossier.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Ce client n'a encore transmis aucun document.</p>
+        ) : (
+          <div className="space-y-4">
+            {docsByDossier.map(({ dossier, items }) => (
+              <div key={dossier.id} className="border rounded-md overflow-hidden">
+                <div className="flex items-center justify-between gap-2 bg-muted/40 px-3 py-2 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FolderOpen className="h-4 w-4 text-gold shrink-0" />
+                    <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(dossier.categorie)}</span>
+                    <span className="text-sm font-medium truncate">{dossier.titre}</span>
+                  </div>
+                  <Link to="/dossiers/$id" params={{ id: dossier.id }} className="text-xs text-primary hover:underline shrink-0">
+                    Ouvrir le dossier →
+                  </Link>
+                </div>
+                <ul className="divide-y">
+                  {items.map((doc: any) => {
+                    const demande = docTypeLabel(doc.detected_type);
+                    return (
+                      <li key={doc.id} className="flex items-center justify-between gap-3 px-3 py-2 flex-wrap">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate">
+                            {doc.nom}
+                            {demande && <span className="text-muted-foreground font-normal"> — {demande}</span>}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {new Date(doc.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
+                            {typeof doc.taille === "number" && ` · ${(doc.taille / 1024).toFixed(0)} Ko`}
+                            {doc.statut === "accepte" && " · ✓ Validé"}
+                            {doc.statut === "refuse" && " · ✗ Refusé"}
+                            {doc.statut === "a_corriger" && " · À corriger"}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button size="sm" variant="ghost" onClick={() => openPreview(doc)} aria-label="Voir le document">
+                            <Eye className="h-4 w-4 mr-1.5" /> Voir
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => downloadDoc(doc)} aria-label="Télécharger">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Dialog open={!!previewDoc} onOpenChange={(o) => !o && setPreviewDoc(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle className="truncate pr-8">{previewDoc?.doc?.nom ?? "Aperçu"}</DialogTitle>
+          </DialogHeader>
+          <div className="bg-muted/30 h-[75vh] flex items-center justify-center overflow-auto">
+            {previewDoc && (() => {
+              const mime: string = previewDoc.doc.mime_type ?? "";
+              const nom: string = previewDoc.doc.nom ?? "";
+              if (mime.startsWith("image/")) return <img src={previewDoc.url} alt={nom} className="max-h-full max-w-full object-contain" />;
+              if (mime.startsWith("video/")) return <video src={previewDoc.url} controls className="max-h-full max-w-full" />;
+              if (mime.startsWith("audio/")) return <audio src={previewDoc.url} controls />;
+              if (mime === "application/pdf" || nom.toLowerCase().endsWith(".pdf")) {
+                return <iframe src={previewDoc.url} title={nom} className="w-full h-full bg-white" />;
+              }
+              return (
+                <div className="text-center p-6 space-y-3">
+                  <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Aperçu non disponible pour ce type de fichier.</p>
+                  <Button onClick={() => downloadDoc(previewDoc.doc)}>
+                    <Download className="h-4 w-4 mr-2" /> Télécharger pour ouvrir
+                  </Button>
+                </div>
+              );
+            })()}
+          </div>
+          {previewDoc && (
+            <div className="flex justify-end gap-2 p-3 border-t">
+              <Button variant="outline" onClick={() => downloadDoc(previewDoc.doc)}>
+                <Download className="h-4 w-4 mr-2" /> Télécharger
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
+
 }
 
 function Kpi({
