@@ -131,29 +131,34 @@ function AdminMessages() {
           const p = presence?.get(t.id);
           const name = `${t.prenom ?? ""} ${t.nom ?? ""}`.trim() || t.email || "Client sans nom";
           return (
-            <div key={t.id} className="flex items-center gap-3 p-4 hover:bg-muted/30">
-              <Link to="/admin/messages/$clientId" params={{ clientId: t.id }} className="flex items-center gap-3 flex-1 min-w-0">
+            <div key={t.id} className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 hover:bg-muted/30">
+              <Link to="/admin/messages/$clientId" params={{ clientId: t.id }} className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <PresenceAvatar online={p?.online}>
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center"><User className="h-5 w-5 text-primary" /></div>
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><User className="h-5 w-5 text-primary" /></div>
                 </PresenceAvatar>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className={`truncate ${t.unread > 0 ? "font-semibold" : "font-medium"}`}>{name}</div>
-                    <PresenceLabel row={p} />
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className={`truncate min-w-0 ${t.unread > 0 ? "font-semibold" : "font-medium"}`}>{name}</div>
+                    <span className="hidden sm:inline"><PresenceLabel row={p} /></span>
                     {t.unread > 0 && (
-                      <Badge className="h-5 min-w-5 px-1.5 rounded-full text-xs">{t.unread}</Badge>
+                      <Badge className="h-5 min-w-5 px-1.5 rounded-full text-xs shrink-0">{t.unread}</Badge>
                     )}
                   </div>
                   <div className={`text-xs truncate ${t.unread > 0 ? "text-foreground" : "text-muted-foreground"}`}>
                     {t.last ? (t.last.from_agence ? "Vous : " : "") + (mentionsToPlainText(t.last.content) || "Pièce jointe") : "Aucun message"}
                   </div>
+                  {t.last && (
+                    <div className="sm:hidden text-[11px] text-muted-foreground mt-0.5 truncate">
+                      {formatDistanceToNow(new Date(t.last.created_at), { addSuffix: true, locale: fr })}
+                    </div>
+                  )}
                 </div>
-                {t.last && <div className="text-xs text-muted-foreground shrink-0">{formatDistanceToNow(new Date(t.last.created_at), { addSuffix: true, locale: fr })}</div>}
+                {t.last && <div className="hidden sm:block text-xs text-muted-foreground shrink-0">{formatDistanceToNow(new Date(t.last.created_at), { addSuffix: true, locale: fr })}</div>}
               </Link>
               {isAdmin && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" aria-label="Supprimer la discussion">
+                    <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-destructive" aria-label="Supprimer la discussion">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </AlertDialogTrigger>
@@ -174,6 +179,7 @@ function AdminMessages() {
             </div>
           );
         })}
+
       </Card>
     </div>
   );
