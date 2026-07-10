@@ -360,6 +360,49 @@ function MesDonneesPage() {
             </div>
           )}
         </Card>
+
+        <Dialog open={!!previewDoc} onOpenChange={(o) => !o && setPreviewDoc(null)}>
+          <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden">
+            <DialogHeader className="p-4 pb-2">
+              <DialogTitle className="truncate pr-8">{previewDoc?.doc?.nom ?? "Aperçu"}</DialogTitle>
+            </DialogHeader>
+            <div className="bg-muted/30 h-[75vh] flex items-center justify-center overflow-auto">
+              {previewDoc && (() => {
+                const mime: string = previewDoc.doc.mime_type ?? "";
+                const nom: string = previewDoc.doc.nom ?? "";
+                if (mime.startsWith("image/")) {
+                  return <img src={previewDoc.url} alt={nom} className="max-h-full max-w-full object-contain" />;
+                }
+                if (mime.startsWith("video/")) {
+                  return <video src={previewDoc.url} controls className="max-h-full max-w-full" />;
+                }
+                if (mime.startsWith("audio/")) {
+                  return <audio src={previewDoc.url} controls />;
+                }
+                if (mime === "application/pdf" || nom.toLowerCase().endsWith(".pdf")) {
+                  return <iframe src={previewDoc.url} title={nom} className="w-full h-full bg-white" />;
+                }
+                return (
+                  <div className="text-center p-6 space-y-3">
+                    <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Aperçu non disponible pour ce type de fichier.</p>
+                    <Button onClick={() => downloadDoc(previewDoc.doc)}>
+                      <Download className="h-4 w-4 mr-2" /> Télécharger pour ouvrir
+                    </Button>
+                  </div>
+                );
+              })()}
+            </div>
+            {previewDoc && (
+              <div className="flex justify-end gap-2 p-3 border-t">
+                <Button variant="outline" onClick={() => downloadDoc(previewDoc.doc)}>
+                  <Download className="h-4 w-4 mr-2" /> Télécharger
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
   );
 }
+
