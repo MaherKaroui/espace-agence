@@ -206,7 +206,7 @@ function DossierDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <button onClick={() => nav({ to: "/dossiers" })} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 min-h-11 py-1">
+        <button onClick={() => nav({ to: isAdmin ? "/admin/dossiers" : "/dossiers" })} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 min-h-11 py-1">
           <ArrowLeft className="h-4 w-4" /> {isAdmin ? "Retour aux dossiers" : "Retour à mes dossiers"}
         </button>
         <div className="flex items-center gap-2 flex-wrap">
