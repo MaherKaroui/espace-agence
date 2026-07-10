@@ -212,7 +212,81 @@ function MesDonneesPage() {
           </form>
         </Card>
 
+        {/* Mes documents transmis */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              <h2 className="font-display text-lg">Mes documents transmis</h2>
+            </div>
+            <Badge variant="outline" className="gap-1 text-xs">
+              <Lock className="h-3 w-3" /> Accès sécurisé
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5">
+            <ShieldCheck className="h-3.5 w-3.5 text-success" />
+            Vos fichiers sont chiffrés et accessibles uniquement par vous et l'équipe de votre agence. Chaque aperçu utilise un lien temporaire signé (10 min).
+          </p>
+          {docsByDossier.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Vous n'avez encore transmis aucun document.</p>
+          ) : (
+            <div className="space-y-4">
+              {docsByDossier.map(({ dossier, items }) => (
+                <div key={dossier.id} className="border rounded-md overflow-hidden">
+                  <div className="flex items-center justify-between gap-2 bg-muted/40 px-3 py-2 flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FolderOpen className="h-4 w-4 text-gold shrink-0" />
+                      <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(dossier.categorie)}</span>
+                      <span className="text-sm font-medium truncate">{dossier.titre}</span>
+                    </div>
+                    <Link
+                      to="/dossiers/$id"
+                      params={{ id: dossier.id }}
+                      className="text-xs text-primary hover:underline shrink-0"
+                    >
+                      Ouvrir le dossier →
+                    </Link>
+                  </div>
+                  <ul className="divide-y">
+                    {items.map((doc: any) => {
+                      const demande = docTypeLabel(doc.detected_type);
+                      return (
+                        <li key={doc.id} className="flex items-center justify-between gap-3 px-3 py-2 flex-wrap">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium truncate">
+                              {doc.nom}
+                              {demande && (
+                                <span className="text-muted-foreground font-normal"> — {demande}</span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                              {new Date(doc.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
+                              {typeof doc.taille === "number" && ` · ${(doc.taille / 1024).toFixed(0)} Ko`}
+                              {doc.statut === "accepte" && " · ✓ Validé"}
+                              {doc.statut === "refuse" && " · ✗ Refusé"}
+                              {doc.statut === "a_corriger" && " · À corriger"}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button size="sm" variant="ghost" onClick={() => openPreview(doc)} aria-label="Voir le document">
+                              <Eye className="h-4 w-4 mr-1.5" /> Voir
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => downloadDoc(doc)} aria-label="Télécharger">
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
         {/* Consentements */}
+
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <FileText className="h-4 w-4 text-primary" />
