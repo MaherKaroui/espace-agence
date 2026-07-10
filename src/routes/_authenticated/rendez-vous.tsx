@@ -200,6 +200,9 @@ function RendezVousPage() {
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">
           Créneaux du lundi au vendredi, 9h–18h. Sélectionnez un créneau libre : votre demande sera envoyée à l'agence pour validation.
         </p>
+        <div className="mt-3 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+          <strong>NB :</strong> IL FAUT QUE TU CONFIRME AVEC NADINE DENDANI AVANT DE PRENDRE RENDEZ-VOUS
+        </div>
       </div>
 
       {mine.length > 0 && (
