@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,18 +7,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LEGAL_LABELS } from "@/lib/legal-versions";
-import { ShieldAlert, User as UserIcon, FileText, Loader2, ExternalLink } from "lucide-react";
+import { REQUIRED_DOCUMENTS, categorieLabel } from "@/lib/labels";
+import { ShieldAlert, User as UserIcon, FileText, Loader2, ExternalLink, Eye, Download, ShieldCheck, FolderOpen, Lock } from "lucide-react";
+
+function docTypeLabel(key: string | null | undefined): string | null {
+  if (!key) return null;
+  for (const list of Object.values(REQUIRED_DOCUMENTS)) {
+    const found = list.find((d) => d.key === key);
+    if (found) return found.label;
+  }
+  return null;
+}
 
 export const Route = createFileRoute("/_authenticated/mes-donnees")({
   head: () => ({ meta: [{ title: "Mes données — IZISuivis" }] }),
   component: MesDonneesPage,
 });
+
 
 function MesDonneesPage() {
   const { user } = useAuth();
