@@ -77,6 +77,49 @@ function ClientDetail() {
     enabled: dossiers.length > 0,
   });
 
+  const dossierIdList = (dossiers ?? []).map((d: any) => d.id);
+  const { data: clientDocs = [] } = useQuery({
+    queryKey: ["client-documents", id, dossierIdList.join(",")],
+    enabled: dossierIdList.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("id, dossier_id, nom, storage_path, mime_type, taille, detected_type, statut, from_agence, created_at")
+        .in("dossier_id", dossierIdList)
+        .eq("from_agence", false)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const docsByDossier = useMemo(() => {
+    const dossierMap = new Map((dossiers as any[]).map((d) => [d.id, d]));
+    const m = new Map<string, { dossier: any; items: any[] }>();
+    for (const d of clientDocs as any[]) {
+      const dossier = dossierMap.get(d.dossier_id);
+      if (!dossier) continue;
+      if (!m.has(d.dossier_id)) m.set(d.dossier_id, { dossier, items: [] });
+      m.get(d.dossier_id)!.items.push(d);
+    }
+    return Array.from(m.values());
+  }, [dossiers, clientDocs]);
+
+  const [previewDoc, setPreviewDoc] = useState<{ doc: any; url: string } | null>(null);
+  const openPreview = async (doc: any) => {
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(doc.storage_path, 600);
+    if (error) { toast.error(error.message); return; }
+    setPreviewDoc({ doc, url: data.signedUrl });
+  };
+  const downloadDoc = async (doc: any) => {
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(doc.storage_path, 60);
+    if (error) { toast.error(error.message); return; }
+    await supabase.rpc("log_document_download", { _document_id: doc.id }).then(() => {}, () => {});
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  };
+
+
+
   const { data: lastMsg } = useQuery({
     queryKey: ["last-msg-client", id],
     queryFn: async () =>
