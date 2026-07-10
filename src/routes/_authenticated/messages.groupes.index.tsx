@@ -173,29 +173,30 @@ function TreeNode({ node, depth, unreadByConv }: { node: Node; depth: number; un
         <Link
           to="/messages/groupes/$id"
           params={{ id: node.id }}
-          className="flex-1 flex items-center justify-between px-2 py-2 text-sm"
+          className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-2 px-2 py-2 text-sm"
         >
           <span className="flex items-center gap-2 min-w-0">
             <Users2 className="h-4 w-4 text-muted-foreground shrink-0" />
-            <span className={`truncate ${ownUnread > 0 ? "font-semibold" : "font-medium"}`}>{node.titre}</span>
+            <span className={`truncate min-w-0 ${ownUnread > 0 ? "font-semibold" : "font-medium"}`}>{node.titre}</span>
             {ownUnread > 0 && (
-              <span className="h-5 min-w-5 px-1.5 rounded-full bg-gold text-[10px] font-semibold text-primary flex items-center justify-center">
+              <span className="h-5 min-w-5 px-1.5 rounded-full bg-gold text-[10px] font-semibold text-primary flex items-center justify-center shrink-0">
                 {ownUnread > 99 ? "99+" : ownUnread}
               </span>
             )}
             {!expanded && subUnread > 0 && (
               <span
                 title={`${subUnread} non lu${subUnread > 1 ? "s" : ""} dans les sous-groupes`}
-                className="h-5 min-w-5 px-1.5 rounded-full bg-muted text-[10px] font-semibold text-foreground flex items-center justify-center"
+                className="h-5 min-w-5 px-1.5 rounded-full bg-muted text-[10px] font-semibold text-foreground flex items-center justify-center shrink-0"
               >
                 +{subUnread}
               </span>
             )}
           </span>
-          <span className="text-xs text-muted-foreground shrink-0 ml-2">
+          <span className="text-[11px] sm:text-xs text-muted-foreground shrink-0 sm:ml-2 pl-6 sm:pl-0 truncate">
             {formatDistanceToNow(new Date(node.updated_at), { locale: fr, addSuffix: true })}
           </span>
         </Link>
+
       </div>
       {hasChildren && expanded && (
         <ul>
