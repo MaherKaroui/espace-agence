@@ -15,6 +15,16 @@ import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel, REQUIRED_DOCUMENTS } from "@/lib/labels";
 import { ArrowLeft, MessageSquare, Building2, Phone, Mail, StickyNote, Trash2, Loader2, FolderOpen, CheckCircle2, Clock, Archive, ArchiveRestore, Activity, FileText, CalendarCheck, ListChecks, Eye, Download, Lock, ShieldCheck } from "lucide-react";
 
+function docTypeLabel(key: string | null | undefined): string | null {
+  if (!key) return null;
+  for (const list of Object.values(REQUIRED_DOCUMENTS)) {
+    const found = list.find((d) => d.key === key);
+    if (found) return found.label;
+  }
+  return null;
+}
+
+
 import { RelanceButton } from "@/components/relance-button";
 
 
