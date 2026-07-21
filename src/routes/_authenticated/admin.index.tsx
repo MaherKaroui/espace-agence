@@ -162,18 +162,20 @@ function AdminDashboard() {
 }
 
 
-function StatCard({ label, value, icon: Icon, tone = "default" }: { label: string; value: number; icon: any; tone?: string }) {
+function StatCard({ label, value, icon: Icon, tone = "default", to }: { label: string; value: number; icon: any; tone?: string; to?: string }) {
   const colors: Record<string, string> = {
     default: "text-primary bg-primary/10",
     warning: "text-warning-foreground bg-warning/20",
+    info: "text-info bg-info/10",
     danger: "text-red-600 bg-red-500/10",
     success: "text-emerald-700 bg-emerald-500/10",
   };
-  return (
-    <Card className="p-4">
+  const inner = (
+    <Card className={`p-4 ${to ? "hover:border-primary/40 transition cursor-pointer" : ""}`}>
       <div className={`h-9 w-9 rounded-lg ${colors[tone]} flex items-center justify-center mb-3`}><Icon className="h-4 w-4" /></div>
       <div className="text-2xl font-display font-semibold">{value}</div>
       <div className="text-xs text-muted-foreground mt-1">{label}</div>
     </Card>
   );
+  return to ? <Link to={to}>{inner}</Link> : inner;
 }
