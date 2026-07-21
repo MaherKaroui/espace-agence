@@ -69,7 +69,7 @@ function AdminDashboard() {
       const now = new Date();
       const blockedSince = new Date(Date.now() - BLOCKED_DAYS * 24 * 3600 * 1000).toISOString();
       const unreadSince = new Date(Date.now() - UNREAD_DAYS * 24 * 3600 * 1000).toISOString();
-      const openStatuts = ["en_attente", "documents_manquants", "a_completer", "en_cours_etude", "en_cours_traitement"];
+      const openStatuts = ["en_attente", "documents_manquants", "a_completer", "en_cours_etude", "en_cours_traitement"] as const;
 
       const [dossiersBloques, msgsSansReponse, docsAVerifier, rdvExpires] = await Promise.all([
         supabase
