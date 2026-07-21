@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Users, FolderOpen, FileText, Clock, ListChecks, AlertTriangle, CalendarCheck, CheckCircle2 } from "lucide-react";
+import { Users, FolderOpen, FileText, Clock, ListChecks, AlertTriangle, CalendarCheck, CheckCircle2, Ban, MessageSquareOff, FileSearch, CalendarX, Zap } from "lucide-react";
 import { AgencyTasksPriorityBoard } from "@/components/agency-tasks-priority-board";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -60,11 +60,71 @@ function AdminDashboard() {
     },
   });
 
+  const BLOCKED_DAYS = 7;
+  const UNREAD_DAYS = 3;
+
+  const { data: actionable } = useQuery({
+    queryKey: ["admin-actionable-kpis"],
+    queryFn: async () => {
+      const now = new Date();
+      const blockedSince = new Date(Date.now() - BLOCKED_DAYS * 24 * 3600 * 1000).toISOString();
+      const unreadSince = new Date(Date.now() - UNREAD_DAYS * 24 * 3600 * 1000).toISOString();
+      const openStatuts = ["en_attente", "documents_manquants", "a_completer", "en_cours_etude", "en_cours_traitement"] as const;
+
+      const [dossiersBloques, msgsSansReponse, docsAVerifier, rdvExpires] = await Promise.all([
+        supabase
+          .from("dossiers")
+          .select("id", { count: "exact", head: true })
+          .in("statut", openStatuts)
+          .lt("updated_at", blockedSince),
+        supabase
+          .from("messages")
+          .select("client_id")
+          .eq("from_agence", true)
+          .is("read_at", null)
+          .lt("created_at", unreadSince),
+        supabase
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("statut", "en_attente")
+          .eq("from_agence", false),
+        supabase
+          .from("rendez_vous")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "en_attente")
+          .lt("starts_at", now.toISOString()),
+      ]);
+
+      const uniqClients = new Set((msgsSansReponse.data ?? []).map((m: any) => m.client_id));
+
+      return {
+        dossiersBloques: dossiersBloques.count ?? 0,
+        clientsSansReponse: uniqClients.size,
+        docsAVerifier: docsAVerifier.count ?? 0,
+        rdvExpires: rdvExpires.count ?? 0,
+      };
+    },
+  });
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-display text-3xl">Tableau de bord agence</h1>
         <p className="text-muted-foreground mt-1">Vue d'ensemble de la plateforme.</p>
+      </div>
+
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <Zap className="h-5 w-5 text-red-600" />
+          <h2 className="font-display text-xl">À traiter en priorité</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">Signaux actionnables — cliquez pour ouvrir la liste filtrée.</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label={`Dossiers bloqués (>${BLOCKED_DAYS}j)`} value={actionable?.dossiersBloques ?? 0} icon={Ban} tone="danger" to="/admin/dossiers" />
+          <StatCard label={`Clients sans réponse (>${UNREAD_DAYS}j)`} value={actionable?.clientsSansReponse ?? 0} icon={MessageSquareOff} tone="warning" to="/admin/messages" />
+          <StatCard label="Documents à vérifier" value={actionable?.docsAVerifier ?? 0} icon={FileSearch} tone="info" to="/admin/dossiers" />
+          <StatCard label="RDV expirés (en attente)" value={actionable?.rdvExpires ?? 0} icon={CalendarX} tone="danger" to="/admin/rendez-vous" />
+        </div>
       </div>
 
       <div>
@@ -102,18 +162,20 @@ function AdminDashboard() {
 }
 
 
-function StatCard({ label, value, icon: Icon, tone = "default" }: { label: string; value: number; icon: any; tone?: string }) {
+function StatCard({ label, value, icon: Icon, tone = "default", to }: { label: string; value: number; icon: any; tone?: string; to?: string }) {
   const colors: Record<string, string> = {
     default: "text-primary bg-primary/10",
     warning: "text-warning-foreground bg-warning/20",
+    info: "text-info bg-info/10",
     danger: "text-red-600 bg-red-500/10",
     success: "text-emerald-700 bg-emerald-500/10",
   };
-  return (
-    <Card className="p-4">
+  const inner = (
+    <Card className={`p-4 ${to ? "hover:border-primary/40 transition cursor-pointer" : ""}`}>
       <div className={`h-9 w-9 rounded-lg ${colors[tone]} flex items-center justify-center mb-3`}><Icon className="h-4 w-4" /></div>
       <div className="text-2xl font-display font-semibold">{value}</div>
       <div className="text-xs text-muted-foreground mt-1">{label}</div>
     </Card>
   );
+  return to ? <Link to={to}>{inner}</Link> : inner;
 }
