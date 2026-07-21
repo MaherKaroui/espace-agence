@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Users, FolderOpen, FileText, Clock, ListChecks, AlertTriangle, CalendarCheck, CheckCircle2 } from "lucide-react";
+import { Users, FolderOpen, FileText, Clock, ListChecks, AlertTriangle, CalendarCheck, CheckCircle2, Ban, MessageSquareOff, FileSearch, CalendarX, Zap } from "lucide-react";
 import { AgencyTasksPriorityBoard } from "@/components/agency-tasks-priority-board";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
