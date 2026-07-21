@@ -60,11 +60,71 @@ function AdminDashboard() {
     },
   });
 
+  const BLOCKED_DAYS = 7;
+  const UNREAD_DAYS = 3;
+
+  const { data: actionable } = useQuery({
+    queryKey: ["admin-actionable-kpis"],
+    queryFn: async () => {
+      const now = new Date();
+      const blockedSince = new Date(Date.now() - BLOCKED_DAYS * 24 * 3600 * 1000).toISOString();
+      const unreadSince = new Date(Date.now() - UNREAD_DAYS * 24 * 3600 * 1000).toISOString();
+      const openStatuts = ["en_attente", "documents_manquants", "a_completer", "en_cours_etude", "en_cours_traitement"];
+
+      const [dossiersBloques, msgsSansReponse, docsAVerifier, rdvExpires] = await Promise.all([
+        supabase
+          .from("dossiers")
+          .select("id", { count: "exact", head: true })
+          .in("statut", openStatuts)
+          .lt("updated_at", blockedSince),
+        supabase
+          .from("messages")
+          .select("client_id")
+          .eq("from_agence", true)
+          .is("read_at", null)
+          .lt("created_at", unreadSince),
+        supabase
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("statut", "en_attente")
+          .eq("from_agence", false),
+        supabase
+          .from("rendez_vous")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "en_attente")
+          .lt("starts_at", now.toISOString()),
+      ]);
+
+      const uniqClients = new Set((msgsSansReponse.data ?? []).map((m: any) => m.client_id));
+
+      return {
+        dossiersBloques: dossiersBloques.count ?? 0,
+        clientsSansReponse: uniqClients.size,
+        docsAVerifier: docsAVerifier.count ?? 0,
+        rdvExpires: rdvExpires.count ?? 0,
+      };
+    },
+  });
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-display text-3xl">Tableau de bord agence</h1>
         <p className="text-muted-foreground mt-1">Vue d'ensemble de la plateforme.</p>
+      </div>
+
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <Zap className="h-5 w-5 text-red-600" />
+          <h2 className="font-display text-xl">À traiter en priorité</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">Signaux actionnables — cliquez pour ouvrir la liste filtrée.</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label={`Dossiers bloqués (>${BLOCKED_DAYS}j)`} value={actionable?.dossiersBloques ?? 0} icon={Ban} tone="danger" to="/admin/dossiers" />
+          <StatCard label={`Clients sans réponse (>${UNREAD_DAYS}j)`} value={actionable?.clientsSansReponse ?? 0} icon={MessageSquareOff} tone="warning" to="/admin/messages" />
+          <StatCard label="Documents à vérifier" value={actionable?.docsAVerifier ?? 0} icon={FileSearch} tone="info" to="/admin/dossiers" />
+          <StatCard label="RDV expirés (en attente)" value={actionable?.rdvExpires ?? 0} icon={CalendarX} tone="danger" to="/admin/rendez-vous" />
+        </div>
       </div>
 
       <div>
