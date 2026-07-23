@@ -38,9 +38,13 @@ function u32(n: number): Uint8Array {
   return new Uint8Array([(n >> 24) & 255, (n >> 16) & 255, (n >> 8) & 255, n & 255]);
 }
 
+function asArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+}
+
 async function hmacSha256(keyBytes: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
-  const key = await crypto.subtle.importKey("raw", keyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", key, data));
+  const key = await crypto.subtle.importKey("raw", asArrayBuffer(keyBytes), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return new Uint8Array(await crypto.subtle.sign("HMAC", key, asArrayBuffer(data)));
 }
 
 async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, length: number): Promise<Uint8Array> {
@@ -64,7 +68,7 @@ async function encryptWebPushPayload(payload: unknown, userPublicKeyB64: string,
     ["deriveBits"],
   );
   const appServerPublicKey = await exportRawPublicKey(appServerKeys.publicKey);
-  const userKey = await crypto.subtle.importKey("raw", userPublicKey, { name: "ECDH", namedCurve: "P-256" }, false, []);
+  const userKey = await crypto.subtle.importKey("raw", asArrayBuffer(userPublicKey), { name: "ECDH", namedCurve: "P-256" }, false, []);
   const sharedSecret = new Uint8Array(
     await crypto.subtle.deriveBits({ name: "ECDH", public: userKey }, appServerKeys.privateKey, 256),
   );
@@ -89,8 +93,8 @@ async function encryptWebPushPayload(payload: unknown, userPublicKeyB64: string,
     new TextEncoder().encode(JSON.stringify(payload)),
     new Uint8Array([2]),
   );
-  const aesKey = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
-  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, aesKey, plaintext));
+  const aesKey = await crypto.subtle.importKey("raw", asArrayBuffer(cek), "AES-GCM", false, ["encrypt"]);
+  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: asArrayBuffer(nonce) }, aesKey, asArrayBuffer(plaintext)));
 
   return concatBytes(salt, u32(4096), new Uint8Array([appServerPublicKey.length]), appServerPublicKey, ciphertext);
 }
@@ -210,7 +214,7 @@ export const Route = createFileRoute("/api/public/hooks/push-fanout")({
                   "Content-Encoding": "aes128gcm",
                   "Authorization": `vapid t=${jwt}, k=${VAPID_PUB}`,
                 },
-                body: encrypted,
+                body: asArrayBuffer(encrypted),
               });
               if (res.status === 404 || res.status === 410) {
                 await supabaseAdmin.from("push_subscriptions").delete().eq("id", sub.id);
