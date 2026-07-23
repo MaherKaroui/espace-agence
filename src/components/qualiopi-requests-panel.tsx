@@ -545,6 +545,39 @@ function RequestCard({
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!previewDoc} onOpenChange={(v) => !v && setPreviewDoc(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[85vh] p-0 flex flex-col overflow-hidden">
+          <DialogHeader className="p-4 pb-2 border-b">
+            <DialogTitle className="text-sm truncate">{previewDoc?.doc?.filename}</DialogTitle>
+            <DialogDescription className="text-xs">
+              v{previewDoc?.doc?.version} · {previewDoc?.doc?.mime_type ?? "fichier"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 bg-muted/30">
+            {previewDoc && (() => {
+              const mime = previewDoc.doc?.mime_type ?? "";
+              if (mime.startsWith("image/")) {
+                return <img src={previewDoc.url} alt={previewDoc.doc?.filename} className="w-full h-full object-contain" />;
+              }
+              if (mime.startsWith("video/")) {
+                return <video src={previewDoc.url} controls className="w-full h-full" />;
+              }
+              if (mime.startsWith("audio/")) {
+                return <div className="p-6"><audio src={previewDoc.url} controls className="w-full" /></div>;
+              }
+              // PDF & everything else the browser can render inline
+              return <iframe src={previewDoc.url} title={previewDoc.doc?.filename} className="w-full h-full border-0" />;
+            })()}
+          </div>
+          <div className="p-3 border-t flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => previewDoc && window.open(previewDoc.url, "_blank")}>
+              <Download className="h-4 w-4 mr-1" /> Télécharger
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setPreviewDoc(null)}>Fermer</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
