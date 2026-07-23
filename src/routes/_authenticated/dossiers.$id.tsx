@@ -23,7 +23,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
-import { RelanceButton } from "@/components/relance-button";
 import { DossierSuiviRappels } from "@/components/dossier-suivi-rappels";
 
 import { RequiredDocuments } from "@/components/required-documents";
