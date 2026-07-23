@@ -442,7 +442,7 @@ function DossierDetail() {
             <label className="text-xs text-muted-foreground">Nom de l'organisme de formation</label>
             <Input
               type="text"
-              placeholder="Ex : WATT'S UP ACADEMY"
+              placeholder="Ex : Mon organisme de formation"
               defaultValue={(dossier as any).organisme_nom ?? ""}
               maxLength={120}
               onBlur={(e) => {

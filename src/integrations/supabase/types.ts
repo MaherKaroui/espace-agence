@@ -1688,7 +1688,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      izisuivis_notification_task_health: {
+        Row: {
+          auto_task_duplicate_dossiers: number | null
+          dossiers_missing_organisme_nom: number | null
+          dossiers_total: number | null
+          dossiers_without_auto_task: number | null
+          push_subscriptions_total: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       anonymize_user_account: { Args: { _user_id: string }; Returns: undefined }
@@ -1696,6 +1705,7 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: undefined
       }
+      backfill_missing_auto_dossier_tasks: { Args: never; Returns: number }
       can_internal_contact: {
         Args: { _a: string; _b: string }
         Returns: boolean
@@ -1717,6 +1727,10 @@ export type Database = {
         Returns: boolean
       }
       close_stale_sessions: { Args: never; Returns: undefined }
+      create_auto_task_for_dossier: {
+        Args: { _dossier_id: string }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
