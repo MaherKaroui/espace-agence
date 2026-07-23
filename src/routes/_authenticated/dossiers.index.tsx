@@ -170,10 +170,14 @@ function DossiersPage() {
     const organisme_email = ((fd.get("organisme_email") as string) ?? "").trim() || undefined;
     const organisme_telephone = ((fd.get("organisme_telephone") as string) ?? "").trim() || undefined;
     const site_web = ((fd.get("site_web") as string) ?? "").trim() || undefined;
+    const juridique_type = ((fd.get("juridique_type") as string) ?? "").trim() || null;
     if (!organisme_nom) { toast.error("Nom de l'organisme de formation requis"); return; }
     if (!categorie || !pole_id) { toast.error("Champs requis"); return; }
-    const titre = buildDossierTitre(categorie, organisme_nom);
-    create.mutate({ titre, categorie, pole_id, description, organisme_nom, organisme_email, organisme_telephone, site_web });
+    if (categorie === "juridique" && !juridique_type) {
+      toast.error("Choisissez le type juridique"); return;
+    }
+    const titre = buildDossierTitre(categorie, organisme_nom, juridique_type);
+    create.mutate({ titre, categorie, pole_id, description, organisme_nom, organisme_email, organisme_telephone, site_web, juridique_type });
   };
 
   const submitClient = (
@@ -187,6 +191,7 @@ function DossiersPage() {
       nb_formations?: number | null;
       has_stagiaires?: boolean;
       stagiaires?: any[];
+      juridique_type?: string | null;
       organisme_nom?: string;
       organisme_email?: string;
       organisme_telephone?: string;
@@ -197,10 +202,14 @@ function DossiersPage() {
     if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
     const organisme_nom = (extra?.organisme_nom ?? "").trim();
     if (!organisme_nom) { toast.error("Nom de l'organisme de formation requis"); return; }
-    const titre = buildDossierTitre(categorie, organisme_nom);
+    if (categorie === "juridique" && !((extra?.juridique_type ?? "").trim())) {
+      toast.error("Choisissez le type juridique"); return;
+    }
+    const titre = buildDossierTitre(categorie, organisme_nom, extra?.juridique_type);
     const { organisme_nom: _n, ...rest } = extra ?? {};
     create.mutate({ titre, categorie, pole_id, description, organisme_nom, ...rest });
   };
+
 
   const filtered = filter === "all" ? dossiers : dossiers.filter((d) => d.categorie === filter);
 
