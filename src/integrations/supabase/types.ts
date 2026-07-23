@@ -1884,6 +1884,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      test_push_notification_for_pole: {
+        Args: { _pole_id: string }
+        Returns: {
+          notification_id: string
+          push_subscriptions_count: number
+          user_id: string
+        }[]
+      }
       test_push_notification_for_user: {
         Args: { _user_id: string }
         Returns: string
