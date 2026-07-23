@@ -386,12 +386,24 @@ function DossierRow({ d, stats, inc, poleColor }: {
   const days = daysSince(d.updated_at);
   const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
   return (
-    <Link to="/dossiers/$id" params={{ id: d.id }} className="block p-4 hover:bg-muted/30 relative">
+    <Link
+      to="/dossiers/$id"
+      params={{ id: d.id }}
+      className="block p-4 hover:bg-muted/40 relative transition-colors"
+      style={{ backgroundColor: `color-mix(in oklab, ${poleColor} 5%, transparent)` }}
+    >
       <span className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: poleColor }} aria-hidden />
       <div className="flex items-center justify-between gap-3 pl-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-xs uppercase tracking-wider font-medium" style={{ color: poleColor }}>
+            <span
+              className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider border"
+              style={{
+                color: poleColor,
+                borderColor: `color-mix(in oklab, ${poleColor} 35%, transparent)`,
+                backgroundColor: `color-mix(in oklab, ${poleColor} 12%, transparent)`,
+              }}
+            >
               {categorieLabel(d.categorie)}
             </span>
             <StatusBadge statut={d.statut} />
