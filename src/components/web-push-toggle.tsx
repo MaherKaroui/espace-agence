@@ -85,22 +85,30 @@ export function WebPushToggle() {
       await reg.update().catch(() => undefined);
 
       const existing = await readyReg.pushManager.getSubscription();
-      const sub = existing ?? await readyReg.pushManager.subscribe({
+      let sub = existing ?? await readyReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
       });
 
-      const p256dh = bufToB64Url(sub.getKey("p256dh"));
-      const authKey = bufToB64Url(sub.getKey("auth"));
-
-      await saveSub({
+      const saveCurrentSubscription = () => saveSub({
         data: {
           endpoint: sub.endpoint,
-          p256dh,
-          auth: authKey,
+          p256dh: bufToB64Url(sub.getKey("p256dh")),
+          auth: bufToB64Url(sub.getKey("auth")),
           user_agent: navigator.userAgent,
         },
       });
+
+      try {
+        await saveCurrentSubscription();
+      } catch {
+        await sub.unsubscribe().catch(() => undefined);
+        sub = await readyReg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
+        });
+        await saveCurrentSubscription();
+      }
       setSubscribed(true);
       toast.success("Notifications navigateur activées");
     } catch (e: any) {
