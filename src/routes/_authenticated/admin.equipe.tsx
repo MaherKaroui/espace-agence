@@ -48,12 +48,14 @@ const STAFF_ROLES = [
   { value: "direction", label: "Direction" },
   { value: "manager", label: "Responsable" },
   { value: "consultant", label: "Collaborateur" },
+  { value: "auditeur", label: "Auditeur (externe)" },
+  { value: "certificateur", label: "Certificateur (externe)" },
 ] as const;
 
 type StaffRole = (typeof STAFF_ROLES)[number]["value"];
 
 function primaryRole(roles: string[]): StaffRole | null {
-  const order: StaffRole[] = ["admin", "direction", "manager", "consultant"];
+  const order: StaffRole[] = ["admin", "direction", "manager", "consultant", "auditeur", "certificateur"];
   for (const r of order) if (roles.includes(r)) return r;
   return null;
 }

@@ -26,6 +26,7 @@ import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { DossierSuiviRappels } from "@/components/dossier-suivi-rappels";
 import { DossierLinkedTask } from "@/components/dossier-linked-task";
+import { DossierExternalIntervenants } from "@/components/dossier-external-intervenants";
 
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
@@ -292,6 +293,7 @@ function DossierDetail() {
       />
 
       {isAdmin && <DossierLinkedTask dossierId={dossier.id} />}
+      {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
 
 
 
