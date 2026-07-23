@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { notifyTeamNewDossier } from "@/lib/email/notify-team";
 
 
 
@@ -114,6 +115,8 @@ function DossiersPage() {
           appUrl: "https://izisuivis.com",
         },
       });
+      // Notifier l'équipe du pôle + admins/direction
+      if (data?.id) { try { notifyTeamNewDossier(data.id); } catch { /* silencieux */ } }
       // Confirmer au client la création du dossier
       if (user?.email) {
         sendTransactionalEmail({
