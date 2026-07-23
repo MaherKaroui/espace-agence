@@ -57,6 +57,33 @@ const FOLLOWUP_LABELS: Record<FollowupStatus, string> = {
   autre: "Autre",
 };
 
+type ColorTag = "vert" | "bleu" | "orange" | "violet" | "rouge" | "gris";
+const COLOR_LABELS: Record<ColorTag, string> = {
+  vert: "Vert", bleu: "Bleu", orange: "Orange", violet: "Violet", rouge: "Rouge", gris: "Gris",
+};
+const COLOR_CLASSES: Record<ColorTag, string> = {
+  vert: "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 border-emerald-500/60",
+  bleu: "bg-blue-500/20 text-blue-800 dark:text-blue-200 border-blue-500/60",
+  orange: "bg-orange-500/20 text-orange-800 dark:text-orange-200 border-orange-500/60",
+  violet: "bg-violet-500/20 text-violet-800 dark:text-violet-200 border-violet-500/60",
+  rouge: "bg-red-500/20 text-red-800 dark:text-red-200 border-red-500/60",
+  gris: "bg-muted text-muted-foreground border-border",
+};
+const COLOR_DOT: Record<ColorTag, string> = {
+  vert: "bg-emerald-500", bleu: "bg-blue-500", orange: "bg-orange-500",
+  violet: "bg-violet-500", rouge: "bg-red-500", gris: "bg-muted-foreground",
+};
+function autoColor(auditor?: string | null, certifier?: string | null, certOrg?: string | null): ColorTag | null {
+  const a = (auditor ?? "").toLowerCase().replace(/\s+/g, "");
+  const c = ((certifier ?? "") + " " + (certOrg ?? "")).toLowerCase().replace(/\s+/g, "");
+  if (a.includes("siby") && c.includes("capcert")) return "vert";
+  return null;
+}
+function effectiveColor(e: Partial<CalEvent>): ColorTag | null {
+  if (e.color_tag) return e.color_tag as ColorTag;
+  return autoColor(e.auditor_name, e.certifier_name, e.certifier_organization);
+}
+
 type CalEvent = {
   id: string;
   audit_date: string;
@@ -69,6 +96,8 @@ type CalEvent = {
   status: EventStatus;
   observation: string | null;
   dossier_id: string | null;
+  color_tag: ColorTag | null;
+  color_manual: boolean;
 };
 type Pending = {
   id: string;
@@ -115,7 +144,7 @@ function CalendrierQualiopi() {
       const to = monthEnd.toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from("qualiopi_calendar_events" as any)
-        .select("id, audit_date, organism_name, formation, auditor_name, certifier_name, certifier_organization, certificate_status, status, observation, dossier_id")
+        .select("id, audit_date, organism_name, formation, auditor_name, certifier_name, certifier_organization, certificate_status, status, observation, dossier_id, color_tag, color_manual")
         .gte("audit_date", from)
         .lte("audit_date", to)
         .order("audit_date", { ascending: true });
@@ -163,6 +192,8 @@ function CalendrierQualiopi() {
         status: payload.status || "planifie",
         observation: payload.observation || null,
         dossier_id: payload.dossier_id || null,
+        color_tag: payload.color_tag ?? null,
+        color_manual: !!payload.color_manual,
         updated_by: user?.id ?? null,
       };
       if (payload.id) {
@@ -386,6 +417,17 @@ function CalendrierQualiopi() {
             </Select>
           </Card>
 
+          <Card className="p-3 flex flex-wrap items-center gap-3 text-xs">
+            <span className="font-medium text-muted-foreground">Légende couleurs :</span>
+            {(Object.keys(COLOR_LABELS) as ColorTag[]).map((c) => (
+              <span key={c} className="inline-flex items-center gap-1.5">
+                <span className={`h-3 w-3 rounded-full ${COLOR_DOT[c]}`} />
+                {COLOR_LABELS[c]}
+              </span>
+            ))}
+            <span className="text-muted-foreground ml-2">• Auto : SIBY + CAPCERT ⇒ vert</span>
+          </Card>
+
           {eventsQ.isLoading ? (
             <p className="text-sm text-muted-foreground">Chargement…</p>
           ) : viewMode === "liste" ? (
@@ -408,22 +450,34 @@ function CalendrierQualiopi() {
                   {filtered.length === 0 && (
                     <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">Aucun évènement ce mois-ci.</td></tr>
                   )}
-                  {filtered.map((e) => (
+                  {filtered.map((e) => {
+                    const col = effectiveColor(e);
+                    return (
                     <tr key={e.id} className="border-t">
-                      <td className="p-2 whitespace-nowrap">{e.audit_date}</td>
+                      <td className="p-2 whitespace-nowrap align-middle">
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-block h-3 w-3 rounded-full ${col ? COLOR_DOT[col] : "bg-transparent border border-border"}`} title={col ? COLOR_LABELS[col] : "Sans couleur"} />
+                          <span>{e.audit_date}</span>
+                        </div>
+                      </td>
                       <td className="p-2 whitespace-nowrap text-muted-foreground">{fmtJour(e.audit_date)}</td>
                       <td className="p-2 font-medium">{e.organism_name}</td>
                       <td className="p-2">{e.formation ?? "—"}</td>
                       <td className="p-2">{e.auditor_name ?? "—"}</td>
                       <td className="p-2">{e.certifier_name || e.certifier_organization || "—"}</td>
                       <td className="p-2">{e.certificate_status ?? "—"}</td>
-                      <td className="p-2"><Badge className={STATUS_COLORS[e.status]}>{STATUS_LABELS[e.status]}</Badge></td>
+                      <td className="p-2">
+                        <div className="flex flex-col gap-1">
+                          <Badge className={STATUS_COLORS[e.status]}>{STATUS_LABELS[e.status]}</Badge>
+                          {col && <Badge variant="outline" className={COLOR_CLASSES[col]}>{COLOR_LABELS[col]}</Badge>}
+                        </div>
+                      </td>
                       <td className="p-2 text-right whitespace-nowrap">
                         <Button variant="ghost" size="icon" onClick={() => setEditEvent(e)}><Pencil className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => { if (confirm("Supprimer cet évènement ?")) deleteEvent.mutate(e.id); }}><Trash2 className="h-4 w-4" /></Button>
                       </td>
                     </tr>
-                  ))}
+                  );})}
                 </tbody>
               </table>
             </Card>
@@ -444,11 +498,14 @@ function CalendrierQualiopi() {
                     cells.push(
                       <div key={dateStr} className="border rounded-md min-h-[90px] p-1 flex flex-col gap-1">
                         <div className="text-xs font-medium">{d}</div>
-                        {dayEvents.map((ev) => (
-                          <button key={ev.id} onClick={() => setEditEvent(ev)} className={`text-left text-[10px] truncate rounded px-1 py-0.5 border ${STATUS_COLORS[ev.status]}`}>
+                        {dayEvents.map((ev) => {
+                          const col = effectiveColor(ev);
+                          const cls = col ? COLOR_CLASSES[col] : STATUS_COLORS[ev.status];
+                          return (
+                          <button key={ev.id} onClick={() => setEditEvent(ev)} className={`text-left text-[10px] truncate rounded px-1 py-0.5 border ${cls}`}>
                             {ev.organism_name}{ev.formation ? ` — ${ev.formation}` : ""}
                           </button>
-                        ))}
+                        );})}
                       </div>
                     );
                   }
@@ -522,6 +579,37 @@ function CalendrierQualiopi() {
               <div><Label>Certificateur</Label><Input value={editEvent.certifier_name ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certifier_name: e.target.value })} placeholder="BCI, CAPCERT, Qualipro…" /></div>
               <div><Label>Organisme certificateur</Label><Input value={editEvent.certifier_organization ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certifier_organization: e.target.value })} /></div>
               <div className="sm:col-span-2"><Label>Certificat</Label><Input value={editEvent.certificate_status ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certificate_status: e.target.value })} /></div>
+              <div className="sm:col-span-2">
+                <Label>Couleur</Label>
+                <Select
+                  value={editEvent.color_manual ? (editEvent.color_tag ?? "auto") : "auto"}
+                  onValueChange={(v) => {
+                    if (v === "auto") setEditEvent({ ...editEvent, color_tag: null, color_manual: false });
+                    else setEditEvent({ ...editEvent, color_tag: v as ColorTag, color_manual: true });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">
+                      <span className="inline-flex items-center gap-2">
+                        <span className={`h-3 w-3 rounded-full ${(() => { const c = autoColor(editEvent.auditor_name, editEvent.certifier_name, editEvent.certifier_organization); return c ? COLOR_DOT[c] : "border border-border"; })()}`} />
+                        Automatique {(() => { const c = autoColor(editEvent.auditor_name, editEvent.certifier_name, editEvent.certifier_organization); return c ? `(${COLOR_LABELS[c]})` : "(aucune)"; })()}
+                      </span>
+                    </SelectItem>
+                    {(Object.keys(COLOR_LABELS) as ColorTag[]).map((c) => (
+                      <SelectItem key={c} value={c}>
+                        <span className="inline-flex items-center gap-2">
+                          <span className={`h-3 w-3 rounded-full ${COLOR_DOT[c]}`} />
+                          {COLOR_LABELS[c]}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Un choix manuel reste prioritaire sur la règle automatique.</p>
+              </div>
               <div className="sm:col-span-2"><Label>Observation</Label><Textarea value={editEvent.observation ?? ""} onChange={(e) => setEditEvent({ ...editEvent, observation: e.target.value })} rows={3} /></div>
             </div>
           )}
