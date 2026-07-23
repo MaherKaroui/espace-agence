@@ -1696,6 +1696,7 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: undefined
       }
+      backfill_missing_auto_dossier_tasks: { Args: never; Returns: number }
       can_internal_contact: {
         Args: { _a: string; _b: string }
         Returns: boolean
