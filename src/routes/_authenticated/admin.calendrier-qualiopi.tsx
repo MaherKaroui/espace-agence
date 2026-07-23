@@ -436,15 +436,16 @@ function CalendrierQualiopi() {
           </Card>
 
           <Card className="p-3 flex flex-wrap items-center gap-3 text-xs">
-            <span className="font-medium text-muted-foreground">Légende couleurs :</span>
-            {(Object.keys(COLOR_LABELS) as ColorTag[]).map((c) => (
-              <span key={c} className="inline-flex items-center gap-1.5">
-                <span className={`h-3 w-3 rounded-full ${COLOR_DOT[c]}`} />
-                {COLOR_LABELS[c]}
+            <span className="font-medium text-muted-foreground">Couleurs par certificateur :</span>
+            {CERT_COLOR_RULES.map((r) => (
+              <span key={r.key} className="inline-flex items-center gap-1.5">
+                <span className={`h-3 w-3 rounded-full ${COLOR_DOT[r.color]}`} />
+                {r.label}
               </span>
             ))}
-            <span className="text-muted-foreground ml-2">• Auto : SIBY + CAPCERT ⇒ vert</span>
+            <span className="text-muted-foreground ml-2">• Autre certificateur : sans couleur</span>
           </Card>
+
 
           {eventsQ.isLoading ? (
             <p className="text-sm text-muted-foreground">Chargement…</p>
