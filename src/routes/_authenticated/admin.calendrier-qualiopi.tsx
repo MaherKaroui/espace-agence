@@ -487,11 +487,14 @@ function CalendrierQualiopi() {
                     cells.push(
                       <div key={dateStr} className="border rounded-md min-h-[90px] p-1 flex flex-col gap-1">
                         <div className="text-xs font-medium">{d}</div>
-                        {dayEvents.map((ev) => (
-                          <button key={ev.id} onClick={() => setEditEvent(ev)} className={`text-left text-[10px] truncate rounded px-1 py-0.5 border ${STATUS_COLORS[ev.status]}`}>
+                        {dayEvents.map((ev) => {
+                          const col = effectiveColor(ev);
+                          const cls = col ? COLOR_CLASSES[col] : STATUS_COLORS[ev.status];
+                          return (
+                          <button key={ev.id} onClick={() => setEditEvent(ev)} className={`text-left text-[10px] truncate rounded px-1 py-0.5 border ${cls}`}>
                             {ev.organism_name}{ev.formation ? ` — ${ev.formation}` : ""}
                           </button>
-                        ))}
+                        );})}
                       </div>
                     );
                   }
