@@ -12,12 +12,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { TEMPLATES } from "@/lib/email-templates/registry";
 import { sendTransactionalEmail } from "@/lib/email/send";
-import { Mail, Send, CheckCircle2, AlertCircle, XCircle, Clock, Search, Eye } from "lucide-react";
+import { Mail, Send, CheckCircle2, AlertCircle, XCircle, Clock, Search, Eye, BellRing } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useServerFn } from "@tanstack/react-start";
 import { previewEmailTemplate } from "@/lib/preview-email.functions";
+import { listNotificationRecipientHistory } from "@/lib/team.functions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { APP_URL } from "@/lib/app-url";
 import { WebPushToggle } from "@/components/web-push-toggle";
@@ -83,6 +84,7 @@ function AdminNotifications() {
   const [previewData, setPreviewData] = useState<{ html: string; subject: string; displayName: string } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const runPreview = useServerFn(previewEmailTemplate);
+  const listNotificationHistoryFn = useServerFn(listNotificationRecipientHistory);
 
   const openPreview = async (templateName: string) => {
     setPreviewOpen(true);
@@ -119,6 +121,12 @@ function AdminNotifications() {
       if (error) throw error;
       return (data ?? []) as LogRow[];
     },
+    refetchInterval: 15000,
+  });
+
+  const { data: notificationHistory = [], isLoading: loadingNotificationHistory } = useQuery({
+    queryKey: ["admin-notifications-recipient-history"],
+    queryFn: () => listNotificationHistoryFn(),
     refetchInterval: 15000,
   });
 
@@ -215,6 +223,7 @@ function AdminNotifications() {
         <TabsList>
           <TabsTrigger value="settings">Réglages</TabsTrigger>
           <TabsTrigger value="history">Historique ({stats.total})</TabsTrigger>
+          <TabsTrigger value="internal">Cloche ({notificationHistory.length})</TabsTrigger>
           <TabsTrigger value="test">Test</TabsTrigger>
         </TabsList>
 
@@ -339,6 +348,39 @@ function AdminNotifications() {
                   </div>
                 );
               })}
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="internal" className="space-y-4 mt-4">
+          <Card className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <BellRing className="h-4 w-4 text-primary" />
+              <div>
+                <h2 className="font-semibold text-sm">Historique cloche interne</h2>
+                <p className="text-xs text-muted-foreground">Chaque ligne correspond à un destinataire réel.</p>
+              </div>
+            </div>
+            <div className="divide-y">
+              {loadingNotificationHistory ? (
+                <div className="text-sm text-muted-foreground py-6 text-center">Chargement…</div>
+              ) : notificationHistory.length === 0 ? (
+                <div className="text-sm text-muted-foreground py-6 text-center">Aucune notification interne.</div>
+              ) : notificationHistory.map((n) => (
+                <div key={n.id} className="py-3 flex items-start gap-3">
+                  <Badge variant="outline" className="shrink-0">{n.type}</Badge>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{n.titre}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {n.recipient_name ? `${n.recipient_name} · ` : ""}{displayRecipient(n.recipient_email)} · {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: fr })}
+                    </div>
+                    {n.message && <div className="text-xs text-muted-foreground truncate mt-1">{n.message}</div>}
+                  </div>
+                  <Badge variant="outline" className={n.read_at ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary border-primary/30"}>
+                    {n.read_at ? "Lu" : "Non lu"}
+                  </Badge>
+                </div>
+              ))}
             </div>
           </Card>
         </TabsContent>

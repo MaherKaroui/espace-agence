@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { UserPlus, Search, Users, KeyRound, Power, PowerOff, ShieldCheck, MoreVertical, AlertTriangle, Circle } from "lucide-react";
+import { UserPlus, Search, Users, KeyRound, Power, PowerOff, ShieldCheck, MoreVertical, AlertTriangle, Circle, BellRing, BellOff } from "lucide-react";
 import { roleLabelFr } from "@/lib/role-labels";
 import { cn } from "@/lib/utils";
 import {
@@ -196,6 +196,16 @@ function MemberRow({ member, isAdmin, onDone }: { member: TeamMember; isAdmin: b
               <Circle className="h-2 w-2 fill-current" /> En ligne
             </Badge>
           )}
+          {!disabled && member.browser_notifications_active && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs gap-1">
+              <BellRing className="h-3 w-3" /> Push actif
+            </Badge>
+          )}
+          {!disabled && !member.browser_notifications_active && (
+            <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-xs gap-1">
+              <BellOff className="h-3 w-3" /> Push inactif
+            </Badge>
+          )}
         </div>
         <div className="text-xs text-muted-foreground truncate">{member.email}</div>
         <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1">
@@ -205,6 +215,9 @@ function MemberRow({ member, isAdmin, onDone }: { member: TeamMember; isAdmin: b
           )}
           {member.poles.length === 0 && (pr === "manager" || pr === "consultant") && (
             <span className="text-warning-foreground">Aucun pôle assigné</span>
+          )}
+          {member.push_subscriptions_count > 0 && (
+            <span>{member.push_subscriptions_count} appareil{member.push_subscriptions_count > 1 ? "s" : ""} notifications PC</span>
           )}
         </div>
       </div>
