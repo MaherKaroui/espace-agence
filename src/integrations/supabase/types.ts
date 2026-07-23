@@ -1559,6 +1559,7 @@ export type Database = {
           due_date: string | null
           id: string
           indicator_id: number
+          last_reminder_at: string | null
           message: string | null
           refus_motif: string | null
           requested_by: string
@@ -1573,6 +1574,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           indicator_id: number
+          last_reminder_at?: string | null
           message?: string | null
           refus_motif?: string | null
           requested_by: string
@@ -1587,6 +1589,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           indicator_id?: number
+          last_reminder_at?: string | null
           message?: string | null
           refus_motif?: string | null
           requested_by?: string
@@ -2142,6 +2145,26 @@ export type Database = {
         Args: { _dossier: string; _user: string }
         Returns: boolean
       }
+      qualiopi_dossier_recipients: {
+        Args: { _dossier: string }
+        Returns: {
+          user_id: string
+        }[]
+      }
+      qualiopi_link_for: {
+        Args: { _dossier: string; _user: string }
+        Returns: string
+      }
+      qualiopi_notify_all: {
+        Args: {
+          _dossier: string
+          _except: string
+          _message: string
+          _titre: string
+          _type: Database["public"]["Enums"]["notification_type"]
+        }
+        Returns: undefined
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -2272,6 +2295,13 @@ export type Database = {
         | "agency_task"
         | "internal_mention"
         | "tache_attente"
+        | "qualiopi_message"
+        | "qualiopi_demande"
+        | "qualiopi_document"
+        | "qualiopi_validation"
+        | "qualiopi_refus"
+        | "qualiopi_echeance"
+        | "qualiopi_retard"
       pole_role: "manager" | "consultant"
       tache_statut:
         | "a_faire"
@@ -2457,6 +2487,13 @@ export const Constants = {
         "agency_task",
         "internal_mention",
         "tache_attente",
+        "qualiopi_message",
+        "qualiopi_demande",
+        "qualiopi_document",
+        "qualiopi_validation",
+        "qualiopi_refus",
+        "qualiopi_echeance",
+        "qualiopi_retard",
       ],
       pole_role: ["manager", "consultant"],
       tache_statut: [

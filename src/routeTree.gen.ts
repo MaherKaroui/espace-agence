@@ -59,6 +59,7 @@ import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public
 import { Route as ApiPublicHooksPushFanoutRouteImport } from './routes/api/public/hooks/push-fanout'
 import { Route as ApiPublicHooksPurgeEphemeralRouteImport } from './routes/api/public/hooks/purge-ephemeral'
 import { Route as AuthenticatedMessagesGroupesIdRouteImport } from './routes/_authenticated/messages.groupes.$id'
+import { Route as AuthenticatedDossiersIdQualiopiRapportRouteImport } from './routes/_authenticated/dossiers.$id.qualiopi-rapport'
 import { Route as AuthenticatedAdminMessagesClientIdRouteImport } from './routes/_authenticated/admin.messages.$clientId'
 import { Route as AuthenticatedAdminInternalMessagesIdRouteImport } from './routes/_authenticated/admin.internal-messages.$id'
 import { Route as AuthenticatedAdminDossiersIdRouteImport } from './routes/_authenticated/admin.dossiers.$id'
@@ -340,6 +341,12 @@ const AuthenticatedMessagesGroupesIdRoute =
     path: '/messages/groupes/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDossiersIdQualiopiRapportRoute =
+  AuthenticatedDossiersIdQualiopiRapportRouteImport.update({
+    id: '/qualiopi-rapport',
+    path: '/qualiopi-rapport',
+    getParentRoute: () => AuthenticatedDossiersIdRoute,
+  } as any)
 const AuthenticatedAdminMessagesClientIdRoute =
   AuthenticatedAdminMessagesClientIdRouteImport.update({
     id: '/admin/messages/$clientId',
@@ -396,7 +403,7 @@ export interface FileRoutesByFullPath {
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/audits/$id': typeof AuthenticatedAuditsIdRoute
-  '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
+  '/dossiers/$id': typeof AuthenticatedDossiersIdRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/audits/': typeof AuthenticatedAuditsIndexRoute
@@ -406,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/admin/dossiers/$id': typeof AuthenticatedAdminDossiersIdRoute
   '/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
+  '/dossiers/$id/qualiopi-rapport': typeof AuthenticatedDossiersIdQualiopiRapportRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
@@ -451,7 +459,7 @@ export interface FileRoutesByTo {
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/audits/$id': typeof AuthenticatedAuditsIdRoute
-  '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
+  '/dossiers/$id': typeof AuthenticatedDossiersIdRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/audits': typeof AuthenticatedAuditsIndexRoute
@@ -461,6 +469,7 @@ export interface FileRoutesByTo {
   '/admin/dossiers/$id': typeof AuthenticatedAdminDossiersIdRoute
   '/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
+  '/dossiers/$id/qualiopi-rapport': typeof AuthenticatedDossiersIdQualiopiRapportRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
@@ -508,7 +517,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/_authenticated/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/_authenticated/audits/$id': typeof AuthenticatedAuditsIdRoute
-  '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
+  '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRouteWithChildren
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/audits/': typeof AuthenticatedAuditsIndexRoute
@@ -518,6 +527,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/dossiers/$id': typeof AuthenticatedAdminDossiersIdRoute
   '/_authenticated/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
   '/_authenticated/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
+  '/_authenticated/dossiers/$id/qualiopi-rapport': typeof AuthenticatedDossiersIdQualiopiRapportRoute
   '/_authenticated/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
@@ -575,6 +585,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers/$id'
     | '/admin/internal-messages/$id'
     | '/admin/messages/$clientId'
+    | '/dossiers/$id/qualiopi-rapport'
     | '/messages/groupes/$id'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
@@ -630,6 +641,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers/$id'
     | '/admin/internal-messages/$id'
     | '/admin/messages/$clientId'
+    | '/dossiers/$id/qualiopi-rapport'
     | '/messages/groupes/$id'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
@@ -686,6 +698,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/dossiers/$id'
     | '/_authenticated/admin/internal-messages/$id'
     | '/_authenticated/admin/messages/$clientId'
+    | '/_authenticated/dossiers/$id/qualiopi-rapport'
     | '/_authenticated/messages/groupes/$id'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
@@ -1079,6 +1092,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessagesGroupesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dossiers/$id/qualiopi-rapport': {
+      id: '/_authenticated/dossiers/$id/qualiopi-rapport'
+      path: '/qualiopi-rapport'
+      fullPath: '/dossiers/$id/qualiopi-rapport'
+      preLoaderRoute: typeof AuthenticatedDossiersIdQualiopiRapportRouteImport
+      parentRoute: typeof AuthenticatedDossiersIdRoute
+    }
     '/_authenticated/admin/messages/$clientId': {
       id: '/_authenticated/admin/messages/$clientId'
       path: '/admin/messages/$clientId'
@@ -1124,6 +1144,21 @@ const AuthenticatedAdminDossiersRouteWithChildren =
     AuthenticatedAdminDossiersRouteChildren,
   )
 
+interface AuthenticatedDossiersIdRouteChildren {
+  AuthenticatedDossiersIdQualiopiRapportRoute: typeof AuthenticatedDossiersIdQualiopiRapportRoute
+}
+
+const AuthenticatedDossiersIdRouteChildren: AuthenticatedDossiersIdRouteChildren =
+  {
+    AuthenticatedDossiersIdQualiopiRapportRoute:
+      AuthenticatedDossiersIdQualiopiRapportRoute,
+  }
+
+const AuthenticatedDossiersIdRouteWithChildren =
+  AuthenticatedDossiersIdRoute._addFileChildren(
+    AuthenticatedDossiersIdRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMesDonneesRoute: typeof AuthenticatedMesDonneesRoute
@@ -1142,7 +1177,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminSessionsRoute: typeof AuthenticatedAdminSessionsRoute
   AuthenticatedAdminTachesAgenceRoute: typeof AuthenticatedAdminTachesAgenceRoute
   AuthenticatedAuditsIdRoute: typeof AuthenticatedAuditsIdRoute
-  AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRoute
+  AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRouteWithChildren
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAuditsIndexRoute: typeof AuthenticatedAuditsIndexRoute
   AuthenticatedDossiersIndexRoute: typeof AuthenticatedDossiersIndexRoute
@@ -1175,7 +1210,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminSessionsRoute: AuthenticatedAdminSessionsRoute,
   AuthenticatedAdminTachesAgenceRoute: AuthenticatedAdminTachesAgenceRoute,
   AuthenticatedAuditsIdRoute: AuthenticatedAuditsIdRoute,
-  AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRoute,
+  AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRouteWithChildren,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAuditsIndexRoute: AuthenticatedAuditsIndexRoute,
   AuthenticatedDossiersIndexRoute: AuthenticatedDossiersIndexRoute,
