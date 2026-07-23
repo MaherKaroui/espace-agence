@@ -493,6 +493,53 @@ export type Database = {
           },
         ]
       }
+      dossier_assignments: {
+        Row: {
+          active: boolean
+          assigned_at: string
+          assigned_by: string | null
+          created_at: string
+          dossier_id: string
+          id: string
+          revoked_at: string | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          dossier_id: string
+          id?: string
+          revoked_at?: string | null
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          dossier_id?: string
+          id?: string
+          revoked_at?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossier_assignments_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dossiers: {
         Row: {
           avancement: number
@@ -1361,6 +1408,62 @@ export type Database = {
         }
         Relationships: []
       }
+      qualiopi_criteria: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: number
+          titre: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id: number
+          titre: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: number
+          titre?: string
+        }
+        Relationships: []
+      }
+      qualiopi_indicators: {
+        Row: {
+          created_at: string
+          criterion_id: number
+          description: string | null
+          id: number
+          libelle_court: string
+          numero: number
+        }
+        Insert: {
+          created_at?: string
+          criterion_id: number
+          description?: string | null
+          id: number
+          libelle_court: string
+          numero: number
+        }
+        Update: {
+          created_at?: string
+          criterion_id?: number
+          description?: string | null
+          id?: number
+          libelle_court?: string
+          numero?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualiopi_indicators_criterion_id_fkey"
+            columns: ["criterion_id"]
+            isOneToOne: false
+            referencedRelation: "qualiopi_criteria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rapports_quotidiens: {
         Row: {
           alertes_securite_24h: number
@@ -1819,6 +1922,14 @@ export type Database = {
         Returns: boolean
       }
       is_agency_member: { Args: { _user: string }; Returns: boolean }
+      is_assigned_as: {
+        Args: { _dossier: string; _role: string; _user: string }
+        Returns: boolean
+      }
+      is_assigned_to_dossier: {
+        Args: { _dossier: string; _user: string }
+        Returns: boolean
+      }
       is_conversation_member: {
         Args: { _conv_id: string; _user_id: string }
         Returns: boolean
@@ -1964,7 +2075,14 @@ export type Database = {
     Enums: {
       agency_task_priority: "basse" | "normale" | "haute" | "urgente"
       agency_task_status: "a_faire" | "en_cours" | "bloquee" | "terminee"
-      app_role: "client" | "admin" | "direction" | "manager" | "consultant"
+      app_role:
+        | "client"
+        | "admin"
+        | "direction"
+        | "manager"
+        | "consultant"
+        | "auditeur"
+        | "certificateur"
       dossier_categorie:
         | "qualiopi"
         | "bpf"
@@ -2139,7 +2257,15 @@ export const Constants = {
     Enums: {
       agency_task_priority: ["basse", "normale", "haute", "urgente"],
       agency_task_status: ["a_faire", "en_cours", "bloquee", "terminee"],
-      app_role: ["client", "admin", "direction", "manager", "consultant"],
+      app_role: [
+        "client",
+        "admin",
+        "direction",
+        "manager",
+        "consultant",
+        "auditeur",
+        "certificateur",
+      ],
       dossier_categorie: [
         "qualiopi",
         "bpf",
