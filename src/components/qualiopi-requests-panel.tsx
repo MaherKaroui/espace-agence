@@ -501,7 +501,20 @@ function RequestCard({
             </Dialog>
           </>
         )}
+        {statut !== "validee" && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => remind.mutate()}
+            disabled={remind.isPending}
+            title="Envoyer une relance (anti-spam 24h)"
+          >
+            {remind.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Bell className="h-4 w-4 mr-1" />}
+            Relancer
+          </Button>
+        )}
       </div>
+
 
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent className="max-w-md">
