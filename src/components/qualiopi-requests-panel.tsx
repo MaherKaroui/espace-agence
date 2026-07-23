@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -240,7 +240,7 @@ function RequestCard({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [refuseOpen, setRefuseOpen] = useState(false);
   const [refuseMotif, setRefuseMotif] = useState("");
-  const uploadRef = useState<HTMLInputElement | null>(null);
+  const uploadRef = useRef<HTMLInputElement | null>(null);
 
   const registerFn = useServerFn(registerQualiopiDocument);
   const reviewFn = useServerFn(reviewQualiopiRequest);
@@ -422,7 +422,7 @@ function RequestCard({
 
       <div className="flex flex-wrap items-center gap-2 pt-1">
         <input
-          ref={(el) => { uploadRef[1](el); }}
+          ref={uploadRef}
           type="file"
           className="hidden"
           onChange={(e) => {
@@ -434,7 +434,7 @@ function RequestCard({
         <Button
           size="sm"
           variant="outline"
-          onClick={() => uploadRef[0]?.click()}
+          onClick={() => uploadRef.current?.click()}
           disabled={uploading}
         >
           {uploading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
