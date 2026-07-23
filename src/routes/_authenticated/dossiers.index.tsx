@@ -635,7 +635,6 @@ function ClientRequestWizard({
       nb_formations: toInt(nbFormations),
       has_stagiaires: hasStagiaires,
       stagiaires: hasStagiaires ? stagiaires : [],
-      organisme_nom: organismeNom.trim(),
       ...ofContact,
     });
   };
