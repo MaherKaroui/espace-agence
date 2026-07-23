@@ -192,6 +192,8 @@ function CalendrierQualiopi() {
         status: payload.status || "planifie",
         observation: payload.observation || null,
         dossier_id: payload.dossier_id || null,
+        color_tag: payload.color_tag ?? null,
+        color_manual: !!payload.color_manual,
         updated_by: user?.id ?? null,
       };
       if (payload.id) {
