@@ -601,6 +601,10 @@ function ClientRequestWizard({
   const [organismeTelephone, setOrganismeTelephone] = useState<string>("");
   const [siteWeb, setSiteWeb] = useState<string>("");
 
+  // Champs spécifiques Juridique
+  const [juridiqueType, setJuridiqueType] = useState<string>("");
+
+
   // Champs spécifiques Qualiopi
   const [auditType, setAuditType] = useState<string>("");
   const [scopes, setScopes] = useState<string[]>([]);
