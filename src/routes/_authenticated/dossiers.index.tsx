@@ -547,6 +547,7 @@ const CLIENT_NEEDS: { value: string; label: string; hint: string }[] = [
   { value: "cfa", label: "Création ou gestion CFA", hint: "Pour créer ou suivre votre CFA." },
   { value: "bpf", label: "BPF annuel", hint: "Pour préparer votre bilan pédagogique et financier." },
   { value: "vae", label: "VAE", hint: "Pour une demande liée à la validation des acquis." },
+  { value: "juridique", label: "Juridique", hint: "Création d'entreprise, transfert de siège, modification d'objet social, cession de parts." },
   { value: "contrats", label: "Contrats", hint: "Pour les conventions, contrats ou documents à signer." },
   { value: "documents_administratifs", label: "Documents administratifs", hint: "Pour envoyer ou demander un document administratif." },
   { value: "autres", label: "Je ne sais pas / Autre demande", hint: "L'agence vous rappellera pour comprendre votre besoin." },
