@@ -420,6 +420,14 @@ function RequestCard({
                 <button
                   type="button"
                   className="p-1 rounded hover:bg-background text-muted-foreground"
+                  onClick={() => preview(d.id)}
+                  title="Prévisualiser dans la plateforme"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  className="p-1 rounded hover:bg-background text-muted-foreground"
                   onClick={() => download(d.id)}
                   title="Télécharger"
                 >
