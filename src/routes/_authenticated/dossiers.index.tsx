@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
-import { CATEGORIES, categorieLabel, requiredDocsFor } from "@/lib/labels";
+import { CATEGORIES, JURIDIQUE_TYPES, categorieLabel, requiredDocsFor } from "@/lib/labels";
 import { buildDossierTitre, baseTitreFor } from "@/lib/dossier-title";
 import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { cn } from "@/lib/utils";
@@ -84,6 +84,7 @@ function DossiersPage() {
       nb_formations?: number | null;
       has_stagiaires?: boolean;
       stagiaires?: any[];
+      juridique_type?: string | null;
     }) => {
       const row: any = {
         client_id: user!.id,
@@ -104,6 +105,9 @@ function DossiersPage() {
         row.nb_formations = payload.nb_formations ?? null;
         row.has_stagiaires = !!payload.has_stagiaires;
         row.stagiaires = payload.stagiaires ?? [];
+      }
+      if (payload.categorie === "juridique") {
+        row.juridique_type = payload.juridique_type ?? null;
       }
       const { data, error } = await supabase.from("dossiers").insert(row).select("id").single();
       if (error) throw error;
