@@ -57,6 +57,33 @@ const FOLLOWUP_LABELS: Record<FollowupStatus, string> = {
   autre: "Autre",
 };
 
+type ColorTag = "vert" | "bleu" | "orange" | "violet" | "rouge" | "gris";
+const COLOR_LABELS: Record<ColorTag, string> = {
+  vert: "Vert", bleu: "Bleu", orange: "Orange", violet: "Violet", rouge: "Rouge", gris: "Gris",
+};
+const COLOR_CLASSES: Record<ColorTag, string> = {
+  vert: "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 border-emerald-500/60",
+  bleu: "bg-blue-500/20 text-blue-800 dark:text-blue-200 border-blue-500/60",
+  orange: "bg-orange-500/20 text-orange-800 dark:text-orange-200 border-orange-500/60",
+  violet: "bg-violet-500/20 text-violet-800 dark:text-violet-200 border-violet-500/60",
+  rouge: "bg-red-500/20 text-red-800 dark:text-red-200 border-red-500/60",
+  gris: "bg-muted text-muted-foreground border-border",
+};
+const COLOR_DOT: Record<ColorTag, string> = {
+  vert: "bg-emerald-500", bleu: "bg-blue-500", orange: "bg-orange-500",
+  violet: "bg-violet-500", rouge: "bg-red-500", gris: "bg-muted-foreground",
+};
+function autoColor(auditor?: string | null, certifier?: string | null, certOrg?: string | null): ColorTag | null {
+  const a = (auditor ?? "").toLowerCase().replace(/\s+/g, "");
+  const c = ((certifier ?? "") + " " + (certOrg ?? "")).toLowerCase().replace(/\s+/g, "");
+  if (a.includes("siby") && c.includes("capcert")) return "vert";
+  return null;
+}
+function effectiveColor(e: Partial<CalEvent>): ColorTag | null {
+  if (e.color_tag) return e.color_tag as ColorTag;
+  return autoColor(e.auditor_name, e.certifier_name, e.certifier_organization);
+}
+
 type CalEvent = {
   id: string;
   audit_date: string;
@@ -69,6 +96,8 @@ type CalEvent = {
   status: EventStatus;
   observation: string | null;
   dossier_id: string | null;
+  color_tag: ColorTag | null;
+  color_manual: boolean;
 };
 type Pending = {
   id: string;
