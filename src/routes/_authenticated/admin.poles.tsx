@@ -525,7 +525,7 @@ function PoleCard({
                 <div className="flex items-center gap-2">
                   <Select
                     value={m.role}
-                    onValueChange={(v) => changeMemberRole.mutate({ memberId: m.id, role: v as "manager" | "consultant" })}
+                    onValueChange={(v) => changeMemberRole.mutate({ memberId: m.id, role: v as PoleMemberRole })}
                   >
                     <SelectTrigger className="h-8 w-40">
                       <SelectValue />
