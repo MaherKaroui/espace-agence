@@ -54,6 +54,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
+import { Route as ApiPublicHooksPushFanoutRouteImport } from './routes/api/public/hooks/push-fanout'
 import { Route as ApiPublicHooksPurgeEphemeralRouteImport } from './routes/api/public/hooks/purge-ephemeral'
 import { Route as AuthenticatedMessagesGroupesIdRouteImport } from './routes/_authenticated/messages.groupes.$id'
 import { Route as AuthenticatedAdminMessagesClientIdRouteImport } from './routes/_authenticated/admin.messages.$clientId'
@@ -308,6 +309,12 @@ const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   path: '/api/public/hooks/reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksPushFanoutRoute =
+  ApiPublicHooksPushFanoutRouteImport.update({
+    id: '/api/public/hooks/push-fanout',
+    path: '/api/public/hooks/push-fanout',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksPurgeEphemeralRoute =
   ApiPublicHooksPurgeEphemeralRouteImport.update({
     id: '/api/public/hooks/purge-ephemeral',
@@ -386,6 +393,7 @@ export interface FileRoutesByFullPath {
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
+  '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -438,6 +446,7 @@ export interface FileRoutesByTo {
   '/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
+  '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -492,6 +501,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/messages/$clientId': typeof AuthenticatedAdminMessagesClientIdRoute
   '/_authenticated/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
+  '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -546,6 +556,7 @@ export interface FileRouteTypes {
     | '/admin/messages/$clientId'
     | '/messages/groupes/$id'
     | '/api/public/hooks/purge-ephemeral'
+    | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/reminders'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -598,6 +609,7 @@ export interface FileRouteTypes {
     | '/admin/messages/$clientId'
     | '/messages/groupes/$id'
     | '/api/public/hooks/purge-ephemeral'
+    | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/reminders'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -651,6 +663,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/messages/$clientId'
     | '/_authenticated/messages/groupes/$id'
     | '/api/public/hooks/purge-ephemeral'
+    | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/reminders'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -680,6 +693,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksPurgeEphemeralRoute: typeof ApiPublicHooksPurgeEphemeralRoute
+  ApiPublicHooksPushFanoutRoute: typeof ApiPublicHooksPushFanoutRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1005,6 +1019,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/push-fanout': {
+      id: '/api/public/hooks/push-fanout'
+      path: '/api/public/hooks/push-fanout'
+      fullPath: '/api/public/hooks/push-fanout'
+      preLoaderRoute: typeof ApiPublicHooksPushFanoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/purge-ephemeral': {
       id: '/api/public/hooks/purge-ephemeral'
       path: '/api/public/hooks/purge-ephemeral'
@@ -1151,6 +1172,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksPurgeEphemeralRoute: ApiPublicHooksPurgeEphemeralRoute,
+  ApiPublicHooksPushFanoutRoute: ApiPublicHooksPushFanoutRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
