@@ -234,6 +234,9 @@ function AgencyTasksPage() {
                     <div className="flex gap-1 flex-shrink-0">
                       <PriorityBadge value={t.priority} />
                       <StatusBadge value={t.status} />
+                      {(t as any).auto && (
+                        <span className="inline-flex items-center rounded border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] font-medium text-gold-foreground">auto</span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm truncate flex items-center gap-2">
@@ -245,6 +248,18 @@ function AgencyTasksPage() {
                         {t.pole_id && <> · {polesMap[t.pole_id] ?? "…"}</>}
                         {" · "}
                         <span className={overdue ? "text-red-600 font-medium" : ""}>{fmtDue(t.due_date)}</span>
+                        {(t as any).dossier_id && (
+                          <>
+                            {" · "}
+                            <a
+                              href={`/dossiers/${(t as any).dossier_id}`}
+                              className="text-primary hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Voir dossier
+                            </a>
+                          </>
+                        )}
                       </div>
                     </div>
                   </Card>
