@@ -73,16 +73,34 @@ const COLOR_DOT: Record<ColorTag, string> = {
   vert: "bg-emerald-500", bleu: "bg-blue-500", orange: "bg-orange-500",
   violet: "bg-violet-500", rouge: "bg-red-500", gris: "bg-muted-foreground",
 };
-function autoColor(auditor?: string | null, certifier?: string | null, certOrg?: string | null): ColorTag | null {
-  const a = (auditor ?? "").toLowerCase().replace(/\s+/g, "");
-  const c = ((certifier ?? "") + " " + (certOrg ?? "")).toLowerCase().replace(/\s+/g, "");
-  if (a.includes("siby") && c.includes("capcert")) return "vert";
+const CERT_COLOR_RULES: Array<{ key: string; color: ColorTag; label: string }> = [
+  { key: "capcert", color: "vert", label: "CAPCERT" },
+  { key: "bci", color: "bleu", label: "BCI" },
+  { key: "qualipro", color: "violet", label: "QUALIPRO" },
+  { key: "icpf", color: "orange", label: "ICPF" },
+  { key: "wecert", color: "rouge", label: "WECERT" },
+  { key: "afnor", color: "gris", label: "AFNOR" },
+];
+function normalizeCert(s?: string | null): string {
+  return (s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, "");
+}
+function autoColor(_auditor?: string | null, certifier?: string | null, certOrg?: string | null): ColorTag | null {
+  const c = normalizeCert((certifier ?? "") + " " + (certOrg ?? ""));
+  for (const rule of CERT_COLOR_RULES) {
+    if (c.includes(rule.key)) return rule.color;
+  }
   return null;
 }
 function effectiveColor(e: Partial<CalEvent>): ColorTag | null {
+  if (e.color_manual && e.color_tag) return e.color_tag as ColorTag;
   if (e.color_tag) return e.color_tag as ColorTag;
   return autoColor(e.auditor_name, e.certifier_name, e.certifier_organization);
 }
+
 
 type CalEvent = {
   id: string;
@@ -418,15 +436,16 @@ function CalendrierQualiopi() {
           </Card>
 
           <Card className="p-3 flex flex-wrap items-center gap-3 text-xs">
-            <span className="font-medium text-muted-foreground">Légende couleurs :</span>
-            {(Object.keys(COLOR_LABELS) as ColorTag[]).map((c) => (
-              <span key={c} className="inline-flex items-center gap-1.5">
-                <span className={`h-3 w-3 rounded-full ${COLOR_DOT[c]}`} />
-                {COLOR_LABELS[c]}
+            <span className="font-medium text-muted-foreground">Couleurs par certificateur :</span>
+            {CERT_COLOR_RULES.map((r) => (
+              <span key={r.key} className="inline-flex items-center gap-1.5">
+                <span className={`h-3 w-3 rounded-full ${COLOR_DOT[r.color]}`} />
+                {r.label}
               </span>
             ))}
-            <span className="text-muted-foreground ml-2">• Auto : SIBY + CAPCERT ⇒ vert</span>
+            <span className="text-muted-foreground ml-2">• Autre certificateur : sans couleur</span>
           </Card>
+
 
           {eventsQ.isLoading ? (
             <p className="text-sm text-muted-foreground">Chargement…</p>
@@ -595,7 +614,7 @@ function CalendrierQualiopi() {
                     <SelectItem value="auto">
                       <span className="inline-flex items-center gap-2">
                         <span className={`h-3 w-3 rounded-full ${(() => { const c = autoColor(editEvent.auditor_name, editEvent.certifier_name, editEvent.certifier_organization); return c ? COLOR_DOT[c] : "border border-border"; })()}`} />
-                        Automatique {(() => { const c = autoColor(editEvent.auditor_name, editEvent.certifier_name, editEvent.certifier_organization); return c ? `(${COLOR_LABELS[c]})` : "(aucune)"; })()}
+                        Auto selon certificateur {(() => { const c = autoColor(editEvent.auditor_name, editEvent.certifier_name, editEvent.certifier_organization); return c ? `(${COLOR_LABELS[c]})` : "(aucune)"; })()}
                       </span>
                     </SelectItem>
                     {(Object.keys(COLOR_LABELS) as ColorTag[]).map((c) => (
