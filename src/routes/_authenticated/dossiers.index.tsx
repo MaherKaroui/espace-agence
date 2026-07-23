@@ -112,7 +112,7 @@ function DossiersPage() {
         templateData: {
           clientName,
           clientEmail: user?.email,
-          dossierTitre: (payload as any)?.titre,
+          dossierTitre: buildDossierTitre((payload as any)?.categorie, (payload as any)?.organisme_nom),
           categorie: categorieLabel((payload as any)?.categorie),
           dossierId: data?.id,
           appUrl: "https://izisuivis.com",
@@ -128,7 +128,7 @@ function DossiersPage() {
           idempotencyKey: `client-dossier-cree-${data?.id}`,
           templateData: {
             prenom: user?.user_metadata?.prenom || "",
-            dossierTitre: (payload as any)?.titre,
+            dossierTitre: buildDossierTitre((payload as any)?.categorie, (payload as any)?.organisme_nom),
             categorie: categorieLabel((payload as any)?.categorie),
             dossierId: data?.id,
             appUrl: "https://izisuivis.com",
@@ -310,7 +310,7 @@ function DossiersPage() {
                   <Textarea id="description" name="description" rows={3} maxLength={500} />
                 </div>
                 <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
-                  <div className="font-medium text-sm">Organisme de formation (optionnel)</div>
+                  <div className="font-medium text-sm">Coordonnées de l'organisme de formation</div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <Label htmlFor="of-email-admin">E-mail de l'OF</Label>
