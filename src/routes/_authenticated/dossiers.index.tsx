@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, categorieLabel, requiredDocsFor } from "@/lib/labels";
+import { buildDossierTitre, baseTitreFor } from "@/lib/dossier-title";
 import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
