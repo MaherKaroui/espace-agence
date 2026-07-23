@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
-import { CATEGORIES, categorieLabel, requiredDocsFor } from "@/lib/labels";
+import { CATEGORIES, JURIDIQUE_TYPES, categorieLabel, requiredDocsFor } from "@/lib/labels";
 import { buildDossierTitre, baseTitreFor } from "@/lib/dossier-title";
 import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { cn } from "@/lib/utils";
@@ -46,6 +46,8 @@ function DossiersPage() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<string>("all");
+  const [adminCategorie, setAdminCategorie] = useState<string>("");
+  const [adminJuridiqueType, setAdminJuridiqueType] = useState<string>("");
 
   const { data: poles = [] } = useQuery({
     queryKey: ["poles"],
@@ -84,6 +86,7 @@ function DossiersPage() {
       nb_formations?: number | null;
       has_stagiaires?: boolean;
       stagiaires?: any[];
+      juridique_type?: string | null;
     }) => {
       const row: any = {
         client_id: user!.id,
@@ -104,6 +107,9 @@ function DossiersPage() {
         row.nb_formations = payload.nb_formations ?? null;
         row.has_stagiaires = !!payload.has_stagiaires;
         row.stagiaires = payload.stagiaires ?? [];
+      }
+      if (payload.categorie === "juridique") {
+        row.juridique_type = payload.juridique_type ?? null;
       }
       const { data, error } = await supabase.from("dossiers").insert(row).select("id").single();
       if (error) throw error;
@@ -166,10 +172,14 @@ function DossiersPage() {
     const organisme_email = ((fd.get("organisme_email") as string) ?? "").trim() || undefined;
     const organisme_telephone = ((fd.get("organisme_telephone") as string) ?? "").trim() || undefined;
     const site_web = ((fd.get("site_web") as string) ?? "").trim() || undefined;
+    const juridique_type = ((fd.get("juridique_type") as string) ?? "").trim() || null;
     if (!organisme_nom) { toast.error("Nom de l'organisme de formation requis"); return; }
     if (!categorie || !pole_id) { toast.error("Champs requis"); return; }
-    const titre = buildDossierTitre(categorie, organisme_nom);
-    create.mutate({ titre, categorie, pole_id, description, organisme_nom, organisme_email, organisme_telephone, site_web });
+    if (categorie === "juridique" && !juridique_type) {
+      toast.error("Choisissez le type juridique"); return;
+    }
+    const titre = buildDossierTitre(categorie, organisme_nom, juridique_type);
+    create.mutate({ titre, categorie, pole_id, description, organisme_nom, organisme_email, organisme_telephone, site_web, juridique_type });
   };
 
   const submitClient = (
@@ -183,6 +193,7 @@ function DossiersPage() {
       nb_formations?: number | null;
       has_stagiaires?: boolean;
       stagiaires?: any[];
+      juridique_type?: string | null;
       organisme_nom?: string;
       organisme_email?: string;
       organisme_telephone?: string;
@@ -193,10 +204,14 @@ function DossiersPage() {
     if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
     const organisme_nom = (extra?.organisme_nom ?? "").trim();
     if (!organisme_nom) { toast.error("Nom de l'organisme de formation requis"); return; }
-    const titre = buildDossierTitre(categorie, organisme_nom);
+    if (categorie === "juridique" && !((extra?.juridique_type ?? "").trim())) {
+      toast.error("Choisissez le type juridique"); return;
+    }
+    const titre = buildDossierTitre(categorie, organisme_nom, extra?.juridique_type);
     const { organisme_nom: _n, ...rest } = extra ?? {};
     create.mutate({ titre, categorie, pole_id, description, organisme_nom, ...rest });
   };
+
 
   const filtered = filter === "all" ? dossiers : dossiers.filter((d) => d.categorie === filter);
 
@@ -307,13 +322,34 @@ function DossiersPage() {
                 </div>
                 <div>
                   <Label>Catégorie</Label>
-                  <Select name="categorie" required>
+                  <Select
+                    name="categorie"
+                    required
+                    value={adminCategorie}
+                    onValueChange={(v) => { setAdminCategorie(v); if (v !== "juridique") setAdminJuridiqueType(""); }}
+                  >
                     <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
                     <SelectContent>
                       {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
+                {adminCategorie === "juridique" && (
+                  <div>
+                    <Label>Type juridique <span className="text-destructive">*</span></Label>
+                    <Select
+                      name="juridique_type"
+                      required
+                      value={adminJuridiqueType}
+                      onValueChange={setAdminJuridiqueType}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Choisir le type…" /></SelectTrigger>
+                      <SelectContent>
+                        {JURIDIQUE_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="description">Description (optionnel)</Label>
                   <Textarea id="description" name="description" rows={3} maxLength={500} />
@@ -511,6 +547,7 @@ const CLIENT_NEEDS: { value: string; label: string; hint: string }[] = [
   { value: "cfa", label: "Création ou gestion CFA", hint: "Pour créer ou suivre votre CFA." },
   { value: "bpf", label: "BPF annuel", hint: "Pour préparer votre bilan pédagogique et financier." },
   { value: "vae", label: "VAE", hint: "Pour une demande liée à la validation des acquis." },
+  { value: "juridique", label: "Juridique", hint: "Création d'entreprise, transfert de siège, modification d'objet social, cession de parts." },
   { value: "contrats", label: "Contrats", hint: "Pour les conventions, contrats ou documents à signer." },
   { value: "documents_administratifs", label: "Documents administratifs", hint: "Pour envoyer ou demander un document administratif." },
   { value: "autres", label: "Je ne sais pas / Autre demande", hint: "L'agence vous rappellera pour comprendre votre besoin." },
@@ -545,6 +582,7 @@ function ClientRequestWizard({
       nb_formations?: number | null;
       has_stagiaires?: boolean;
       stagiaires?: any[];
+      juridique_type?: string | null;
       organisme_nom?: string;
       organisme_email?: string;
       organisme_telephone?: string;
@@ -562,6 +600,10 @@ function ClientRequestWizard({
   const [organismeEmail, setOrganismeEmail] = useState<string>("");
   const [organismeTelephone, setOrganismeTelephone] = useState<string>("");
   const [siteWeb, setSiteWeb] = useState<string>("");
+
+  // Champs spécifiques Juridique
+  const [juridiqueType, setJuridiqueType] = useState<string>("");
+
 
   // Champs spécifiques Qualiopi
   const [auditType, setAuditType] = useState<string>("");
@@ -630,7 +672,7 @@ function ClientRequestWizard({
       </div>
       {categorie && organismeNom.trim() && (
         <p className="text-xs text-muted-foreground">
-          Titre généré : <span className="font-medium text-foreground">{buildDossierTitre(categorie, organismeNom)}</span>
+          Titre généré : <span className="font-medium text-foreground">{buildDossierTitre(categorie, organismeNom, juridiqueType)}</span>
         </p>
       )}
     </div>
@@ -853,6 +895,28 @@ function ClientRequestWizard({
       {step === 2 && !isQualiopi && (
         <div className="space-y-3">
           {OFContactFields}
+          {categorie === "juridique" && (
+            <div className="space-y-2">
+              <div>
+                <div className="font-medium">Type de demande juridique <span className="text-destructive">*</span></div>
+                <p className="text-sm text-muted-foreground">Sélectionnez la sous-demande qui vous concerne.</p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {JURIDIQUE_TYPES.map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setJuridiqueType(t.value)}
+                    className={`text-left rounded-lg border p-3 hover:border-primary/60 hover:bg-muted/40 transition-colors ${
+                      juridiqueType === t.value ? "border-primary bg-primary/5" : ""
+                    }`}
+                  >
+                    <div className="text-sm font-medium">{t.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div>
             <div className="font-medium">Expliquez votre demande en une phrase</div>
             <p className="text-sm text-muted-foreground">Ex : « Je souhaite obtenir mon NDA pour mon organisme. »</p>
@@ -869,8 +933,15 @@ function ClientRequestWizard({
             <Button
               type="button"
               className="flex-1"
-              disabled={pending || organismeNom.trim().length === 0}
-              onClick={() => onSubmit(categorie, description.trim(), ofContact)}
+              disabled={
+                pending
+                || organismeNom.trim().length === 0
+                || (categorie === "juridique" && !juridiqueType)
+              }
+              onClick={() => onSubmit(categorie, description.trim(), {
+                ...ofContact,
+                juridique_type: categorie === "juridique" ? juridiqueType : null,
+              })}
             >
               {pending ? "Création…" : "Créer la demande"}
             </Button>

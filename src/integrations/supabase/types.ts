@@ -550,6 +550,7 @@ export type Database = {
           description: string | null
           has_stagiaires: boolean
           id: string
+          juridique_type: string | null
           last_relance_at: string | null
           nb_formateurs: number | null
           nb_formations: number | null
@@ -577,6 +578,7 @@ export type Database = {
           description?: string | null
           has_stagiaires?: boolean
           id?: string
+          juridique_type?: string | null
           last_relance_at?: string | null
           nb_formateurs?: number | null
           nb_formations?: number | null
@@ -604,6 +606,7 @@ export type Database = {
           description?: string | null
           has_stagiaires?: boolean
           id?: string
+          juridique_type?: string | null
           last_relance_at?: string | null
           nb_formateurs?: number | null
           nb_formations?: number | null
@@ -2039,10 +2042,19 @@ export type Database = {
         Args: { _dossier: string; _user: string }
         Returns: boolean
       }
-      dossier_title_from_of: {
-        Args: { _categorie: string; _organisme_nom: string }
-        Returns: string
-      }
+      dossier_title_from_of:
+        | {
+            Args: { _categorie: string; _organisme_nom: string }
+            Returns: string
+          }
+        | {
+            Args: {
+              _categorie: string
+              _juridique_type: string
+              _organisme_nom: string
+            }
+            Returns: string
+          }
       email_queue_dispatch: { Args: never; Returns: undefined }
       email_template_enabled: {
         Args: { _template_name: string }
@@ -2268,6 +2280,7 @@ export type Database = {
         | "contrats"
         | "documents_administratifs"
         | "autres"
+        | "juridique"
       dossier_statut:
         | "en_attente"
         | "documents_manquants"
@@ -2458,6 +2471,7 @@ export const Constants = {
         "contrats",
         "documents_administratifs",
         "autres",
+        "juridique",
       ],
       dossier_statut: [
         "en_attente",

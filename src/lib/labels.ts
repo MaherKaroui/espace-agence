@@ -5,10 +5,22 @@ export const CATEGORIES = [
   { value: "cfa", label: "Création ou gestion CFA" },
   { value: "vae", label: "VAE" },
   { value: "edof", label: "Dossier EDOF / CPF" },
+  { value: "juridique", label: "Juridique" },
   { value: "contrats", label: "Contrats" },
   { value: "documents_administratifs", label: "Documents administratifs" },
   { value: "autres", label: "Je ne sais pas / Autre demande" },
 ] as const;
+
+// Sous-types Juridique — libellés canoniques (aussi validés côté trigger DB).
+export const JURIDIQUE_TYPES = [
+  { value: "Création d'entreprise", label: "Création d'entreprise" },
+  { value: "Transfert de siège social", label: "Transfert de siège social" },
+  { value: "Modification d'objet social", label: "Modification d'objet social" },
+  { value: "Cession de parts", label: "Cession de parts" },
+] as const;
+
+export type JuridiqueType = (typeof JURIDIQUE_TYPES)[number]["value"];
+
 
 export type Categorie = (typeof CATEGORIES)[number]["value"];
 
