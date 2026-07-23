@@ -391,15 +391,14 @@ function AdminDossiers() {
   );
 }
 
-function DossierRow({ d, stats, inc, poleColor }: {
-  d: any; stats: ReviewStats | undefined; inc: Inconsistency; poleColor: string;
+function DossierRow({ d, stats, inc, poleColor, unread = 0 }: {
+  d: any; stats: ReviewStats | undefined; inc: Inconsistency; poleColor: string; unread?: number;
 }) {
   const days = daysSince(d.updated_at);
   const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
   return (
     <Link
-      to="/dossiers/$id"
-      params={{ id: d.id }}
+      to={`/dossiers/${d.id}${unread > 0 ? "#audit-chat" : ""}`}
       className="block p-4 hover:bg-muted/40 relative transition-colors"
       style={{ backgroundColor: `color-mix(in oklab, ${poleColor} 5%, transparent)` }}
     >
@@ -434,6 +433,11 @@ function DossierRow({ d, stats, inc, poleColor }: {
                 <AlertTriangle className="h-3 w-3" /> 0% mais validés
               </Badge>
             )}
+            {unread > 0 && (
+              <Badge className="bg-primary text-primary-foreground text-xs gap-1">
+                <MessageSquare className="h-3 w-3" /> {unread} audit
+              </Badge>
+            )}
           </div>
           <div className="font-medium truncate">{d.titre}</div>
           <div className="text-xs text-muted-foreground mt-0.5">
@@ -452,11 +456,12 @@ function DossierRow({ d, stats, inc, poleColor }: {
   );
 }
 
-function KanbanView({ items, statsById, inconsistencyById, poleById }: {
+function KanbanView({ items, statsById, inconsistencyById, poleById, externalUnread = {} }: {
   items: any[];
   statsById: Record<string, ReviewStats>;
   inconsistencyById: Record<string, Inconsistency>;
   poleById: Map<string, any>;
+  externalUnread?: Record<string, number>;
 }) {
   const byLane = useMemo(() => {
     const m: Record<string, any[]> = { todo: [], doing: [], done: [], ko: [] };
