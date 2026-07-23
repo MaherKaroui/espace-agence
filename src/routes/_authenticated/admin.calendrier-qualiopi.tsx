@@ -144,7 +144,7 @@ function CalendrierQualiopi() {
       const to = monthEnd.toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from("qualiopi_calendar_events" as any)
-        .select("id, audit_date, organism_name, formation, auditor_name, certifier_name, certifier_organization, certificate_status, status, observation, dossier_id")
+        .select("id, audit_date, organism_name, formation, auditor_name, certifier_name, certifier_organization, certificate_status, status, observation, dossier_id, color_tag, color_manual")
         .gte("audit_date", from)
         .lte("audit_date", to)
         .order("audit_date", { ascending: true });
