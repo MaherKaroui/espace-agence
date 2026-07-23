@@ -1,81 +1,111 @@
-## Mode éphémère — plan d'implémentation
+# Évolution IZISuivis — Rôles Auditeur & Certificateur + Module Qualiopi
 
-Fonctionnalité type Instagram/WhatsApp : les messages disparaissent automatiquement après une durée choisie par conversation.
+Vu l'ampleur, je propose de découper en 4 lots livrés dans l'ordre, sans casser l'existant. Je te confirme le lot A dans cette réponse et j'enchaîne B → C → D si tu me dis "go tout".
 
-### 1. Portée
+---
 
-L'app a 3 systèmes de messagerie. Le mode éphémère sera ajouté aux 3 pour rester cohérent :
+## Lot A — Fondation : rôles + affectations + référentiel RNQ
 
-- **`messages`** — conversation client ↔ agence (1:1 privée)
-- **`conversations` / `group_messages`** — groupes de discussion
-- **`internal_conversations` / `internal_messages`** — messagerie interne staff (directs + groupes)
+**Base de données (migration unique)**
+- Enum `app_role` : ajouter `auditeur`, `certificateur`.
+- Table `dossier_assignments(dossier_id, user_id, role, assigned_by, assigned_at, active)` — un auditeur/certif peut être affecté à N dossiers.
+- Table `qualiopi_criteria` (7 critères) + `qualiopi_indicators` (32 indicateurs, num + libellé court + critère). Seed complet du RNQ dans la migration.
+- Helpers SQL :
+  - `is_assigned_to_dossier(_user, _dossier)` SECURITY DEFINER
+  - `user_visible_dossiers(_user)` (retourne les dossiers visibles selon rôle : admin/direction=all, manager=poles, client=owned, auditeur/certif=via assignments)
+- RLS : étendre les policies `dossiers`, `messages`, `documents`, `agency_tasks` pour inclure `is_assigned_to_dossier(auth.uid(), dossier_id)`.
+- GRANTS conformes.
 
-### 2. Schéma base de données
+**UI Admin**
+- Page `/admin/equipe` : autoriser l'assignation des rôles auditeur/certificateur.
+- Fiche dossier : nouveau bloc "Intervenants externes" pour affecter/révoquer un auditeur ou un certificateur (staff uniquement).
 
-Ajout sur les 3 tables de conversations :
-- `ephemeral_enabled boolean default false`
-- `ephemeral_duration_seconds int` (nullable)
-- `ephemeral_members_can_edit boolean default false` (groupes uniquement — sinon seul l'admin/owner modifie)
+---
 
-Ajout sur les 3 tables de messages :
-- `expires_at timestamptz` (nullable, indexé)
-- `is_system boolean default false` (pour les messages système "Mode éphémère activé…")
+## Lot B — Espaces Auditeur & Certificateur + Chat sécurisé
 
-Pour `messages` (client↔agence) qui n'a pas de table conversation dédiée : stockage des réglages éphémères dans une nouvelle table `client_ephemeral_settings(client_id, enabled, duration_seconds)` — la "conversation" est identifiée par `client_id`.
+**Nouvelles routes** (layout `_authenticated`, gated par rôle) :
+- `/auditeur` — liste des dossiers affectés
+- `/auditeur/dossier/$id` — détail + chat + panneau Qualiopi
+- `/certificateur` — même principe
+- `/certificateur/dossier/$id` — détail avec historique complet lecture seule sur messages clients + chat propre
 
-Trigger `BEFORE INSERT` sur chaque table de messages : si le mode est activé sur la conversation, calcule `expires_at = now() + duration`.
+**Chat** : réutiliser `conversations` + `messages` existantes.
+- Ajouter colonne `conversations.kind` : `client` (existant, défaut) | `auditeur` | `certificateur`.
+- Une conversation `auditeur`/`certificateur` est liée à un `dossier_id` ; membres = staff pôle + user externe affecté. Cloisonné du chat client d'origine.
+- Réutiliser composants `chat-thread`, `rich-message-content`, avatars, ephemeral mode.
+- App-shell : afficher menu "Auditeur" / "Certificateur" selon le rôle exclusif ; masquer Pilotage/Organisation.
 
-### 3. Suppression automatique
+---
 
-Cron job pg_cron toutes les minutes qui :
-1. Sélectionne les messages où `expires_at < now()`.
-2. Récupère les `attachment_path` associés.
-3. Supprime les fichiers du bucket `chat-files` (via `net.http_post` vers une route TSS `/api/public/hooks/purge-ephemeral` qui utilise `supabaseAdmin` + Storage API).
-4. `DELETE` en cascade les messages (les réponses/threads sont déjà supprimées via `ON DELETE CASCADE` sur `parent_message_id`).
+## Lot C — Demandes de pièces Qualiopi
 
-### 4. Interface utilisateur
+**BDD**
+- `qualiopi_document_requests(id, dossier_id, requested_by, role, message, priority, due_date, status, created_at, updated_at)` — statuts : `en_attente`, `deposee`, `validee`, `refusee`, avec `refusal_reason` obligatoire si refusée (trigger).
+- `qualiopi_document_request_indicators(request_id, indicator_id)` — N-N.
+- `qualiopi_document_submissions(id, request_id, submitted_by, file_path, file_name, file_size, sha256, mime, antivirus_status default 'pending', version, created_at)` — version auto-incrémentée par request.
+- Trigger notifications sur INSERT/UPDATE de request et submission → réutilise le hub `notifications` + push existant + email (nouveau template `qualiopi_*`).
+- RLS : lecture/écriture limitée aux acteurs affectés au dossier.
 
-- **Header conversation** : bandeau discret "🔥 Mode éphémère · 24 h" quand actif.
-- **Icône ⏳** à côté des messages éphémères + tooltip "Disparaît dans XX".
-- **Bouton "Paramètres"** ouvrant un `Sheet`/`Dialog` avec :
-  - Switch Activé / Désactivé
-  - Select durée : 5 min, 30 min, 1 h, 6 h, 12 h, 24 h, 3 j, 7 j, 30 j, Personnalisé
-  - (Groupes) Checkbox admin : "Les membres peuvent modifier"
-- **Message système** inséré à chaque changement : "Mode éphémère activé — messages supprimés après 24 h."
+**UI**
+- Panneau latéral "Demandes Qualiopi" dans la fiche dossier (visible staff + auditeur/certif affecté + client OF).
+- Vue par critère → indicateurs → demandes/documents ; filtres statut / échéance / indicateur.
+- Formulaire nouvelle demande : sélection indicateurs (chips), message, échéance, priorité.
+- Détail demande : versions, historique statuts, boutons Valider / Refuser (motif obligatoire), Déposer nouvelle version (côté staff/client).
+- Badges : En attente / Déposée / Validée / Refusée / En retard (calculé à partir de `due_date`).
 
-Utilisation des composants existants : `Sheet`, `Switch`, `Select`, `Dialog`, `Badge` (shadcn déjà installés).
+---
 
-### 5. Permissions
+## Lot D — Upload gros fichiers + Audit trail + Notifs
 
-- **1:1 privé** (client↔agence, direct interne) : chaque participant peut modifier.
-- **Groupe** : owner + admin toujours ; membres seulement si `ephemeral_members_can_edit = true`.
-- Enforcement via RLS `UPDATE` policies sur les tables conversations.
+**Storage**
+- Bucket privé `qualiopi-documents` (créé via `supabase--storage_create_bucket`).
+- Upload direct Supabase Storage via `upload({upsert:false})` avec `onUploadProgress` (barre de progression). Limite UI 500 Mo, formats whitelistés (PDF/DOCX/XLSX/JPG/PNG/ZIP/MP4). Note UI : la reprise multipart réelle dépend du backend Storage ; on branche `resumable` si dispo, sinon fallback classique avec message clair.
+- Hash sha256 calculé côté client avant upload (Web Crypto).
+- Téléchargement via `createSignedUrl` (5 min), bloqué si `antivirus_status = 'infected'`.
+- Colonne `antivirus_status` prête + hook `scan_document` (stub `pending → clean` par défaut, extensible).
 
-### 6. Fichiers modifiés / créés
+**Audit trail**
+- Table `audit_trail(id, actor_id, actor_role, dossier_id, conversation_id, indicator_id, entity_type, entity_id, action, old_value, new_value, ip, user_agent, created_at)` — rétention 3 ans (colonne `retention_until`).
+- Triggers sur `qualiopi_document_requests`, `qualiopi_document_submissions`, `messages` (kind ≠ client), `dossier_assignments`.
+- Vue admin `/admin/audit-qualiopi` avec filtres dossier / acteur / indicateur / période.
 
-**Migration** (1 fichier) : colonnes, index sur `expires_at`, table `client_ephemeral_settings`, triggers `set_expires_at`, RLS policies, pg_cron.
+**Notifications**
+- Étendre `notification_type` : `qualiopi_request_created`, `qualiopi_submission`, `qualiopi_validated`, `qualiopi_refused`, `qualiopi_due_soon`, `qualiopi_overdue`.
+- Fan-out réutilise `team_notification_recipients_for_pole` + destinataires externes affectés au dossier.
+- Cron `pg_cron` quotidien : détection échéances J-2 et retards → notifs + emails.
+- Templates emails dans `src/lib/email-templates/qualiopi-*.ts`.
 
-**Backend** :
-- `src/routes/api/public/hooks/purge-ephemeral.ts` — route appelée par le cron, supprime fichiers Storage + messages.
+---
 
-**Frontend** — nouveau composant réutilisable :
-- `src/components/ephemeral-settings-dialog.tsx` — le Sheet de réglages
-- `src/components/ephemeral-header-badge.tsx` — bandeau header + icône message
+## Matrice de droits appliquée (rappel)
 
-**Intégration** dans les 3 fenêtres de chat existantes :
-- `src/components/chat-window.tsx`
-- `src/components/group-chat-window.tsx`
-- `src/components/internal-chat-window.tsx` (si présent, sinon dans `admin.internal-messages.$id.tsx`)
-- `src/routes/_authenticated/messages.groupes.$id.tsx` — ajout du bouton dans le header
+| Rôle | Voir dossiers | Chat client | Chat auditeur | Chat certif | Demandes Qualiopi |
+|---|---|---|---|---|---|
+| admin / direction | tous | oui | oui | oui | tout |
+| manager / consultant | pôles | oui | oui (si pôle) | oui (si pôle) | tout du pôle |
+| client / OF | siens | oui | non | non | ses demandes (dépose) |
+| auditeur | affectés | non | oui | non | ses demandes |
+| certificateur | affectés | lecture historique | non | oui | ses demandes + suivi |
 
-### 7. UX
+---
 
-- Suppression invisible côté utilisateur (le message disparaît juste de la liste au rafraîchissement realtime).
-- Fonctionne sur texte, images, vidéos, documents, messages vocaux (tous stockés via `attachment_path`).
-- Realtime déjà en place : les DELETE sont propagés automatiquement.
+## Détails techniques
 
-### Notes techniques
+- Server fns dans `src/lib/qualiopi/*.functions.ts` (list/create/update requests, submissions, assignments).
+- `requireSupabaseAuth` + vérif rôle via `has_role` + `is_assigned_to_dossier` côté handler.
+- Route uploads volumineux : server route `src/routes/api/qualiopi/upload.ts` pour initier/valider (hash + sha256 sur le serveur pour audit) ; l'upload binaire va directement à Supabase Storage (évite les 10 Mo de la Worker Cloudflare).
+- Aucune modification des routes/tables existantes de messagerie client — seul l'ajout du champ `kind` (défaut `client`) est neutre.
+- Seed indicateurs Qualiopi complet (32 lignes) dans la migration du Lot A.
 
-- Les fichiers supprimés du bucket sont retirés définitivement (pas de corbeille).
-- Les threads/réactions/reads : `ON DELETE CASCADE` déjà configuré sur les FK.
-- Le cron traite max 500 messages par exécution pour éviter les timeouts.
+---
+
+## Vérifications après chaque lot
+- Lot A : linter Supabase clean, RLS testée par rôle en `read_query`.
+- Lot B : login auditeur factice → ne voit qu'un dossier ; chat fonctionne.
+- Lot C : cycle en_attente → déposée → validée + refus avec motif obligatoire.
+- Lot D : upload 100 Mo, signed URL, entrée audit_trail, email + push reçus.
+
+---
+
+**Confirme-moi "go A" (ou "go tout") et je démarre par la migration du Lot A.**
