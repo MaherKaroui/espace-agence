@@ -64,6 +64,7 @@ function DossiersPage() {
       categorie: string;
       pole_id: string;
       description: string;
+      organisme_nom: string;
       site_web?: string | null;
       organisme_email?: string | null;
       organisme_telephone?: string | null;
@@ -81,6 +82,7 @@ function DossiersPage() {
         categorie: payload.categorie as any,
         pole_id: payload.pole_id,
         description: payload.description || null,
+        organisme_nom: payload.organisme_nom,
         site_web: payload.site_web?.trim() || null,
         organisme_email: payload.organisme_email?.trim() || null,
         organisme_telephone: payload.organisme_telephone?.trim() || null,
