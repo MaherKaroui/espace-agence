@@ -7,7 +7,10 @@ import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, FolderOpen, CheckCircle2, AlertTriangle, Circle, ClipboardCheck } from "lucide-react";
+import {
+  Search, FolderOpen, CheckCircle2, AlertTriangle, Circle, ClipboardCheck,
+  LayoutGrid, List as ListIcon, Clock, FileText,
+} from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel, CATEGORIES, requiredDocsFor, docMatches } from "@/lib/labels";
 import { cn } from "@/lib/utils";
@@ -23,10 +26,10 @@ type DocRow = {
 type ReviewStats = {
   total: number;
   validated: number;
-  toReview: number; // envoyé, en attente de revue
-  toFix: number;    // refusé ou à corriger
-  missing: number;  // pas de fichier
-  needsAction: boolean; // toReview + toFix + missing > 0
+  toReview: number;
+  toFix: number;
+  missing: number;
+  needsAction: boolean;
 };
 
 function computeReviewStats(categorie: string, docs: DocRow[]): ReviewStats {
@@ -50,10 +53,6 @@ function computeReviewStats(categorie: string, docs: DocRow[]): ReviewStats {
   };
 }
 
-// Un dossier est "incohérent" si :
-// - marqué terminé alors qu'il reste des pièces à valider
-// - avancement = 0 alors que des documents sont acceptés
-// - documents en attente/à corriger alors qu'aucun n'est encore accepté depuis longtemps (>7j)
 type Inconsistency = "done_incomplete" | "zero_but_validated" | null;
 function detectInconsistency(dossier: any, stats: ReviewStats | undefined): Inconsistency {
   if (!stats) return null;
@@ -62,6 +61,23 @@ function detectInconsistency(dossier: any, stats: ReviewStats | undefined): Inco
   return null;
 }
 
+function daysSince(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const d = new Date(iso).getTime();
+  if (Number.isNaN(d)) return null;
+  return Math.floor((Date.now() - d) / 86400000);
+}
+
+// Kanban lanes
+const LANES: { key: string; label: string; statuts: string[] }[] = [
+  { key: "todo", label: "À traiter", statuts: ["en_attente", "documents_manquants", "a_completer"] },
+  { key: "doing", label: "En cours", statuts: ["en_cours_etude", "en_cours_traitement"] },
+  { key: "done", label: "Terminés", statuts: ["termine", "valide"] },
+  { key: "ko", label: "Refusés", statuts: ["refuse"] },
+];
+function laneOf(statut: string | null | undefined): string {
+  return LANES.find((l) => l.statuts.includes(statut ?? ""))?.key ?? "todo";
+}
 
 export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   head: () => ({ meta: [{ title: "Dossiers — Admin" }] }),
@@ -75,33 +91,26 @@ export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   component: AdminDossiers,
 });
 
-
 type QualityFilter =
-  | "all"
-  | "to_fix"
-  | "missing"
-  | "to_review"
-  | "done_incomplete"
-  | "zero_but_validated";
+  | "all" | "to_fix" | "missing" | "to_review" | "done_incomplete" | "zero_but_validated";
+type ViewMode = "list" | "kanban";
 
 function AdminDossiers() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
   const [reviewOnly, setReviewOnly] = useState(false);
   const [quality, setQuality] = useState<QualityFilter>("all");
+  const [view, setView] = useState<ViewMode>("list");
+  const [poleFilter, setPoleFilter] = useState<string>("all");
   const { user } = useAuth();
   const { isDirectionOrAdmin } = useRole();
-
-
 
   const { data: myPoleIds, isLoading: polesLoading } = useQuery({
     queryKey: ["my-pole-ids", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("pole_members")
-        .select("pole_id")
-        .eq("user_id", user!.id);
+        .from("pole_members").select("pole_id").eq("user_id", user!.id);
       if (error) throw error;
       return (data ?? []).map((r) => r.pole_id);
     },
@@ -111,43 +120,35 @@ function AdminDossiers() {
     queryKey: ["admin-dossiers-poles"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("poles")
-        .select("id, code, nom, couleur, actif")
-        .eq("actif", true)
-        .order("nom");
+        .from("poles").select("id, code, nom, couleur, actif").eq("actif", true).order("nom");
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  // Direction/Admin voient tous les pôles ; le reste du staff : uniquement leurs pôles.
   const poles = isDirectionOrAdmin
     ? allPoles
     : allPoles.filter((p) => (myPoleIds ?? []).includes(p.id));
+
+  const poleById = useMemo(() => {
+    const m = new Map<string, any>();
+    for (const p of poles) m.set(p.id, p);
+    return m;
+  }, [poles]);
 
   const { data: rows = [], isLoading: dossiersLoading, error: dossiersError } = useQuery({
     queryKey: ["admin-dossiers"],
     queryFn: async () => {
       const { data: dossiers, error } = await supabase
-        .from("dossiers")
-        .select("*")
-        .order("updated_at", { ascending: false });
+        .from("dossiers").select("*").order("updated_at", { ascending: false });
       if (error) throw error;
       const dossierRows = dossiers ?? [];
       const clientIds = [...new Set(dossierRows.map((d: any) => d.client_id).filter(Boolean))];
-
       if (clientIds.length === 0) return dossierRows;
-
       const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, nom, prenom, email")
-        .in("id", clientIds);
-
+        .from("profiles").select("id, nom, prenom, email").in("id", clientIds);
       const profileById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
-      return dossierRows.map((d: any) => ({
-        ...d,
-        profiles: profileById.get(d.client_id) ?? null,
-      }));
+      return dossierRows.map((d: any) => ({ ...d, profiles: profileById.get(d.client_id) ?? null }));
     },
   });
 
@@ -158,36 +159,29 @@ function AdminDossiers() {
     enabled: dossierIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("documents")
-        .select("id, dossier_id, nom, detected_type, statut")
-        .in("dossier_id", dossierIds);
+        .from("documents").select("id, dossier_id, nom, detected_type, statut").in("dossier_id", dossierIds);
       if (error) throw error;
       const m: Record<string, DocRow[]> = {};
-      for (const d of (data ?? []) as DocRow[]) {
-        (m[d.dossier_id] ??= []).push(d);
-      }
+      for (const d of (data ?? []) as DocRow[]) (m[d.dossier_id] ??= []).push(d);
       return m;
     },
   });
 
   const statsById = useMemo(() => {
     const m: Record<string, ReviewStats> = {};
-    for (const d of rows as any[]) {
-      m[d.id] = computeReviewStats(d.categorie, (docsByDossier as any)[d.id] ?? []);
-    }
+    for (const d of rows as any[]) m[d.id] = computeReviewStats(d.categorie, (docsByDossier as any)[d.id] ?? []);
     return m;
   }, [rows, docsByDossier]);
 
   const inconsistencyById = useMemo(() => {
     const m: Record<string, Inconsistency> = {};
-    for (const d of rows as any[]) {
-      m[d.id] = detectInconsistency(d, statsById[d.id]);
-    }
+    for (const d of rows as any[]) m[d.id] = detectInconsistency(d, statsById[d.id]);
     return m;
   }, [rows, statsById]);
 
   const filtered = (rows as any[]).filter((r: any) => {
     if (cat !== "all" && r.categorie !== cat) return false;
+    if (poleFilter !== "all" && r.pole_id !== poleFilter) return false;
     if (reviewOnly && !statsById[r.id]?.needsAction) return false;
     const s = statsById[r.id];
     switch (quality) {
@@ -202,20 +196,15 @@ function AdminDossiers() {
     return txt.includes(q.toLowerCase());
   });
 
-
-  // Regroupement par pôle
   const groups: { pole: any; items: any[] }[] = poles.map((p) => ({
-    pole: p,
-    items: filtered.filter((d: any) => d.pole_id === p.id),
+    pole: p, items: filtered.filter((d: any) => d.pole_id === p.id),
   }));
-  // Les dossiers "orphelins" (sans pôle actif) ne sont montrés qu'aux direction/admin.
   if (isDirectionOrAdmin) {
     const orphelins = filtered.filter((d: any) => !poles.some((p) => p.id === d.pole_id));
     if (orphelins.length > 0) {
-      groups.push({ pole: { id: "_orphelins", nom: "Sans pôle actif", couleur: "gray" }, items: orphelins });
+      groups.push({ pole: { id: "_orphelins", nom: "Sans pôle actif", couleur: "#94a3b8" }, items: orphelins });
     }
   }
-
   const visibleGroups = groups.filter((g) => g.items.length > 0);
 
   const totalToReview = (rows as any[]).reduce((n, d) => n + (statsById[d.id]?.needsAction ? 1 : 0), 0);
@@ -225,16 +214,38 @@ function AdminDossiers() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl">
-          {isDirectionOrAdmin ? "Tous les dossiers" : "Dossiers de mes pôles"}
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          {filtered.length} dossier{filtered.length > 1 ? "s" : ""} · {visibleGroups.length} pôle{visibleGroups.length > 1 ? "s" : ""}
-          {totalToReview > 0 && (
-            <> · <span className="text-warning-foreground font-medium">{totalToReview} à revoir</span></>
-          )}
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="font-display text-3xl">
+            {isDirectionOrAdmin ? "Tous les dossiers" : "Dossiers de mes pôles"}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {filtered.length} dossier{filtered.length > 1 ? "s" : ""} · {visibleGroups.length} pôle{visibleGroups.length > 1 ? "s" : ""}
+            {totalToReview > 0 && (
+              <> · <span className="text-warning-foreground font-medium">{totalToReview} à revoir</span></>
+            )}
+          </p>
+        </div>
+        <div className="inline-flex rounded-md border border-input overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setView("list")}
+            className={cn("h-9 px-3 inline-flex items-center gap-2 text-sm",
+              view === "list" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted/50")}
+            aria-pressed={view === "list"}
+          >
+            <ListIcon className="h-4 w-4" /> Liste
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("kanban")}
+            className={cn("h-9 px-3 inline-flex items-center gap-2 text-sm border-l border-input",
+              view === "kanban" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted/50")}
+            aria-pressed={view === "kanban"}
+          >
+            <LayoutGrid className="h-4 w-4" /> Kanban
+          </button>
+        </div>
       </div>
 
       {inconsistencies.length > 0 && (
@@ -269,15 +280,18 @@ function AdminDossiers() {
           <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
           <Input className="pl-9" placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
-        <select value={cat} onChange={(e) => setCat(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+        <select value={poleFilter} onChange={(e) => setPoleFilter(e.target.value)}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+          <option value="all">Tous les pôles</option>
+          {poles.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
+        </select>
+        <select value={cat} onChange={(e) => setCat(e.target.value)}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm">
           <option value="all">Toutes catégories</option>
           {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
         </select>
-        <select
-          value={quality}
-          onChange={(e) => setQuality(e.target.value as QualityFilter)}
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-        >
+        <select value={quality} onChange={(e) => setQuality(e.target.value as QualityFilter)}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm">
           <option value="all">Tous les états</option>
           <option value="to_fix">Documents à corriger / refusés</option>
           <option value="missing">Documents manquants</option>
@@ -288,19 +302,15 @@ function AdminDossiers() {
         <button
           type="button"
           onClick={() => setReviewOnly((v) => !v)}
-          className={cn(
-            "h-10 px-3 rounded-md border text-sm inline-flex items-center gap-2 transition-colors",
-            reviewOnly
-              ? "bg-warning/15 border-warning/30 text-warning-foreground"
-              : "bg-background border-input hover:bg-muted/50",
-          )}
+          className={cn("h-10 px-3 rounded-md border text-sm inline-flex items-center gap-2 transition-colors",
+            reviewOnly ? "bg-warning/15 border-warning/30 text-warning-foreground"
+                       : "bg-background border-input hover:bg-muted/50")}
           aria-pressed={reviewOnly}
         >
           <ClipboardCheck className="h-4 w-4" />
           {reviewOnly ? "À revoir uniquement" : "À revoir"}
         </button>
       </div>
-
 
       {dossiersError ? (
         <Card className="p-8 text-center border-destructive/30 bg-destructive/5">
@@ -316,82 +326,199 @@ function AdminDossiers() {
           <div className="font-display text-lg">Aucun dossier créé pour le moment</div>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
             {isDirectionOrAdmin
-              ? "La plateforme ne contient encore aucun dossier client. Les dossiers sont créés par les clients depuis leur espace, ou peuvent être créés manuellement depuis la fiche d'un client."
-              : "Aucun dossier n'a encore été créé dans vos pôles. Contactez la direction si vous pensez que des dossiers devraient être visibles ici."}
+              ? "La plateforme ne contient encore aucun dossier client."
+              : "Aucun dossier n'a encore été créé dans vos pôles."}
           </p>
-          {isDirectionOrAdmin && (
-            <Link to="/admin/clients" className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
-              Ouvrir la liste des clients →
-            </Link>
-          )}
         </Card>
       ) : visibleGroups.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground text-sm">
-          {reviewOnly
-            ? "Aucun dossier à revoir — tous les documents requis sont validés."
-            : isDirectionOrAdmin
-              ? "Aucun dossier ne correspond à ces filtres."
-              : "Aucun dossier accessible dans vos pôles pour ces filtres."}
+          Aucun dossier ne correspond à ces filtres.
         </Card>
+      ) : view === "kanban" ? (
+        <KanbanView
+          items={filtered}
+          statsById={statsById}
+          inconsistencyById={inconsistencyById}
+          poleById={poleById}
+        />
       ) : (
         <div className="space-y-6">
           {visibleGroups.map(({ pole, items }) => {
             const groupToReview = items.reduce((n: number, d: any) => n + (statsById[d.id]?.needsAction ? 1 : 0), 0);
+            const color = pole.couleur ?? "#94a3b8";
             return (
-            <section key={pole.id} className="space-y-2">
-              <div className="flex items-center gap-2 px-1 flex-wrap">
-                <FolderOpen className="h-4 w-4 text-gold" />
-                <h2 className="font-display text-lg">{pole.nom}</h2>
-                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-muted text-xs font-medium text-muted-foreground">
-                  {items.length}
-                </span>
-                {groupToReview > 0 && (
-                  <Badge variant="outline" className="bg-warning/15 border-warning/30 text-warning-foreground text-xs">
-                    {groupToReview} à revoir
-                  </Badge>
-                )}
-              </div>
-              <Card className="divide-y">
-                {items.map((d: any) => {
-                  const stats = statsById[d.id];
-                  const inc = inconsistencyById[d.id];
-                  return (
-                  <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }} className="block p-4 hover:bg-muted/30">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="text-xs uppercase tracking-wider text-gold font-medium">{categorieLabel(d.categorie)}</span>
-                          <StatusBadge statut={d.statut} />
-                          <ReviewSummary stats={stats} />
-                          {inc === "done_incomplete" && (
-                            <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
-                              <AlertTriangle className="h-3 w-3" /> Terminé incomplet
-                            </Badge>
-                          )}
-                          {inc === "zero_but_validated" && (
-                            <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
-                              <AlertTriangle className="h-3 w-3" /> 0% mais validés
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="font-medium truncate">{d.titre}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {d.profiles?.prenom} {d.profiles?.nom} · {d.profiles?.email} · {d.avancement}%
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                  );
-                })}
-
-              </Card>
-            </section>
+              <section key={pole.id} className="space-y-2">
+                <div className="flex items-center gap-2 px-1 flex-wrap">
+                  <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: color }} aria-hidden />
+                  <h2 className="font-display text-lg">{pole.nom}</h2>
+                  <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                    {items.length}
+                  </span>
+                  {groupToReview > 0 && (
+                    <Badge variant="outline" className="bg-warning/15 border-warning/30 text-warning-foreground text-xs">
+                      {groupToReview} à revoir
+                    </Badge>
+                  )}
+                </div>
+                <Card className="divide-y overflow-hidden">
+                  {items.map((d: any) => (
+                    <DossierRow
+                      key={d.id}
+                      d={d}
+                      stats={statsById[d.id]}
+                      inc={inconsistencyById[d.id]}
+                      poleColor={color}
+                    />
+                  ))}
+                </Card>
+              </section>
             );
           })}
         </div>
       )}
     </div>
+  );
+}
 
+function DossierRow({ d, stats, inc, poleColor }: {
+  d: any; stats: ReviewStats | undefined; inc: Inconsistency; poleColor: string;
+}) {
+  const days = daysSince(d.updated_at);
+  const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
+  return (
+    <Link to="/dossiers/$id" params={{ id: d.id }} className="block p-4 hover:bg-muted/30 relative">
+      <span className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: poleColor }} aria-hidden />
+      <div className="flex items-center justify-between gap-3 pl-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-xs uppercase tracking-wider font-medium" style={{ color: poleColor }}>
+              {categorieLabel(d.categorie)}
+            </span>
+            <StatusBadge statut={d.statut} />
+            <ReviewSummary stats={stats} />
+            {inactive && (
+              <Badge variant="outline" className="bg-warning/15 border-warning/30 text-warning-foreground text-xs gap-1">
+                <Clock className="h-3 w-3" /> Inactif {days}j
+              </Badge>
+            )}
+            {inc === "done_incomplete" && (
+              <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
+                <AlertTriangle className="h-3 w-3" /> Terminé incomplet
+              </Badge>
+            )}
+            {inc === "zero_but_validated" && (
+              <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
+                <AlertTriangle className="h-3 w-3" /> 0% mais validés
+              </Badge>
+            )}
+          </div>
+          <div className="font-medium truncate">{d.titre}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            {d.profiles?.prenom} {d.profiles?.nom} · {d.profiles?.email}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="h-1.5 flex-1 max-w-40 rounded-full bg-muted overflow-hidden">
+              <div className="h-full rounded-full transition-all"
+                style={{ width: `${d.avancement ?? 0}%`, backgroundColor: poleColor }} />
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums">{d.avancement ?? 0}%</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function KanbanView({ items, statsById, inconsistencyById, poleById }: {
+  items: any[];
+  statsById: Record<string, ReviewStats>;
+  inconsistencyById: Record<string, Inconsistency>;
+  poleById: Map<string, any>;
+}) {
+  const byLane = useMemo(() => {
+    const m: Record<string, any[]> = { todo: [], doing: [], done: [], ko: [] };
+    for (const d of items) m[laneOf(d.statut)].push(d);
+    return m;
+  }, [items]);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      {LANES.map((lane) => {
+        const list = byLane[lane.key] ?? [];
+        return (
+          <div key={lane.key} className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="font-display text-sm uppercase tracking-wider text-muted-foreground">{lane.label}</h3>
+              <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-muted text-xs font-medium">
+                {list.length}
+              </span>
+            </div>
+            <div className="space-y-2 min-h-24">
+              {list.length === 0 ? (
+                <Card className="p-4 border-dashed text-center text-xs text-muted-foreground">Vide</Card>
+              ) : list.map((d: any) => {
+                const pole = poleById.get(d.pole_id);
+                const color = pole?.couleur ?? "#94a3b8";
+                const stats = statsById[d.id];
+                const inc = inconsistencyById[d.id];
+                const days = daysSince(d.updated_at);
+                const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
+                return (
+                  <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}
+                    className="block relative rounded-lg border bg-card hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden">
+                    <span className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: color }} aria-hidden />
+                    <div className="p-3 pl-4 space-y-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color }}>
+                          {pole?.nom ?? "Sans pôle"}
+                        </span>
+                      </div>
+                      <div className="font-medium text-sm line-clamp-2">{d.titre}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {d.profiles?.prenom} {d.profiles?.nom}
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {stats && stats.total > 0 && (
+                          <Badge variant="outline" className="text-[10px] gap-1 py-0 h-5">
+                            <FileText className="h-2.5 w-2.5" /> {stats.validated}/{stats.total}
+                          </Badge>
+                        )}
+                        {stats?.toFix ? (
+                          <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] py-0 h-5">
+                            {stats.toFix} à corriger
+                          </Badge>
+                        ) : null}
+                        {stats?.missing ? (
+                          <Badge variant="outline" className="bg-warning/15 text-warning-foreground border-warning/30 text-[10px] py-0 h-5">
+                            {stats.missing} manquant{stats.missing > 1 ? "s" : ""}
+                          </Badge>
+                        ) : null}
+                        {inactive && (
+                          <Badge variant="outline" className="bg-warning/15 text-warning-foreground border-warning/30 text-[10px] py-0 h-5 gap-1">
+                            <Clock className="h-2.5 w-2.5" /> {days}j
+                          </Badge>
+                        )}
+                        {(inc === "done_incomplete" || inc === "zero_but_validated") && (
+                          <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] py-0 h-5 gap-1">
+                            <AlertTriangle className="h-2.5 w-2.5" /> Alerte
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${d.avancement ?? 0}%`, backgroundColor: color }} />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground tabular-nums">{d.avancement ?? 0}%</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -428,4 +555,3 @@ function ReviewSummary({ stats }: { stats: ReviewStats | undefined }) {
     </div>
   );
 }
-
