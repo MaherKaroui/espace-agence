@@ -192,12 +192,12 @@ export function NotificationsBell() {
       await reg.update().catch(() => undefined);
       const readyReg = await navigator.serviceWorker.ready;
       const existing = await readyReg.pushManager.getSubscription();
-      const sub = existing ?? await readyReg.pushManager.subscribe({
+      let sub = existing ?? await readyReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
       });
 
-      await saveSub({
+      const saveCurrentSubscription = () => saveSub({
         data: {
           endpoint: sub.endpoint,
           p256dh: bufToB64Url(sub.getKey("p256dh")),
@@ -205,6 +205,17 @@ export function NotificationsBell() {
           user_agent: navigator.userAgent,
         },
       });
+
+      try {
+        await saveCurrentSubscription();
+      } catch {
+        await sub.unsubscribe().catch(() => undefined);
+        sub = await readyReg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
+        });
+        await saveCurrentSubscription();
+      }
       setBrowserNotifEnabled(true);
       setDevicePushSaved(true);
       toast.success("Notifications navigateur activées pour ce compte");
