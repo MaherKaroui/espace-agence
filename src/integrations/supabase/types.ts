@@ -1411,6 +1411,74 @@ export type Database = {
         }
         Relationships: []
       }
+      qualiopi_calendar_events: {
+        Row: {
+          audit_date: string
+          auditor_name: string | null
+          auditor_user_id: string | null
+          certificate_status: string | null
+          certifier_name: string | null
+          certifier_organization: string | null
+          certifier_user_id: string | null
+          created_at: string
+          created_by: string | null
+          dossier_id: string | null
+          formation: string | null
+          id: string
+          observation: string | null
+          organism_name: string
+          status: Database["public"]["Enums"]["qualiopi_event_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          audit_date: string
+          auditor_name?: string | null
+          auditor_user_id?: string | null
+          certificate_status?: string | null
+          certifier_name?: string | null
+          certifier_organization?: string | null
+          certifier_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string | null
+          formation?: string | null
+          id?: string
+          observation?: string | null
+          organism_name: string
+          status?: Database["public"]["Enums"]["qualiopi_event_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          audit_date?: string
+          auditor_name?: string | null
+          auditor_user_id?: string | null
+          certificate_status?: string | null
+          certifier_name?: string | null
+          certifier_organization?: string | null
+          certifier_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string | null
+          formation?: string | null
+          id?: string
+          observation?: string | null
+          organism_name?: string
+          status?: Database["public"]["Enums"]["qualiopi_event_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualiopi_calendar_events_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qualiopi_criteria: {
         Row: {
           created_at: string
@@ -1463,6 +1531,59 @@ export type Database = {
             columns: ["criterion_id"]
             isOneToOne: false
             referencedRelation: "qualiopi_criteria"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualiopi_pending_requests: {
+        Row: {
+          certifier: string | null
+          created_at: string
+          created_by: string | null
+          dossier_id: string | null
+          due_date: string | null
+          followup_status: Database["public"]["Enums"]["qualiopi_followup_status"]
+          id: string
+          observation: string | null
+          organism_name: string
+          priority: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          certifier?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string | null
+          due_date?: string | null
+          followup_status?: Database["public"]["Enums"]["qualiopi_followup_status"]
+          id?: string
+          observation?: string | null
+          organism_name: string
+          priority?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          certifier?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string | null
+          due_date?: string | null
+          followup_status?: Database["public"]["Enums"]["qualiopi_followup_status"]
+          id?: string
+          observation?: string | null
+          organism_name?: string
+          priority?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualiopi_pending_requests_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
             referencedColumns: ["id"]
           },
         ]
@@ -2316,6 +2437,21 @@ export type Database = {
         | "qualiopi_echeance"
         | "qualiopi_retard"
       pole_role: "manager" | "consultant" | "auditeur" | "certificateur"
+      qualiopi_event_status:
+        | "planifie"
+        | "en_attente"
+        | "realise"
+        | "annule"
+        | "certificat_a_recuperer"
+        | "certificat_recu"
+      qualiopi_followup_status:
+        | "attente_contrat"
+        | "attente_paiement"
+        | "attente_facture"
+        | "attente_docs"
+        | "attente_retour_certificateur"
+        | "recuperation_certificat"
+        | "autre"
       tache_statut:
         | "a_faire"
         | "en_cours"
@@ -2510,6 +2646,23 @@ export const Constants = {
         "qualiopi_retard",
       ],
       pole_role: ["manager", "consultant", "auditeur", "certificateur"],
+      qualiopi_event_status: [
+        "planifie",
+        "en_attente",
+        "realise",
+        "annule",
+        "certificat_a_recuperer",
+        "certificat_recu",
+      ],
+      qualiopi_followup_status: [
+        "attente_contrat",
+        "attente_paiement",
+        "attente_facture",
+        "attente_docs",
+        "attente_retour_certificateur",
+        "recuperation_certificat",
+        "autre",
+      ],
       tache_statut: [
         "a_faire",
         "en_cours",
