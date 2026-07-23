@@ -322,13 +322,34 @@ function DossiersPage() {
                 </div>
                 <div>
                   <Label>Catégorie</Label>
-                  <Select name="categorie" required>
+                  <Select
+                    name="categorie"
+                    required
+                    value={adminCategorie}
+                    onValueChange={(v) => { setAdminCategorie(v); if (v !== "juridique") setAdminJuridiqueType(""); }}
+                  >
                     <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
                     <SelectContent>
                       {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
+                {adminCategorie === "juridique" && (
+                  <div>
+                    <Label>Type juridique <span className="text-destructive">*</span></Label>
+                    <Select
+                      name="juridique_type"
+                      required
+                      value={adminJuridiqueType}
+                      onValueChange={setAdminJuridiqueType}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Choisir le type…" /></SelectTrigger>
+                      <SelectContent>
+                        {JURIDIQUE_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="description">Description (optionnel)</Label>
                   <Textarea id="description" name="description" rows={3} maxLength={500} />
