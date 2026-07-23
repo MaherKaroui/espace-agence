@@ -14,7 +14,7 @@ import { fr } from "date-fns/locale";
 import { groupNotifications, type NotifRow } from "@/lib/notification-grouping";
 import { cn } from "@/lib/utils";
 import {
-  getBrowserNotifPermission, isBrowserNotifEnabled, isBrowserNotifSupported,
+  getBrowserNotifPermission, isBrowserNotifEnabled,
   requestBrowserNotifPermission, setBrowserNotifEnabled, showBrowserNotif,
 } from "@/lib/web-push";
 
