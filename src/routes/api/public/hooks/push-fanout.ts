@@ -30,10 +30,6 @@ function concatBytes(...chunks: Uint8Array[]): Uint8Array {
   return out;
 }
 
-function u16(n: number): Uint8Array {
-  return new Uint8Array([(n >> 8) & 255, n & 255]);
-}
-
 function u32(n: number): Uint8Array {
   return new Uint8Array([(n >> 24) & 255, (n >> 16) & 255, (n >> 8) & 255, n & 255]);
 }
@@ -73,17 +69,10 @@ async function encryptWebPushPayload(payload: unknown, userPublicKeyB64: string,
     await crypto.subtle.deriveBits({ name: "ECDH", public: userKey }, appServerKeys.privateKey, 256),
   );
 
-  const context = concatBytes(
-    new TextEncoder().encode("P-256\0"),
-    u16(userPublicKey.length),
-    userPublicKey,
-    u16(appServerPublicKey.length),
-    appServerPublicKey,
-  );
   const ikm = await hkdf(
     authSecret,
     sharedSecret,
-    concatBytes(new TextEncoder().encode("WebPush: info\0"), context),
+    concatBytes(new TextEncoder().encode("WebPush: info\0"), userPublicKey, appServerPublicKey),
     32,
   );
   const cek = await hkdf(salt, ikm, new TextEncoder().encode("Content-Encoding: aes128gcm\0"), 16);
@@ -154,15 +143,6 @@ export const Route = createFileRoute("/api/public/hooks/push-fanout")({
               .eq("id", body.notification_id)
               .maybeSingle();
             notification = data;
-          } else if (body?.user_id) {
-            notification = {
-              id: crypto.randomUUID(),
-              user_id: body.user_id,
-              type: body.type ?? "notification",
-              titre: body.titre ?? "IZISuivis",
-              message: body.message ?? "Nouvelle notification",
-              link: body.link ?? "/notifications",
-            };
           }
 
           if (!notification?.user_id) {
