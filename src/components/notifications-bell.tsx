@@ -139,14 +139,52 @@ export function NotificationsBell() {
   };
 
   const togglePush = async () => {
-    if (permission === "unsupported") return;
-    if (permission === "granted") {
-      setBrowserNotifEnabled(!enabled);
+    if (permission === "unsupported" || pushLoading) return;
+    setPushLoading(true);
+    try {
+      if (permission === "granted" && enabled) {
+        const reg = await navigator.serviceWorker.getRegistration("/");
+        const sub = await reg?.pushManager.getSubscription();
+        if (sub) {
+          await delSub({ data: { endpoint: sub.endpoint } }).catch(() => undefined);
+          await sub.unsubscribe().catch(() => undefined);
+        }
+        setBrowserNotifEnabled(false);
+        toast.success("Notifications navigateur désactivées");
+        return;
+      }
+
+      const perm = await requestBrowserNotifPermission();
+      if (perm !== "granted") return;
+
+      const { key } = await getKey();
+      if (!key) throw new Error("Clé serveur indisponible");
+
+      const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
+      await reg.update().catch(() => undefined);
+      const readyReg = await navigator.serviceWorker.ready;
+      const existing = await readyReg.pushManager.getSubscription();
+      const sub = existing ?? await readyReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
+      });
+
+      await saveSub({
+        data: {
+          endpoint: sub.endpoint,
+          p256dh: bufToB64Url(sub.getKey("p256dh")),
+          auth: bufToB64Url(sub.getKey("auth")),
+          user_agent: navigator.userAgent,
+        },
+      });
+      setBrowserNotifEnabled(true);
+      toast.success("Notifications navigateur activées pour ce compte");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Impossible d'activer les notifications navigateur");
+    } finally {
       setPermTick((v) => v + 1);
-      return;
+      setPushLoading(false);
     }
-    await requestBrowserNotifPermission();
-    setPermTick((v) => v + 1);
   };
 
   return (
@@ -171,7 +209,7 @@ export function NotificationsBell() {
               <Button
                 size="sm" variant="ghost"
                 onClick={togglePush}
-                disabled={permission === "unsupported" || permission === "denied"}
+                disabled={pushLoading || permission === "unsupported" || permission === "denied"}
                 title={
                   permission === "unsupported" ? "Non supporté par ce navigateur"
                   : permission === "denied" ? "Notifications bloquées — autorisez-les dans le navigateur"
@@ -182,7 +220,7 @@ export function NotificationsBell() {
               >
                 {enabled ? <BellRing className="h-4 w-4 text-primary" /> : <BellOff className="h-4 w-4" />}
                 <span className="text-xs">
-                  {permission === "denied" ? "Bloquées" : enabled ? "Alertes ON" : "Alertes"}
+                  {pushLoading ? "..." : permission === "denied" ? "Bloquées" : enabled ? "Push ON" : "Activer Push"}
                 </span>
               </Button>
               {unread > 0 && (
