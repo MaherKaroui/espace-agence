@@ -8,7 +8,7 @@ import { listQualiopiRequests } from "@/lib/qualiopi.functions";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
-export const Route = createFileRoute("/_authenticated/dossiers/$id/qualiopi-rapport")({
+export const Route = createFileRoute("/_authenticated/audits/$id_/qualiopi-rapport")({
   head: () => ({ meta: [{ title: "Rapport Qualiopi — IZISuivis" }] }),
   component: QualiopiReport,
 });
