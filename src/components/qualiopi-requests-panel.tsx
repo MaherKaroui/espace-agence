@@ -21,8 +21,9 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  FileCheck2, Upload, Plus, Download, Trash2, Check, X, History, Loader2, Clock, FileWarning,
+  FileCheck2, Upload, Plus, Download, Trash2, Check, X, History, Loader2, Clock, FileWarning, Bell, FileText,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import {
   listQualiopiRequests,
@@ -32,6 +33,8 @@ import {
   deleteQualiopiRequest,
   getQualiopiDocumentUrl,
 } from "@/lib/qualiopi.functions";
+import { sendQualiopiReminder } from "@/lib/qualiopi-notifications.functions";
+
 
 type Statut = "en_attente" | "deposee" | "validee" | "refusee";
 
@@ -90,13 +93,20 @@ export function QualiopiRequestsPanel({ dossierId }: { dossierId: string }) {
             Pièces justificatives demandées par indicateur (RNQ · 7 critères / 32 indicateurs)
           </p>
         </div>
-        <NewRequestDialog
-          dossierId={dossierId}
-          indicators={indicators}
-          criteria={criteria}
-          onDone={invalidate}
-        />
-      </div>
+        <div className="flex items-center gap-2">
+          <Link to="/dossiers/$id/qualiopi-rapport" params={{ id: dossierId }}>
+            <Button size="sm" variant="outline">
+              <FileText className="h-4 w-4 mr-1" /> Rapport
+            </Button>
+          </Link>
+          <NewRequestDialog
+            dossierId={dossierId}
+            indicators={indicators}
+            criteria={criteria}
+            onDone={invalidate}
+          />
+        </div>
+
 
       {isLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
 
