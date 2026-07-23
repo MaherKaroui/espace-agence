@@ -1729,6 +1729,10 @@ export type Database = {
         Args: { _dossier: string; _user: string }
         Returns: boolean
       }
+      dossier_title_from_of: {
+        Args: { _categorie: string; _organisme_nom: string }
+        Returns: string
+      }
       email_queue_dispatch: { Args: never; Returns: undefined }
       email_template_enabled: {
         Args: { _template_name: string }

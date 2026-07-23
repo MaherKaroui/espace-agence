@@ -6,6 +6,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { getVapidPublicKey, savePushSubscription, deletePushSubscription } from "@/lib/push.functions";
 import { toast } from "sonner";
 
+const SERVICE_WORKER_URL = "/service-worker.js";
+
 function urlBase64ToUint8Array(b64: string): Uint8Array {
   const pad = "=".repeat((4 - (b64.length % 4)) % 4);
   const base64 = (b64 + pad).replace(/-/g, "+").replace(/_/g, "/");
@@ -41,7 +43,8 @@ export function WebPushToggle() {
     setPermission(Notification.permission);
     (async () => {
       try {
-        const reg = await navigator.serviceWorker.getRegistration("/sw.js");
+        const reg = await navigator.serviceWorker.getRegistration("/")
+          ?? await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
         if (reg) {
           const sub = await reg.pushManager.getSubscription();
           setSubscribed(!!sub);
@@ -57,11 +60,15 @@ export function WebPushToggle() {
       setPermission(perm);
       if (perm !== "granted") { toast.error("Permission refusée"); return; }
 
-      const reg = await navigator.serviceWorker.register("/sw.js");
-      await navigator.serviceWorker.ready;
-
       const { key } = await getKey();
       if (!key) { toast.error("Clé serveur indisponible"); return; }
+
+      const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
+      await navigator.serviceWorker.ready;
+      await reg.update().catch(() => undefined);
+
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) await existing.unsubscribe().catch(() => undefined);
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
@@ -92,7 +99,7 @@ export function WebPushToggle() {
   const disable = async () => {
     setLoading(true);
     try {
-      const reg = await navigator.serviceWorker.getRegistration("/sw.js");
+      const reg = await navigator.serviceWorker.getRegistration("/");
       const sub = await reg?.pushManager.getSubscription();
       if (sub) {
         await delSub({ data: { endpoint: sub.endpoint } }).catch(() => {});
