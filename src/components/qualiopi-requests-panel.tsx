@@ -259,6 +259,14 @@ function RequestCard({
   const reviewFn = useServerFn(reviewQualiopiRequest);
   const deleteFn = useServerFn(deleteQualiopiRequest);
   const urlFn = useServerFn(getQualiopiDocumentUrl);
+  const remindFn = useServerFn(sendQualiopiReminder);
+
+  const remind = useMutation({
+    mutationFn: () => remindFn({ data: { requestId: request.id } }),
+    onSuccess: () => { toast.success("Relance envoyée"); onChanged(); },
+    onError: (e: any) => toast.error(e?.message ?? "Erreur"),
+  });
+
 
   const [uploading, setUploading] = useState(false);
 
