@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Users, FolderOpen, Save, X, Power } from "lucide-react";
-import { POLE_MEMBER_ROLES, roleLabelFr } from "@/lib/role-labels";
+import { POLE_MEMBER_ROLES, roleLabelFr, type PoleMemberRole } from "@/lib/role-labels";
 import { OpenInternalConversationButton } from "@/components/open-internal-conversation-button";
 
 
