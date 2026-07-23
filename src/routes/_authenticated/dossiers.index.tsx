@@ -283,8 +283,9 @@ function DossiersPage() {
             {isAdmin ? (
               <form onSubmit={submitAdmin} className="space-y-4">
                 <div>
-                  <Label htmlFor="titre">Titre</Label>
-                  <Input id="titre" name="titre" required maxLength={120} />
+                  <Label htmlFor="organisme_nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
+                  <Input id="organisme_nom" name="organisme_nom" required maxLength={120} placeholder="Ex : WATT'S UP ACADEMY" />
+                  <p className="text-xs text-muted-foreground mt-1">Le titre du dossier sera généré automatiquement.</p>
                 </div>
                 <div>
                   <Label>Pôle</Label>
