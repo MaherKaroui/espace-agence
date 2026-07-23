@@ -53,6 +53,7 @@ async function computeSha256(file: File): Promise<string> {
 
 export function QualiopiRequestsPanel({ dossierId }: { dossierId: string }) {
   const qc = useQueryClient();
+  const { isExternal } = useRole();
   const listFn = useServerFn(listQualiopiRequests);
 
   const { data, isLoading } = useQuery({
