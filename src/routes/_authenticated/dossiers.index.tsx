@@ -284,7 +284,7 @@ function DossiersPage() {
               <form onSubmit={submitAdmin} className="space-y-4">
                 <div>
                   <Label htmlFor="organisme_nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
-                  <Input id="organisme_nom" name="organisme_nom" required maxLength={120} placeholder="Ex : WATT'S UP ACADEMY" />
+                  <Input id="organisme_nom" name="organisme_nom" required maxLength={120} placeholder="Ex : Mon organisme de formation" />
                   <p className="text-xs text-muted-foreground mt-1">Le titre du dossier sera généré automatiquement.</p>
                 </div>
                 <div>
@@ -592,7 +592,7 @@ function ClientRequestWizard({
           id="of-nom"
           value={organismeNom}
           onChange={(e) => setOrganismeNom(e.target.value)}
-          placeholder="Ex : WATT'S UP ACADEMY"
+          placeholder="Ex : Mon organisme de formation"
           maxLength={120}
           required
         />

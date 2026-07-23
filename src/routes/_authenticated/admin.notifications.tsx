@@ -23,7 +23,16 @@ import { APP_URL } from "@/lib/app-url";
 import { WebPushToggle } from "@/components/web-push-toggle";
 
 export const Route = createFileRoute("/_authenticated/admin/notifications")({
-  head: () => ({ meta: [{ title: "Notifications & emails — Admin" }] }),
+  head: () => ({
+    meta: [
+      { title: "Notifications & emails — IZISuivis" },
+      { name: "description", content: "Gestion des emails automatiques, notifications navigateur et historique d'envoi IZISuivis." },
+      { property: "og:title", content: "Notifications & emails — IZISuivis" },
+      { property: "og:description", content: "Gestion des emails automatiques, notifications navigateur et historique d'envoi IZISuivis." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   beforeLoad: async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) throw redirect({ to: "/auth" });
