@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +54,7 @@ async function computeSha256(file: File): Promise<string> {
 
 export function QualiopiRequestsPanel({ dossierId }: { dossierId: string }) {
   const qc = useQueryClient();
+  const { isExternal } = useRole();
   const listFn = useServerFn(listQualiopiRequests);
 
   const { data, isLoading } = useQuery({
@@ -94,7 +96,7 @@ export function QualiopiRequestsPanel({ dossierId }: { dossierId: string }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/dossiers/$id/qualiopi-rapport" params={{ id: dossierId }}>
+          <Link to={isExternal ? "/audits/$id/qualiopi-rapport" : "/dossiers/$id/qualiopi-rapport"} params={{ id: dossierId }}>
             <Button size="sm" variant="outline">
               <FileText className="h-4 w-4 mr-1" /> Rapport
             </Button>
