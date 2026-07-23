@@ -54,6 +54,14 @@ function AgencyTasksPage() {
     },
   });
 
+  const { data: dossiersList = [] } = useQuery({
+    queryKey: ["dossiers-for-task-filter"],
+    queryFn: async () => {
+      const { data } = await supabase.from("dossiers").select("id, titre").order("created_at", { ascending: false }).limit(200);
+      return data ?? [];
+    },
+  });
+
   const includeArchived = tab === "archived";
   const { data: tasks = [] } = useQuery({
     queryKey: ["agency-tasks", "all", includeArchived],
