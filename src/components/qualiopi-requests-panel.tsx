@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
-  FileCheck2, Upload, Plus, Download, Trash2, Check, X, History, Loader2, Clock, FileWarning, Bell, FileText,
+  FileCheck2, Upload, Plus, Download, Trash2, Check, X, History, Loader2, Clock, FileWarning, Bell, FileText, Eye,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
