@@ -614,7 +614,7 @@ function CalendrierQualiopi() {
                     <SelectItem value="auto">
                       <span className="inline-flex items-center gap-2">
                         <span className={`h-3 w-3 rounded-full ${(() => { const c = autoColor(editEvent.auditor_name, editEvent.certifier_name, editEvent.certifier_organization); return c ? COLOR_DOT[c] : "border border-border"; })()}`} />
-                        Automatique {(() => { const c = autoColor(editEvent.auditor_name, editEvent.certifier_name, editEvent.certifier_organization); return c ? `(${COLOR_LABELS[c]})` : "(aucune)"; })()}
+                        Auto selon certificateur {(() => { const c = autoColor(editEvent.auditor_name, editEvent.certifier_name, editEvent.certifier_organization); return c ? `(${COLOR_LABELS[c]})` : "(aucune)"; })()}
                       </span>
                     </SelectItem>
                     {(Object.keys(COLOR_LABELS) as ColorTag[]).map((c) => (
