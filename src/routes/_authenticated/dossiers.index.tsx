@@ -46,6 +46,8 @@ function DossiersPage() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<string>("all");
+  const [adminCategorie, setAdminCategorie] = useState<string>("");
+  const [adminJuridiqueType, setAdminJuridiqueType] = useState<string>("");
 
   const { data: poles = [] } = useQuery({
     queryKey: ["poles"],
