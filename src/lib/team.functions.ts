@@ -48,6 +48,13 @@ export type NotificationRecipientHistoryRow = {
   recipient_name: string | null;
 };
 
+export type PolePushTestResult = {
+  notificationsCreated: number;
+  recipientsWithPush: number;
+  pushSubscriptionsCount: number;
+  rows: { notification_id: string; user_id: string; push_subscriptions_count: number }[];
+};
+
 /** Liste tous les membres de l'équipe (staff) — Direction/Admin uniquement */
 export const listTeam = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -209,6 +216,33 @@ export const testPushNotificationForMember = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     return { ok: true, notificationId };
+  });
+
+/** Crée une notification test pour chaque membre actif d'un pôle — la cloche est toujours créée, le push part si activé */
+export const testPushNotificationForPole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ poleId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }): Promise<PolePushTestResult> => {
+    const { supabase, userId } = context;
+    await assertAdminOrDirection(supabase, userId);
+
+    const { data: rows, error } = await (supabase as any).rpc("test_push_notification_for_pole", {
+      _pole_id: data.poleId,
+    });
+    if (error) throw new Error(error.message);
+
+    const normalizedRows = ((rows ?? []) as any[]).map((row) => ({
+      notification_id: String(row.notification_id),
+      user_id: String(row.user_id),
+      push_subscriptions_count: Number(row.push_subscriptions_count ?? 0),
+    }));
+
+    return {
+      notificationsCreated: normalizedRows.length,
+      recipientsWithPush: normalizedRows.filter((row) => row.push_subscriptions_count > 0).length,
+      pushSubscriptionsCount: normalizedRows.reduce((total, row) => total + row.push_subscriptions_count, 0),
+      rows: normalizedRows,
+    };
   });
 
 /** Inviter un membre de l'équipe */
