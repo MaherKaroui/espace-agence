@@ -106,6 +106,9 @@ export function QualiopiRequestsPanel({ dossierId }: { dossierId: string }) {
             onDone={invalidate}
           />
         </div>
+      </div>
+
+
 
 
       {isLoading && <p className="text-sm text-muted-foreground">Chargement…</p>}
