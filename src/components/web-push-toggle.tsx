@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Bell, BellOff, CheckCircle2, MonitorSmartphone, XCircle } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { getVapidPublicKey, savePushSubscription, deletePushSubscription } from "@/lib/push.functions";
+import { getVapidPublicKey, getPushSubscriptionStatus, savePushSubscription, deletePushSubscription } from "@/lib/push.functions";
 import { toast } from "sonner";
 
 const SERVICE_WORKER_URL = "/service-worker.js";
@@ -25,6 +25,7 @@ function bufToB64Url(buf: ArrayBuffer | null): string {
 
 export function WebPushToggle() {
   const getKey = useServerFn(getVapidPublicKey);
+  const getStatus = useServerFn(getPushSubscriptionStatus);
   const saveSub = useServerFn(savePushSubscription);
   const delSub = useServerFn(deletePushSubscription);
 
@@ -55,17 +56,19 @@ export function WebPushToggle() {
     setSupported(ok);
     if (!ok) return;
     setPermission(Notification.permission);
+    let cancelled = false;
     (async () => {
       try {
-        const reg = await navigator.serviceWorker.getRegistration("/")
-          ?? await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
-        if (reg) {
-          const sub = await reg.pushManager.getSubscription();
-          setSubscribed(!!sub);
-        }
+        const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
+        await reg.update().catch(() => undefined);
+        const readyReg = await navigator.serviceWorker.ready;
+        const sub = await readyReg.pushManager.getSubscription();
+        const status = await getStatus({ data: { endpoint: sub?.endpoint ?? null } });
+        if (!cancelled) setSubscribed(status.currentDeviceSaved);
       } catch { /* noop */ }
     })();
-  }, []);
+    return () => { cancelled = true; };
+  }, [getStatus]);
 
   const enable = async () => {
     setLoading(true);
@@ -82,9 +85,7 @@ export function WebPushToggle() {
       await reg.update().catch(() => undefined);
 
       const existing = await readyReg.pushManager.getSubscription();
-      if (existing) await existing.unsubscribe().catch(() => undefined);
-
-      const sub = await readyReg.pushManager.subscribe({
+      const sub = existing ?? await readyReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
       });

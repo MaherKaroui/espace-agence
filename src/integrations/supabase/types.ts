@@ -1846,6 +1846,15 @@ export type Database = {
           sanitized: string
         }[]
       }
+      save_push_subscription: {
+        Args: {
+          _auth: string
+          _endpoint: string
+          _p256dh: string
+          _user_agent?: string
+        }
+        Returns: undefined
+      }
       send_rdv_reminders: { Args: never; Returns: undefined }
       session_end: { Args: { _session_id: string }; Returns: undefined }
       session_heartbeat: { Args: { _session_id: string }; Returns: undefined }
