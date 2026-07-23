@@ -169,6 +169,13 @@ function AdminDossiers() {
     },
   });
 
+  const unreadFn = useServerFn(getExternalUnreadCounts);
+  const { data: externalUnread = {} } = useQuery({
+    queryKey: ["admin-dossiers-external-unread"],
+    queryFn: () => unreadFn(),
+    refetchInterval: 30_000,
+  });
+
   const statsById = useMemo(() => {
     const m: Record<string, ReviewStats> = {};
     for (const d of rows as any[]) m[d.id] = computeReviewStats(d.categorie, (docsByDossier as any)[d.id] ?? []);
