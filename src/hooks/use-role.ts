@@ -13,12 +13,14 @@ export function useRole() {
         .select("role")
         .eq("user_id", user!.id);
       if (error) throw error;
-      const roles = (data ?? []).map((r) => r.role);
+      const roles = (data ?? []).map((r) => r.role as string);
       const isAdmin = roles.includes("admin");
       const isDirection = roles.includes("direction");
       const isManager = roles.includes("manager");
       const isConsultant = roles.includes("consultant");
       const isClient = roles.includes("client");
+      const isAuditeur = roles.includes("auditeur");
+      const isCertificateur = roles.includes("certificateur");
       return {
         roles,
         isAdmin,
@@ -26,8 +28,11 @@ export function useRole() {
         isManager,
         isConsultant,
         isClient,
+        isAuditeur,
+        isCertificateur,
         isStaff: isAdmin || isDirection || isManager || isConsultant,
         isDirectionOrAdmin: isAdmin || isDirection,
+        isExternal: isAuditeur || isCertificateur,
       };
     },
   });
@@ -38,8 +43,11 @@ export function useRole() {
     isManager: q.data?.isManager ?? false,
     isConsultant: q.data?.isConsultant ?? false,
     isClient: q.data?.isClient ?? false,
+    isAuditeur: q.data?.isAuditeur ?? false,
+    isCertificateur: q.data?.isCertificateur ?? false,
     isStaff: q.data?.isStaff ?? false,
     isDirectionOrAdmin: q.data?.isDirectionOrAdmin ?? false,
+    isExternal: q.data?.isExternal ?? false,
     loading: authLoading || (!!user && q.isLoading),
   };
 }
