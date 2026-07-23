@@ -1,6 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
@@ -9,11 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, FolderOpen, CheckCircle2, AlertTriangle, Circle, ClipboardCheck,
-  LayoutGrid, List as ListIcon, Clock, FileText,
+  LayoutGrid, List as ListIcon, Clock, FileText, MessageSquare,
 } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel, CATEGORIES, requiredDocsFor, docMatches } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import { getExternalUnreadCounts } from "@/lib/qualiopi-notifications.functions";
 
 type DocRow = {
   id: string;
