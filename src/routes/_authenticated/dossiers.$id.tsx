@@ -290,7 +290,7 @@ function DossierDetail() {
         lastRelanceAt={(dossier as any).last_relance_at}
       />
 
-      {isStaff && <DossierLinkedTask dossierId={dossier.id} />}
+      {isAdmin && <DossierLinkedTask dossierId={dossier.id} />}
 
 
 
