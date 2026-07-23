@@ -678,17 +678,6 @@ function ClientRequestWizard({
         <div className="space-y-4">
           {OFContactFields}
           <div>
-            <Label htmlFor="organisme-nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
-            <Input
-              id="organisme-nom"
-              value={organismeNom}
-              onChange={(e) => setOrganismeNom(e.target.value)}
-              placeholder="Ex : Mon Centre de Formation"
-              maxLength={120}
-              required
-            />
-          </div>
-          <div>
             <div className="font-medium">Type d'audit Qualiopi</div>
             <p className="text-sm text-muted-foreground">Sélectionnez le type qui vous concerne.</p>
           </div>
