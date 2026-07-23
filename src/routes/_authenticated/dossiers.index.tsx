@@ -582,8 +582,19 @@ function ClientRequestWizard({
   const OFContactFields = (
     <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
       <div>
-        <div className="font-medium text-sm">Coordonnées de l'organisme de formation</div>
-        <p className="text-xs text-muted-foreground">Nous permet de vous joindre plus rapidement.</p>
+        <div className="font-medium text-sm">Organisme de formation</div>
+        <p className="text-xs text-muted-foreground">Ces informations serviront à identifier votre dossier.</p>
+      </div>
+      <div>
+        <Label htmlFor="of-nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
+        <Input
+          id="of-nom"
+          value={organismeNom}
+          onChange={(e) => setOrganismeNom(e.target.value)}
+          placeholder="Ex : WATT'S UP ACADEMY"
+          maxLength={120}
+          required
+        />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
@@ -602,6 +613,11 @@ function ClientRequestWizard({
             onChange={(e) => setSiteWeb(e.target.value)} placeholder="https://monorganisme.fr" />
         </div>
       </div>
+      {categorie && organismeNom.trim() && (
+        <p className="text-xs text-muted-foreground">
+          Titre généré : <span className="font-medium text-foreground">{buildDossierTitre(categorie, organismeNom)}</span>
+        </p>
+      )}
     </div>
   );
 
