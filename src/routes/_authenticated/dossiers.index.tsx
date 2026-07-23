@@ -574,6 +574,7 @@ function ClientRequestWizard({
   const canSubmitQualiopi = isQualiopi && organismeNom.trim().length > 0 && auditType && scopes.length > 0;
 
   const ofContact = {
+    organisme_nom: organismeNom.trim(),
     organisme_email: organismeEmail.trim() || undefined,
     organisme_telephone: organismeTelephone.trim() || undefined,
     site_web: siteWeb.trim() || undefined,
