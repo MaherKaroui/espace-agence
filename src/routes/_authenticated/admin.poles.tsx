@@ -583,7 +583,7 @@ function PoleCard({
           </div>
           <div className="w-40">
             <Label className="text-xs">Rôle dans le pôle</Label>
-            <Select value={addRole} onValueChange={(v) => setAddRole(v as "manager" | "consultant")}>
+            <Select value={addRole} onValueChange={(v) => setAddRole(v as PoleMemberRole)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
