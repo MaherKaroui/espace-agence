@@ -1107,6 +1107,24 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_reminders_sent: {
+        Row: {
+          entity_id: string
+          kind: string
+          sent_at: string
+        }
+        Insert: {
+          entity_id: string
+          kind: string
+          sent_at?: string
+        }
+        Update: {
+          entity_id?: string
+          kind?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
