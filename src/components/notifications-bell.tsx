@@ -125,8 +125,10 @@ export function NotificationsBell() {
     let cancelled = false;
     (async () => {
       try {
-        const reg = await navigator.serviceWorker.getRegistration("/");
-        const sub = await reg?.pushManager.getSubscription();
+        const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
+        await reg.update().catch(() => undefined);
+        const readyReg = await navigator.serviceWorker.ready;
+        const sub = await readyReg.pushManager.getSubscription();
         const status = await getPushStatus({ data: { endpoint: sub?.endpoint ?? null } });
         if (cancelled) return;
         setDevicePushSaved(status.currentDeviceSaved);

@@ -1,5 +1,6 @@
-// IZISuivis — Service Worker Web Push
-// Tickle-only push (no payload) + rich fallback with body when server sends JSON.
+// IZISuivis — Service Worker Web Push réel
+// Ancien chemin conservé pour les navigateurs déjà abonnés sur /sw.js.
+// Important : afficher aussi lorsque l'application est ouverte, sinon le test admin semble ne rien recevoir.
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -14,32 +15,26 @@ self.addEventListener("push", (event) => {
   if (event.data) {
     try { payload = event.data.json(); } catch { payload = { titre: event.data.text() }; }
   }
-  const title = payload.titre || "IZISuivis";
-  const body = payload.message || "Nouvelle notification";
-  const url = payload.url || "/";
+  const title = payload.titre || payload.title || "IZISuivis";
+  const body = payload.message || payload.body || "Nouvelle notification";
+  const url = payload.link || payload.url || "/notifications";
+  const tag = payload.tag || payload.id || "izisuivis-notification";
 
   event.waitUntil(
-    (async () => {
-      // If a client window is focused, skip OS notification — the in-app bell handles it.
-      const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      const hasFocused = clientsList.some((c) => c.focused);
-      if (hasFocused) return;
-
-      await self.registration.showNotification(title, {
-        body,
-        icon: "/favicon.ico",
-        badge: "/favicon.ico",
-        tag: payload.tag || "izisuivis",
-        renotify: true,
-        data: { url },
-      });
-    })()
+    self.registration.showNotification(title, {
+      body,
+      icon: "/favicon.ico",
+      badge: "/favicon.ico",
+      tag,
+      renotify: true,
+      data: { url },
+    })
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || "/";
+  const url = (event.notification.data && event.notification.data.url) || "/notifications";
   event.waitUntil(
     (async () => {
       const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
