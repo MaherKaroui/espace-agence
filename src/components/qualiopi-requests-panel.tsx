@@ -319,11 +319,10 @@ function RequestCard({
     }
   };
 
-  const preview = async (docId: string) => {
+  const preview = async (doc: any) => {
     try {
-      const { url } = await urlFn({ data: { documentId: docId } });
-      const w = window.open(url, "_blank", "noopener,noreferrer");
-      if (!w) toast.error("Autorisez les popups pour prévisualiser");
+      const { url } = await urlFn({ data: { documentId: doc.id } });
+      setPreviewDoc({ url, doc });
     } catch (e: any) {
       toast.error(e?.message ?? "Erreur");
     }
