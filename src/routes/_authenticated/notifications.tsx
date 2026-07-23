@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Bell } from "lucide-react";
 import { groupNotifications, type NotifRow } from "@/lib/notification-grouping";
+import { notifTargetLink } from "@/lib/notif-link";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({ meta: [{ title: "Notifications" }] }),
@@ -60,7 +61,7 @@ function NotifPage() {
         <Card className="divide-y">
           {groups.map((g) => (
             <Link
-              key={g.key} to={g.link || "/dashboard"}
+              key={g.key} to={notifTargetLink(g.type, g.link)}
               onClick={() => g.unread && markGroup(g.unreadIds)}
               className={`block p-4 hover:bg-muted/30 ${g.unread ? "bg-accent/30" : ""}`}
             >
