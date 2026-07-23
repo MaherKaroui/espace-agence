@@ -1420,6 +1420,8 @@ export type Database = {
           certifier_name: string | null
           certifier_organization: string | null
           certifier_user_id: string | null
+          color_manual: boolean
+          color_tag: string | null
           created_at: string
           created_by: string | null
           dossier_id: string | null
@@ -1439,6 +1441,8 @@ export type Database = {
           certifier_name?: string | null
           certifier_organization?: string | null
           certifier_user_id?: string | null
+          color_manual?: boolean
+          color_tag?: string | null
           created_at?: string
           created_by?: string | null
           dossier_id?: string | null
@@ -1458,6 +1462,8 @@ export type Database = {
           certifier_name?: string | null
           certifier_organization?: string | null
           certifier_user_id?: string | null
+          color_manual?: boolean
+          color_tag?: string | null
           created_at?: string
           created_by?: string | null
           dossier_id?: string | null
