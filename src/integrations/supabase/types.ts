@@ -1688,7 +1688,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      izisuivis_notification_task_health: {
+        Row: {
+          auto_task_duplicate_dossiers: number | null
+          dossiers_missing_organisme_nom: number | null
+          dossiers_total: number | null
+          dossiers_without_auto_task: number | null
+          push_subscriptions_total: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       anonymize_user_account: { Args: { _user_id: string }; Returns: undefined }
