@@ -497,14 +497,17 @@ export type Database = {
           description: string | null
           has_stagiaires: boolean
           id: string
+          last_relance_at: string | null
           nb_formateurs: number | null
           nb_formations: number | null
           nb_stagiaires: number | null
           organisme_email: string | null
           organisme_telephone: string | null
           pole_id: string
+          prochaine_action: string | null
           qualiopi_audit_type: string | null
           qualiopi_scopes: string[]
+          responsable_id: string | null
           site_web: string | null
           stagiaires: Json
           statut: Database["public"]["Enums"]["dossier_statut"]
@@ -520,14 +523,17 @@ export type Database = {
           description?: string | null
           has_stagiaires?: boolean
           id?: string
+          last_relance_at?: string | null
           nb_formateurs?: number | null
           nb_formations?: number | null
           nb_stagiaires?: number | null
           organisme_email?: string | null
           organisme_telephone?: string | null
           pole_id: string
+          prochaine_action?: string | null
           qualiopi_audit_type?: string | null
           qualiopi_scopes?: string[]
+          responsable_id?: string | null
           site_web?: string | null
           stagiaires?: Json
           statut?: Database["public"]["Enums"]["dossier_statut"]
@@ -543,14 +549,17 @@ export type Database = {
           description?: string | null
           has_stagiaires?: boolean
           id?: string
+          last_relance_at?: string | null
           nb_formateurs?: number | null
           nb_formations?: number | null
           nb_stagiaires?: number | null
           organisme_email?: string | null
           organisme_telephone?: string | null
           pole_id?: string
+          prochaine_action?: string | null
           qualiopi_audit_type?: string | null
           qualiopi_scopes?: string[]
+          responsable_id?: string | null
           site_web?: string | null
           stagiaires?: Json
           statut?: Database["public"]["Enums"]["dossier_statut"]
