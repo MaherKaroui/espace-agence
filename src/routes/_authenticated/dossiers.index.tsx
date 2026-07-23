@@ -115,6 +115,8 @@ function DossiersPage() {
           appUrl: "https://izisuivis.com",
         },
       });
+      // Notifier l'équipe du pôle + admins/direction
+      if (data?.id) { try { notifyTeamNewDossier(data.id); } catch { /* silencieux */ } }
       // Confirmer au client la création du dossier
       if (user?.email) {
         sendTransactionalEmail({
