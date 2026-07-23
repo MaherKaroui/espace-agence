@@ -349,6 +349,7 @@ function AdminDossiers() {
           statsById={statsById}
           inconsistencyById={inconsistencyById}
           poleById={poleById}
+          externalUnread={externalUnread as Record<string, number>}
         />
       ) : (
         <div className="space-y-6">
@@ -377,6 +378,7 @@ function AdminDossiers() {
                       stats={statsById[d.id]}
                       inc={inconsistencyById[d.id]}
                       poleColor={color}
+                      unread={(externalUnread as Record<string, number>)[d.id] ?? 0}
                     />
                   ))}
                 </Card>
