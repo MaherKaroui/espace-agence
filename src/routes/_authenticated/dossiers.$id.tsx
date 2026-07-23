@@ -298,8 +298,8 @@ function DossierDetail() {
       {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
       {isAdmin && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <DossierExternalChat dossierId={dossier.id} />
-          <QualiopiRequestsPanel dossierId={dossier.id} />
+          <div id="audit-chat" className="scroll-mt-20"><DossierExternalChat dossierId={dossier.id} /></div>
+          <div id="qualiopi" className="scroll-mt-20"><QualiopiRequestsPanel dossierId={dossier.id} /></div>
         </div>
       )}
 
