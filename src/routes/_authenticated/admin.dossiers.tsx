@@ -477,11 +477,22 @@ function KanbanView({ items, statsById, inconsistencyById, poleById }: {
                 const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
                 return (
                   <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}
-                    className="block relative rounded-lg border bg-card hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden">
+                    className="block relative rounded-lg border hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden"
+                    style={{
+                      backgroundColor: `color-mix(in oklab, ${color} 5%, var(--card))`,
+                      borderColor: `color-mix(in oklab, ${color} 25%, var(--border))`,
+                    }}>
                     <span className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: color }} aria-hidden />
                     <div className="p-3 pl-4 space-y-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color }}>
+                        <span
+                          className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider border"
+                          style={{
+                            color,
+                            borderColor: `color-mix(in oklab, ${color} 35%, transparent)`,
+                            backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+                          }}
+                        >
                           {pole?.nom ?? "Sans pôle"}
                         </span>
                       </div>
