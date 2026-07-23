@@ -2315,7 +2315,7 @@ export type Database = {
         | "qualiopi_refus"
         | "qualiopi_echeance"
         | "qualiopi_retard"
-      pole_role: "manager" | "consultant"
+      pole_role: "manager" | "consultant" | "auditeur" | "certificateur"
       tache_statut:
         | "a_faire"
         | "en_cours"
@@ -2509,7 +2509,7 @@ export const Constants = {
         "qualiopi_echeance",
         "qualiopi_retard",
       ],
-      pole_role: ["manager", "consultant"],
+      pole_role: ["manager", "consultant", "auditeur", "certificateur"],
       tache_statut: [
         "a_faire",
         "en_cours",

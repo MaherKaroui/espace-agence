@@ -10,10 +10,13 @@ export const ROLE_LABELS_FR: Record<string, string> = {
 
 export const roleLabelFr = (role: string): string => ROLE_LABELS_FR[role] ?? role;
 
-// Rôles assignables à un membre de pôle (hors admin/direction/client)
-export const POLE_MEMBER_ROLES: { value: "manager" | "consultant"; label: string }[] = [
+// Rôles assignables à un membre de pôle
+export type PoleMemberRole = "manager" | "consultant" | "auditeur" | "certificateur";
+export const POLE_MEMBER_ROLES: { value: PoleMemberRole; label: string }[] = [
   { value: "manager", label: "Responsable" },
   { value: "consultant", label: "Collaborateur" },
+  { value: "auditeur", label: "Auditeur" },
+  { value: "certificateur", label: "Certificateur" },
 ];
 
 // Rôles externes (professionnels rattachés à un dossier via dossier_assignments)

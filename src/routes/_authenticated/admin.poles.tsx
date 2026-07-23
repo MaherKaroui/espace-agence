@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Users, FolderOpen, Save, X, Power } from "lucide-react";
-import { POLE_MEMBER_ROLES, roleLabelFr } from "@/lib/role-labels";
+import { POLE_MEMBER_ROLES, roleLabelFr, type PoleMemberRole } from "@/lib/role-labels";
 import { OpenInternalConversationButton } from "@/components/open-internal-conversation-button";
 
 
@@ -302,7 +302,7 @@ function PoleCard({
 
   // Ajout membre
   const [addUserId, setAddUserId] = useState<string>("");
-  const [addRole, setAddRole] = useState<"manager" | "consultant">("consultant");
+  const [addRole, setAddRole] = useState<PoleMemberRole>("consultant");
   const memberUserIds = new Set(members.map((m) => m.user_id));
   const candidates = profiles.filter((p) => !memberUserIds.has(p.id));
 
@@ -347,7 +347,7 @@ function PoleCard({
   });
 
   const changeMemberRole = useMutation({
-    mutationFn: async ({ memberId, role }: { memberId: string; role: "manager" | "consultant" }) => {
+    mutationFn: async ({ memberId, role }: { memberId: string; role: PoleMemberRole }) => {
       const { error } = await supabase.from("pole_members").update({ role }).eq("id", memberId);
       if (error) throw error;
     },
@@ -525,7 +525,7 @@ function PoleCard({
                 <div className="flex items-center gap-2">
                   <Select
                     value={m.role}
-                    onValueChange={(v) => changeMemberRole.mutate({ memberId: m.id, role: v as "manager" | "consultant" })}
+                    onValueChange={(v) => changeMemberRole.mutate({ memberId: m.id, role: v as PoleMemberRole })}
                   >
                     <SelectTrigger className="h-8 w-40">
                       <SelectValue />
@@ -583,7 +583,7 @@ function PoleCard({
           </div>
           <div className="w-40">
             <Label className="text-xs">Rôle dans le pôle</Label>
-            <Select value={addRole} onValueChange={(v) => setAddRole(v as "manager" | "consultant")}>
+            <Select value={addRole} onValueChange={(v) => setAddRole(v as PoleMemberRole)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
