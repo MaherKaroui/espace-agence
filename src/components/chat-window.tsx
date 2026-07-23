@@ -21,6 +21,7 @@ import { MentionTextarea } from "@/components/mention-textarea";
 import { RichMessageContent } from "@/components/rich-message-content";
 import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
 import { notifyEmail } from "@/lib/email/notify";
+import { notifyTeamClientMessage } from "@/lib/email/notify-team";
 
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
@@ -153,6 +154,12 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
               templateData: { prenom: prof.prenom || "", extrait: extrait || undefined },
             });
           }
+        } catch { /* silencieux */ }
+      } else {
+        // Message envoyé par le client → notifier l'équipe (pôle + admins/direction)
+        try {
+          const extrait = (content || "").trim().slice(0, 140);
+          notifyTeamClientMessage(clientId, extrait || undefined);
         } catch { /* silencieux */ }
       }
     },

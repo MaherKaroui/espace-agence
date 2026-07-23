@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { cn } from "@/lib/utils";
 import { notifyEmail } from "@/lib/email/notify";
+import { notifyTeamDocumentDepose } from "@/lib/email/notify-team";
 
 
 type Doc = {
@@ -177,6 +178,10 @@ function RequiredRow({
         statut: "en_attente",
       });
       if (error) throw error;
+      // Notifier l'équipe si le dépôt vient du client
+      if (!isAdmin) {
+        try { notifyTeamDocumentDepose(dossierId, renamed); } catch { /* silencieux */ }
+      }
     },
     onSuccess: () => {
       toast.success(doc ? "Document remplacé — l'agence va le vérifier" : "Merci ! L'agence va vérifier votre document");

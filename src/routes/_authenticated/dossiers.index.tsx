@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { notifyTeamNewDossier } from "@/lib/email/notify-team";
 
 
 
