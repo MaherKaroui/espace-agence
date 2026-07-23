@@ -433,7 +433,7 @@ function CalendrierQualiopi() {
                   <div key={d} className="p-2 text-center font-medium text-muted-foreground">{d}</div>
                 ))}
                 {(() => {
-                  const cells: JSX.Element[] = [];
+                  const cells: React.ReactNode[] = [];
                   const first = monthStart;
                   const firstWeekday = (first.getDay() + 6) % 7; // Monday=0
                   for (let i = 0; i < firstWeekday; i++) cells.push(<div key={`pad-${i}`} />);
