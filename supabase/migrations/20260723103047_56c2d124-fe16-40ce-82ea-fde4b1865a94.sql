@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.auto_create_task_for_new_dossier() FROM authenticated;
