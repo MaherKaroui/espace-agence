@@ -895,6 +895,28 @@ function ClientRequestWizard({
       {step === 2 && !isQualiopi && (
         <div className="space-y-3">
           {OFContactFields}
+          {categorie === "juridique" && (
+            <div className="space-y-2">
+              <div>
+                <div className="font-medium">Type de demande juridique <span className="text-destructive">*</span></div>
+                <p className="text-sm text-muted-foreground">Sélectionnez la sous-demande qui vous concerne.</p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {JURIDIQUE_TYPES.map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setJuridiqueType(t.value)}
+                    className={`text-left rounded-lg border p-3 hover:border-primary/60 hover:bg-muted/40 transition-colors ${
+                      juridiqueType === t.value ? "border-primary bg-primary/5" : ""
+                    }`}
+                  >
+                    <div className="text-sm font-medium">{t.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div>
             <div className="font-medium">Expliquez votre demande en une phrase</div>
             <p className="text-sm text-muted-foreground">Ex : « Je souhaite obtenir mon NDA pour mon organisme. »</p>
@@ -911,8 +933,15 @@ function ClientRequestWizard({
             <Button
               type="button"
               className="flex-1"
-              disabled={pending || organismeNom.trim().length === 0}
-              onClick={() => onSubmit(categorie, description.trim(), ofContact)}
+              disabled={
+                pending
+                || organismeNom.trim().length === 0
+                || (categorie === "juridique" && !juridiqueType)
+              }
+              onClick={() => onSubmit(categorie, description.trim(), {
+                ...ofContact,
+                juridique_type: categorie === "juridique" ? juridiqueType : null,
+              })}
             >
               {pending ? "Création…" : "Créer la demande"}
             </Button>
