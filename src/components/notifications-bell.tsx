@@ -15,7 +15,7 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { groupNotifications, type NotifRow } from "@/lib/notification-grouping";
 import { cn } from "@/lib/utils";
-import { getVapidPublicKey, savePushSubscription, deletePushSubscription } from "@/lib/push.functions";
+import { getVapidPublicKey, getPushSubscriptionStatus, savePushSubscription, deletePushSubscription } from "@/lib/push.functions";
 import {
   getBrowserNotifPermission, isBrowserNotifEnabled,
   requestBrowserNotifPermission, setBrowserNotifEnabled, showBrowserNotif,
@@ -63,7 +63,9 @@ export function NotificationsBell() {
   const [tab, setTab] = useState<TabKey>("unread");
   const [permTick, setPermTick] = useState(0); // force refresh après demande
   const [pushLoading, setPushLoading] = useState(false);
+  const [devicePushSaved, setDevicePushSaved] = useState(false);
   const getKey = useServerFn(getVapidPublicKey);
+  const getPushStatus = useServerFn(getPushSubscriptionStatus);
   const saveSub = useServerFn(savePushSubscription);
   const delSub = useServerFn(deletePushSubscription);
 
@@ -112,7 +114,30 @@ export function NotificationsBell() {
   }, [user, qc]);
 
   const permission = useMemo(() => getBrowserNotifPermission(), [permTick]);
-  const enabled = useMemo(() => isBrowserNotifEnabled(), [permTick]);
+  const enabled = useMemo(() => isBrowserNotifEnabled() && devicePushSaved, [devicePushSaved, permTick]);
+
+  useEffect(() => {
+    if (!user || permission !== "granted" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setDevicePushSaved(false);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration("/");
+        const sub = await reg?.pushManager.getSubscription();
+        const status = await getPushStatus({ data: { endpoint: sub?.endpoint ?? null } });
+        if (cancelled) return;
+        setDevicePushSaved(status.currentDeviceSaved);
+        if (!status.currentDeviceSaved) setBrowserNotifEnabled(false);
+      } catch {
+        if (!cancelled) setDevicePushSaved(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user, permission, getPushStatus, permTick]);
 
   const unreadNotifs = notifications.filter((n) => !n.read_at);
   const activeList = tab === "unread" ? unreadNotifs : notifications;
@@ -142,7 +167,7 @@ export function NotificationsBell() {
     if (permission === "unsupported" || pushLoading) return;
     setPushLoading(true);
     try {
-      if (permission === "granted" && enabled) {
+      if (permission === "granted" && devicePushSaved) {
         const reg = await navigator.serviceWorker.getRegistration("/");
         const sub = await reg?.pushManager.getSubscription();
         if (sub) {
@@ -150,6 +175,7 @@ export function NotificationsBell() {
           await sub.unsubscribe().catch(() => undefined);
         }
         setBrowserNotifEnabled(false);
+        setDevicePushSaved(false);
         toast.success("Notifications navigateur désactivées");
         return;
       }
@@ -178,6 +204,7 @@ export function NotificationsBell() {
         },
       });
       setBrowserNotifEnabled(true);
+      setDevicePushSaved(true);
       toast.success("Notifications navigateur activées pour ce compte");
     } catch (e: any) {
       toast.error(e?.message ?? "Impossible d'activer les notifications navigateur");
