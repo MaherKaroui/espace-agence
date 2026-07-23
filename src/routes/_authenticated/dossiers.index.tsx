@@ -26,7 +26,16 @@ import { notifyTeamNewDossier } from "@/lib/email/notify-team";
 
 
 export const Route = createFileRoute("/_authenticated/dossiers/")({
-  head: () => ({ meta: [{ title: "Mes dossiers" }] }),
+  head: () => ({
+    meta: [
+      { title: "Mes dossiers — IZISuivis" },
+      { name: "description", content: "Suivi des dossiers IZISuivis, documents, étapes et prochaines actions." },
+      { property: "og:title", content: "Mes dossiers — IZISuivis" },
+      { property: "og:description", content: "Suivi des dossiers IZISuivis, documents, étapes et prochaines actions." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: DossiersPage,
 });
 
@@ -446,6 +455,11 @@ function ClientSection({
                   <div className="min-w-0">
                     <div className="text-xs uppercase tracking-wider text-gold font-medium">{catLabel}</div>
                     <div className={`mt-0.5 truncate ${isAutre ? "text-sm text-muted-foreground" : "font-medium"}`}>{titre}</div>
+                    {!((d.organisme_nom ?? "").trim()) && (
+                      <div className="mt-1 inline-flex items-center gap-1 rounded-md border border-warning/30 bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
+                        <AlertCircle className="h-3 w-3" /> Nom OF manquant
+                      </div>
+                    )}
                   </div>
                   <StatusBadge statut={d.statut} />
                 </div>
