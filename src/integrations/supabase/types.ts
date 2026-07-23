@@ -1884,6 +1884,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      test_push_notification_for_user: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       unarchive_client: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {

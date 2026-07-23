@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { UserPlus, Search, Users, KeyRound, Power, PowerOff, ShieldCheck, MoreVertical, AlertTriangle, Circle, BellRing, BellOff } from "lucide-react";
+import { UserPlus, Search, Users, KeyRound, Power, PowerOff, ShieldCheck, MoreVertical, AlertTriangle, Circle, BellRing, BellOff, Send } from "lucide-react";
 import { roleLabelFr } from "@/lib/role-labels";
 import { cn } from "@/lib/utils";
 import {
@@ -24,6 +24,7 @@ import {
   disableTeamMember,
   enableTeamMember,
   resetTeamMemberPassword,
+  testPushNotificationForMember,
   type TeamMember,
 } from "@/lib/team.functions";
 
@@ -234,6 +235,7 @@ function MemberActions({ member, isAdmin, onDone }: { member: TeamMember; isAdmi
   const resetFn = useServerFn(resetTeamMemberPassword);
   const disableFn = useServerFn(disableTeamMember);
   const enableFn = useServerFn(enableTeamMember);
+  const testPushFn = useServerFn(testPushNotificationForMember);
 
   const resetMut = useMutation({
     mutationFn: () => resetFn({ data: { userId: member.id } }),
@@ -248,6 +250,16 @@ function MemberActions({ member, isAdmin, onDone }: { member: TeamMember; isAdmi
   const enableMut = useMutation({
     mutationFn: () => enableFn({ data: { userId: member.id } }),
     onSuccess: () => { toast.success("Membre réactivé"); onDone(); },
+    onError: (e: any) => toast.error(e?.message ?? "Erreur"),
+  });
+  const testPushMut = useMutation({
+    mutationFn: () => testPushFn({ data: { userId: member.id } }),
+    onSuccess: () => {
+      toast.success(member.browser_notifications_active
+        ? "Notification test envoyée à ce membre"
+        : "Notification cloche créée — push inactif pour ce membre");
+      onDone();
+    },
     onError: (e: any) => toast.error(e?.message ?? "Erreur"),
   });
 
@@ -275,6 +287,15 @@ function MemberActions({ member, isAdmin, onDone }: { member: TeamMember; isAdmi
               className="w-full text-left px-3 py-2 text-sm rounded hover:bg-muted flex items-center gap-2"
             >
               <KeyRound className="h-4 w-4" /> Réinitialiser le mot de passe
+            </button>
+          )}
+          {!disabled && (
+            <button
+              onClick={() => { setOpen(false); testPushMut.mutate(); }}
+              disabled={testPushMut.isPending}
+              className="w-full text-left px-3 py-2 text-sm rounded hover:bg-muted flex items-center gap-2"
+            >
+              <Send className="h-4 w-4" /> Tester notification
             </button>
           )}
           {isAdmin && !disabled && (
