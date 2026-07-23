@@ -43,6 +43,8 @@ function AgencyTasksPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>(ALL);
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
   const [poleFilter, setPoleFilter] = useState<string>(ALL);
+  const [dossierFilter, setDossierFilter] = useState<string>(ALL);
+  const [autoFilter, setAutoFilter] = useState<string>(ALL);
 
   const { data: poles = [] } = useQuery({
     queryKey: ["poles-list"],
