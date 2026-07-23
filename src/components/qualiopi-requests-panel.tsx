@@ -94,7 +94,7 @@ export function QualiopiRequestsPanel({ dossierId }: { dossierId: string }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/dossiers/$id/qualiopi-rapport" params={{ id: dossierId }}>
+          <Link to={isExternal ? "/audits/$id/qualiopi-rapport" : "/dossiers/$id/qualiopi-rapport"} params={{ id: dossierId }}>
             <Button size="sm" variant="outline">
               <FileText className="h-4 w-4 mr-1" /> Rapport
             </Button>
