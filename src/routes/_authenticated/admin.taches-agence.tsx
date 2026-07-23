@@ -43,11 +43,21 @@ function AgencyTasksPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>(ALL);
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
   const [poleFilter, setPoleFilter] = useState<string>(ALL);
+  const [dossierFilter, setDossierFilter] = useState<string>(ALL);
+  const [autoFilter, setAutoFilter] = useState<string>(ALL);
 
   const { data: poles = [] } = useQuery({
     queryKey: ["poles-list"],
     queryFn: async () => {
       const { data } = await supabase.from("poles").select("id, nom").eq("actif", true).order("nom");
+      return data ?? [];
+    },
+  });
+
+  const { data: dossiersList = [] } = useQuery({
+    queryKey: ["dossiers-for-task-filter"],
+    queryFn: async () => {
+      const { data } = await supabase.from("dossiers").select("id, titre").order("created_at", { ascending: false }).limit(200);
       return data ?? [];
     },
   });
@@ -91,6 +101,9 @@ function AgencyTasksPage() {
     if (priorityFilter !== ALL) list = list.filter((t) => t.priority === priorityFilter);
     if (statusFilter !== ALL) list = list.filter((t) => t.status === statusFilter);
     if (poleFilter !== ALL) list = list.filter((t) => t.pole_id === poleFilter);
+    if (dossierFilter !== ALL) list = list.filter((t) => (t as any).dossier_id === dossierFilter);
+    if (autoFilter === "auto") list = list.filter((t) => !!(t as any).auto);
+    else if (autoFilter === "manual") list = list.filter((t) => !(t as any).auto);
 
     switch (tab) {
       case "priority":
@@ -126,7 +139,7 @@ function AgencyTasksPage() {
         break;
     }
     return list;
-  }, [tasks, tab, search, priorityFilter, statusFilter, poleFilter, user?.id]);
+  }, [tasks, tab, search, priorityFilter, statusFilter, poleFilter, dossierFilter, autoFilter, user?.id]);
 
   const fmtDue = (d: string | null) => d ? new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -147,7 +160,7 @@ function AgencyTasksPage() {
       </div>
 
       <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <Input placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select value={priorityFilter} onValueChange={setPriorityFilter}>
             <SelectTrigger><SelectValue placeholder="Priorité" /></SelectTrigger>
@@ -174,6 +187,21 @@ function AgencyTasksPage() {
             <SelectContent>
               <SelectItem value={ALL}>Tous pôles</SelectItem>
               {poles.map((p) => <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={dossierFilter} onValueChange={setDossierFilter}>
+            <SelectTrigger><SelectValue placeholder="Dossier lié" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Tous dossiers</SelectItem>
+              {dossiersList.map((d) => <SelectItem key={d.id} value={d.id}>{d.titre}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={autoFilter} onValueChange={setAutoFilter}>
+            <SelectTrigger><SelectValue placeholder="Origine" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Toutes origines</SelectItem>
+              <SelectItem value="auto">Tâches automatiques</SelectItem>
+              <SelectItem value="manual">Tâches manuelles</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -206,6 +234,9 @@ function AgencyTasksPage() {
                     <div className="flex gap-1 flex-shrink-0">
                       <PriorityBadge value={t.priority} />
                       <StatusBadge value={t.status} />
+                      {(t as any).auto && (
+                        <span className="inline-flex items-center rounded border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[10px] font-medium text-gold-foreground">auto</span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm truncate flex items-center gap-2">
@@ -217,6 +248,18 @@ function AgencyTasksPage() {
                         {t.pole_id && <> · {polesMap[t.pole_id] ?? "…"}</>}
                         {" · "}
                         <span className={overdue ? "text-red-600 font-medium" : ""}>{fmtDue(t.due_date)}</span>
+                        {(t as any).dossier_id && (
+                          <>
+                            {" · "}
+                            <a
+                              href={`/dossiers/${(t as any).dossier_id}`}
+                              className="text-primary hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Voir dossier
+                            </a>
+                          </>
+                        )}
                       </div>
                     </div>
                   </Card>
