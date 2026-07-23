@@ -101,6 +101,9 @@ function AgencyTasksPage() {
     if (priorityFilter !== ALL) list = list.filter((t) => t.priority === priorityFilter);
     if (statusFilter !== ALL) list = list.filter((t) => t.status === statusFilter);
     if (poleFilter !== ALL) list = list.filter((t) => t.pole_id === poleFilter);
+    if (dossierFilter !== ALL) list = list.filter((t) => (t as any).dossier_id === dossierFilter);
+    if (autoFilter === "auto") list = list.filter((t) => !!(t as any).auto);
+    else if (autoFilter === "manual") list = list.filter((t) => !(t as any).auto);
 
     switch (tab) {
       case "priority":
