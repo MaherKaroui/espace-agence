@@ -417,6 +417,17 @@ function CalendrierQualiopi() {
             </Select>
           </Card>
 
+          <Card className="p-3 flex flex-wrap items-center gap-3 text-xs">
+            <span className="font-medium text-muted-foreground">Légende couleurs :</span>
+            {(Object.keys(COLOR_LABELS) as ColorTag[]).map((c) => (
+              <span key={c} className="inline-flex items-center gap-1.5">
+                <span className={`h-3 w-3 rounded-full ${COLOR_DOT[c]}`} />
+                {COLOR_LABELS[c]}
+              </span>
+            ))}
+            <span className="text-muted-foreground ml-2">• Auto : SIBY + CAPCERT ⇒ vert</span>
+          </Card>
+
           {eventsQ.isLoading ? (
             <p className="text-sm text-muted-foreground">Chargement…</p>
           ) : viewMode === "liste" ? (
