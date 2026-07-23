@@ -855,7 +855,7 @@ function ClientRequestWizard({
             <Button
               type="button"
               className="flex-1"
-              disabled={pending}
+              disabled={pending || organismeNom.trim().length === 0}
               onClick={() => onSubmit(categorie, description.trim(), ofContact)}
             >
               {pending ? "Création…" : "Créer la demande"}
