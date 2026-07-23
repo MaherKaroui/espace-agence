@@ -249,6 +249,7 @@ function RequestCard({
 
 
   const [uploading, setUploading] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{ url: string; doc: any } | null>(null);
 
   const upload = async (file: File) => {
     if (file.size > 524288000) {
