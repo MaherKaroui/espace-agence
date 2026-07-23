@@ -160,7 +160,7 @@ function AgencyTasksPage() {
       </div>
 
       <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <Input placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select value={priorityFilter} onValueChange={setPriorityFilter}>
             <SelectTrigger><SelectValue placeholder="Priorité" /></SelectTrigger>
@@ -187,6 +187,21 @@ function AgencyTasksPage() {
             <SelectContent>
               <SelectItem value={ALL}>Tous pôles</SelectItem>
               {poles.map((p) => <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={dossierFilter} onValueChange={setDossierFilter}>
+            <SelectTrigger><SelectValue placeholder="Dossier lié" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Tous dossiers</SelectItem>
+              {dossiersList.map((d) => <SelectItem key={d.id} value={d.id}>{d.titre}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={autoFilter} onValueChange={setAutoFilter}>
+            <SelectTrigger><SelectValue placeholder="Origine" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Toutes origines</SelectItem>
+              <SelectItem value="auto">Tâches automatiques</SelectItem>
+              <SelectItem value="manual">Tâches manuelles</SelectItem>
             </SelectContent>
           </Select>
         </div>
