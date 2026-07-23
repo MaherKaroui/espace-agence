@@ -302,7 +302,7 @@ function PoleCard({
 
   // Ajout membre
   const [addUserId, setAddUserId] = useState<string>("");
-  const [addRole, setAddRole] = useState<"manager" | "consultant">("consultant");
+  const [addRole, setAddRole] = useState<PoleMemberRole>("consultant");
   const memberUserIds = new Set(members.map((m) => m.user_id));
   const candidates = profiles.filter((p) => !memberUserIds.has(p.id));
 
