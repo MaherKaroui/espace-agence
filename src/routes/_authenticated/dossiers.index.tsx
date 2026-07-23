@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, categorieLabel, requiredDocsFor } from "@/lib/labels";
+import { buildDossierTitre, baseTitreFor } from "@/lib/dossier-title";
 import { computeNextAction, computeAvancement } from "@/lib/next-action";
 import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
@@ -63,6 +64,7 @@ function DossiersPage() {
       categorie: string;
       pole_id: string;
       description: string;
+      organisme_nom: string;
       site_web?: string | null;
       organisme_email?: string | null;
       organisme_telephone?: string | null;
@@ -80,6 +82,7 @@ function DossiersPage() {
         categorie: payload.categorie as any,
         pole_id: payload.pole_id,
         description: payload.description || null,
+        organisme_nom: payload.organisme_nom,
         site_web: payload.site_web?.trim() || null,
         organisme_email: payload.organisme_email?.trim() || null,
         organisme_telephone: payload.organisme_telephone?.trim() || null,
@@ -147,15 +150,17 @@ function DossiersPage() {
   const submitAdmin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const titre = (fd.get("titre") as string)?.trim();
+    const organisme_nom = ((fd.get("organisme_nom") as string) ?? "").trim();
     const categorie = fd.get("categorie") as string;
     const pole_id = fd.get("pole_id") as string;
     const description = (fd.get("description") as string)?.trim() ?? "";
     const organisme_email = ((fd.get("organisme_email") as string) ?? "").trim() || undefined;
     const organisme_telephone = ((fd.get("organisme_telephone") as string) ?? "").trim() || undefined;
     const site_web = ((fd.get("site_web") as string) ?? "").trim() || undefined;
-    if (!titre || !categorie || !pole_id) { toast.error("Champs requis" ); return; }
-    create.mutate({ titre, categorie, pole_id, description, organisme_email, organisme_telephone, site_web });
+    if (!organisme_nom) { toast.error("Nom de l'organisme de formation requis"); return; }
+    if (!categorie || !pole_id) { toast.error("Champs requis"); return; }
+    const titre = buildDossierTitre(categorie, organisme_nom);
+    create.mutate({ titre, categorie, pole_id, description, organisme_nom, organisme_email, organisme_telephone, site_web });
   };
 
   const submitClient = (
@@ -177,13 +182,11 @@ function DossiersPage() {
   ) => {
     const pole_id = poleForCategorie(categorie);
     if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
-    const label = categorieLabel(categorie);
-    const organisme = extra?.organisme_nom?.trim();
-    const alreadyPrefixed = /^(Demande|Dossier)\b/i.test(label);
-    const base = alreadyPrefixed ? label : `Demande ${label}`;
-    const titre = organisme ? `${base} - ${organisme}` : base;
-    const { organisme_nom, ...rest } = extra ?? {};
-    create.mutate({ titre, categorie, pole_id, description, ...rest });
+    const organisme_nom = (extra?.organisme_nom ?? "").trim();
+    if (!organisme_nom) { toast.error("Nom de l'organisme de formation requis"); return; }
+    const titre = buildDossierTitre(categorie, organisme_nom);
+    const { organisme_nom: _n, ...rest } = extra ?? {};
+    create.mutate({ titre, categorie, pole_id, description, organisme_nom, ...rest });
   };
 
   const filtered = filter === "all" ? dossiers : dossiers.filter((d) => d.categorie === filter);
@@ -280,8 +283,9 @@ function DossiersPage() {
             {isAdmin ? (
               <form onSubmit={submitAdmin} className="space-y-4">
                 <div>
-                  <Label htmlFor="titre">Titre</Label>
-                  <Input id="titre" name="titre" required maxLength={120} />
+                  <Label htmlFor="organisme_nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
+                  <Input id="organisme_nom" name="organisme_nom" required maxLength={120} placeholder="Ex : WATT'S UP ACADEMY" />
+                  <p className="text-xs text-muted-foreground mt-1">Le titre du dossier sera généré automatiquement.</p>
                 </div>
                 <div>
                   <Label>Pôle</Label>
@@ -570,6 +574,7 @@ function ClientRequestWizard({
   const canSubmitQualiopi = isQualiopi && organismeNom.trim().length > 0 && auditType && scopes.length > 0;
 
   const ofContact = {
+    organisme_nom: organismeNom.trim(),
     organisme_email: organismeEmail.trim() || undefined,
     organisme_telephone: organismeTelephone.trim() || undefined,
     site_web: siteWeb.trim() || undefined,
@@ -578,8 +583,19 @@ function ClientRequestWizard({
   const OFContactFields = (
     <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
       <div>
-        <div className="font-medium text-sm">Coordonnées de l'organisme de formation</div>
-        <p className="text-xs text-muted-foreground">Nous permet de vous joindre plus rapidement.</p>
+        <div className="font-medium text-sm">Organisme de formation</div>
+        <p className="text-xs text-muted-foreground">Ces informations serviront à identifier votre dossier.</p>
+      </div>
+      <div>
+        <Label htmlFor="of-nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
+        <Input
+          id="of-nom"
+          value={organismeNom}
+          onChange={(e) => setOrganismeNom(e.target.value)}
+          placeholder="Ex : WATT'S UP ACADEMY"
+          maxLength={120}
+          required
+        />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
@@ -598,6 +614,11 @@ function ClientRequestWizard({
             onChange={(e) => setSiteWeb(e.target.value)} placeholder="https://monorganisme.fr" />
         </div>
       </div>
+      {categorie && organismeNom.trim() && (
+        <p className="text-xs text-muted-foreground">
+          Titre généré : <span className="font-medium text-foreground">{buildDossierTitre(categorie, organismeNom)}</span>
+        </p>
+      )}
     </div>
   );
 
@@ -614,7 +635,6 @@ function ClientRequestWizard({
       nb_formations: toInt(nbFormations),
       has_stagiaires: hasStagiaires,
       stagiaires: hasStagiaires ? stagiaires : [],
-      organisme_nom: organismeNom.trim(),
       ...ofContact,
     });
   };
@@ -657,17 +677,6 @@ function ClientRequestWizard({
       {step === 2 && isQualiopi && (
         <div className="space-y-4">
           {OFContactFields}
-          <div>
-            <Label htmlFor="organisme-nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
-            <Input
-              id="organisme-nom"
-              value={organismeNom}
-              onChange={(e) => setOrganismeNom(e.target.value)}
-              placeholder="Ex : Mon Centre de Formation"
-              maxLength={120}
-              required
-            />
-          </div>
           <div>
             <div className="font-medium">Type d'audit Qualiopi</div>
             <p className="text-sm text-muted-foreground">Sélectionnez le type qui vous concerne.</p>
@@ -846,7 +855,7 @@ function ClientRequestWizard({
             <Button
               type="button"
               className="flex-1"
-              disabled={pending}
+              disabled={pending || organismeNom.trim().length === 0}
               onClick={() => onSubmit(categorie, description.trim(), ofContact)}
             >
               {pending ? "Création…" : "Créer la demande"}

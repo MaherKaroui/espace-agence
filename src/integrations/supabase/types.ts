@@ -502,6 +502,7 @@ export type Database = {
           nb_formations: number | null
           nb_stagiaires: number | null
           organisme_email: string | null
+          organisme_nom: string | null
           organisme_telephone: string | null
           pole_id: string
           prochaine_action: string | null
@@ -528,6 +529,7 @@ export type Database = {
           nb_formations?: number | null
           nb_stagiaires?: number | null
           organisme_email?: string | null
+          organisme_nom?: string | null
           organisme_telephone?: string | null
           pole_id: string
           prochaine_action?: string | null
@@ -554,6 +556,7 @@ export type Database = {
           nb_formations?: number | null
           nb_stagiaires?: number | null
           organisme_email?: string | null
+          organisme_nom?: string | null
           organisme_telephone?: string | null
           pole_id?: string
           prochaine_action?: string | null

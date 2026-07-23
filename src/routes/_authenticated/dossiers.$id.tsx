@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, STATUTS } from "@/lib/labels";
+import { buildDossierTitre } from "@/lib/dossier-title";
 import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2, LifeBuoy, MessageSquare, Eye, Link2, Send } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -434,6 +435,32 @@ function DossierDetail() {
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label className="text-xs text-muted-foreground">Nom de l'organisme de formation</label>
+            <Input
+              type="text"
+              placeholder="Ex : WATT'S UP ACADEMY"
+              defaultValue={(dossier as any).organisme_nom ?? ""}
+              maxLength={120}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                const cur = ((dossier as any).organisme_nom ?? "").trim();
+                if (v === cur) return;
+                const patch: any = { organisme_nom: v || null };
+                // Regénère le titre s'il correspond encore au format automatique
+                const currentAuto = buildDossierTitre(dossier.categorie, cur);
+                if (!cur || dossier.titre === currentAuto) {
+                  patch.titre = buildDossierTitre(dossier.categorie, v);
+                }
+                updateDossier.mutate(patch);
+              }}
+            />
+            {!((dossier as any).organisme_nom ?? "").trim() && (
+              <p className="text-xs text-warning mt-1 flex items-center gap-1">
+                ⚠️ Nom de l'OF manquant — merci de le renseigner pour identifier ce dossier.
+              </p>
+            )}
+          </div>
           <div>
             <label className="text-xs text-muted-foreground">E-mail de l'OF</label>
             <Input
