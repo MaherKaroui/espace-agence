@@ -35,6 +35,19 @@ export type TeamMember = {
   browser_notifications_active: boolean;
 };
 
+export type NotificationRecipientHistoryRow = {
+  id: string;
+  user_id: string;
+  type: string;
+  titre: string;
+  message: string | null;
+  link: string | null;
+  read_at: string | null;
+  created_at: string;
+  recipient_email: string | null;
+  recipient_name: string | null;
+};
+
 /** Liste tous les membres de l'équipe (staff) — Direction/Admin uniquement */
 export const listTeam = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -137,6 +150,50 @@ export const listTeam = createServerFn({ method: "GET" })
       push_subscriptions_count: pushByUser.get(p.id) ?? 0,
       browser_notifications_active: (pushByUser.get(p.id) ?? 0) > 0,
     }));
+  });
+
+/** Historique des notifications internes avec destinataires — Direction/Admin uniquement */
+export const listNotificationRecipientHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<NotificationRecipientHistoryRow[]> => {
+    const { supabase, userId } = context;
+    await assertAdminOrDirection(supabase, userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: notifications, error } = await supabaseAdmin
+      .from("notifications")
+      .select("id, user_id, type, titre, message, link, read_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(300);
+    if (error) throw new Error(error.message);
+
+    const userIds = Array.from(new Set((notifications ?? []).map((n) => n.user_id).filter(Boolean)));
+    const profilesById = new Map<string, { email: string | null; prenom: string | null; nom: string | null }>();
+    if (userIds.length > 0) {
+      const { data: profiles, error: profilesError } = await supabaseAdmin
+        .from("profiles")
+        .select("id, email, prenom, nom")
+        .in("id", userIds);
+      if (profilesError) throw new Error(profilesError.message);
+      for (const profile of profiles ?? []) profilesById.set(profile.id, profile);
+    }
+
+    return (notifications ?? []).map((notification) => {
+      const profile = profilesById.get(notification.user_id);
+      const name = `${profile?.prenom ?? ""} ${profile?.nom ?? ""}`.trim();
+      return {
+        id: notification.id,
+        user_id: notification.user_id,
+        type: notification.type,
+        titre: notification.titre,
+        message: notification.message,
+        link: notification.link,
+        read_at: notification.read_at,
+        created_at: notification.created_at,
+        recipient_email: profile?.email ?? null,
+        recipient_name: name || null,
+      };
+    });
   });
 
 /** Inviter un membre de l'équipe */
