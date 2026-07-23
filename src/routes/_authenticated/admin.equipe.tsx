@@ -25,6 +25,7 @@ import {
   enableTeamMember,
   resetTeamMemberPassword,
   testPushNotificationForMember,
+  testPushNotificationForPole,
   type TeamMember,
 } from "@/lib/team.functions";
 
@@ -77,8 +78,10 @@ function AdminTeam() {
   const [q, setQ] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | StaffRole>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "disabled">("active");
+  const [testPoleId, setTestPoleId] = useState<string | undefined>();
 
   const listTeamFn = useServerFn(listTeam);
+  const testPoleFn = useServerFn(testPushNotificationForPole);
   const { data: members = [], isLoading, error, refetch } = useQuery({
     queryKey: ["admin-team"],
     queryFn: () => listTeamFn(),
@@ -106,6 +109,20 @@ function AdminTeam() {
   }, [members, q, roleFilter, statusFilter]);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["admin-team"] });
+
+  const testPoleMut = useMutation({
+    mutationFn: () => {
+      if (!testPoleId) throw new Error("Choisissez un pôle");
+      return testPoleFn({ data: { poleId: testPoleId } });
+    },
+    onSuccess: (result) => {
+      toast.success(
+        `${result.notificationsCreated} notification${result.notificationsCreated > 1 ? "s" : ""} cloche créée${result.notificationsCreated > 1 ? "s" : ""} · ${result.recipientsWithPush} membre${result.recipientsWithPush > 1 ? "s" : ""} avec push`,
+      );
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erreur"),
+  });
 
   return (
     <div className="space-y-6">
@@ -142,6 +159,30 @@ function AdminTeam() {
             <SelectItem value="all">Tous</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="rounded-md border bg-muted/20 p-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-56">
+          <div className="text-sm font-medium">Test notifications par pôle</div>
+          <div className="text-xs text-muted-foreground">Crée une cloche interne pour chaque membre actif du pôle, avec push si activé.</div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={testPoleId} onValueChange={setTestPoleId}>
+            <SelectTrigger className="w-56"><SelectValue placeholder="Choisir un pôle" /></SelectTrigger>
+            <SelectContent>
+              {poles.map((p) => <SelectItem key={p.id} value={p.id}>{p.nom}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={!testPoleId || testPoleMut.isPending}
+            onClick={() => testPoleMut.mutate()}
+          >
+            <Send className="h-4 w-4" />
+            {testPoleMut.isPending ? "Envoi…" : "Tester tout le pôle"}
+          </Button>
+        </div>
       </div>
 
       {error ? (
