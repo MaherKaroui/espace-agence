@@ -20,6 +20,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { previewEmailTemplate } from "@/lib/preview-email.functions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { APP_URL } from "@/lib/app-url";
+import { WebPushToggle } from "@/components/web-push-toggle";
 
 export const Route = createFileRoute("/_authenticated/admin/notifications")({
   head: () => ({ meta: [{ title: "Notifications & emails — Admin" }] }),
@@ -197,7 +198,7 @@ function AdminNotifications() {
         <div className="rounded-xl bg-primary/10 p-2.5"><Mail className="h-5 w-5 text-primary" /></div>
         <div>
           <h1 className="font-display text-2xl">Notifications & emails</h1>
-          <p className="text-sm text-muted-foreground">Réglez les emails automatiques, prévisualisez chaque template et suivez leur historique.</p>
+          <p className="text-sm text-muted-foreground">Réglez les emails automatiques, les notifications navigateur et leur historique.</p>
         </div>
       </div>
 
@@ -209,6 +210,16 @@ function AdminNotifications() {
         </TabsList>
 
         <TabsContent value="settings" className="space-y-4 mt-4">
+          <Card className="p-6 space-y-4">
+            <div>
+              <h2 className="font-semibold">Notifications navigateur / PC</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Activation par utilisateur : chaque membre autorise son navigateur, l'abonnement est sauvegardé de façon sécurisée, et la cloche interne reste le secours si le navigateur refuse.
+              </p>
+            </div>
+            <WebPushToggle />
+          </Card>
+
           <Card className="p-6 space-y-4">
             <div>
               <h2 className="font-semibold">Adresse admin principale</h2>
