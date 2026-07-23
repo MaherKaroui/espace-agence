@@ -150,15 +150,17 @@ function DossiersPage() {
   const submitAdmin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const titre = (fd.get("titre") as string)?.trim();
+    const organisme_nom = ((fd.get("organisme_nom") as string) ?? "").trim();
     const categorie = fd.get("categorie") as string;
     const pole_id = fd.get("pole_id") as string;
     const description = (fd.get("description") as string)?.trim() ?? "";
     const organisme_email = ((fd.get("organisme_email") as string) ?? "").trim() || undefined;
     const organisme_telephone = ((fd.get("organisme_telephone") as string) ?? "").trim() || undefined;
     const site_web = ((fd.get("site_web") as string) ?? "").trim() || undefined;
-    if (!titre || !categorie || !pole_id) { toast.error("Champs requis" ); return; }
-    create.mutate({ titre, categorie, pole_id, description, organisme_email, organisme_telephone, site_web });
+    if (!organisme_nom) { toast.error("Nom de l'organisme de formation requis"); return; }
+    if (!categorie || !pole_id) { toast.error("Champs requis"); return; }
+    const titre = buildDossierTitre(categorie, organisme_nom);
+    create.mutate({ titre, categorie, pole_id, description, organisme_nom, organisme_email, organisme_telephone, site_web });
   };
 
   const submitClient = (
@@ -180,13 +182,11 @@ function DossiersPage() {
   ) => {
     const pole_id = poleForCategorie(categorie);
     if (!pole_id) { toast.error("Configuration indisponible, contactez l'agence"); return; }
-    const label = categorieLabel(categorie);
-    const organisme = extra?.organisme_nom?.trim();
-    const alreadyPrefixed = /^(Demande|Dossier)\b/i.test(label);
-    const base = alreadyPrefixed ? label : `Demande ${label}`;
-    const titre = organisme ? `${base} - ${organisme}` : base;
-    const { organisme_nom, ...rest } = extra ?? {};
-    create.mutate({ titre, categorie, pole_id, description, ...rest });
+    const organisme_nom = (extra?.organisme_nom ?? "").trim();
+    if (!organisme_nom) { toast.error("Nom de l'organisme de formation requis"); return; }
+    const titre = buildDossierTitre(categorie, organisme_nom);
+    const { organisme_nom: _n, ...rest } = extra ?? {};
+    create.mutate({ titre, categorie, pole_id, description, organisme_nom, ...rest });
   };
 
   const filtered = filter === "all" ? dossiers : dossiers.filter((d) => d.categorie === filter);
