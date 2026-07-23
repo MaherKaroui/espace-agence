@@ -582,6 +582,7 @@ function ClientRequestWizard({
       nb_formations?: number | null;
       has_stagiaires?: boolean;
       stagiaires?: any[];
+      juridique_type?: string | null;
       organisme_nom?: string;
       organisme_email?: string;
       organisme_telephone?: string;
