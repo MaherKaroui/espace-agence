@@ -579,6 +579,37 @@ function CalendrierQualiopi() {
               <div><Label>Certificateur</Label><Input value={editEvent.certifier_name ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certifier_name: e.target.value })} placeholder="BCI, CAPCERT, Qualipro…" /></div>
               <div><Label>Organisme certificateur</Label><Input value={editEvent.certifier_organization ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certifier_organization: e.target.value })} /></div>
               <div className="sm:col-span-2"><Label>Certificat</Label><Input value={editEvent.certificate_status ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certificate_status: e.target.value })} /></div>
+              <div className="sm:col-span-2">
+                <Label>Couleur</Label>
+                <Select
+                  value={editEvent.color_manual ? (editEvent.color_tag ?? "auto") : "auto"}
+                  onValueChange={(v) => {
+                    if (v === "auto") setEditEvent({ ...editEvent, color_tag: null, color_manual: false });
+                    else setEditEvent({ ...editEvent, color_tag: v as ColorTag, color_manual: true });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">
+                      <span className="inline-flex items-center gap-2">
+                        <span className={`h-3 w-3 rounded-full ${(() => { const c = autoColor(editEvent.auditor_name, editEvent.certifier_name, editEvent.certifier_organization); return c ? COLOR_DOT[c] : "border border-border"; })()}`} />
+                        Automatique {(() => { const c = autoColor(editEvent.auditor_name, editEvent.certifier_name, editEvent.certifier_organization); return c ? `(${COLOR_LABELS[c]})` : "(aucune)"; })()}
+                      </span>
+                    </SelectItem>
+                    {(Object.keys(COLOR_LABELS) as ColorTag[]).map((c) => (
+                      <SelectItem key={c} value={c}>
+                        <span className="inline-flex items-center gap-2">
+                          <span className={`h-3 w-3 rounded-full ${COLOR_DOT[c]}`} />
+                          {COLOR_LABELS[c]}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Un choix manuel reste prioritaire sur la règle automatique.</p>
+              </div>
               <div className="sm:col-span-2"><Label>Observation</Label><Textarea value={editEvent.observation ?? ""} onChange={(e) => setEditEvent({ ...editEvent, observation: e.target.value })} rows={3} /></div>
             </div>
           )}
