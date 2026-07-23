@@ -52,6 +52,7 @@ export type Database = {
           assigned_to: string | null
           attachment_name: string | null
           attachment_path: string | null
+          auto: boolean
           client_id: string | null
           completed_at: string | null
           created_at: string
@@ -64,6 +65,7 @@ export type Database = {
           pole_id: string | null
           priority: Database["public"]["Enums"]["agency_task_priority"]
           status: Database["public"]["Enums"]["agency_task_status"]
+          task_type: string | null
           title: string
           updated_at: string
         }
@@ -72,6 +74,7 @@ export type Database = {
           assigned_to?: string | null
           attachment_name?: string | null
           attachment_path?: string | null
+          auto?: boolean
           client_id?: string | null
           completed_at?: string | null
           created_at?: string
@@ -84,6 +87,7 @@ export type Database = {
           pole_id?: string | null
           priority?: Database["public"]["Enums"]["agency_task_priority"]
           status?: Database["public"]["Enums"]["agency_task_status"]
+          task_type?: string | null
           title: string
           updated_at?: string
         }
@@ -92,6 +96,7 @@ export type Database = {
           assigned_to?: string | null
           attachment_name?: string | null
           attachment_path?: string | null
+          auto?: boolean
           client_id?: string | null
           completed_at?: string | null
           created_at?: string
@@ -104,6 +109,7 @@ export type Database = {
           pole_id?: string | null
           priority?: Database["public"]["Enums"]["agency_task_priority"]
           status?: Database["public"]["Enums"]["agency_task_status"]
+          task_type?: string | null
           title?: string
           updated_at?: string
         }
