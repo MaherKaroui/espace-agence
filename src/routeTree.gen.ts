@@ -28,9 +28,11 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
 import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
+import { Route as AuthenticatedAuditsIndexRouteImport } from './routes/_authenticated/audits.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
+import { Route as AuthenticatedAuditsIdRouteImport } from './routes/_authenticated/audits.$id'
 import { Route as AuthenticatedAdminTachesAgenceRouteImport } from './routes/_authenticated/admin.taches-agence'
 import { Route as AuthenticatedAdminSessionsRouteImport } from './routes/_authenticated/admin.sessions'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
@@ -163,6 +165,12 @@ const AuthenticatedDossiersIndexRoute =
     path: '/dossiers/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAuditsIndexRoute =
+  AuthenticatedAuditsIndexRouteImport.update({
+    id: '/audits/',
+    path: '/audits/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -176,6 +184,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
 const AuthenticatedDossiersIdRoute = AuthenticatedDossiersIdRouteImport.update({
   id: '/dossiers/$id',
   path: '/dossiers/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAuditsIdRoute = AuthenticatedAuditsIdRouteImport.update({
+  id: '/audits/$id',
+  path: '/audits/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminTachesAgenceRoute =
@@ -382,9 +395,11 @@ export interface FileRoutesByFullPath {
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
+  '/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/audits/': typeof AuthenticatedAuditsIndexRoute
   '/dossiers/': typeof AuthenticatedDossiersIndexRoute
   '/messages/': typeof AuthenticatedMessagesIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
@@ -435,9 +450,11 @@ export interface FileRoutesByTo {
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
+  '/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/audits': typeof AuthenticatedAuditsIndexRoute
   '/dossiers': typeof AuthenticatedDossiersIndexRoute
   '/messages': typeof AuthenticatedMessagesIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
@@ -490,9 +507,11 @@ export interface FileRoutesById {
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
   '/_authenticated/admin/sessions': typeof AuthenticatedAdminSessionsRoute
   '/_authenticated/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
+  '/_authenticated/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/audits/': typeof AuthenticatedAuditsIndexRoute
   '/_authenticated/dossiers/': typeof AuthenticatedDossiersIndexRoute
   '/_authenticated/messages/': typeof AuthenticatedMessagesIndexRoute
   '/_authenticated/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
@@ -545,9 +564,11 @@ export interface FileRouteTypes {
     | '/admin/security'
     | '/admin/sessions'
     | '/admin/taches-agence'
+    | '/audits/$id'
     | '/dossiers/$id'
     | '/lovable/email/suppression'
     | '/admin/'
+    | '/audits/'
     | '/dossiers/'
     | '/messages/'
     | '/admin/clients/$id'
@@ -598,9 +619,11 @@ export interface FileRouteTypes {
     | '/admin/security'
     | '/admin/sessions'
     | '/admin/taches-agence'
+    | '/audits/$id'
     | '/dossiers/$id'
     | '/lovable/email/suppression'
     | '/admin'
+    | '/audits'
     | '/dossiers'
     | '/messages'
     | '/admin/clients/$id'
@@ -652,9 +675,11 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/security'
     | '/_authenticated/admin/sessions'
     | '/_authenticated/admin/taches-agence'
+    | '/_authenticated/audits/$id'
     | '/_authenticated/dossiers/$id'
     | '/lovable/email/suppression'
     | '/_authenticated/admin/'
+    | '/_authenticated/audits/'
     | '/_authenticated/dossiers/'
     | '/_authenticated/messages/'
     | '/_authenticated/admin/clients/$id'
@@ -837,6 +862,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDossiersIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/audits/': {
+      id: '/_authenticated/audits/'
+      path: '/audits'
+      fullPath: '/audits/'
+      preLoaderRoute: typeof AuthenticatedAuditsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/admin'
@@ -856,6 +888,13 @@ declare module '@tanstack/react-router' {
       path: '/dossiers/$id'
       fullPath: '/dossiers/$id'
       preLoaderRoute: typeof AuthenticatedDossiersIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audits/$id': {
+      id: '/_authenticated/audits/$id'
+      path: '/audits/$id'
+      fullPath: '/audits/$id'
+      preLoaderRoute: typeof AuthenticatedAuditsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/taches-agence': {
@@ -1102,8 +1141,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
   AuthenticatedAdminSessionsRoute: typeof AuthenticatedAdminSessionsRoute
   AuthenticatedAdminTachesAgenceRoute: typeof AuthenticatedAdminTachesAgenceRoute
+  AuthenticatedAuditsIdRoute: typeof AuthenticatedAuditsIdRoute
   AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAuditsIndexRoute: typeof AuthenticatedAuditsIndexRoute
   AuthenticatedDossiersIndexRoute: typeof AuthenticatedDossiersIndexRoute
   AuthenticatedMessagesIndexRoute: typeof AuthenticatedMessagesIndexRoute
   AuthenticatedAdminClientsIdRoute: typeof AuthenticatedAdminClientsIdRoute
@@ -1133,8 +1174,10 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
   AuthenticatedAdminSessionsRoute: AuthenticatedAdminSessionsRoute,
   AuthenticatedAdminTachesAgenceRoute: AuthenticatedAdminTachesAgenceRoute,
+  AuthenticatedAuditsIdRoute: AuthenticatedAuditsIdRoute,
   AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAuditsIndexRoute: AuthenticatedAuditsIndexRoute,
   AuthenticatedDossiersIndexRoute: AuthenticatedDossiersIndexRoute,
   AuthenticatedMessagesIndexRoute: AuthenticatedMessagesIndexRoute,
   AuthenticatedAdminClientsIdRoute: AuthenticatedAdminClientsIdRoute,

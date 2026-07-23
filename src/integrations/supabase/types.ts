@@ -1464,6 +1464,154 @@ export type Database = {
           },
         ]
       }
+      qualiopi_request_documents: {
+        Row: {
+          antivirus_status: string
+          created_at: string
+          file_size: number | null
+          filename: string
+          id: string
+          mime_type: string | null
+          request_id: string
+          sha256: string | null
+          storage_path: string
+          uploaded_by: string
+          version: number
+        }
+        Insert: {
+          antivirus_status?: string
+          created_at?: string
+          file_size?: number | null
+          filename: string
+          id?: string
+          mime_type?: string | null
+          request_id: string
+          sha256?: string | null
+          storage_path: string
+          uploaded_by: string
+          version?: number
+        }
+        Update: {
+          antivirus_status?: string
+          created_at?: string
+          file_size?: number | null
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          request_id?: string
+          sha256?: string | null
+          storage_path?: string
+          uploaded_by?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualiopi_request_documents_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "qualiopi_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualiopi_request_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string
+          id: string
+          meta: Json | null
+          request_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          request_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualiopi_request_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "qualiopi_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualiopi_requests: {
+        Row: {
+          created_at: string
+          dossier_id: string
+          due_date: string | null
+          id: string
+          indicator_id: number
+          message: string | null
+          refus_motif: string | null
+          requested_by: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          statut: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dossier_id: string
+          due_date?: string | null
+          id?: string
+          indicator_id: number
+          message?: string | null
+          refus_motif?: string | null
+          requested_by: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          statut?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dossier_id?: string
+          due_date?: string | null
+          id?: string
+          indicator_id?: number
+          message?: string | null
+          refus_motif?: string | null
+          requested_by?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          statut?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualiopi_requests_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qualiopi_requests_indicator_id_fkey"
+            columns: ["indicator_id"]
+            isOneToOne: false
+            referencedRelation: "qualiopi_indicators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rapports_quotidiens: {
         Row: {
           alertes_securite_24h: number
@@ -1989,6 +2137,10 @@ export type Database = {
       notify_team_dossier_reminder: {
         Args: { _dossier_id: string; _reminder_type?: string }
         Returns: number
+      }
+      qualiopi_dossier_participant: {
+        Args: { _dossier: string; _user: string }
+        Returns: boolean
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }

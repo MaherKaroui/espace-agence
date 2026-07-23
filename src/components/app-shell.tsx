@@ -38,7 +38,7 @@ function matchesSection(row: NavUnreadRow, to: string): boolean {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const { isStaff, isAdmin, isDirection, isManager, isConsultant } = useRole();
+  const { isStaff, isAdmin, isDirection, isManager, isConsultant, isAuditeur, isCertificateur, isExternal } = useRole();
   const roleLabel = isAdmin
     ? roleLabelFr("admin")
     : isDirection
@@ -47,7 +47,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ? roleLabelFr("manager")
         : isConsultant
           ? roleLabelFr("consultant")
-          : roleLabelFr("client");
+          : isAuditeur
+            ? roleLabelFr("auditeur")
+            : isCertificateur
+              ? roleLabelFr("certificateur")
+              : roleLabelFr("client");
   const { data: profile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
@@ -146,10 +150,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const clientNav = isStaff ? nav.filter((n) => n.to === "/mes-donnees") : nav;
     return (
     <>
-      {!isStaff && (
+      {!isStaff && !isExternal && (
         <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/50">Espace client</div>
       )}
-      {!isStaff && clientNav.map((n) => {
+      {!isStaff && !isExternal && clientNav.map((n) => {
         const c = countFor(n.to);
         return (
           <Link
@@ -167,6 +171,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         );
       })}
+      {isExternal && !isStaff && (
+        <>
+          <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">
+            {isAuditeur && isCertificateur ? "Auditeur / Certificateur" : isAuditeur ? "Auditeur" : "Certificateur"}
+          </div>
+          <Link
+            to="/audits"
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
+          >
+            <ShieldCheck className="h-4 w-4" />
+            <span className="flex-1">Mes dossiers affectés</span>
+          </Link>
+          <Link
+            to="/notifications"
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
+          >
+            <Bell className="h-4 w-4" />
+            <span className="flex-1">Notifications</span>
+          </Link>
+          <Link
+            to="/mes-donnees"
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
+          >
+            <UserCog className="h-4 w-4" />
+            <span className="flex-1">Mes données</span>
+          </Link>
+        </>
+      )}
       {isStaff && (
         <>
           <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Agence</div>
