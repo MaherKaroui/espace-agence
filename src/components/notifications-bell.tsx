@@ -16,6 +16,7 @@ import { fr } from "date-fns/locale";
 import { groupNotifications, type NotifRow } from "@/lib/notification-grouping";
 import { cn } from "@/lib/utils";
 import { getVapidPublicKey, getPushSubscriptionStatus, savePushSubscription, deletePushSubscription } from "@/lib/push.functions";
+import { notifTargetLink } from "@/lib/notif-link";
 import {
   getBrowserNotifPermission, isBrowserNotifEnabled,
   requestBrowserNotifPermission, setBrowserNotifEnabled, showBrowserNotif,
@@ -313,7 +314,7 @@ export function NotificationsBell() {
             const { icon: Icon, color } = iconFor(g.type);
             return (
               <Link
-                key={g.key} to={g.link || "/dashboard"}
+                key={g.key} to={notifTargetLink(g.type, g.link)}
                 onClick={() => g.unread && markGroup(g.unreadIds)}
                 className={cn(
                   "flex items-start gap-3 px-4 py-3 border-b hover:bg-muted/50 transition-colors",

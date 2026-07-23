@@ -1,6 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
@@ -9,11 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, FolderOpen, CheckCircle2, AlertTriangle, Circle, ClipboardCheck,
-  LayoutGrid, List as ListIcon, Clock, FileText,
+  LayoutGrid, List as ListIcon, Clock, FileText, MessageSquare,
 } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel, CATEGORIES, requiredDocsFor, docMatches } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import { getExternalUnreadCounts } from "@/lib/qualiopi-notifications.functions";
 
 type DocRow = {
   id: string;
@@ -165,6 +167,13 @@ function AdminDossiers() {
       for (const d of (data ?? []) as DocRow[]) (m[d.dossier_id] ??= []).push(d);
       return m;
     },
+  });
+
+  const unreadFn = useServerFn(getExternalUnreadCounts);
+  const { data: externalUnread = {} } = useQuery({
+    queryKey: ["admin-dossiers-external-unread"],
+    queryFn: () => unreadFn(),
+    refetchInterval: 30_000,
   });
 
   const statsById = useMemo(() => {
@@ -340,6 +349,7 @@ function AdminDossiers() {
           statsById={statsById}
           inconsistencyById={inconsistencyById}
           poleById={poleById}
+          externalUnread={externalUnread as Record<string, number>}
         />
       ) : (
         <div className="space-y-6">
@@ -368,6 +378,7 @@ function AdminDossiers() {
                       stats={statsById[d.id]}
                       inc={inconsistencyById[d.id]}
                       poleColor={color}
+                      unread={(externalUnread as Record<string, number>)[d.id] ?? 0}
                     />
                   ))}
                 </Card>
@@ -380,15 +391,14 @@ function AdminDossiers() {
   );
 }
 
-function DossierRow({ d, stats, inc, poleColor }: {
-  d: any; stats: ReviewStats | undefined; inc: Inconsistency; poleColor: string;
+function DossierRow({ d, stats, inc, poleColor, unread = 0 }: {
+  d: any; stats: ReviewStats | undefined; inc: Inconsistency; poleColor: string; unread?: number;
 }) {
   const days = daysSince(d.updated_at);
   const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
   return (
     <Link
-      to="/dossiers/$id"
-      params={{ id: d.id }}
+      to={`/dossiers/${d.id}${unread > 0 ? "#audit-chat" : ""}`}
       className="block p-4 hover:bg-muted/40 relative transition-colors"
       style={{ backgroundColor: `color-mix(in oklab, ${poleColor} 5%, transparent)` }}
     >
@@ -423,6 +433,11 @@ function DossierRow({ d, stats, inc, poleColor }: {
                 <AlertTriangle className="h-3 w-3" /> 0% mais validés
               </Badge>
             )}
+            {unread > 0 && (
+              <Badge className="bg-primary text-primary-foreground text-xs gap-1">
+                <MessageSquare className="h-3 w-3" /> {unread} audit
+              </Badge>
+            )}
           </div>
           <div className="font-medium truncate">{d.titre}</div>
           <div className="text-xs text-muted-foreground mt-0.5">
@@ -441,11 +456,12 @@ function DossierRow({ d, stats, inc, poleColor }: {
   );
 }
 
-function KanbanView({ items, statsById, inconsistencyById, poleById }: {
+function KanbanView({ items, statsById, inconsistencyById, poleById, externalUnread = {} }: {
   items: any[];
   statsById: Record<string, ReviewStats>;
   inconsistencyById: Record<string, Inconsistency>;
   poleById: Map<string, any>;
+  externalUnread?: Record<string, number>;
 }) {
   const byLane = useMemo(() => {
     const m: Record<string, any[]> = { todo: [], doing: [], done: [], ko: [] };
@@ -475,8 +491,10 @@ function KanbanView({ items, statsById, inconsistencyById, poleById }: {
                 const inc = inconsistencyById[d.id];
                 const days = daysSince(d.updated_at);
                 const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
+                const unread = externalUnread[d.id] ?? 0;
                 return (
-                  <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}
+                  <Link key={d.id}
+                    to={`/dossiers/${d.id}${unread > 0 ? "#audit-chat" : ""}`}
                     className="block relative rounded-lg border hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden"
                     style={{
                       backgroundColor: `color-mix(in oklab, ${color} 5%, var(--card))`,
@@ -495,6 +513,11 @@ function KanbanView({ items, statsById, inconsistencyById, poleById }: {
                         >
                           {pole?.nom ?? "Sans pôle"}
                         </span>
+                        {unread > 0 && (
+                          <Badge className="bg-primary text-primary-foreground text-[10px] py-0 h-5 gap-1">
+                            <MessageSquare className="h-2.5 w-2.5" /> {unread}
+                          </Badge>
+                        )}
                       </div>
                       <div className="font-medium text-sm line-clamp-2">{d.titre}</div>
                       <div className="text-xs text-muted-foreground truncate">

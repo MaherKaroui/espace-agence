@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
 import { DossierExternalChat } from "@/components/dossier-external-chat";
 import { QualiopiRequestsPanel } from "@/components/qualiopi-requests-panel";
+import { useScrollToHash } from "@/hooks/use-scroll-to-hash";
 
 export const Route = createFileRoute("/_authenticated/audits/$id")({
   head: () => ({ meta: [{ title: "Dossier audité — IZISuivis" }] }),
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/audits/$id")({
 function AuditDetail() {
   const { id } = Route.useParams();
   const nav = useNavigate();
+  useScrollToHash([id]);
 
   const { data: dossier, isLoading } = useQuery({
     queryKey: ["audit-dossier", id],
@@ -83,8 +85,8 @@ function AuditDetail() {
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <DossierExternalChat dossierId={id} />
-        <QualiopiRequestsPanel dossierId={id} />
+        <div id="audit-chat" className="scroll-mt-20"><DossierExternalChat dossierId={id} /></div>
+        <div id="qualiopi" className="scroll-mt-20"><QualiopiRequestsPanel dossierId={id} /></div>
       </div>
     </div>
   );

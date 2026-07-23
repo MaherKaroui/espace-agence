@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
+import { useScrollToHash } from "@/hooks/use-scroll-to-hash";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,8 @@ export const Route = createFileRoute("/_authenticated/dossiers/$id")({
 function DossierDetail() {
   const { id } = Route.useParams();
   const { user } = useAuth();
+  useScrollToHash([id]);
+
   // Any agency staff (admin / direction / manager / consultant) sees the
   // management UI. RLS restricts non-admins to dossiers in their poles.
   const { isStaff: isAdmin } = useRole();
@@ -298,8 +301,8 @@ function DossierDetail() {
       {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
       {isAdmin && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <DossierExternalChat dossierId={dossier.id} />
-          <QualiopiRequestsPanel dossierId={dossier.id} />
+          <div id="audit-chat" className="scroll-mt-20"><DossierExternalChat dossierId={dossier.id} /></div>
+          <div id="qualiopi" className="scroll-mt-20"><QualiopiRequestsPanel dossierId={dossier.id} /></div>
         </div>
       )}
 
