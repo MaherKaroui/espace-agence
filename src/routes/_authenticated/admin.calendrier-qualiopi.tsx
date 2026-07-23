@@ -439,22 +439,34 @@ function CalendrierQualiopi() {
                   {filtered.length === 0 && (
                     <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">Aucun évènement ce mois-ci.</td></tr>
                   )}
-                  {filtered.map((e) => (
+                  {filtered.map((e) => {
+                    const col = effectiveColor(e);
+                    return (
                     <tr key={e.id} className="border-t">
-                      <td className="p-2 whitespace-nowrap">{e.audit_date}</td>
+                      <td className="p-2 whitespace-nowrap align-middle">
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-block h-3 w-3 rounded-full ${col ? COLOR_DOT[col] : "bg-transparent border border-border"}`} title={col ? COLOR_LABELS[col] : "Sans couleur"} />
+                          <span>{e.audit_date}</span>
+                        </div>
+                      </td>
                       <td className="p-2 whitespace-nowrap text-muted-foreground">{fmtJour(e.audit_date)}</td>
-                      <td className="p-2 font-medium">{e.organism_name}</td>
+                      <td className={`p-2 font-medium ${col ? `border-l-4 ${COLOR_DOT[col]} border-l-current` : ""}`}>{e.organism_name}</td>
                       <td className="p-2">{e.formation ?? "—"}</td>
                       <td className="p-2">{e.auditor_name ?? "—"}</td>
                       <td className="p-2">{e.certifier_name || e.certifier_organization || "—"}</td>
                       <td className="p-2">{e.certificate_status ?? "—"}</td>
-                      <td className="p-2"><Badge className={STATUS_COLORS[e.status]}>{STATUS_LABELS[e.status]}</Badge></td>
+                      <td className="p-2">
+                        <div className="flex flex-col gap-1">
+                          <Badge className={STATUS_COLORS[e.status]}>{STATUS_LABELS[e.status]}</Badge>
+                          {col && <Badge variant="outline" className={COLOR_CLASSES[col]}>{COLOR_LABELS[col]}</Badge>}
+                        </div>
+                      </td>
                       <td className="p-2 text-right whitespace-nowrap">
                         <Button variant="ghost" size="icon" onClick={() => setEditEvent(e)}><Pencil className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => { if (confirm("Supprimer cet évènement ?")) deleteEvent.mutate(e.id); }}><Trash2 className="h-4 w-4" /></Button>
                       </td>
                     </tr>
-                  ))}
+                  );})}
                 </tbody>
               </table>
             </Card>
