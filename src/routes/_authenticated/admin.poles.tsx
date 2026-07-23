@@ -347,7 +347,7 @@ function PoleCard({
   });
 
   const changeMemberRole = useMutation({
-    mutationFn: async ({ memberId, role }: { memberId: string; role: "manager" | "consultant" }) => {
+    mutationFn: async ({ memberId, role }: { memberId: string; role: PoleMemberRole }) => {
       const { error } = await supabase.from("pole_members").update({ role }).eq("id", memberId);
       if (error) throw error;
     },
