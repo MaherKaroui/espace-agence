@@ -158,10 +158,9 @@ export function QualiopiRequestsPanel({ dossierId }: { dossierId: string }) {
 }
 
 function NewRequestDialog({
-  dossierId, indicators, criteria, onDone,
+  dossierId, onDone,
 }: { dossierId: string; indicators: any[]; criteria: any[]; onDone: () => void }) {
   const [open, setOpen] = useState(false);
-  const [indicatorId, setIndicatorId] = useState<string>("");
   const [message, setMessage] = useState("");
   const [dueDate, setDueDate] = useState("");
   const createFn = useServerFn(createQualiopiRequest);
@@ -170,7 +169,7 @@ function NewRequestDialog({
     mutationFn: () => createFn({
       data: {
         dossierId,
-        indicatorId: Number(indicatorId),
+        indicatorId: 1,
         message,
         dueDate: dueDate || null,
       },
@@ -178,7 +177,6 @@ function NewRequestDialog({
     onSuccess: () => {
       toast.success("Demande créée");
       setOpen(false);
-      setIndicatorId("");
       setMessage("");
       setDueDate("");
       onDone();
@@ -193,34 +191,14 @@ function NewRequestDialog({
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nouvelle demande Qualiopi</DialogTitle>
-          <DialogDescription>Choisir un indicateur du RNQ et décrire la pièce attendue.</DialogDescription>
+          <DialogTitle>Nouvelle demande de pièce</DialogTitle>
+          <DialogDescription>Décrire précisément le fichier attendu.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Indicateur</Label>
-            <Select value={indicatorId} onValueChange={setIndicatorId}>
-              <SelectTrigger><SelectValue placeholder="Sélectionner un indicateur…" /></SelectTrigger>
-              <SelectContent className="max-h-80">
-                {criteria.map((c) => (
-                  <div key={c.id}>
-                    <div className="px-2 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-                      Critère {c.id} — {c.titre}
-                    </div>
-                    {indicators.filter((i) => i.criterion_id === c.id).map((i) => (
-                      <SelectItem key={i.id} value={String(i.id)}>
-                        Ind. {i.numero} — {i.libelle_court}
-                      </SelectItem>
-                    ))}
-                  </div>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Message / précisions</Label>
+            <Label>Fichier demandé</Label>
             <Textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)}
-              placeholder="Décrire la pièce justificative attendue…" />
+              placeholder="Ex : Attestation de formation du formateur Jean Dupont (PDF signé)…" />
           </div>
           <div>
             <Label>Échéance (optionnelle)</Label>
@@ -231,7 +209,7 @@ function NewRequestDialog({
           <Button variant="ghost" onClick={() => setOpen(false)}>Annuler</Button>
           <Button
             onClick={() => create.mutate()}
-            disabled={create.isPending || !indicatorId || message.trim().length < 3}
+            disabled={create.isPending || message.trim().length < 3}
           >
             {create.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Créer la demande
