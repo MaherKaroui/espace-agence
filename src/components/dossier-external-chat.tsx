@@ -13,7 +13,9 @@ import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { openDossierExternalConversation } from "@/lib/dossier-external-chat.functions";
+import { markExternalConversationRead } from "@/lib/qualiopi-notifications.functions";
 import { roleLabelFr } from "@/lib/role-labels";
+
 
 /**
  * Chat cloisonné d'un dossier avec les intervenants externes (auditeur / certificateur)
@@ -24,8 +26,10 @@ export function DossierExternalChat({ dossierId }: { dossierId: string }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const openFn = useServerFn(openDossierExternalConversation);
+  const markReadFn = useServerFn(markExternalConversationRead);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
   const [content, setContent] = useState("");
 
   const { data: conv, isLoading, error } = useQuery({
@@ -80,6 +84,15 @@ export function DossierExternalChat({ dossierId }: { dossierId: string }) {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
+
+  // Marquer comme lu au montage et à chaque nouveau message
+  useEffect(() => {
+    if (!conversationId) return;
+    markReadFn({ data: { dossierId } })
+      .then(() => qc.invalidateQueries({ queryKey: ["ext-unread-counts"] }))
+      .catch(() => {});
+  }, [conversationId, messages, markReadFn, dossierId, qc]);
+
 
   useEffect(() => {
     if (!conversationId) return;
