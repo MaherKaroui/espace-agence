@@ -111,6 +111,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/admin/dossiers", label: "Dossiers de mes pôles", icon: FolderOpen },
     { to: "/admin/clients", label: "Clients de mes pôles", icon: Users },
     { to: "/admin/taches-agence", label: "Tâches agence", icon: ListChecks },
+    { to: "/admin/calendrier-qualiopi", label: "Calendrier Qualiopi", icon: CalendarDays },
     { to: "/admin/messages", label: "Messagerie clients", icon: MessageSquare },
     { to: "/admin/internal-messages", label: "Messagerie interne", icon: Users2 },
     { to: "/messages/groupes", label: "Groupes", icon: Users2 },
@@ -119,7 +120,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const directionPilotage = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
     { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
-    { to: "/admin/calendrier-qualiopi", label: "Calendrier Qualiopi", icon: CalendarDays },
     { to: "/admin/sessions", label: "Temps de connexion", icon: TrendingUp },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
   ];
