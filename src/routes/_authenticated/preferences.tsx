@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { EVENT_CATEGORIES, type EventCategory } from "@/lib/notification-types";
 import { toast } from "sonner";
+import { WebPushToggle } from "@/components/web-push-toggle";
 
 export const Route = createFileRoute("/_authenticated/preferences")({
   head: () => ({ meta: [{ title: "Préférences de notifications" }] }),
@@ -58,6 +59,7 @@ function PreferencesPage() {
           Choisissez les événements pour lesquels vous souhaitez recevoir une notification pop-up.
         </p>
       </div>
+      <WebPushToggle />
 
       <Card className="divide-y">
         {visible.map((c) => {
