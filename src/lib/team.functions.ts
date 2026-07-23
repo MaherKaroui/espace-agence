@@ -52,7 +52,14 @@ export type PolePushTestResult = {
   notificationsCreated: number;
   recipientsWithPush: number;
   pushSubscriptionsCount: number;
+  pushIgnoredCount: number;
   rows: { notification_id: string; user_id: string; push_subscriptions_count: number }[];
+};
+
+export type MemberPushTestResult = {
+  ok: true;
+  notificationId: string;
+  pushSubscriptionsCount: number;
 };
 
 /** Liste tous les membres de l'équipe (staff) — Direction/Admin uniquement */
@@ -207,15 +214,20 @@ export const listNotificationRecipientHistory = createServerFn({ method: "GET" }
 export const testPushNotificationForMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }): Promise<MemberPushTestResult> => {
     const { supabase, userId } = context;
     await assertAdminOrDirection(supabase, userId);
 
-    const { data: notificationId, error } = await (supabase as any).rpc("test_push_notification_for_user", {
+    const { data: rows, error } = await (supabase as any).rpc("test_push_notification_for_user", {
       _user_id: data.userId,
     });
     if (error) throw new Error(error.message);
-    return { ok: true, notificationId };
+    const first = Array.isArray(rows) ? rows[0] : rows;
+    return {
+      ok: true,
+      notificationId: String(first?.notification_id ?? ""),
+      pushSubscriptionsCount: Number(first?.push_subscriptions_count ?? 0),
+    };
   });
 
 /** Crée une notification test pour chaque membre actif d'un pôle — la cloche est toujours créée, le push part si activé */
@@ -241,6 +253,7 @@ export const testPushNotificationForPole = createServerFn({ method: "POST" })
       notificationsCreated: normalizedRows.length,
       recipientsWithPush: normalizedRows.filter((row) => row.push_subscriptions_count > 0).length,
       pushSubscriptionsCount: normalizedRows.reduce((total, row) => total + row.push_subscriptions_count, 0),
+      pushIgnoredCount: normalizedRows.filter((row) => row.push_subscriptions_count === 0).length,
       rows: normalizedRows,
     };
   });

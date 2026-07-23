@@ -38,6 +38,14 @@ function asArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
 }
 
+function hex(bytes: Uint8Array): string {
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  return hex(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value))));
+}
+
 async function hmacSha256(keyBytes: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey("raw", asArrayBuffer(keyBytes), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return new Uint8Array(await crypto.subtle.sign("HMAC", key, asArrayBuffer(data)));
@@ -157,13 +165,20 @@ export const Route = createFileRoute("/api/public/hooks/push-fanout")({
             .eq("user_id", notification.user_id);
 
           if (!subs || subs.length === 0) {
-            return new Response(JSON.stringify({ ok: true, sent: 0 }), {
+            await (supabaseAdmin as any).from("push_delivery_logs").insert({
+              notification_id: notification.id,
+              user_id: notification.user_id,
+              status: "skipped",
+              error_message: "Aucun appareil Push activé pour ce destinataire",
+            });
+            return new Response(JSON.stringify({ ok: true, sent: 0, skipped: 1 }), {
               status: 200, headers: { "Content-Type": "application/json" },
             });
           }
 
           const jwtCache = new Map<string, string>();
           let sent = 0;
+          let failed = 0;
           let removed = 0;
 
           const notificationPayload = {
@@ -176,9 +191,23 @@ export const Route = createFileRoute("/api/public/hooks/push-fanout")({
           };
 
           await Promise.all(subs.map(async (sub: any) => {
+            let logId: string | null = null;
+            let endpointHost = "";
+            let endpointHash = "";
             try {
               const url = new URL(sub.endpoint);
               const origin = url.origin;
+              endpointHost = url.host;
+              endpointHash = await sha256Hex(sub.endpoint);
+              const { data: logRow } = await (supabaseAdmin as any).from("push_delivery_logs").insert({
+                notification_id: notification.id,
+                user_id: notification.user_id,
+                subscription_id: sub.id,
+                endpoint_host: endpointHost,
+                endpoint_hash: endpointHash,
+                status: "pending",
+              }).select("id").maybeSingle();
+              logId = logRow?.id ?? null;
               let jwt = jwtCache.get(origin);
               if (!jwt) {
                 jwt = await signVapidJwt(origin, VAPID_SUB, VAPID_PRIV, VAPID_PUB);
@@ -198,16 +227,61 @@ export const Route = createFileRoute("/api/public/hooks/push-fanout")({
               });
               if (res.status === 404 || res.status === 410) {
                 await supabaseAdmin.from("push_subscriptions").delete().eq("id", sub.id);
+                if (logId) {
+                  await (supabaseAdmin as any).from("push_delivery_logs").update({
+                    status: "failed",
+                    http_status: res.status,
+                    error_message: "Endpoint invalide supprimé",
+                    sent_at: new Date().toISOString(),
+                  }).eq("id", logId);
+                }
+                failed++;
                 removed++;
               } else if (res.status >= 200 && res.status < 300) {
+                if (logId) {
+                  await (supabaseAdmin as any).from("push_delivery_logs").update({
+                    status: "sent",
+                    http_status: res.status,
+                    sent_at: new Date().toISOString(),
+                  }).eq("id", logId);
+                }
                 sent++;
+              } else {
+                const errorText = await res.text().catch(() => "");
+                if (logId) {
+                  await (supabaseAdmin as any).from("push_delivery_logs").update({
+                    status: "failed",
+                    http_status: res.status,
+                    error_message: errorText.slice(0, 500) || `HTTP ${res.status}`,
+                    sent_at: new Date().toISOString(),
+                  }).eq("id", logId);
+                }
+                failed++;
               }
-            } catch {
-              // silent — do not break others
+            } catch (error: any) {
+              failed++;
+              const message = String(error?.message ?? error).slice(0, 500);
+              if (logId) {
+                await (supabaseAdmin as any).from("push_delivery_logs").update({
+                  status: "failed",
+                  error_message: message,
+                  sent_at: new Date().toISOString(),
+                }).eq("id", logId);
+              } else {
+                await (supabaseAdmin as any).from("push_delivery_logs").insert({
+                  notification_id: notification.id,
+                  user_id: notification.user_id,
+                  subscription_id: sub.id,
+                  endpoint_host: endpointHost || null,
+                  endpoint_hash: endpointHash || null,
+                  status: "failed",
+                  error_message: message,
+                });
+              }
             }
           }));
 
-          return new Response(JSON.stringify({ ok: true, sent, removed }), {
+          return new Response(JSON.stringify({ ok: true, sent, failed, removed }), {
             status: 200, headers: { "Content-Type": "application/json" },
           });
         } catch (e: any) {

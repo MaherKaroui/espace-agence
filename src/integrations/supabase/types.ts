@@ -1286,6 +1286,48 @@ export type Database = {
         }
         Relationships: []
       }
+      push_delivery_logs: {
+        Row: {
+          created_at: string
+          endpoint_hash: string | null
+          endpoint_host: string | null
+          error_message: string | null
+          http_status: number | null
+          id: string
+          notification_id: string
+          sent_at: string
+          status: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint_hash?: string | null
+          endpoint_host?: string | null
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          notification_id: string
+          sent_at?: string
+          status?: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          endpoint_hash?: string | null
+          endpoint_host?: string | null
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          notification_id?: string
+          sent_at?: string
+          status?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string
@@ -1829,6 +1871,14 @@ export type Database = {
         }
         Returns: number
       }
+      notify_team_document_reminder: {
+        Args: { _document_id: string; _reminder_type?: string }
+        Returns: number
+      }
+      notify_team_dossier_reminder: {
+        Args: { _dossier_id: string; _reminder_type?: string }
+        Returns: number
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -1903,7 +1953,11 @@ export type Database = {
       }
       test_push_notification_for_user: {
         Args: { _user_id: string }
-        Returns: string
+        Returns: {
+          notification_id: string
+          push_subscriptions_count: number
+          user_id: string
+        }[]
       }
       unarchive_client: { Args: { _user_id: string }; Returns: undefined }
     }

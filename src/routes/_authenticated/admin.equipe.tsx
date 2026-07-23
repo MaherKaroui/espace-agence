@@ -117,7 +117,7 @@ function AdminTeam() {
     },
     onSuccess: (result) => {
       toast.success(
-        `${result.notificationsCreated} notification${result.notificationsCreated > 1 ? "s" : ""} cloche créée${result.notificationsCreated > 1 ? "s" : ""} · ${result.recipientsWithPush} membre${result.recipientsWithPush > 1 ? "s" : ""} avec push`,
+        `${result.notificationsCreated} cloche${result.notificationsCreated > 1 ? "s" : ""} créée${result.notificationsCreated > 1 ? "s" : ""} · ${result.pushSubscriptionsCount} appareil${result.pushSubscriptionsCount > 1 ? "s" : ""} Push · ${result.pushIgnoredCount} membre${result.pushIgnoredCount > 1 ? "s" : ""} sans Push`,
       );
       invalidate();
     },
@@ -295,10 +295,10 @@ function MemberActions({ member, isAdmin, onDone }: { member: TeamMember; isAdmi
   });
   const testPushMut = useMutation({
     mutationFn: () => testPushFn({ data: { userId: member.id } }),
-    onSuccess: () => {
-      toast.success(member.browser_notifications_active
-        ? "Notification test envoyée à ce membre"
-        : "Notification cloche créée — push inactif pour ce membre");
+    onSuccess: (result) => {
+      toast.success(result.pushSubscriptionsCount > 0
+        ? `Cloche créée · ${result.pushSubscriptionsCount} appareil${result.pushSubscriptionsCount > 1 ? "s" : ""} Push ciblé${result.pushSubscriptionsCount > 1 ? "s" : ""}`
+        : "Cloche créée · aucun appareil Push activé pour ce membre");
       onDone();
     },
     onError: (e: any) => toast.error(e?.message ?? "Erreur"),
