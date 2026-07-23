@@ -450,7 +450,7 @@ function CalendrierQualiopi() {
                         </div>
                       </td>
                       <td className="p-2 whitespace-nowrap text-muted-foreground">{fmtJour(e.audit_date)}</td>
-                      <td className={`p-2 font-medium ${col ? `border-l-4 ${COLOR_DOT[col]} border-l-current` : ""}`}>{e.organism_name}</td>
+                      <td className="p-2 font-medium">{e.organism_name}</td>
                       <td className="p-2">{e.formation ?? "—"}</td>
                       <td className="p-2">{e.auditor_name ?? "—"}</td>
                       <td className="p-2">{e.certifier_name || e.certifier_organization || "—"}</td>
