@@ -1718,6 +1718,10 @@ export type Database = {
         Returns: boolean
       }
       close_stale_sessions: { Args: never; Returns: undefined }
+      create_auto_task_for_dossier: {
+        Args: { _dossier_id: string }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
