@@ -491,8 +491,10 @@ function KanbanView({ items, statsById, inconsistencyById, poleById, externalUnr
                 const inc = inconsistencyById[d.id];
                 const days = daysSince(d.updated_at);
                 const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
+                const unread = externalUnread[d.id] ?? 0;
                 return (
-                  <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}
+                  <Link key={d.id}
+                    to={`/dossiers/${d.id}${unread > 0 ? "#audit-chat" : ""}`}
                     className="block relative rounded-lg border hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden"
                     style={{
                       backgroundColor: `color-mix(in oklab, ${color} 5%, var(--card))`,
@@ -511,6 +513,11 @@ function KanbanView({ items, statsById, inconsistencyById, poleById, externalUnr
                         >
                           {pole?.nom ?? "Sans pôle"}
                         </span>
+                        {unread > 0 && (
+                          <Badge className="bg-primary text-primary-foreground text-[10px] py-0 h-5 gap-1">
+                            <MessageSquare className="h-2.5 w-2.5" /> {unread}
+                          </Badge>
+                        )}
                       </div>
                       <div className="font-medium text-sm line-clamp-2">{d.titre}</div>
                       <div className="text-xs text-muted-foreground truncate">
