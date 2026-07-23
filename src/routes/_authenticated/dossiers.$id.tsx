@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
-import { RelanceButton } from "@/components/relance-button";
+import { DossierSuiviRappels } from "@/components/dossier-suivi-rappels";
 
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
@@ -77,6 +77,16 @@ function DossierDetail() {
       const { data, error } = await supabase.from("taches").select("id,titre,statut,cote_client,verrouillee,updated_at").eq("dossier_id", id);
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const { data: clientProfile } = useQuery({
+    queryKey: ["dossier-client", (dossier as any)?.client_id],
+    enabled: !!(dossier as any)?.client_id,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles")
+        .select("email, prenom, nom").eq("id", (dossier as any).client_id).maybeSingle();
+      return data;
     },
   });
 
@@ -252,13 +262,6 @@ function DossierDetail() {
               <Send className="h-4 w-4 mr-1.5" /> Renvoyer email au client
             </Button>
           )}
-          {isAdmin && dossier.client_id && (
-            <RelanceButton
-              clientId={dossier.client_id}
-              dossierId={dossier.id}
-              dossierTitre={dossier.titre}
-            />
-          )}
           {isAdmin && !dossier.client_id && (
             <InviteClientToDossier dossierId={dossier.id} onDone={() => qc.invalidateQueries({ queryKey: ["dossier", id] })} />
           )}
@@ -274,6 +277,17 @@ function DossierDetail() {
           dossierStatut={dossier.statut}
         />
       )}
+
+      {/* Suivi & rappels — responsable / prochaine action / historique / relance */}
+      <DossierSuiviRappels
+        dossierId={dossier.id}
+        clientId={dossier.client_id}
+        clientEmail={clientProfile?.email}
+        dossierTitre={dossier.titre}
+        responsableId={(dossier as any).responsable_id}
+        prochaineAction={(dossier as any).prochaine_action}
+        lastRelanceAt={(dossier as any).last_relance_at}
+      />
 
 
 
