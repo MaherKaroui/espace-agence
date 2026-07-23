@@ -672,7 +672,7 @@ function ClientRequestWizard({
       </div>
       {categorie && organismeNom.trim() && (
         <p className="text-xs text-muted-foreground">
-          Titre généré : <span className="font-medium text-foreground">{buildDossierTitre(categorie, organismeNom)}</span>
+          Titre généré : <span className="font-medium text-foreground">{buildDossierTitre(categorie, organismeNom, juridiqueType)}</span>
         </p>
       )}
     </div>
