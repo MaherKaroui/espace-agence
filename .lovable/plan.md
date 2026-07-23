@@ -1,111 +1,71 @@
-# Évolution IZISuivis — Rôles Auditeur & Certificateur + Module Qualiopi
+# Lot D — Finalisation Qualiopi avant publication
 
-Vu l'ampleur, je propose de découper en 4 lots livrés dans l'ordre, sans casser l'existant. Je te confirme le lot A dans cette réponse et j'enchaîne B → C → D si tu me dis "go tout".
+Objectif : compléter les 6 points manquants sans casser la messagerie client existante ni les notifications déjà en place.
 
----
+## 1) Notifications Qualiopi temps réel
 
-## Lot A — Fondation : rôles + affectations + référentiel RNQ
+Migration SQL :
+- Ajouter au type `notification_type` les valeurs : `qualiopi_message`, `qualiopi_demande`, `qualiopi_document`, `qualiopi_validation`, `qualiopi_refus`, `qualiopi_echeance`, `qualiopi_retard`.
+- Fonction `qualiopi_dossier_recipients(_dossier uuid)` retournant tous les user_ids autorisés (staff du pôle + admins + direction + auditeurs/certificateurs affectés), utilisée par les triggers.
+- Trigger `AFTER INSERT` sur `qualiopi_requests` → notifie tous les destinataires sauf l'auteur (type `qualiopi_demande`).
+- Trigger `AFTER INSERT` sur `qualiopi_request_documents` → `qualiopi_document`.
+- Trigger `AFTER UPDATE OF statut` sur `qualiopi_requests` → `qualiopi_validation` ou `qualiopi_refus` (avec motif dans le message).
+- Trigger `AFTER INSERT` sur `internal_messages` pour conversations `type = 'external'` → `qualiopi_message` (link = `/audits/$id` pour externes, `/admin/dossiers/$id` pour staff, calculé côté fonction serveur qui pousse la notif — ou link générique `/dossiers/$id` accepté par les deux).
+- Chaque notification crée une ligne `notifications` (déjà branchée sur email + web push existants via triggers/queues actuelles).
 
-**Base de données (migration unique)**
-- Enum `app_role` : ajouter `auditeur`, `certificateur`.
-- Table `dossier_assignments(dossier_id, user_id, role, assigned_by, assigned_at, active)` — un auditeur/certif peut être affecté à N dossiers.
-- Table `qualiopi_criteria` (7 critères) + `qualiopi_indicators` (32 indicateurs, num + libellé court + critère). Seed complet du RNQ dans la migration.
-- Helpers SQL :
-  - `is_assigned_to_dossier(_user, _dossier)` SECURITY DEFINER
-  - `user_visible_dossiers(_user)` (retourne les dossiers visibles selon rôle : admin/direction=all, manager=poles, client=owned, auditeur/certif=via assignments)
-- RLS : étendre les policies `dossiers`, `messages`, `documents`, `agency_tasks` pour inclure `is_assigned_to_dossier(auth.uid(), dossier_id)`.
-- GRANTS conformes.
+Côté client :
+- Étendre `src/lib/notification-types.ts` avec les nouveaux types (icône `ShieldCheck` / `FileText` / `MessageSquare` / `CheckCircle2` / `XCircle` / `Clock`).
+- `NotificationsRealtime` prend déjà en charge automatiquement (préférences par catégorie).
 
-**UI Admin**
-- Page `/admin/equipe` : autoriser l'assignation des rôles auditeur/certificateur.
-- Fiche dossier : nouveau bloc "Intervenants externes" pour affecter/révoquer un auditeur ou un certificateur (staff uniquement).
+Journalisation : `push_delivery_logs` déjà utilisé par le fan-out existant, aucune modification requise.
 
----
+## 2) Lecture / non-lus conversations externes
 
-## Lot B — Espaces Auditeur & Certificateur + Chat sécurisé
+Réutiliser l'existant `internal_conversation_members.last_read_at` (déjà présent). Ajouter :
+- Server fn `markExternalConversationRead(dossierId)` → met à jour `last_read_at = now()`.
+- Server fn `getExternalUnreadCounts()` → map `dossierId → nb messages depuis last_read_at`.
+- Dans `DossierExternalChat` : appel `markExternalConversationRead` à l'ouverture et sur nouveau message reçu.
+- Dans `/audits` (index) : badge compteur par ligne de dossier.
+- Dans la fiche dossier admin (`dossiers.$id.tsx`) : badge total non-lus sur l'onglet/section "Canal d'audit".
 
-**Nouvelles routes** (layout `_authenticated`, gated par rôle) :
-- `/auditeur` — liste des dossiers affectés
-- `/auditeur/dossier/$id` — détail + chat + panneau Qualiopi
-- `/certificateur` — même principe
-- `/certificateur/dossier/$id` — détail avec historique complet lecture seule sur messages clients + chat propre
+## 3) Export rapport Qualiopi
 
-**Chat** : réutiliser `conversations` + `messages` existantes.
-- Ajouter colonne `conversations.kind` : `client` (existant, défaut) | `auditeur` | `certificateur`.
-- Une conversation `auditeur`/`certificateur` est liée à un `dossier_id` ; membres = staff pôle + user externe affecté. Cloisonné du chat client d'origine.
-- Réutiliser composants `chat-thread`, `rich-message-content`, avatars, ephemeral mode.
-- App-shell : afficher menu "Auditeur" / "Certificateur" selon le rôle exclusif ; masquer Pilotage/Organisation.
+Vue imprimable (route dédiée + bouton dans `QualiopiRequestsPanel`) :
+- Nouvelle route `src/routes/_authenticated/dossiers.$id.qualiopi-rapport.tsx` (lecture seule, mise en page A4, styles print).
+- Contenu : entête dossier, tableau des demandes par critère/indicateur, statuts, motifs de refus, historique événements, versions de documents (nom + version + date + auteur).
+- Bouton "Exporter (imprimer / PDF)" → `window.print()`.
+- Bouton "Exporter CSV" → génère un CSV côté client à partir des mêmes données.
 
----
+## 4) Relances automatiques
 
-## Lot C — Demandes de pièces Qualiopi
+- Colonne `due_date` déjà présente sur `qualiopi_requests`, ajouter `last_reminder_at timestamptz`.
+- Server function `sendQualiopiReminder(requestId)` : notifie les participants (via helper existant), garde-fou 24h, log dans `qualiopi_request_events` (action `reminder_sent`).
+- Bouton "Relancer" dans `QualiopiRequestsPanel` sur chaque demande `en_attente` ou en retard.
+- Job pg_cron quotidien (07:00 Europe/Paris) : détecte `due_date - now() < 2 days` (échéance proche) et `due_date < now()` (retard) sur statut `en_attente`, appelle `sendQualiopiReminder` en respectant l'anti-spam.
 
-**BDD**
-- `qualiopi_document_requests(id, dossier_id, requested_by, role, message, priority, due_date, status, created_at, updated_at)` — statuts : `en_attente`, `deposee`, `validee`, `refusee`, avec `refusal_reason` obligatoire si refusée (trigger).
-- `qualiopi_document_request_indicators(request_id, indicator_id)` — N-N.
-- `qualiopi_document_submissions(id, request_id, submitted_by, file_path, file_name, file_size, sha256, mime, antivirus_status default 'pending', version, created_at)` — version auto-incrémentée par request.
-- Trigger notifications sur INSERT/UPDATE de request et submission → réutilise le hub `notifications` + push existant + email (nouveau template `qualiopi_*`).
-- RLS : lecture/écriture limitée aux acteurs affectés au dossier.
+## 5) Filtres & tri liste Audits
 
-**UI**
-- Panneau latéral "Demandes Qualiopi" dans la fiche dossier (visible staff + auditeur/certif affecté + client OF).
-- Vue par critère → indicateurs → demandes/documents ; filtres statut / échéance / indicateur.
-- Formulaire nouvelle demande : sélection indicateurs (chips), message, échéance, priorité.
-- Détail demande : versions, historique statuts, boutons Valider / Refuser (motif obligatoire), Déposer nouvelle version (côté staff/client).
-- Badges : En attente / Déposée / Validée / Refusée / En retard (calculé à partir de `due_date`).
+Dans `src/routes/_authenticated/audits.index.tsx` :
+- Barre de filtres : statut dossier, client (organisme_nom), rôle (auditeur/certificateur), retard (dossiers avec ≥1 demande en retard).
+- Tri : plus récent, échéance la plus proche, retard en premier.
+- État conservé en `useState` local + query params.
 
----
+## 6) Vérification finale
 
-## Lot D — Upload gros fichiers + Audit trail + Notifs
-
-**Storage**
-- Bucket privé `qualiopi-documents` (créé via `supabase--storage_create_bucket`).
-- Upload direct Supabase Storage via `upload({upsert:false})` avec `onUploadProgress` (barre de progression). Limite UI 500 Mo, formats whitelistés (PDF/DOCX/XLSX/JPG/PNG/ZIP/MP4). Note UI : la reprise multipart réelle dépend du backend Storage ; on branche `resumable` si dispo, sinon fallback classique avec message clair.
-- Hash sha256 calculé côté client avant upload (Web Crypto).
-- Téléchargement via `createSignedUrl` (5 min), bloqué si `antivirus_status = 'infected'`.
-- Colonne `antivirus_status` prête + hook `scan_document` (stub `pending → clean` par défaut, extensible).
-
-**Audit trail**
-- Table `audit_trail(id, actor_id, actor_role, dossier_id, conversation_id, indicator_id, entity_type, entity_id, action, old_value, new_value, ip, user_agent, created_at)` — rétention 3 ans (colonne `retention_until`).
-- Triggers sur `qualiopi_document_requests`, `qualiopi_document_submissions`, `messages` (kind ≠ client), `dossier_assignments`.
-- Vue admin `/admin/audit-qualiopi` avec filtres dossier / acteur / indicateur / période.
-
-**Notifications**
-- Étendre `notification_type` : `qualiopi_request_created`, `qualiopi_submission`, `qualiopi_validated`, `qualiopi_refused`, `qualiopi_due_soon`, `qualiopi_overdue`.
-- Fan-out réutilise `team_notification_recipients_for_pole` + destinataires externes affectés au dossier.
-- Cron `pg_cron` quotidien : détection échéances J-2 et retards → notifs + emails.
-- Templates emails dans `src/lib/email-templates/qualiopi-*.ts`.
-
----
-
-## Matrice de droits appliquée (rappel)
-
-| Rôle | Voir dossiers | Chat client | Chat auditeur | Chat certif | Demandes Qualiopi |
-|---|---|---|---|---|---|
-| admin / direction | tous | oui | oui | oui | tout |
-| manager / consultant | pôles | oui | oui (si pôle) | oui (si pôle) | tout du pôle |
-| client / OF | siens | oui | non | non | ses demandes (dépose) |
-| auditeur | affectés | non | oui | non | ses demandes |
-| certificateur | affectés | lecture historique | non | oui | ses demandes + suivi |
-
----
+- `tsgo` sur les fichiers modifiés.
+- Vérifier les policies RLS existantes (aucun `TO anon` ajouté).
+- Rapide fumigation preview : ouvrir `/audits`, `/audits/$id`, `/admin/dossiers/$id`, s'assurer que la messagerie client `/admin/messages` reste intacte.
 
 ## Détails techniques
 
-- Server fns dans `src/lib/qualiopi/*.functions.ts` (list/create/update requests, submissions, assignments).
-- `requireSupabaseAuth` + vérif rôle via `has_role` + `is_assigned_to_dossier` côté handler.
-- Route uploads volumineux : server route `src/routes/api/qualiopi/upload.ts` pour initier/valider (hash + sha256 sur le serveur pour audit) ; l'upload binaire va directement à Supabase Storage (évite les 10 Mo de la Worker Cloudflare).
-- Aucune modification des routes/tables existantes de messagerie client — seul l'ajout du champ `kind` (défaut `client`) est neutre.
-- Seed indicateurs Qualiopi complet (32 lignes) dans la migration du Lot A.
+- Migrations dans un seul appel `supabase--migration` (types enum + fonction destinataires + 4 triggers + colonne `last_reminder_at` + cron).
+- Aucune modification aux fichiers auto-générés (`client.ts`, `types.ts` sera régénéré après la migration).
+- Nouveaux fichiers :
+  - `src/lib/qualiopi-notifications.functions.ts` (mark read, unread counts, send reminder).
+  - `src/routes/_authenticated/dossiers.$id.qualiopi-rapport.tsx`.
+- Fichiers modifiés :
+  - `src/lib/notification-types.ts`, `src/components/qualiopi-requests-panel.tsx`, `src/components/dossier-external-chat.tsx`, `src/routes/_authenticated/audits.index.tsx`, `src/routes/_authenticated/audits.$id.tsx`, `src/routes/_authenticated/dossiers.$id.tsx`.
 
----
+## Livraison
 
-## Vérifications après chaque lot
-- Lot A : linter Supabase clean, RLS testée par rôle en `read_query`.
-- Lot B : login auditeur factice → ne voit qu'un dossier ; chat fonctionne.
-- Lot C : cycle en_attente → déposée → validée + refus avec motif obligatoire.
-- Lot D : upload 100 Mo, signed URL, entrée audit_trail, email + push reçus.
-
----
-
-**Confirme-moi "go A" (ou "go tout") et je démarre par la migration du Lot A.**
+Après approbation : je lance la migration, code les fichiers en parallèle, puis vérifie TypeScript et preview.
