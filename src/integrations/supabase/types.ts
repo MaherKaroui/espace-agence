@@ -1872,6 +1872,18 @@ export type Database = {
         Args: { _client_id: string; _staff_id: string }
         Returns: boolean
       }
+      team_notification_recipients_for_client: {
+        Args: { _client_id: string; _exclude_user_id?: string }
+        Returns: {
+          user_id: string
+        }[]
+      }
+      team_notification_recipients_for_pole: {
+        Args: { _exclude_user_id?: string; _pole_id: string }
+        Returns: {
+          user_id: string
+        }[]
+      }
       unarchive_client: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
