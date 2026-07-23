@@ -27,6 +27,8 @@ import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { DossierSuiviRappels } from "@/components/dossier-suivi-rappels";
 import { DossierLinkedTask } from "@/components/dossier-linked-task";
 import { DossierExternalIntervenants } from "@/components/dossier-external-intervenants";
+import { DossierExternalChat } from "@/components/dossier-external-chat";
+import { QualiopiRequestsPanel } from "@/components/qualiopi-requests-panel";
 
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
@@ -294,6 +296,12 @@ function DossierDetail() {
 
       {isAdmin && <DossierLinkedTask dossierId={dossier.id} />}
       {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
+      {isAdmin && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <DossierExternalChat dossierId={dossier.id} />
+          <QualiopiRequestsPanel dossierId={dossier.id} />
+        </div>
+      )}
 
 
 
