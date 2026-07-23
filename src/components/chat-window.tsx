@@ -20,6 +20,7 @@ import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
 import { MentionTextarea } from "@/components/mention-textarea";
 import { RichMessageContent } from "@/components/rich-message-content";
 import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
+import { notifyEmail } from "@/lib/email/notify";
 
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
@@ -129,11 +130,31 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
       const { error } = await supabase.from("messages").insert({
         client_id: clientId,
         sender_id: user!.id,
-        from_agence: isAdmin,
+        from_agence: isStaff,
         content: content || null,
         attachment_path, attachment_name, attachment_mime,
       });
       if (error) throw error;
+      // Email au client si c'est l'agence qui écrit (fire-and-forget, anti-spam par idempotency 10min)
+      if (isStaff) {
+        try {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("email, prenom")
+            .eq("id", clientId)
+            .maybeSingle();
+          if (prof?.email) {
+            const extrait = (content || "").trim().slice(0, 140);
+            const bucket = Math.floor(Date.now() / (10 * 60 * 1000));
+            notifyEmail({
+              templateName: "client-nouveau-message",
+              recipientEmail: prof.email,
+              idempotencyKey: `client-msg-${clientId}-${bucket}`,
+              templateData: { prenom: prof.prenom || "", extrait: extrait || undefined },
+            });
+          }
+        } catch { /* silencieux */ }
+      }
     },
     onSuccess: () => { setText(""); qc.invalidateQueries({ queryKey: ["messages", clientId] }); },
     onError: (e: any) => toast.error(e.message),

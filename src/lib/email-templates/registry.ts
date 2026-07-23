@@ -11,6 +11,7 @@ import { template as clientDocumentRefuse } from './client-document-refuse'
 import { template as clientDossierTermine } from './client-dossier-termine'
 import { template as clientDossierAttente } from './client-dossier-attente'
 import { template as relanceClient } from './relance-client'
+import { template as clientNouveauMessage } from './client-nouveau-message'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -34,4 +35,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'client-dossier-termine': clientDossierTermine,
   'client-dossier-attente': clientDossierAttente,
   'relance-client': relanceClient,
+  'client-nouveau-message': clientNouveauMessage,
 }
