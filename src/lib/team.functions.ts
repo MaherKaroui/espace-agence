@@ -196,6 +196,21 @@ export const listNotificationRecipientHistory = createServerFn({ method: "GET" }
     });
   });
 
+/** Crée une notification de test pour un membre — déclenche aussi le fan-out push si son navigateur est activé */
+export const testPushNotificationForMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ userId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdminOrDirection(supabase, userId);
+
+    const { data: notificationId, error } = await (supabase as any).rpc("test_push_notification_for_user", {
+      _user_id: data.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, notificationId };
+  });
+
 /** Inviter un membre de l'équipe */
 export const inviteTeamMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
