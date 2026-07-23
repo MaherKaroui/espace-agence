@@ -31,6 +31,8 @@ export type TeamMember = {
   poles: { id: string; nom: string; code: string; role: string }[];
   last_activity: string | null;
   active_sessions: number;
+  push_subscriptions_count: number;
+  browser_notifications_active: boolean;
 };
 
 /** Liste tous les membres de l'équipe (staff) — Direction/Admin uniquement */
@@ -106,6 +108,18 @@ export const listTeam = createServerFn({ method: "GET" })
       }
     }
 
+    // 5) Notifications navigateur : au moins un abonnement actif par utilisateur
+    const { data: pushSubs, error: pushErr } = await supabaseAdmin
+      .from("push_subscriptions")
+      .select("user_id")
+      .in("user_id", staffIds);
+    if (pushErr) throw new Error(pushErr.message);
+
+    const pushByUser = new Map<string, number>();
+    for (const sub of pushSubs ?? []) {
+      pushByUser.set(sub.user_id, (pushByUser.get(sub.user_id) ?? 0) + 1);
+    }
+
     return (profiles ?? []).map((p) => ({
       id: p.id,
       email: p.email,
@@ -120,6 +134,8 @@ export const listTeam = createServerFn({ method: "GET" })
       poles: polesByUser.get(p.id) ?? [],
       last_activity: lastByUser.get(p.id) ?? null,
       active_sessions: activeByUser.get(p.id) ?? 0,
+      push_subscriptions_count: pushByUser.get(p.id) ?? 0,
+      browser_notifications_active: (pushByUser.get(p.id) ?? 0) > 0,
     }));
   });
 
