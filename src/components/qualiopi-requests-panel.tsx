@@ -318,6 +318,16 @@ function RequestCard({
     }
   };
 
+  const preview = async (docId: string) => {
+    try {
+      const { url } = await urlFn({ data: { documentId: docId } });
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (!w) toast.error("Autorisez les popups pour prévisualiser");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur");
+    }
+  };
+
   const canDelete = user?.id === request.requested_by; // admin/direction handled server-side too
 
   return (
