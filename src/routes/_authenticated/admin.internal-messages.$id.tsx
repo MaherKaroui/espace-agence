@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
 import { MentionTextarea } from "@/components/mention-textarea";
+import { playNotifSound } from "@/lib/notif-sound";
 import { RichMessageContent } from "@/components/rich-message-content";
 import { extractMentions } from "@/lib/mentions";
 import { ConversationSummaryButton } from "@/components/conversation-summary-button";
