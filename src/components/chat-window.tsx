@@ -22,6 +22,7 @@ import { RichMessageContent } from "@/components/rich-message-content";
 import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
 import { notifyEmail } from "@/lib/email/notify";
 import { notifyTeamClientMessage } from "@/lib/email/notify-team";
+import { playNotifSound } from "@/lib/notif-sound";
 
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
