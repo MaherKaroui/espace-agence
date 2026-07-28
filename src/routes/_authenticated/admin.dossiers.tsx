@@ -190,6 +190,8 @@ function AdminDossiers() {
   }, [rows, statsById]);
 
   const filtered = (rows as any[]).filter((r: any) => {
+    const isArchived = !!r.archived_at;
+    if (showArchived ? !isArchived : isArchived) return false;
     if (cat !== "all" && r.categorie !== cat) return false;
     if (poleFilter !== "all" && r.pole_id !== poleFilter) return false;
     if (reviewOnly && !statsById[r.id]?.needsAction) return false;
@@ -205,6 +207,8 @@ function AdminDossiers() {
     const txt = `${r.titre} ${r.profiles?.email ?? ""} ${r.profiles?.nom ?? ""} ${r.profiles?.prenom ?? ""}`.toLowerCase();
     return txt.includes(q.toLowerCase());
   });
+
+  const archivedCount = (rows as any[]).filter((r: any) => !!r.archived_at).length;
 
   const groups: { pole: any; items: any[] }[] = poles.map((p) => ({
     pole: p, items: filtered.filter((d: any) => d.pole_id === p.id),
