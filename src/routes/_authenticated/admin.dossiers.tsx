@@ -324,6 +324,18 @@ function AdminDossiers() {
           <ClipboardCheck className="h-4 w-4" />
           {reviewOnly ? "À revoir uniquement" : "À revoir"}
         </button>
+        <button
+          type="button"
+          onClick={() => setShowArchived((v) => !v)}
+          className={cn("h-10 px-3 rounded-md border text-sm inline-flex items-center gap-2 transition-colors",
+            showArchived ? "bg-primary text-primary-foreground border-primary"
+                         : "bg-background border-input hover:bg-muted/50")}
+          aria-pressed={showArchived}
+          title="Les dossiers terminés sont archivés automatiquement"
+        >
+          <FolderOpen className="h-4 w-4" />
+          {showArchived ? "Archives" : `Archives${archivedCount > 0 ? ` (${archivedCount})` : ""}`}
+        </button>
       </div>
 
       {dossiersError ? (
