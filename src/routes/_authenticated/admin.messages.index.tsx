@@ -38,6 +38,24 @@ function AdminMessages() {
   const { user } = useAuth();
   const [q, setQ] = useState("");
   const [onlyUnread, setOnlyUnread] = useState(false);
+  const [muted, setMuted] = useState(false);
+  useEffect(() => { setMuted(isNotifSoundMuted()); }, []);
+
+  // Bip global quand un message entrant arrive (côté client -> agence)
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel(`admin-threads-notif-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload: any) => {
+        const row = payload.new;
+        if (row && row.from_agence === false && row.sender_id !== user.id) {
+          playNotifSound();
+          qc.invalidateQueries({ queryKey: ["admin-threads"] });
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user, qc]);
 
   const { data: threads = [] } = useQuery({
     queryKey: ["admin-threads"],
