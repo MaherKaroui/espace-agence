@@ -120,14 +120,31 @@ function AdminMessages() {
             {totalUnread > 0 && <> · <span className="text-primary font-medium">{totalUnread} non lu{totalUnread > 1 ? "s" : ""}</span></>}
           </p>
         </div>
-        <Button
-          variant={onlyUnread ? "default" : "outline"}
-          size="sm"
-          onClick={() => setOnlyUnread((v) => !v)}
-          className="gap-2"
-        >
-          Non lus {totalUnread > 0 && <Badge variant="secondary" className="ml-1">{totalUnread}</Badge>}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const next = !muted;
+              setNotifSoundMuted(next);
+              setMuted(next);
+              if (!next) playNotifSound();
+            }}
+            className="gap-2"
+            title={muted ? "Activer le son de notification" : "Couper le son de notification"}
+          >
+            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            {muted ? "Son coupé" : "Son actif"}
+          </Button>
+          <Button
+            variant={onlyUnread ? "default" : "outline"}
+            size="sm"
+            onClick={() => setOnlyUnread((v) => !v)}
+            className="gap-2"
+          >
+            Non lus {totalUnread > 0 && <Badge variant="secondary" className="ml-1">{totalUnread}</Badge>}
+          </Button>
+        </div>
       </div>
 
       <div className="relative max-w-md">
