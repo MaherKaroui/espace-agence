@@ -542,6 +542,8 @@ export type Database = {
       }
       dossiers: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           avancement: number
           categorie: Database["public"]["Enums"]["dossier_categorie"]
           client_id: string
@@ -570,6 +572,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           avancement?: number
           categorie: Database["public"]["Enums"]["dossier_categorie"]
           client_id: string
@@ -598,6 +602,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           avancement?: number
           categorie?: Database["public"]["Enums"]["dossier_categorie"]
           client_id?: string
