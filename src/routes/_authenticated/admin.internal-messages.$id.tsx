@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
 import { MentionTextarea } from "@/components/mention-textarea";
+import { playNotifSound } from "@/lib/notif-sound";
 import { RichMessageContent } from "@/components/rich-message-content";
 import { extractMentions } from "@/lib/mentions";
 import { ConversationSummaryButton } from "@/components/conversation-summary-button";
@@ -136,7 +137,10 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "internal_messages", filter: `conversation_id=eq.${id}` },
-        () => {
+        (payload: any) => {
+          if (payload.new?.sender_id && payload.new.sender_id !== userId) {
+            playNotifSound();
+          }
           qc.invalidateQueries({ queryKey: ["internal-messages", id] });
           qc.invalidateQueries({ queryKey: ["internal-conversations-full"] });
         },
@@ -145,7 +149,7 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [id, qc]);
+  }, [id, qc, userId]);
 
   const send = useMutation({
     mutationFn: async (payload: { content?: string; file?: File | null }) => {

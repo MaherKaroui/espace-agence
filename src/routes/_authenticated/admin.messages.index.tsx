@@ -1,12 +1,12 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Trash2, User } from "lucide-react";
+import { Search, Trash2, User, Volume2, VolumeX } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePresence, PresenceAvatar, PresenceLabel } from "@/components/presence-indicator";
@@ -18,6 +18,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { isNotifSoundMuted, setNotifSoundMuted, playNotifSound } from "@/lib/notif-sound";
 
 export const Route = createFileRoute("/_authenticated/admin/messages/")({
   head: () => ({ meta: [{ title: "Messagerie clients" }] }),
@@ -37,6 +38,24 @@ function AdminMessages() {
   const { user } = useAuth();
   const [q, setQ] = useState("");
   const [onlyUnread, setOnlyUnread] = useState(false);
+  const [muted, setMuted] = useState(false);
+  useEffect(() => { setMuted(isNotifSoundMuted()); }, []);
+
+  // Bip global quand un message entrant arrive (côté client -> agence)
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel(`admin-threads-notif-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload: any) => {
+        const row = payload.new;
+        if (row && row.from_agence === false && row.sender_id !== user.id) {
+          playNotifSound();
+          qc.invalidateQueries({ queryKey: ["admin-threads"] });
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user, qc]);
 
   const { data: threads = [] } = useQuery({
     queryKey: ["admin-threads"],
@@ -101,14 +120,31 @@ function AdminMessages() {
             {totalUnread > 0 && <> · <span className="text-primary font-medium">{totalUnread} non lu{totalUnread > 1 ? "s" : ""}</span></>}
           </p>
         </div>
-        <Button
-          variant={onlyUnread ? "default" : "outline"}
-          size="sm"
-          onClick={() => setOnlyUnread((v) => !v)}
-          className="gap-2"
-        >
-          Non lus {totalUnread > 0 && <Badge variant="secondary" className="ml-1">{totalUnread}</Badge>}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const next = !muted;
+              setNotifSoundMuted(next);
+              setMuted(next);
+              if (!next) playNotifSound();
+            }}
+            className="gap-2"
+            title={muted ? "Activer le son de notification" : "Couper le son de notification"}
+          >
+            {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            {muted ? "Son coupé" : "Son actif"}
+          </Button>
+          <Button
+            variant={onlyUnread ? "default" : "outline"}
+            size="sm"
+            onClick={() => setOnlyUnread((v) => !v)}
+            className="gap-2"
+          >
+            Non lus {totalUnread > 0 && <Badge variant="secondary" className="ml-1">{totalUnread}</Badge>}
+          </Button>
+        </div>
       </div>
 
       <div className="relative max-w-md">

@@ -22,6 +22,7 @@ import { RichMessageContent } from "@/components/rich-message-content";
 import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
 import { notifyEmail } from "@/lib/email/notify";
 import { notifyTeamClientMessage } from "@/lib/email/notify-team";
+import { playNotifSound } from "@/lib/notif-sound";
 
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
@@ -79,7 +80,12 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
       .channel(`chat-${clientId}`, { config: { broadcast: { self: false } } })
       .on("postgres_changes",
         { event: "*", schema: "public", table: "messages", filter: `client_id=eq.${clientId}` },
-        () => qc.invalidateQueries({ queryKey: ["messages", clientId] }))
+        (payload: any) => {
+          if (payload.eventType === "INSERT" && payload.new?.sender_id && payload.new.sender_id !== user.id) {
+            playNotifSound();
+          }
+          qc.invalidateQueries({ queryKey: ["messages", clientId] });
+        })
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         if (payload.userId !== user.id) {
           setOtherTyping(true);
