@@ -80,7 +80,12 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
       .channel(`chat-${clientId}`, { config: { broadcast: { self: false } } })
       .on("postgres_changes",
         { event: "*", schema: "public", table: "messages", filter: `client_id=eq.${clientId}` },
-        () => qc.invalidateQueries({ queryKey: ["messages", clientId] }))
+        (payload: any) => {
+          if (payload.eventType === "INSERT" && payload.new?.sender_id && payload.new.sender_id !== user.id) {
+            playNotifSound();
+          }
+          qc.invalidateQueries({ queryKey: ["messages", clientId] });
+        })
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         if (payload.userId !== user.id) {
           setOtherTyping(true);
