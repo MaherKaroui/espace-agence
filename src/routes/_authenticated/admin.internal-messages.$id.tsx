@@ -137,7 +137,10 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "internal_messages", filter: `conversation_id=eq.${id}` },
-        () => {
+        (payload: any) => {
+          if (payload.new?.sender_id && payload.new.sender_id !== userId) {
+            playNotifSound();
+          }
           qc.invalidateQueries({ queryKey: ["internal-messages", id] });
           qc.invalidateQueries({ queryKey: ["internal-conversations-full"] });
         },
