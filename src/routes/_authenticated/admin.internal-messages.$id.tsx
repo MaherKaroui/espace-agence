@@ -149,7 +149,7 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [id, qc]);
+  }, [id, qc, userId]);
 
   const send = useMutation({
     mutationFn: async (payload: { content?: string; file?: File | null }) => {
