@@ -171,7 +171,7 @@ export function DossierExternalChat({ dossierId }: { dossierId: string }) {
   }
 
   return (
-    <Card className="flex flex-col h-[calc(100vh-16rem)] min-h-[420px] overflow-hidden">
+    <Card className="flex flex-col h-[70dvh] lg:h-[calc(100vh-16rem)] min-h-[380px] overflow-hidden">
       <div className="border-b px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">

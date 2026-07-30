@@ -282,7 +282,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   }, [messages, search]);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] sm:h-[calc(100vh-8rem)]">
+    <div className="flex flex-col h-chat min-w-0">
       <Card className="flex flex-col flex-1 overflow-hidden rounded-none sm:rounded-xl border-x-0 sm:border-x">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-3 sm:p-4 border-b sm:flex sm:justify-between">
           <div className="min-w-0">

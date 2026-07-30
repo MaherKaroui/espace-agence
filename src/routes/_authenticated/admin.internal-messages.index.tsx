@@ -174,7 +174,7 @@ export function InternalConversationsSidebar({ activeId }: { activeId: string | 
   const totalUnread = convs.filter((c: any) => c.unread).length;
 
   return (
-    <Card className="flex flex-col overflow-hidden max-h-[calc(100vh-8rem)]">
+    <Card className="flex flex-col overflow-hidden max-h-[70dvh] lg:max-h-[calc(100vh-8rem)]">
       <div className="p-3 border-b space-y-2">
         <div className="flex items-center justify-between gap-2">
           <div>
