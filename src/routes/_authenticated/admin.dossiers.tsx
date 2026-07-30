@@ -262,32 +262,6 @@ function AdminDossiers() {
         </div>
       </div>
 
-      {inconsistencies.length > 0 && (
-        <Card className="p-4 border-destructive/30 bg-destructive/5">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-            <div className="flex-1 space-y-2">
-              <div className="font-medium text-sm">Alertes qualité ({inconsistencies.length})</div>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                {doneIncompleteCount > 0 && (
-                  <li>
-                    <button className="text-destructive hover:underline" onClick={() => setQuality("done_incomplete")}>
-                      {doneIncompleteCount} dossier{doneIncompleteCount > 1 ? "s" : ""} marqué{doneIncompleteCount > 1 ? "s" : ""} terminé{doneIncompleteCount > 1 ? "s" : ""} avec pièces non validées
-                    </button>
-                  </li>
-                )}
-                {zeroValidatedCount > 0 && (
-                  <li>
-                    <button className="text-destructive hover:underline" onClick={() => setQuality("zero_but_validated")}>
-                      {zeroValidatedCount} dossier{zeroValidatedCount > 1 ? "s" : ""} à 0% mais avec documents validés
-                    </button>
-                  </li>
-                )}
-              </ul>
-            </div>
-          </div>
-        </Card>
-      )}
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-64">
