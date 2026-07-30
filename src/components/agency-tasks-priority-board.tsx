@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, AlertTriangle, Bot } from "lucide-react";
+import { Plus, AlertTriangle, Bot, FolderOpen, FileSearch } from "lucide-react";
+import { computeDossierHealth, TONE_STYLES } from "@/lib/dossier-health";
 import { Link } from "@tanstack/react-router";
 import {
   PriorityBadge, StatusBadge, OriginBadge, isOverdue, daysLate, sortByUrgency,
