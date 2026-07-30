@@ -2,7 +2,7 @@ import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import * as XLSX from "xlsx";
+import { parseQualiopiWorkbook, normalizeKey } from "@/lib/qualiopi-xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useRole } from "@/hooks/use-role";
 import { useAuth } from "@/hooks/use-auth";
@@ -147,7 +147,7 @@ function CalendrierQualiopi() {
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [editEvent, setEditEvent] = useState<Partial<CalEvent> | null>(null);
   const [editPending, setEditPending] = useState<Partial<Pending> | null>(null);
-  const [importPreview, setImportPreview] = useState<{ events: Partial<CalEvent>[]; pendings: Partial<Pending>[] } | null>(null);
+  const [importPreview, setImportPreview] = useState<{ newEvents: any[]; updEvents: any[]; newPendings: any[]; updPendings: any[] } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const monthStart = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth(), 1), [cursor]);
@@ -282,64 +282,58 @@ function CalendrierQualiopi() {
   const importXlsx = async (file: File) => {
     try {
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
-      const events: Partial<CalEvent>[] = [];
-      const pendings: Partial<Pending>[] = [];
-      const normalize = (s: string) => (s ?? "").toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      for (const sheetName of wb.SheetNames) {
-        const sheet = wb.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { defval: "", raw: false });
-        if (rows.length === 0) continue;
-        const norm = normalize(sheetName);
-        if (norm.includes("demande") || norm.includes("en cours")) {
-          for (const r of rows) {
-            const keys = Object.keys(r).reduce<Record<string, string>>((a, k) => { a[normalize(k)] = k; return a; }, {});
-            const org = r[keys["organisme de formation"] ?? keys["organisme"] ?? "Organisme"] ?? "";
-            if (!org) continue;
-            const cert = r[keys["certificateur"] ?? "Certificateur"] ?? "";
-            const obs = r[keys["observation"] ?? keys["observations"] ?? "Observation"] ?? "";
-            pendings.push({
-              organism_name: String(org),
-              certifier: String(cert || "") || null,
-              observation: String(obs || "") || null,
-              followup_status: "autre",
-            });
-          }
-        } else {
-          // Monthly sheet
-          for (const r of rows) {
-            const keys = Object.keys(r).reduce<Record<string, string>>((a, k) => { a[normalize(k)] = k; return a; }, {});
-            const rawDate = r[keys["date"] ?? "Date"];
-            if (!rawDate) continue;
-            let iso = "";
-            if (rawDate instanceof Date) iso = rawDate.toISOString().slice(0, 10);
-            else {
-              const s = String(rawDate).trim();
-              const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
-              if (m) {
-                const y = m[3].length === 2 ? `20${m[3]}` : m[3];
-                iso = `${y}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
-              } else {
-                const parsed = new Date(s);
-                if (!isNaN(parsed.getTime())) iso = parsed.toISOString().slice(0, 10);
-              }
-            }
-            if (!iso) continue;
-            const org = r[keys["organisme de formation"] ?? keys["organisme"] ?? "Organisme"] ?? "";
-            if (!org) continue;
-            events.push({
-              audit_date: iso,
-              organism_name: String(org),
-              formation: String(r[keys["formation"] ?? "Formation"] ?? "") || null,
-              auditor_name: String(r[keys["nom de l'auditeur"] ?? keys["auditeur"] ?? "Auditeur"] ?? "") || null,
-              certifier_name: String(r[keys["certificateur"] ?? "Certificateur"] ?? "") || null,
-              certificate_status: String(r[keys["certificat"] ?? "Certificat"] ?? "") || null,
-              status: "planifie",
-            });
-          }
-        }
+      const { events: parsedEvents, pendings: parsedPendings } = parseQualiopiWorkbook(buf);
+      if (parsedEvents.length === 0 && parsedPendings.length === 0) {
+        toast.error("Aucune ligne exploitable dans ce fichier");
+        return;
       }
-      setImportPreview({ events, pendings });
+
+      // Existing data (all months) to merge updates instead of duplicating
+      const [{ data: exEvents, error: e1 }, { data: exPendings, error: e2 }] = await Promise.all([
+        supabase.from("qualiopi_calendar_events" as any).select("id, audit_date, organism_name, formation, auditor_name, certifier_name, certificate_status"),
+        supabase.from("qualiopi_pending_requests" as any).select("id, organism_name, certifier, observation, followup_status"),
+      ]);
+      if (e1) throw e1;
+      if (e2) throw e2;
+
+      const evIndex = new Map<string, any>();
+      ((exEvents ?? []) as any[]).forEach((e) => evIndex.set(`${e.audit_date}|${normalizeKey(e.organism_name)}`, e));
+      const pdIndex = new Map<string, any>();
+      ((exPendings ?? []) as any[]).forEach((p) => pdIndex.set(normalizeKey(p.organism_name), p));
+
+      const newEvents: any[] = [];
+      const updEvents: any[] = [];
+      for (const ev of parsedEvents) {
+        const existing = evIndex.get(`${ev.audit_date}|${normalizeKey(ev.organism_name)}`);
+        if (!existing) {
+          newEvents.push(ev);
+          continue;
+        }
+        const patch: Record<string, any> = {};
+        (["formation", "auditor_name", "certifier_name", "certificate_status"] as const).forEach((k) => {
+          const v = (ev as any)[k];
+          if (v && v !== existing[k]) patch[k] = v;
+        });
+        if (Object.keys(patch).length > 0) updEvents.push({ id: existing.id, ...ev, ...patch, _patch: patch });
+      }
+
+      const newPendings: any[] = [];
+      const updPendings: any[] = [];
+      for (const p of parsedPendings) {
+        const existing = pdIndex.get(normalizeKey(p.organism_name));
+        if (!existing) {
+          newPendings.push(p);
+          continue;
+        }
+        const patch: Record<string, any> = {};
+        (["certifier", "observation", "followup_status"] as const).forEach((k) => {
+          const v = (p as any)[k];
+          if (v && v !== existing[k]) patch[k] = v;
+        });
+        if (Object.keys(patch).length > 0) updPendings.push({ id: existing.id, ...p, ...patch, _patch: patch });
+      }
+
+      setImportPreview({ newEvents, updEvents, newPendings, updPendings });
     } catch (e: any) {
       toast.error(e.message ?? "Import impossible");
     }
@@ -348,25 +342,43 @@ function CalendrierQualiopi() {
   const confirmImport = useMutation({
     mutationFn: async () => {
       if (!importPreview) return;
-      if (importPreview.events.length > 0) {
-        const rows = importPreview.events.map((e) => ({ ...e, created_by: user?.id ?? null }));
+      const { newEvents, updEvents, newPendings, updPendings } = importPreview;
+      if (newEvents.length > 0) {
+        const rows = newEvents.map((e) => ({ ...e, status: "planifie", created_by: user?.id ?? null }));
         const { error } = await supabase.from("qualiopi_calendar_events" as any).insert(rows as any);
         if (error) throw error;
       }
-      if (importPreview.pendings.length > 0) {
-        const rows = importPreview.pendings.map((p) => ({ ...p, created_by: user?.id ?? null }));
+      for (const e of updEvents) {
+        const { error } = await supabase
+          .from("qualiopi_calendar_events" as any)
+          .update({ ...e._patch, updated_by: user?.id ?? null } as any)
+          .eq("id", e.id);
+        if (error) throw error;
+      }
+      if (newPendings.length > 0) {
+        const rows = newPendings.map((p) => ({ ...p, created_by: user?.id ?? null }));
         const { error } = await supabase.from("qualiopi_pending_requests" as any).insert(rows as any);
+        if (error) throw error;
+      }
+      for (const p of updPendings) {
+        const { error } = await supabase
+          .from("qualiopi_pending_requests" as any)
+          .update({ ...p._patch, updated_by: user?.id ?? null } as any)
+          .eq("id", p.id);
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      toast.success("Import terminé");
+      const n = importPreview ? importPreview.newEvents.length + importPreview.newPendings.length : 0;
+      const u = importPreview ? importPreview.updEvents.length + importPreview.updPendings.length : 0;
+      toast.success(`Import terminé — ${n} ajout(s), ${u} mise(s) à jour`);
       setImportPreview(null);
       qc.invalidateQueries({ queryKey: ["qcal-events"] });
       qc.invalidateQueries({ queryKey: ["qcal-pending"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erreur import"),
   });
+
 
   if (!isStaff) {
     return <Card className="p-6 text-sm">Accès réservé à l'équipe.</Card>;
@@ -688,35 +700,44 @@ function CalendrierQualiopi() {
           <DialogHeader><DialogTitle>Aperçu de l'import</DialogTitle></DialogHeader>
           {importPreview && (
             <div className="space-y-3 text-sm">
-              <div className="flex gap-4">
-                <Badge variant="outline">{importPreview.events.length} évènements calendrier</Badge>
-                <Badge variant="outline">{importPreview.pendings.length} demandes en cours</Badge>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{importPreview.newEvents.length} nouveaux audits</Badge>
+                <Badge variant="outline">{importPreview.updEvents.length} audits mis à jour</Badge>
+                <Badge variant="outline">{importPreview.newPendings.length} nouvelles demandes</Badge>
+                <Badge variant="outline">{importPreview.updPendings.length} demandes mises à jour</Badge>
               </div>
-              {importPreview.events.length > 0 && (
+              {[...importPreview.newEvents, ...importPreview.updEvents].length > 0 && (
                 <div className="max-h-60 overflow-auto border rounded-md">
                   <table className="w-full text-xs">
-                    <thead className="bg-muted/40 sticky top-0"><tr><th className="p-2 text-left">Date</th><th className="p-2 text-left">Organisme</th><th className="p-2 text-left">Formation</th><th className="p-2 text-left">Auditeur</th><th className="p-2 text-left">Certificateur</th></tr></thead>
+                    <thead className="bg-muted/40 sticky top-0"><tr><th className="p-2 text-left">Action</th><th className="p-2 text-left">Date</th><th className="p-2 text-left">Organisme</th><th className="p-2 text-left">Formation</th><th className="p-2 text-left">Auditeur</th><th className="p-2 text-left">Certificateur</th></tr></thead>
                     <tbody>
-                      {importPreview.events.slice(0, 100).map((e, i) => (
-                        <tr key={i} className="border-t"><td className="p-2">{e.audit_date}</td><td className="p-2">{e.organism_name}</td><td className="p-2">{e.formation}</td><td className="p-2">{e.auditor_name}</td><td className="p-2">{e.certifier_name}</td></tr>
+                      {[
+                        ...importPreview.newEvents.map((e: any) => ({ ...e, _kind: "Ajout" })),
+                        ...importPreview.updEvents.map((e: any) => ({ ...e, _kind: "Mise à jour" })),
+                      ].slice(0, 150).map((e: any, i: number) => (
+                        <tr key={i} className="border-t"><td className="p-2">{e._kind}</td><td className="p-2">{e.audit_date}</td><td className="p-2">{e.organism_name}</td><td className="p-2">{e.formation}</td><td className="p-2">{e.auditor_name}</td><td className="p-2">{e.certifier_name}</td></tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               )}
-              {importPreview.pendings.length > 0 && (
+              {[...importPreview.newPendings, ...importPreview.updPendings].length > 0 && (
                 <div className="max-h-40 overflow-auto border rounded-md">
                   <table className="w-full text-xs">
-                    <thead className="bg-muted/40 sticky top-0"><tr><th className="p-2 text-left">Organisme</th><th className="p-2 text-left">Certificateur</th><th className="p-2 text-left">Observation</th></tr></thead>
+                    <thead className="bg-muted/40 sticky top-0"><tr><th className="p-2 text-left">Action</th><th className="p-2 text-left">Organisme</th><th className="p-2 text-left">Certificateur</th><th className="p-2 text-left">Observation</th></tr></thead>
                     <tbody>
-                      {importPreview.pendings.slice(0, 100).map((p, i) => (
-                        <tr key={i} className="border-t"><td className="p-2">{p.organism_name}</td><td className="p-2">{p.certifier}</td><td className="p-2">{p.observation}</td></tr>
+                      {[
+                        ...importPreview.newPendings.map((p: any) => ({ ...p, _kind: "Ajout" })),
+                        ...importPreview.updPendings.map((p: any) => ({ ...p, _kind: "Mise à jour" })),
+                      ].slice(0, 150).map((p: any, i: number) => (
+                        <tr key={i} className="border-t"><td className="p-2">{p._kind}</td><td className="p-2">{p.organism_name}</td><td className="p-2">{p.certifier}</td><td className="p-2">{p.observation}</td></tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               )}
             </div>
+
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setImportPreview(null)}><X className="h-4 w-4 mr-1" /> Annuler</Button>
