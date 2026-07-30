@@ -147,7 +147,7 @@ function CalendrierQualiopi() {
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [editEvent, setEditEvent] = useState<Partial<CalEvent> | null>(null);
   const [editPending, setEditPending] = useState<Partial<Pending> | null>(null);
-  const [importPreview, setImportPreview] = useState<{ events: Partial<CalEvent>[]; pendings: Partial<Pending>[] } | null>(null);
+  const [importPreview, setImportPreview] = useState<{ newEvents: any[]; updEvents: any[]; newPendings: any[]; updPendings: any[] } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const monthStart = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth(), 1), [cursor]);
