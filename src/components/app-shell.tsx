@@ -298,6 +298,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <main className="min-w-0 max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 pb-[calc(90px+var(--safe-bottom))] lg:pb-8">{children}</main>
         <LegalFooter />
+        <div className="lg:hidden h-[calc(80px+var(--safe-bottom))]" aria-hidden />
       </div>
       <MobileBottomNav countFor={countFor} />
     </div>
