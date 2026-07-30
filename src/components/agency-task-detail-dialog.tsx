@@ -9,10 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Archive, Pencil, Send } from "lucide-react";
-import { PriorityBadge, StatusBadge } from "./agency-task-badges";
+import { Archive, Pencil, Send, ExternalLink, PlayCircle, CheckCircle2, CalendarClock } from "lucide-react";
+import {
+  PriorityBadge, StatusBadge, OriginBadge, daysLate, taskTone, TONE_CARD_CLASSES,
+  STATUS_LABELS, STATUS_ORDER, TASK_TYPE_RULES,
+} from "./agency-task-badges";
 import { AgencyTaskFormDialog } from "./agency-task-form-dialog";
-
+import { cn } from "@/lib/utils";
 
 import type { Database } from "@/integrations/supabase/types";
 
@@ -49,6 +52,24 @@ export function AgencyTaskDetailDialog({
     },
   });
 
+  const { data: pole } = useQuery({
+    queryKey: ["agency-task-pole", task?.pole_id],
+    enabled: !!task?.pole_id,
+    queryFn: async () => {
+      const { data } = await supabase.from("poles").select("id, nom").eq("id", task!.pole_id!).maybeSingle();
+      return data;
+    },
+  });
+
+  const { data: dossier } = useQuery({
+    queryKey: ["agency-task-dossier", task?.dossier_id],
+    enabled: !!task?.dossier_id,
+    queryFn: async () => {
+      const { data } = await supabase.from("dossiers").select("id, titre, statut").eq("id", task!.dossier_id!).maybeSingle();
+      return data;
+    },
+  });
+
   const { data: comments = [] } = useQuery({
     queryKey: ["agency-task-comments", taskId],
     enabled: !!taskId && open,
@@ -62,17 +83,32 @@ export function AgencyTaskDetailDialog({
     },
   });
 
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["agency-task", taskId] });
+    qc.invalidateQueries({ queryKey: ["agency-tasks"] });
+    qc.invalidateQueries({ queryKey: ["agency-tasks-kpis"] });
+    qc.invalidateQueries({ queryKey: ["dossier-linked-task"] });
+  };
+
   const changeStatus = useMutation({
     mutationFn: async (status: Status) => {
-      const { error } = await supabase.from("agency_tasks").update({ status }).eq("id", taskId!);
+      const patch: Record<string, unknown> = { status };
+      if (status === "terminee") patch.completed_at = new Date().toISOString();
+      const { error } = await supabase.from("agency_tasks").update(patch).eq("id", taskId!);
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast.success("Statut mis à jour");
-      qc.invalidateQueries({ queryKey: ["agency-task", taskId] });
-      qc.invalidateQueries({ queryKey: ["agency-tasks"] });
-      qc.invalidateQueries({ queryKey: ["agency-tasks-kpis"] });
+    onSuccess: () => { toast.success("Statut mis à jour"); invalidate(); },
+    onError: (e: any) => toast.error(e.message ?? "Erreur"),
+  });
+
+  const postpone = useMutation({
+    mutationFn: async (days: number) => {
+      const base = task?.due_date ? new Date(task.due_date) : new Date();
+      const next = new Date(Math.max(base.getTime(), Date.now()) + days * 86400000);
+      const { error } = await supabase.from("agency_tasks").update({ due_date: next.toISOString() }).eq("id", taskId!);
+      if (error) throw error;
     },
+    onSuccess: () => { toast.success("Échéance reportée"); invalidate(); },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
 
@@ -81,12 +117,7 @@ export function AgencyTaskDetailDialog({
       const { error } = await supabase.from("agency_tasks").update({ archived_at: new Date().toISOString() }).eq("id", taskId!);
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast.success("Tâche archivée");
-      qc.invalidateQueries({ queryKey: ["agency-tasks"] });
-      qc.invalidateQueries({ queryKey: ["agency-tasks-kpis"] });
-      onOpenChange(false);
-    },
+    onSuccess: () => { toast.success("Tâche archivée"); invalidate(); onOpenChange(false); },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
 
@@ -115,6 +146,9 @@ export function AgencyTaskDetailDialog({
 
   const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
   const canArchive = isAdmin || isDirection;
+  const late = daysLate(task.due_date, task.status);
+  const tone = taskTone(task);
+  const rule = task.task_type ? TASK_TYPE_RULES[task.task_type] : null;
 
   return (
     <>
@@ -123,9 +157,10 @@ export function AgencyTaskDetailDialog({
           <DialogHeader>
             <DialogTitle className="flex items-start justify-between gap-3 pr-6">
               <span className="flex-1">{task.title}</span>
-              <div className="flex gap-1 flex-shrink-0">
+              <div className="flex flex-wrap gap-1 flex-shrink-0">
                 <PriorityBadge value={task.priority} />
                 <StatusBadge value={task.status} />
+                <OriginBadge auto={task.auto} />
               </div>
             </DialogTitle>
           </DialogHeader>
@@ -133,27 +168,62 @@ export function AgencyTaskDetailDialog({
           <div className="space-y-4">
             {task.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{task.description}</p>}
 
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span className="text-muted-foreground">Échéance :</span> {fmtDate(task.due_date)}</div>
-              <div><span className="text-muted-foreground">Assigné à :</span> {task.assigned_to ? profilesMap[task.assigned_to] ?? "…" : "—"}</div>
-              <div><span className="text-muted-foreground">Créé par :</span> {task.created_by ? profilesMap[task.created_by] ?? "…" : "—"}</div>
-              <div><span className="text-muted-foreground">Créé le :</span> {fmtDate(task.created_at)}</div>
-              {task.client_id && <div><span className="text-muted-foreground">Client :</span> {profilesMap[task.client_id] ?? "…"}</div>}
-              {task.completed_at && <div><span className="text-muted-foreground">Terminé le :</span> {fmtDate(task.completed_at)}</div>}
-            </div>
+            <Card className={cn("p-3 space-y-2 text-sm", TONE_CARD_CLASSES[tone])}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div><span className="text-muted-foreground">Origine :</span> {task.auto ? "Automatique" : "Manuelle"}</div>
+                {task.auto && rule && <div className="sm:col-span-2"><span className="text-muted-foreground">Règle :</span> {rule}</div>}
+                <div><span className="text-muted-foreground">Pôle :</span> {pole?.nom ?? "—"}</div>
+                <div><span className="text-muted-foreground">Collaborateur responsable :</span> {task.assigned_to ? profilesMap[task.assigned_to] ?? "…" : "Non assigné"}</div>
+                <div><span className="text-muted-foreground">Échéance :</span> {fmtDate(task.due_date)}</div>
+                <div>
+                  <span className="text-muted-foreground">Retard :</span>{" "}
+                  {late > 0 ? <span className="text-red-600 font-medium">{late} jour{late > 1 ? "s" : ""}</span> : "Aucun"}
+                </div>
+                {dossier && <div className="sm:col-span-2"><span className="text-muted-foreground">Dossier lié :</span> {dossier.titre}</div>}
+                {task.client_id && <div><span className="text-muted-foreground">Client :</span> {profilesMap[task.client_id] ?? "…"}</div>}
+                <div><span className="text-muted-foreground">Créé par :</span> {task.created_by ? profilesMap[task.created_by] ?? "…" : "—"}</div>
+                <div><span className="text-muted-foreground">Créé le :</span> {fmtDate(task.created_at)}</div>
+                {task.completed_at && <div><span className="text-muted-foreground">Terminé le :</span> {fmtDate(task.completed_at)}</div>}
+                {task.archived_at && <div><span className="text-muted-foreground">Archivé le :</span> {fmtDate(task.archived_at)}</div>}
+              </div>
+            </Card>
 
             {task.internal_comment && (
               <Card className="p-3 bg-muted/50 text-sm whitespace-pre-wrap">{task.internal_comment}</Card>
             )}
 
             <div className="flex flex-wrap gap-2">
+              {task.dossier_id && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`/admin/dossiers/${task.dossier_id}`}>
+                    <ExternalLink className="h-4 w-4 mr-1" /> Voir dossier
+                  </a>
+                </Button>
+              )}
+              {task.status !== "en_cours" && task.status !== "terminee" && (
+                <Button variant="outline" size="sm" onClick={() => changeStatus.mutate("en_cours")} disabled={changeStatus.isPending}>
+                  <PlayCircle className="h-4 w-4 mr-1" /> Marquer en cours
+                </Button>
+              )}
+              {task.status !== "terminee" && (
+                <Button size="sm" onClick={() => changeStatus.mutate("terminee")} disabled={changeStatus.isPending}>
+                  <CheckCircle2 className="h-4 w-4 mr-1" /> Terminer
+                </Button>
+              )}
+              <Select onValueChange={(v) => postpone.mutate(Number(v))}>
+                <SelectTrigger className="w-36 h-9">
+                  <span className="flex items-center gap-1 text-sm"><CalendarClock className="h-4 w-4" /> Reporter</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">+ 1 jour</SelectItem>
+                  <SelectItem value="3">+ 3 jours</SelectItem>
+                  <SelectItem value="7">+ 7 jours</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={task.status} onValueChange={(v) => changeStatus.mutate(v as Status)}>
                 <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="a_faire">À faire</SelectItem>
-                  <SelectItem value="en_cours">En cours</SelectItem>
-                  <SelectItem value="bloquee">Bloquée</SelectItem>
-                  <SelectItem value="terminee">Terminée</SelectItem>
+                  {STATUS_ORDER.map((s) => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
@@ -165,7 +235,6 @@ export function AgencyTaskDetailDialog({
                 </Button>
               )}
             </div>
-
 
             <div className="space-y-2 pt-2 border-t">
               <div className="text-sm font-medium">Commentaires ({comments.length})</div>
