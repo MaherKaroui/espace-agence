@@ -286,6 +286,13 @@ function DossierDetail() {
       )}
 
 
+      {isAdmin && (
+        <DossierAuditCard
+          dossier={dossier as any}
+          documents={documents as any}
+          taches={taches as any}
+        />
+      )}
       {isAdmin && <DossierLinkedTask dossierId={dossier.id} />}
       {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
       {isAdmin && (
