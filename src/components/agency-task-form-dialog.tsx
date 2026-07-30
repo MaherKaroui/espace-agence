@@ -180,6 +180,7 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
                 <SelectContent>
                   <SelectItem value="a_faire">À faire</SelectItem>
                   <SelectItem value="en_cours">En cours</SelectItem>
+                  <SelectItem value="en_attente">En attente</SelectItem>
                   <SelectItem value="bloquee">Bloquée</SelectItem>
                   <SelectItem value="terminee">Terminée</SelectItem>
                 </SelectContent>
