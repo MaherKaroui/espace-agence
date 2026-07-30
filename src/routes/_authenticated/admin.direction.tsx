@@ -334,14 +334,13 @@ function DirectionDashboard() {
                   <TableHead className="text-right">Dossiers</TableHead>
                   <TableHead className="text-right">Relances</TableHead>
                   <TableHead className="text-right">Notes</TableHead>
-                  <TableHead className="text-right">Connexion</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={12} className="text-center text-muted-foreground py-6">
+                    <TableCell colSpan={11} className="text-center text-muted-foreground py-6">
                       Aucune activité pour cette date. Générez le rapport si besoin.
                     </TableCell>
                   </TableRow>
@@ -370,7 +369,6 @@ function DirectionDashboard() {
                     <TableCell className="text-right">{u.dossiers_modifies}</TableCell>
                     <TableCell className="text-right">{u.relances}</TableCell>
                     <TableCell className="text-right">{u.notes}</TableCell>
-                    <TableCell className="text-right text-xs">{fmtDuration(u.session_seconds ?? 0)}</TableCell>
                     <TableCell>
                       <Button size="sm" variant="ghost" onClick={() => setDetailUserId(u.user_id)}>
                         <Eye className="h-4 w-4" />
