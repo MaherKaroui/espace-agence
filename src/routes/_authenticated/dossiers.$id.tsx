@@ -319,21 +319,37 @@ function DossierDetail() {
           <div className="w-full md:w-64">
             {(() => {
               // Source unique de vérité : même calcul que la liste & le dashboard.
-              const av = computeAvancement(dossier.categorie, documents as any, taches as any, dossier.statut);
+              const health = computeDossierHealth({
+                dossier: dossier as any,
+                documents: documents as any,
+                taches: taches as any,
+              });
+              const av = health.global;
               return isAdmin ? (
                 <>
-                  <div className="text-xs text-muted-foreground mb-1">Avancement</div>
+                  <div className="text-xs text-muted-foreground mb-1">Avancement global</div>
                   <Progress value={av} />
                   <div className="text-sm mt-1">{av}%</div>
+                  <div className="text-[11px] text-muted-foreground mt-1 space-y-0.5">
+                    <div>Documents : {health.docs.validated}/{health.docs.total} validés</div>
+                    <div>Étapes : {health.steps.done}/{health.steps.total} terminées</div>
+                    {health.manual !== av && <div>Saisi manuellement : {health.manual}%</div>}
+                  </div>
+                  {health.manual < av - 19 && (
+                    <p className="text-[11px] text-warning-foreground mt-1">
+                      Avancement incohérent : le dossier semble plus avancé que le pourcentage manuel.
+                    </p>
+                  )}
                 </>
               ) : (
                 <ClientProgressSummary
-                  avancement={av}
+                  avancement={computeAvancement(dossier.categorie, documents as any, taches as any, dossier.statut)}
                   taches={taches as any}
                 />
               );
             })()}
           </div>
+
 
 
         </div>
