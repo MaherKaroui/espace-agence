@@ -124,6 +124,7 @@ export const assignIntervenant = createServerFn({ method: "POST" })
           .eq("id", existing.id);
         if (error) throw new Error(error.message);
       }
+      await syncExternalConversationMember(data.dossierId, data.userId, true);
       return { ok: true, id: existing.id };
     }
 
