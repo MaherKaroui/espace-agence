@@ -64,7 +64,7 @@ export function DossierExternalIntervenants({ dossierId }: { dossierId: string }
             dossierId={dossierId}
             onDone={() => {
               setAddOpen(false);
-              qc.invalidateQueries({ queryKey: ["dossier-intervenants", dossierId] });
+              refreshAll();
             }}
           />
         </Dialog>
