@@ -45,12 +45,6 @@ export const Route = createFileRoute("/_authenticated/admin/direction")({
 
 const COLORS = ["#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
 
-function fmtDuration(seconds: number) {
-  if (!seconds) return "—";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return h > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${m} min`;
-}
 
 function fmtHour(ts?: string | null) {
   return ts ? format(new Date(ts), "HH:mm") : "—";
@@ -167,13 +161,13 @@ function DirectionDashboard() {
   const exportCSV = () => {
     if (!report) return;
     const rows = [
-      ["Nom", "Rôles", "Pôles", "Première activité", "Dernière activité", "Actions", "Messages client", "Msg internes", "Msg groupe", "Docs déposés", "Docs validés", "Docs refusés", "Dossiers modifiés", "Relances", "Notes", "Temps connexion"],
+      ["Nom", "Rôles", "Pôles", "Première activité", "Dernière activité", "Actions", "Messages client", "Msg internes", "Msg groupe", "Docs déposés", "Docs validés", "Docs refusés", "Dossiers modifiés", "Relances", "Notes"],
       ...users.map((u) => [
         u.name, (u.roles ?? []).join("+"), (u.poles ?? []).join("+"),
         fmtHour(u.first_action), fmtHour(u.last_action),
         u.actions, u.messages, u.internal_messages, u.group_messages,
         u.documents_uploaded, u.documents_validated, u.documents_rejected,
-        u.dossiers_modifies, u.relances, u.notes, fmtDuration(u.session_seconds ?? 0),
+        u.dossiers_modifies, u.relances, u.notes,
       ]),
     ];
     const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(";")).join("\n");
