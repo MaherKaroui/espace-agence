@@ -122,10 +122,12 @@ export function AgencyTasksPriorityBoard() {
       </div>
 
       <div className="space-y-5">
-        <Section title="En retard" icon={<AlertTriangle className="h-4 w-4 text-red-600" />} items={overdue} empty="Aucune tâche en retard." />
-        <Section title="Aujourd'hui" items={today} empty="Aucune échéance aujourd'hui." />
+        <Section title="Tâches manuelles en retard" icon={<AlertTriangle className="h-4 w-4 text-red-600" />} items={overdue} empty="Aucune tâche en retard." />
+        <Section title="Tâches manuelles du jour" items={today} empty="Aucune échéance aujourd'hui." />
         <Section title="Tâches automatiques" icon={<Bot className="h-4 w-4 text-violet-600" />} items={autos} empty="Aucune tâche automatique en cours." />
+        <DossierSignals />
       </div>
+
 
       <AgencyTaskFormDialog open={createOpen} onOpenChange={setCreateOpen} />
       <AgencyTaskDetailDialog taskId={detailId} open={!!detailId} onOpenChange={(o) => !o && setDetailId(null)} />
