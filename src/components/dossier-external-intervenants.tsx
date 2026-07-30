@@ -29,14 +29,23 @@ export function DossierExternalIntervenants({ dossierId }: { dossierId: string }
     queryFn: () => listFn({ data: { dossierId } }),
   });
 
+  const refreshAll = () => {
+    qc.invalidateQueries({ queryKey: ["dossier-intervenants", dossierId] });
+    // Rouvre/re-seed la conversation d'audit pour intégrer le nouvel intervenant
+    qc.invalidateQueries({ queryKey: ["ext-conv", dossierId] });
+    qc.invalidateQueries({ queryKey: ["ext-conv-members"] });
+    qc.invalidateQueries({ queryKey: ["qualiopi-requests", dossierId] });
+  };
+
   const revokeMut = useMutation({
     mutationFn: (assignmentId: string) => revokeFn({ data: { assignmentId } }),
     onSuccess: () => {
       toast.success("Affectation révoquée");
-      qc.invalidateQueries({ queryKey: ["dossier-intervenants", dossierId] });
+      refreshAll();
     },
     onError: (e: any) => toast.error(e?.message ?? "Erreur"),
   });
+
 
   return (
     <Card className="p-4 space-y-3">
@@ -55,7 +64,7 @@ export function DossierExternalIntervenants({ dossierId }: { dossierId: string }
             dossierId={dossierId}
             onDone={() => {
               setAddOpen(false);
-              qc.invalidateQueries({ queryKey: ["dossier-intervenants", dossierId] });
+              refreshAll();
             }}
           />
         </Dialog>
