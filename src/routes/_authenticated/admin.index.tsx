@@ -141,7 +141,7 @@ function AdminDashboard() {
           taches: tachesBy[d.id] ?? [],
           linkedTask: taskBy[d.id] ?? null,
         });
-        if (h.anomalies.some((a) => ["manual_mismatch", "zero_but_validated", "full_but_missing", "steps_done_low_progress"].includes(a.key))) incoherents++;
+        if (h.anomalies.some((a: Anomaly) => ["manual_mismatch", "zero_but_validated", "full_but_missing", "steps_done_low_progress"].includes(a.key))) incoherents++;
         if (!h.isDone && h.docs.total > 0 && h.docs.validated === h.docs.total) pretsAFinaliser++;
         if (h.docs.toReview > 0) docsAVerifier++;
         if (h.docs.missing > 0) docsManquants++;
