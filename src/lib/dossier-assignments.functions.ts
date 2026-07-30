@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { syncExternalConversationMember } from "./dossier-assignments.server";
 
 export type ExternalIntervenant = {
   assignment_id: string;
@@ -139,6 +140,7 @@ export const assignIntervenant = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    await syncExternalConversationMember(data.dossierId, data.userId, true);
     return { ok: true, id: inserted.id };
   });
 
@@ -152,7 +154,7 @@ export const revokeIntervenant = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: a } = await supabase
       .from("dossier_assignments")
-      .select("dossier_id")
+      .select("dossier_id, user_id")
       .eq("id", data.assignmentId)
       .maybeSingle();
     if (!a) throw new Error("Affectation introuvable");
@@ -162,6 +164,7 @@ export const revokeIntervenant = createServerFn({ method: "POST" })
       .update({ active: false, revoked_at: new Date().toISOString() })
       .eq("id", data.assignmentId);
     if (error) throw new Error(error.message);
+    await syncExternalConversationMember(a.dossier_id, a.user_id, false);
     return { ok: true };
   });
 
