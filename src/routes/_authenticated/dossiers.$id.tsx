@@ -27,6 +27,7 @@ import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { DossierLinkedTask } from "@/components/dossier-linked-task";
 import { DossierExternalIntervenants } from "@/components/dossier-external-intervenants";
+import { listDossierIntervenants } from "@/lib/dossier-assignments.functions";
 import { DossierExternalChat } from "@/components/dossier-external-chat";
 import { QualiopiRequestsPanel } from "@/components/qualiopi-requests-panel";
 
@@ -99,6 +100,16 @@ function DossierDetail() {
 
 
   const classify = useServerFn(classifyDocument);
+
+  // Le canal d'audit et les demandes Qualiopi n'apparaissent qu'une fois
+  // au moins un intervenant externe affecté au dossier.
+  const listIntervenantsFn = useServerFn(listDossierIntervenants);
+  const { data: intervenants = [] } = useQuery({
+    queryKey: ["dossier-intervenants", id],
+    queryFn: () => listIntervenantsFn({ data: { dossierId: id } }),
+    enabled: isAdmin,
+  });
+  const hasIntervenants = intervenants.length > 0;
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
@@ -288,7 +299,7 @@ function DossierDetail() {
 
       {isAdmin && <DossierLinkedTask dossierId={dossier.id} />}
       {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
-      {isAdmin && (
+      {isAdmin && hasIntervenants && (
         <div className="grid gap-4 lg:grid-cols-2">
           <div id="audit-chat" className="scroll-mt-20"><DossierExternalChat dossierId={dossier.id} /></div>
           <div id="qualiopi" className="scroll-mt-20"><QualiopiRequestsPanel dossierId={dossier.id} /></div>
