@@ -34,6 +34,8 @@ export function DossierExternalIntervenants({ dossierId }: { dossierId: string }
     onSuccess: () => {
       toast.success("Affectation révoquée");
       qc.invalidateQueries({ queryKey: ["dossier-intervenants", dossierId] });
+      qc.invalidateQueries({ queryKey: ["ext-conv", dossierId] });
+      qc.invalidateQueries({ queryKey: ["ext-conv-members"] });
     },
     onError: (e: any) => toast.error(e?.message ?? "Erreur"),
   });
@@ -56,6 +58,8 @@ export function DossierExternalIntervenants({ dossierId }: { dossierId: string }
             onDone={() => {
               setAddOpen(false);
               qc.invalidateQueries({ queryKey: ["dossier-intervenants", dossierId] });
+              qc.invalidateQueries({ queryKey: ["ext-conv", dossierId] });
+              qc.invalidateQueries({ queryKey: ["ext-conv-members"] });
             }}
           />
         </Dialog>
