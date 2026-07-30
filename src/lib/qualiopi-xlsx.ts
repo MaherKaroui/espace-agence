@@ -146,7 +146,7 @@ export function parseQualiopiWorkbook(buf: ArrayBuffer): { events: ParsedEvent[]
     const cForm = findCol("formation");
     const cAud = findCol("nom de l'auditeur", "auditeur");
     const cCert = findCol("certificateur");
-    const cStat = findCol("certificat");
+    const cStat = header.findIndex((h) => h === "certificat" || (h.startsWith("certificat") && !h.startsWith("certificateur")));
     let currentDate = "";
     for (let i = headerRow + 1; i < grid.length; i++) {
       const row = grid[i] ?? [];
