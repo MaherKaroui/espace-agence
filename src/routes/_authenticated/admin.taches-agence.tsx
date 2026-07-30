@@ -248,7 +248,7 @@ function AgencyTasksPage() {
           </h1>
           <p className="text-muted-foreground mt-1">Gestion interne des tâches — priorités, échéances, assignations.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <div className="flex rounded-md border overflow-hidden">
             <Button variant={view === "list" ? "secondary" : "ghost"} size="sm" className="rounded-none" onClick={() => setView("list")}>
               <ListIcon className="h-4 w-4 mr-1" /> Liste
@@ -258,7 +258,7 @@ function AgencyTasksPage() {
             </Button>
           </div>
           {isStaff && (
-            <Button onClick={() => setCreateOpen(true)}>
+            <Button className="flex-1 sm:flex-none" onClick={() => setCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-1" /> Créer une tâche
             </Button>
           )}

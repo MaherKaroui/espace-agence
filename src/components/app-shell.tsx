@@ -14,7 +14,6 @@ import { SessionTracker } from "@/components/session-tracker";
 import { AdminFlaggedAlert } from "@/components/admin-flagged-alert";
 import { ConsentBanner } from "@/components/consent-banner";
 import { LegalFooter } from "@/components/legal-footer";
-import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
@@ -249,7 +248,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     : user?.email ?? "";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <NotificationsRealtime />
       <SessionTracker />
       <AdminFlaggedAlert />
@@ -287,18 +286,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/95 backdrop-blur px-4 sm:px-6 h-16 pt-safe px-safe">
-          <button aria-label="Ouvrir le menu" className="lg:hidden p-2" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
-          <div className="lg:hidden font-display">IZISuivis</div>
-          <div className="hidden lg:block" />
-          <div className="flex items-center gap-2">
+      <div className="lg:pl-64 min-w-0">
+        <header className="sticky top-0 z-30 flex items-center gap-2 border-b bg-background/95 backdrop-blur px-3 sm:px-6 min-h-14 sm:h-16 pt-safe px-safe">
+          <button aria-label="Ouvrir le menu" className="lg:hidden shrink-0 p-2 -ml-1" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
+          <div className="lg:hidden min-w-0 flex-1 truncate font-display text-base">IZISuivis</div>
+          <div className="hidden lg:block flex-1" />
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <NotificationsBell />
           </div>
         </header>
-        <main className={cn("p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8")}>{children}</main>
+        <main className="min-w-0 max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 pb-[calc(90px+var(--safe-bottom))] lg:pb-8">{children}</main>
         <LegalFooter />
-        <div className="lg:hidden h-16" aria-hidden />
+        <div className="lg:hidden h-[calc(80px+var(--safe-bottom))]" aria-hidden />
       </div>
       <MobileBottomNav countFor={countFor} />
     </div>
