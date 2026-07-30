@@ -155,12 +155,14 @@ iframe, embed, object { max-width: 100%; }
   main .text-4xl.font-display { font-size: 1.75rem; line-height: 2.1rem; }
 
   /* Aucun débordement horizontal */
-  main table { min-width: 640px; }
+  main div[class*="overflow-x-auto"] > table { min-width: 620px; }
+  main table { max-width: 100%; }
   main pre, main code { white-space: pre-wrap; word-break: break-word; }
 
   /* Cibles tactiles */
   main button, main a[role="button"], main [data-slot="button"] { min-height: 40px; }
-  main input, main textarea, main select, main [role="combobox"] { min-height: 40px; width: 100%; }
+  main input:not([type="checkbox"]):not([type="radio"]),
+  main textarea, main select, main [role="combobox"] { min-height: 40px; width: 100%; }
 
   /* Modales toujours dans l'écran */
   [role="dialog"][data-state] {
