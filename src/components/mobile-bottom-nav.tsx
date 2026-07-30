@@ -37,7 +37,7 @@ export function MobileBottomNav({ countFor }: { countFor: (to: string) => number
 
   return (
     <nav
-      className="mobile-bottom-nav lg:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur pb-safe"
+      className="mobile-bottom-nav lg:hidden fixed bottom-0 inset-x-0 z-50 w-full border-t border-border bg-background shadow-[0_-2px_10px_rgba(0,0,0,0.08)] pb-safe px-safe"
       aria-label="Navigation principale"
     >
       <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))` }}>
@@ -48,13 +48,13 @@ export function MobileBottomNav({ countFor }: { countFor: (to: string) => number
               <Link
                 to={n.to}
                 onClick={() => { void hapticTap(); }}
-                className="relative flex flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] text-muted-foreground"
+                className="relative flex min-h-16 w-full flex-col items-center justify-center gap-1 px-0.5 py-2 text-[10px] leading-tight text-muted-foreground"
                 activeProps={{ className: "text-primary font-medium" }}
               >
-                <n.icon className="h-5 w-5 shrink-0" />
-                <span className="truncate max-w-full">{n.label}</span>
+                <n.icon className="h-[20px] w-[20px] shrink-0" />
+                <span className="w-full truncate px-0.5 text-center">{n.label}</span>
                 {c > 0 && (
-                  <span className="absolute top-1 right-[22%] h-4 min-w-4 px-1 rounded-full bg-gold text-[9px] font-semibold text-primary flex items-center justify-center">
+                  <span className="absolute top-1.5 right-[18%] h-4 min-w-4 px-1 rounded-full bg-gold text-[9px] font-semibold text-primary flex items-center justify-center">
                     {c > 9 ? "9+" : c}
                   </span>
                 )}
