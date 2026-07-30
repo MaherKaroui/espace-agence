@@ -87,8 +87,7 @@ export async function takePhotoFile(): Promise<File | null> {
       quality: 80,
       resultType: CameraResultType.Uri,
       source: CameraSource.Prompt,
-freeform: false,
-    } as never);
+    });
     if (!photo.webPath) return null;
     const blob = await fetch(photo.webPath).then((r) => r.blob());
     const ext = photo.format || "jpeg";
