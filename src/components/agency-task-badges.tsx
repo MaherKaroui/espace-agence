@@ -146,3 +146,23 @@ export const TASK_TYPE_RULES: Record<string, string> = {
   client_sans_reponse: "Client sans réponse — relance sous 3 jours",
   dossier_bloque: "Dossier bloqué — traitement immédiat",
 };
+
+type SortableTask = {
+  priority: Priority;
+  status: Status;
+  due_date: string | null;
+  auto?: boolean | null;
+};
+
+/** urgente > retard > échéance proche > manuel > auto */
+export function sortByUrgency(a: SortableTask, b: SortableTask): number {
+  const ao = isOverdue(a.due_date, a.status);
+  const bo = isOverdue(b.due_date, b.status);
+  const aScore = a.priority === "urgente" ? -1 : ao ? -0.5 : priorityRank(a.priority);
+  const bScore = b.priority === "urgente" ? -1 : bo ? -0.5 : priorityRank(b.priority);
+  if (aScore !== bScore) return aScore - bScore;
+  if (a.due_date && b.due_date && a.due_date !== b.due_date) return a.due_date.localeCompare(b.due_date);
+  if (a.due_date && !b.due_date) return -1;
+  if (!a.due_date && b.due_date) return 1;
+  return (a.auto ? 1 : 0) - (b.auto ? 1 : 0);
+}

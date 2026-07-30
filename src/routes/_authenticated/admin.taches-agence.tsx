@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, AlertTriangle, ListChecks, LayoutGrid, List as ListIcon } from "lucide-react";
 import {
   PriorityBadge, StatusBadge, OriginBadge, isOverdue, priorityRank, daysLate,
-  taskTone, TONE_CARD_CLASSES, TONE_DOT_CLASSES, TONE_LABELS, STATUS_LABELS, STATUS_ORDER,
+  taskTone, TONE_CARD_CLASSES, TONE_DOT_CLASSES, TONE_LABELS, STATUS_LABELS, STATUS_ORDER, sortByUrgency,
 } from "@/components/agency-task-badges";
 import { AgencyTaskFormDialog } from "@/components/agency-task-form-dialog";
 import { AgencyTaskDetailDialog } from "@/components/agency-task-detail-dialog";
@@ -376,19 +376,4 @@ function AgencyTasksPage() {
       <AgencyTaskDetailDialog taskId={detailId} open={!!detailId} onOpenChange={(o) => !o && setDetailId(null)} />
     </div>
   );
-}
-
-/** urgente > retard > échéance proche > manuel > auto */
-export function sortByUrgency(a: Task, b: Task): number {
-  const ao = isOverdue(a.due_date, a.status);
-  const bo = isOverdue(b.due_date, b.status);
-  const aScore = a.priority === "urgente" ? -1 : ao ? -0.5 : priorityRank(a.priority);
-  const bScore = b.priority === "urgente" ? -1 : bo ? -0.5 : priorityRank(b.priority);
-  if (aScore !== bScore) return aScore - bScore;
-  if (a.due_date && b.due_date && a.due_date !== b.due_date) return a.due_date.localeCompare(b.due_date);
-  if (a.due_date && !b.due_date) return -1;
-  if (!a.due_date && b.due_date) return 1;
-  const aAuto = a.auto ? 1 : 0;
-  const bAuto = b.auto ? 1 : 0;
-  return aAuto - bAuto;
 }
