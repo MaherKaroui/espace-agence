@@ -143,3 +143,41 @@
   main .text-3xl.font-display { font-size: 1.5rem; line-height: 2rem; }
   main .text-4xl.font-display { font-size: 1.75rem; line-height: 2.1rem; }
 }
+
+/* ---------- Capacitor / mobile natif ---------- */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+@utility pt-safe { padding-top: var(--safe-top); }
+@utility pb-safe { padding-bottom: var(--safe-bottom); }
+@utility px-safe { padding-left: var(--safe-left); padding-right: var(--safe-right); }
+
+/* Optimisation tactile + performances sur mobile */
+html.capacitor-native, html.capacitor-native body {
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+html.capacitor-native button,
+html.capacitor-native a[role="button"],
+html.capacitor-native [data-touch-target] {
+  min-height: 44px;
+}
+html.capacitor-native input,
+html.capacitor-native textarea,
+html.capacitor-native select {
+  font-size: 16px; /* évite le zoom automatique iOS */
+}
+html.keyboard-open .mobile-bottom-nav { display: none; }
+
+/* Écran de chargement natif */
+.native-boot-screen {
+  position: fixed; inset: 0; z-index: 9999;
+  display: grid; place-items: center;
+  background: var(--sidebar);
+  color: var(--sidebar-foreground);
+}
