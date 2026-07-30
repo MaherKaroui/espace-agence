@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import "../lib/fonts";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
+import { NativeBootstrap } from "@/components/native-bootstrap";
 
 function NotFoundComponent() {
   return (
@@ -104,6 +105,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
+      <NativeBootstrap />
       <Outlet />
       <Toaster position="top-right" richColors />
     </QueryClientProvider>
