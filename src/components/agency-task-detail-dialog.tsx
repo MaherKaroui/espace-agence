@@ -92,7 +92,7 @@ export function AgencyTaskDetailDialog({
 
   const changeStatus = useMutation({
     mutationFn: async (status: Status) => {
-      const patch: Record<string, unknown> = { status };
+      const patch: Database["public"]["Tables"]["agency_tasks"]["Update"] = { status };
       if (status === "terminee") patch.completed_at = new Date().toISOString();
       const { error } = await supabase.from("agency_tasks").update(patch).eq("id", taskId!);
       if (error) throw error;
