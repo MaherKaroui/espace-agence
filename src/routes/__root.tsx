@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import "../lib/fonts";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
+import { NativeBootstrap } from "@/components/native-bootstrap";
 
 function NotFoundComponent() {
   return (
@@ -54,7 +55,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "theme-color", content: "#0B1B33" },
       { title: "IZISuivis" },
       { name: "description", content: "Plateforme sécurisée pour gérer vos dossiers Qualiopi, BPF, NDA, CFA, VAE et échanger avec votre agence." },
       { property: "og:title", content: "IZISuivis" },
@@ -104,6 +109,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
+      <NativeBootstrap />
       <Outlet />
       <Toaster position="top-right" richColors />
     </QueryClientProvider>

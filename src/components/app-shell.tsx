@@ -16,6 +16,7 @@ import { ConsentBanner } from "@/components/consent-banner";
 import { LegalFooter } from "@/components/legal-footer";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -276,7 +277,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-40">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-72 bg-sidebar text-sidebar-foreground p-3 flex flex-col">
+          <aside className="absolute inset-y-0 left-0 w-72 bg-sidebar text-sidebar-foreground p-3 pt-safe pb-safe flex flex-col">
             <button aria-label="Fermer le menu" className="self-end p-2" onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></button>
             <nav className="flex-1 space-y-1 overflow-y-auto"><NavList /></nav>
             <button onClick={signOut} className="mt-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent">
@@ -287,7 +288,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/95 backdrop-blur px-4 sm:px-6 h-16">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/95 backdrop-blur px-4 sm:px-6 h-16 pt-safe px-safe">
           <button aria-label="Ouvrir le menu" className="lg:hidden p-2" onClick={() => setMobileOpen(true)}><Menu className="h-5 w-5" /></button>
           <div className="lg:hidden font-display">IZISuivis</div>
           <div className="hidden lg:block" />
@@ -295,9 +296,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <NotificationsBell />
           </div>
         </header>
-        <main className={cn("p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto")}>{children}</main>
+        <main className={cn("p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8")}>{children}</main>
         <LegalFooter />
+        <div className="lg:hidden h-16" aria-hidden />
       </div>
+      <MobileBottomNav countFor={countFor} />
     </div>
   );
 }
