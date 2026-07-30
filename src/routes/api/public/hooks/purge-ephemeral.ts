@@ -1,3 +1,4 @@
+import { requireCronAuth } from "@/lib/cron-auth";
 import { createFileRoute } from "@tanstack/react-router";
 
 type ExpiredRow = {
@@ -9,7 +10,9 @@ type ExpiredRow = {
 export const Route = createFileRoute("/api/public/hooks/purge-ephemeral")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
