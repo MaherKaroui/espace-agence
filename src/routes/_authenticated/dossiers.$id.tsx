@@ -26,7 +26,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { DossierLinkedTask } from "@/components/dossier-linked-task";
-import { DossierAuditCard } from "@/components/dossier-audit-card";
 import { DossierExternalIntervenants } from "@/components/dossier-external-intervenants";
 import { DossierExternalChat } from "@/components/dossier-external-chat";
 import { QualiopiRequestsPanel } from "@/components/qualiopi-requests-panel";
@@ -35,7 +34,6 @@ import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
 import { computeAvancement } from "@/lib/next-action";
-import { computeDossierHealth } from "@/lib/dossier-health";
 
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
@@ -288,13 +286,6 @@ function DossierDetail() {
       )}
 
 
-      {isAdmin && (
-        <DossierAuditCard
-          dossier={dossier as any}
-          documents={documents as any}
-          taches={taches as any}
-        />
-      )}
       {isAdmin && <DossierLinkedTask dossierId={dossier.id} />}
       {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
       {isAdmin && (
@@ -320,37 +311,21 @@ function DossierDetail() {
           <div className="w-full md:w-64">
             {(() => {
               // Source unique de vérité : même calcul que la liste & le dashboard.
-              const health = computeDossierHealth({
-                dossier: dossier as any,
-                documents: documents as any,
-                taches: taches as any,
-              });
-              const av = health.global;
+              const av = computeAvancement(dossier.categorie, documents as any, taches as any, dossier.statut);
               return isAdmin ? (
                 <>
-                  <div className="text-xs text-muted-foreground mb-1">Avancement global</div>
+                  <div className="text-xs text-muted-foreground mb-1">Avancement</div>
                   <Progress value={av} />
                   <div className="text-sm mt-1">{av}%</div>
-                  <div className="text-[11px] text-muted-foreground mt-1 space-y-0.5">
-                    <div>Documents : {health.docs.validated}/{health.docs.total} validés</div>
-                    <div>Étapes : {health.steps.done}/{health.steps.total} terminées</div>
-                    {health.manual !== av && <div>Saisi manuellement : {health.manual}%</div>}
-                  </div>
-                  {health.manual < av - 19 && (
-                    <p className="text-[11px] text-warning-foreground mt-1">
-                      Avancement incohérent : le dossier semble plus avancé que le pourcentage manuel.
-                    </p>
-                  )}
                 </>
               ) : (
                 <ClientProgressSummary
-                  avancement={computeAvancement(dossier.categorie, documents as any, taches as any, dossier.statut)}
+                  avancement={av}
                   taches={taches as any}
                 />
               );
             })()}
           </div>
-
 
 
         </div>
