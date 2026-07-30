@@ -1,3 +1,4 @@
+import { requireCronAuth } from "@/lib/cron-auth";
 import { createFileRoute } from '@tanstack/react-router'
 
 /**
@@ -33,7 +34,9 @@ export const Route = createFileRoute('/api/public/hooks/reminders')({
   server: {
     handlers: {
       GET: async () => Response.json({ ok: true, hint: 'POST to run reminders' }),
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
 

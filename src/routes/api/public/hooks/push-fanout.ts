@@ -1,3 +1,4 @@
+import { requireCronAuth } from "@/lib/cron-auth";
 import { createFileRoute } from "@tanstack/react-router";
 
 // ---------- helpers ----------
@@ -130,6 +131,8 @@ export const Route = createFileRoute("/api/public/hooks/push-fanout")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const VAPID_PUB = process.env.VAPID_PUBLIC_KEY;
           const VAPID_PRIV = process.env.VAPID_PRIVATE_KEY;
