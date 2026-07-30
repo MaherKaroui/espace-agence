@@ -137,12 +137,49 @@
   --tw-ring-color: var(--gold);
 }
 
-/* Mobile responsive polish: shrink oversized display headings on narrow screens */
-@media (max-width: 640px) {
+/* ---------- Responsive global (mobile-first hardening) ---------- */
+html, body { max-width: 100%; overflow-x: hidden; }
+#root { max-width: 100%; overflow-x: hidden; }
+
+img, video, canvas, svg:not([class*="h-"]) { max-width: 100%; }
+img, video { height: auto; }
+iframe, embed, object { max-width: 100%; }
+
+@media (max-width: 767px) {
+  /* Typographie mobile */
+  main h1 { font-size: 1.5rem; line-height: 2rem; word-break: break-word; }
+  main h2 { font-size: 1.25rem; line-height: 1.75rem; word-break: break-word; }
+  main h3 { font-size: 1.05rem; line-height: 1.55rem; word-break: break-word; }
+  main .text-3xl.font-display,
   main h1.font-display { font-size: 1.5rem; line-height: 2rem; }
-  main .text-3xl.font-display { font-size: 1.5rem; line-height: 2rem; }
   main .text-4xl.font-display { font-size: 1.75rem; line-height: 2.1rem; }
+
+  /* Aucun débordement horizontal */
+  main table { min-width: 640px; }
+  main pre, main code { white-space: pre-wrap; word-break: break-word; }
+
+  /* Cibles tactiles */
+  main button, main a[role="button"], main [data-slot="button"] { min-height: 40px; }
+  main input, main textarea, main select, main [role="combobox"] { min-height: 40px; width: 100%; }
+
+  /* Modales toujours dans l'écran */
+  [role="dialog"][data-state] {
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+  /* Menus déroulants dans l'écran */
+  [data-radix-popper-content-wrapper] > * {
+    max-width: calc(100vw - 20px);
+    max-height: 70dvh;
+    overflow-y: auto;
+  }
 }
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  main { padding-left: 20px; padding-right: 20px; }
+}
+
 
 /* ---------- Capacitor / mobile natif ---------- */
 :root {
