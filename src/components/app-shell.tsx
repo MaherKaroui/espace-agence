@@ -14,7 +14,6 @@ import { SessionTracker } from "@/components/session-tracker";
 import { AdminFlaggedAlert } from "@/components/admin-flagged-alert";
 import { ConsentBanner } from "@/components/consent-banner";
 import { LegalFooter } from "@/components/legal-footer";
-import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
