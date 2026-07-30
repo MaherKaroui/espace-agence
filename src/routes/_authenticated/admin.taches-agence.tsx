@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, AlertTriangle, ListChecks, LayoutGrid, List as ListIcon } from "lucide-react";
 import {
-  PriorityBadge, StatusBadge, OriginBadge, isOverdue, priorityRank, daysLate,
+  PriorityBadge, StatusBadge, OriginBadge, isOverdue, daysLate,
   taskTone, TONE_CARD_CLASSES, TONE_DOT_CLASSES, TONE_LABELS, STATUS_LABELS, STATUS_ORDER, sortByUrgency,
 } from "@/components/agency-task-badges";
 import { AgencyTaskFormDialog } from "@/components/agency-task-form-dialog";
