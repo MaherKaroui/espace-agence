@@ -150,6 +150,23 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           )
         }
 
+        // Authorization: non-staff callers may not choose an arbitrary recipient.
+        // They can only send to themselves, or to a recipient fixed by the template
+        // (admin notification templates), never to an address they supply.
+        if (!isInternalCaller && !callerIsStaff) {
+          const fixedRecipient = Boolean(adminOverride || template.to)
+          const selfRecipient =
+            callerEmail !== null && effectiveRecipient.toLowerCase() === callerEmail
+          if (!fixedRecipient && !selfRecipient) {
+            console.warn('Blocked unauthorized email recipient', {
+              templateName,
+              recipient_redacted: redactEmail(effectiveRecipient),
+            })
+            return Response.json({ error: 'Forbidden' }, { status: 403 })
+          }
+        }
+
+
         // 2. Check suppression list (fail-closed: if we can't verify, don't send)
         const { data: suppressed, error: suppressionError } = await supabase
           .from('suppressed_emails')
