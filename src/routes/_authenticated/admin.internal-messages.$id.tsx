@@ -237,7 +237,7 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
   const TypeIcon = typeIcon[conv?.type ?? "direct"] ?? MessageSquare;
 
   return (
-    <Card className="flex flex-col h-[calc(100vh-8rem)] overflow-hidden">
+    <Card className="flex flex-col h-chat overflow-hidden">
       <div className="border-b px-4 py-3 flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -463,7 +463,7 @@ function ContextPanel({ conversationId }: { conversationId: string }) {
   }
 
   return (
-    <Card className="flex flex-col overflow-hidden max-h-[calc(100vh-8rem)]">
+    <Card className="flex flex-col overflow-hidden max-h-[80dvh] lg:max-h-[calc(100vh-8rem)]">
       <div className="p-3 border-b">
         <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
           Contexte
