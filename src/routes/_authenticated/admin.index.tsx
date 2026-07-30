@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Users, FolderOpen, FileText, Clock, ListChecks, AlertTriangle, CalendarCheck, CheckCircle2, Ban, MessageSquareOff, FileSearch, CalendarX, Zap } from "lucide-react";
 import { AgencyTasksPriorityBoard } from "@/components/agency-tasks-priority-board";
+import { computeDossierHealth, type Anomaly } from "@/lib/dossier-health";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Admin — Dashboard" }] }),
