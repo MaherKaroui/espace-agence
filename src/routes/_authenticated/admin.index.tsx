@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Users, FolderOpen, FileText, Clock, ListChecks, AlertTriangle, CalendarCheck, CheckCircle2, Ban, MessageSquareOff, FileSearch, CalendarX, Zap } from "lucide-react";
 import { AgencyTasksPriorityBoard } from "@/components/agency-tasks-priority-board";
+import { computeDossierHealth, type Anomaly } from "@/lib/dossier-health";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => ({ meta: [{ title: "Admin — Dashboard" }] }),
@@ -106,6 +107,50 @@ function AdminDashboard() {
     },
   });
 
+  const { data: healthKpis } = useQuery({
+    queryKey: ["admin-dossier-health-kpis"],
+    queryFn: async () => {
+      const { data: dossiers } = await supabase
+        .from("dossiers")
+        .select("id, categorie, statut, avancement, updated_at, archived_at")
+        .is("archived_at", null);
+      const list = dossiers ?? [];
+      const ids = list.map((d) => d.id);
+      if (ids.length === 0) {
+        return { incoherents: 0, pretsAFinaliser: 0, docsAVerifier: 0, docsManquants: 0, autoEnRetard: 0 };
+      }
+      const [docsRes, tachesRes, tasksRes] = await Promise.all([
+        supabase.from("documents").select("id, dossier_id, nom, detected_type, statut").in("dossier_id", ids),
+        supabase.from("taches").select("id, dossier_id, statut").in("dossier_id", ids),
+        supabase.from("agency_tasks")
+          .select("id, dossier_id, status, priority, due_date, auto")
+          .in("dossier_id", ids).is("archived_at", null),
+      ]);
+      const docsBy: Record<string, any[]> = {};
+      for (const d of docsRes.data ?? []) (docsBy[d.dossier_id] ??= []).push(d);
+      const tachesBy: Record<string, any[]> = {};
+      for (const t of tachesRes.data ?? []) (tachesBy[t.dossier_id] ??= []).push(t);
+      const taskBy: Record<string, any> = {};
+      for (const t of tasksRes.data ?? []) if (t.dossier_id && !taskBy[t.dossier_id]) taskBy[t.dossier_id] = t;
+
+      let incoherents = 0, pretsAFinaliser = 0, docsAVerifier = 0, docsManquants = 0, autoEnRetard = 0;
+      for (const d of list) {
+        const h = computeDossierHealth({
+          dossier: d as any,
+          documents: docsBy[d.id] ?? [],
+          taches: tachesBy[d.id] ?? [],
+          linkedTask: taskBy[d.id] ?? null,
+        });
+        if (h.anomalies.some((a: Anomaly) => ["manual_mismatch", "zero_but_validated", "full_but_missing", "steps_done_low_progress"].includes(a.key))) incoherents++;
+        if (!h.isDone && h.docs.total > 0 && h.docs.validated === h.docs.total) pretsAFinaliser++;
+        if (h.docs.toReview > 0) docsAVerifier++;
+        if (h.docs.missing > 0) docsManquants++;
+        if (h.taskOverdue && taskBy[d.id]?.auto) autoEnRetard++;
+      }
+      return { incoherents, pretsAFinaliser, docsAVerifier, docsManquants, autoEnRetard };
+    },
+  });
+
   return (
     <div className="space-y-8">
       <div>
@@ -122,10 +167,15 @@ function AdminDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label={`Dossiers bloqués (>${BLOCKED_DAYS}j)`} value={actionable?.dossiersBloques ?? 0} icon={Ban} tone="danger" to="/admin/dossiers" />
           <StatCard label={`Clients sans réponse (>${UNREAD_DAYS}j)`} value={actionable?.clientsSansReponse ?? 0} icon={MessageSquareOff} tone="warning" to="/admin/messages" />
-          <StatCard label="Documents à vérifier" value={actionable?.docsAVerifier ?? 0} icon={FileSearch} tone="info" to="/admin/dossiers" />
+          <StatCard label="Documents à vérifier" value={healthKpis?.docsAVerifier ?? actionable?.docsAVerifier ?? 0} icon={FileSearch} tone="info" to="/admin/dossiers" />
           <StatCard label="RDV expirés (en attente)" value={actionable?.rdvExpires ?? 0} icon={CalendarX} tone="danger" to="/admin/rendez-vous" />
+          <StatCard label="Avancement incohérent" value={healthKpis?.incoherents ?? 0} icon={AlertTriangle} tone="warning" to="/admin/dossiers" />
+          <StatCard label="Prêts à finaliser" value={healthKpis?.pretsAFinaliser ?? 0} icon={CheckCircle2} tone="success" to="/admin/dossiers" />
+          <StatCard label="Documents manquants" value={healthKpis?.docsManquants ?? 0} icon={FileText} tone="warning" to="/admin/dossiers" />
+          <StatCard label="Tâches auto en retard" value={healthKpis?.autoEnRetard ?? 0} icon={ListChecks} tone="danger" to="/admin/taches-agence" />
         </div>
       </div>
+
 
       <div>
         <h2 className="font-display text-xl mb-3">Dossiers clients</h2>
