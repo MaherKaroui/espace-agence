@@ -317,11 +317,6 @@ function DossierDetail() {
                   <div className="text-xs text-muted-foreground mb-1">Avancement</div>
                   <Progress value={av} />
                   <div className="text-sm mt-1">{av}%</div>
-                  {dossier.avancement !== av && (
-                    <div className="text-[11px] text-warning mt-1">
-                      Saisi manuellement : {dossier.avancement}%
-                    </div>
-                  )}
                 </>
               ) : (
                 <ClientProgressSummary
@@ -361,14 +356,6 @@ function DossierDetail() {
                   {STATUTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Avancement (%)</label>
-              <Input type="number" min={0} max={100} defaultValue={dossier.avancement}
-                onBlur={(e) => {
-                  const v = Math.max(0, Math.min(100, Number(e.target.value)));
-                  if (v !== dossier.avancement) updateDossier.mutate({ avancement: v });
-                }} />
             </div>
             <div className="flex items-end">
               <AlertDialog>
