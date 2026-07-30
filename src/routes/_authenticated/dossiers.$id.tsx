@@ -35,6 +35,7 @@ import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
 import { computeAvancement } from "@/lib/next-action";
+import { computeDossierHealth } from "@/lib/dossier-health";
 
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
