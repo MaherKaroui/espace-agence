@@ -45,12 +45,6 @@ export const Route = createFileRoute("/_authenticated/admin/direction")({
 
 const COLORS = ["#0ea5e9", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
 
-function fmtDuration(seconds: number) {
-  if (!seconds) return "—";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return h > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${m} min`;
-}
 
 function fmtHour(ts?: string | null) {
   return ts ? format(new Date(ts), "HH:mm") : "—";
@@ -167,13 +161,13 @@ function DirectionDashboard() {
   const exportCSV = () => {
     if (!report) return;
     const rows = [
-      ["Nom", "Rôles", "Pôles", "Première activité", "Dernière activité", "Actions", "Messages client", "Msg internes", "Msg groupe", "Docs déposés", "Docs validés", "Docs refusés", "Dossiers modifiés", "Relances", "Notes", "Temps connexion"],
+      ["Nom", "Rôles", "Pôles", "Première activité", "Dernière activité", "Actions", "Messages client", "Msg internes", "Msg groupe", "Docs déposés", "Docs validés", "Docs refusés", "Dossiers modifiés", "Relances", "Notes"],
       ...users.map((u) => [
         u.name, (u.roles ?? []).join("+"), (u.poles ?? []).join("+"),
         fmtHour(u.first_action), fmtHour(u.last_action),
         u.actions, u.messages, u.internal_messages, u.group_messages,
         u.documents_uploaded, u.documents_validated, u.documents_rejected,
-        u.dossiers_modifies, u.relances, u.notes, fmtDuration(u.session_seconds ?? 0),
+        u.dossiers_modifies, u.relances, u.notes,
       ]),
     ];
     const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(";")).join("\n");
@@ -340,14 +334,13 @@ function DirectionDashboard() {
                   <TableHead className="text-right">Dossiers</TableHead>
                   <TableHead className="text-right">Relances</TableHead>
                   <TableHead className="text-right">Notes</TableHead>
-                  <TableHead className="text-right">Connexion</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={12} className="text-center text-muted-foreground py-6">
+                    <TableCell colSpan={11} className="text-center text-muted-foreground py-6">
                       Aucune activité pour cette date. Générez le rapport si besoin.
                     </TableCell>
                   </TableRow>
@@ -376,7 +369,6 @@ function DirectionDashboard() {
                     <TableCell className="text-right">{u.dossiers_modifies}</TableCell>
                     <TableCell className="text-right">{u.relances}</TableCell>
                     <TableCell className="text-right">{u.notes}</TableCell>
-                    <TableCell className="text-right text-xs">{fmtDuration(u.session_seconds ?? 0)}</TableCell>
                     <TableCell>
                       <Button size="sm" variant="ghost" onClick={() => setDetailUserId(u.user_id)}>
                         <Eye className="h-4 w-4" />
