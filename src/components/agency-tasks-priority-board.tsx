@@ -134,3 +134,82 @@ export function AgencyTasksPriorityBoard() {
     </Card>
   );
 }
+
+/** Signaux dossiers : bloqués et documents à vérifier. */
+function DossierSignals() {
+  const { data } = useQuery({
+    queryKey: ["priority-board-dossier-signals"],
+    queryFn: async () => {
+      const { data: dossiers } = await supabase
+        .from("dossiers")
+        .select("id, titre, categorie, statut, avancement, updated_at, archived_at, organisme_nom")
+        .is("archived_at", null)
+        .order("updated_at", { ascending: true })
+        .limit(200);
+      const list = dossiers ?? [];
+      const ids = list.map((d) => d.id);
+      if (!ids.length) return { blocked: [], toReview: [] };
+      const [docsRes, tachesRes] = await Promise.all([
+        supabase.from("documents").select("id, dossier_id, nom, detected_type, statut").in("dossier_id", ids),
+        supabase.from("taches").select("id, dossier_id, statut").in("dossier_id", ids),
+      ]);
+      const docsBy: Record<string, any[]> = {};
+      for (const d of docsRes.data ?? []) (docsBy[d.dossier_id] ??= []).push(d);
+      const tachesBy: Record<string, any[]> = {};
+      for (const t of tachesRes.data ?? []) (tachesBy[t.dossier_id] ??= []).push(t);
+
+      const blocked: any[] = [];
+      const toReview: any[] = [];
+      for (const d of list) {
+        const h = computeDossierHealth({
+          dossier: d as any,
+          documents: docsBy[d.id] ?? [],
+          taches: tachesBy[d.id] ?? [],
+        });
+        if (h.blocked) blocked.push({ ...d, h });
+        if (h.docs.toReview > 0) toReview.push({ ...d, h });
+      }
+      return { blocked: blocked.slice(0, 6), toReview: toReview.slice(0, 6) };
+    },
+  });
+
+  const renderList = (items: any[], empty: string) =>
+    items.length === 0 ? (
+      <div className="text-xs text-muted-foreground py-2">{empty}</div>
+    ) : (
+      <div className="space-y-2">
+        {items.map((d) => {
+          const tone = TONE_STYLES[d.h.tone as keyof typeof TONE_STYLES];
+          return (
+            <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}
+              className={cn("block relative overflow-hidden rounded-md border p-2.5 pl-4 text-sm hover:shadow-sm transition", tone.card)}>
+              <span className={cn("absolute left-0 top-0 bottom-0 w-1", tone.bar)} aria-hidden />
+              <div className="font-medium truncate">{d.titre}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {d.organisme_nom ? `${d.organisme_nom} · ` : ""}{d.h.global}% · {d.h.nextAction}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    );
+
+  return (
+    <>
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <FolderOpen className="h-4 w-4 text-red-600" />
+          <h3 className="text-sm font-semibold">Dossiers bloqués</h3>
+        </div>
+        {renderList(data?.blocked ?? [], "Aucun dossier bloqué.")}
+      </div>
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <FileSearch className="h-4 w-4 text-orange-500" />
+          <h3 className="text-sm font-semibold">Documents à vérifier</h3>
+        </div>
+        {renderList(data?.toReview ?? [], "Aucun document en attente de vérification.")}
+      </div>
+    </>
+  );
+}
