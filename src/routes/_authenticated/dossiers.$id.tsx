@@ -362,14 +362,6 @@ function DossierDetail() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Avancement (%)</label>
-              <Input type="number" min={0} max={100} defaultValue={dossier.avancement}
-                onBlur={(e) => {
-                  const v = Math.max(0, Math.min(100, Number(e.target.value)));
-                  if (v !== dossier.avancement) updateDossier.mutate({ avancement: v });
-                }} />
-            </div>
             <div className="flex items-end">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
