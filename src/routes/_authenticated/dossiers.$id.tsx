@@ -267,7 +267,7 @@ function DossierDetail() {
                 toast[ok ? "success" : "error"](ok ? "Email renvoyé au client" : "Envoi impossible (template désactivé ?)");
               }}
             >
-              <Send className="h-4 w-4 mr-1.5" /> Renvoyer email au client
+              <Send className="h-4 w-4 mr-1.5" /> Relance client
             </Button>
           )}
           {isAdmin && !dossier.client_id && (
@@ -286,16 +286,6 @@ function DossierDetail() {
         />
       )}
 
-      {/* Suivi & rappels — responsable / prochaine action / historique / relance */}
-      <DossierSuiviRappels
-        dossierId={dossier.id}
-        clientId={dossier.client_id}
-        clientEmail={clientProfile?.email}
-        dossierTitre={dossier.titre}
-        responsableId={(dossier as any).responsable_id}
-        prochaineAction={(dossier as any).prochaine_action}
-        lastRelanceAt={(dossier as any).last_relance_at}
-      />
 
       {isAdmin && <DossierLinkedTask dossierId={dossier.id} />}
       {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
