@@ -56,12 +56,24 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
 
         // Allow the server-side service role key as bearer (used by internal cron jobs).
         // Otherwise, validate as a user JWT.
-        if (token !== supabaseServiceKey) {
+        let callerEmail: string | null = null
+        let callerIsStaff = false
+        const isInternalCaller = token === supabaseServiceKey
+        if (!isInternalCaller) {
           const { data: { user }, error: authError } = await supabase.auth.getUser(token)
           if (authError || !user) {
             return Response.json({ error: 'Unauthorized' }, { status: 401 })
           }
+          callerEmail = (user.email ?? '').toLowerCase() || null
+          const { data: callerRoles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+          callerIsStaff = (callerRoles ?? []).some((r: any) =>
+            ['admin', 'direction', 'manager', 'consultant'].includes(r.role)
+          )
         }
+
 
         // Parse request body
         let templateName: string
