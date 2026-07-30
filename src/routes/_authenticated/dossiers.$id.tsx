@@ -317,11 +317,6 @@ function DossierDetail() {
                   <div className="text-xs text-muted-foreground mb-1">Avancement</div>
                   <Progress value={av} />
                   <div className="text-sm mt-1">{av}%</div>
-                  {dossier.avancement !== av && (
-                    <div className="text-[11px] text-warning mt-1">
-                      Saisi manuellement : {dossier.avancement}%
-                    </div>
-                  )}
                 </>
               ) : (
                 <ClientProgressSummary
