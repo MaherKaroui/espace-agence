@@ -2132,6 +2132,10 @@ export type Database = {
       }
     }
     Functions: {
+      agency_task_default_due: {
+        Args: { _from?: string; _task_type: string }
+        Returns: string
+      }
       anonymize_user_account: { Args: { _user_id: string }; Returns: undefined }
       archive_client: {
         Args: { _reason?: string; _user_id: string }
@@ -2394,7 +2398,12 @@ export type Database = {
     }
     Enums: {
       agency_task_priority: "basse" | "normale" | "haute" | "urgente"
-      agency_task_status: "a_faire" | "en_cours" | "bloquee" | "terminee"
+      agency_task_status:
+        | "a_faire"
+        | "en_cours"
+        | "bloquee"
+        | "terminee"
+        | "en_attente"
       app_role:
         | "client"
         | "admin"
@@ -2599,7 +2608,13 @@ export const Constants = {
   public: {
     Enums: {
       agency_task_priority: ["basse", "normale", "haute", "urgente"],
-      agency_task_status: ["a_faire", "en_cours", "bloquee", "terminee"],
+      agency_task_status: [
+        "a_faire",
+        "en_cours",
+        "bloquee",
+        "terminee",
+        "en_attente",
+      ],
       app_role: [
         "client",
         "admin",

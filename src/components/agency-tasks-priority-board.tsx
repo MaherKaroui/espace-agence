@@ -3,11 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus, AlertTriangle, Bot } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { PriorityBadge, StatusBadge, isOverdue, priorityRank } from "./agency-task-badges";
+import {
+  PriorityBadge, StatusBadge, OriginBadge, isOverdue, daysLate, sortByUrgency,
+  taskTone, TONE_CARD_CLASSES,
+} from "./agency-task-badges";
 import { AgencyTaskFormDialog } from "./agency-task-form-dialog";
 import { AgencyTaskDetailDialog } from "./agency-task-detail-dialog";
+import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 
 type Task = Database["public"]["Tables"]["agency_tasks"]["Row"];
@@ -41,21 +45,65 @@ export function AgencyTasksPriorityBoard() {
     },
   });
 
-  const sorted = useMemo(() => {
-    return [...tasks].sort((a, b) => {
-      const ao = isOverdue(a.due_date, a.status);
-      const bo = isOverdue(b.due_date, b.status);
-      const aScore = (a.priority === "urgente" && ao ? -1 : priorityRank(a.priority));
-      const bScore = (b.priority === "urgente" && bo ? -1 : priorityRank(b.priority));
-      if (aScore !== bScore) return aScore - bScore;
-      if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
-      if (a.due_date) return -1;
-      if (b.due_date) return 1;
-      return 0;
-    }).slice(0, 8);
+  const { overdue, today, autos } = useMemo(() => {
+    const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+    const sorted = [...tasks].sort(sortByUrgency);
+    const overdue = sorted.filter((t) => isOverdue(t.due_date, t.status) && !t.auto).slice(0, 6);
+    const today = sorted
+      .filter((t) => !t.auto && t.due_date && new Date(t.due_date) >= startOfDay && new Date(t.due_date) <= endOfDay)
+      .slice(0, 6);
+    const autos = sorted.filter((t) => !!t.auto).slice(0, 6);
+    return { overdue, today, autos };
   }, [tasks]);
 
   const fmtDue = (d: string | null) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }) : "—";
+
+  const Row = ({ t }: { t: Task }) => {
+    const od = isOverdue(t.due_date, t.status);
+    const late = daysLate(t.due_date, t.status);
+    const tone = taskTone(t);
+    return (
+      <button
+        onClick={() => setDetailId(t.id)}
+        className={cn(
+          "w-full p-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 text-left rounded-md hover:brightness-95 transition border",
+          TONE_CARD_CLASSES[tone],
+        )}
+      >
+        <div className="flex-shrink-0 flex flex-wrap gap-1 pt-0.5">
+          <PriorityBadge value={t.priority} />
+          {t.auto && <OriginBadge auto />}
+        </div>
+        <div className="min-w-0">
+          <div className="font-medium text-sm flex items-start gap-2">
+            <span className="line-clamp-2 break-words">{t.title}</span>
+            {od && <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />}
+          </div>
+          <div className="text-xs text-muted-foreground truncate mt-0.5">
+            {t.assigned_to ? profilesMap[t.assigned_to] ?? "…" : "Non assigné"}
+            {" · "}
+            <span className={od ? "text-red-600 font-medium" : ""}>
+              {t.due_date ? (od ? `En retard de ${late} j — ` : "Échéance : ") : "Aucune échéance"}
+              {t.due_date ? fmtDue(t.due_date) : ""}
+            </span>
+          </div>
+        </div>
+        <div className="shrink-0"><StatusBadge value={t.status} /></div>
+      </button>
+    );
+  };
+
+  const Section = ({ title, icon, items, empty }: { title: string; icon?: React.ReactNode; items: Task[]; empty: string }) => (
+    <div className="space-y-2">
+      <div className="text-sm font-medium flex items-center gap-2">{icon}{title} <span className="text-xs text-muted-foreground">({items.length})</span></div>
+      {items.length === 0 ? (
+        <div className="text-xs text-muted-foreground py-2">{empty}</div>
+      ) : (
+        <div className="space-y-2">{items.map((t) => <Row key={t.id} t={t} />)}</div>
+      )}
+    </div>
+  );
 
   return (
     <Card className="p-5">
@@ -73,42 +121,11 @@ export function AgencyTasksPriorityBoard() {
         </div>
       </div>
 
-      {sorted.length === 0 ? (
-        <div className="text-sm text-muted-foreground py-6 text-center">Aucune tâche en cours. Créez-en une pour organiser la journée.</div>
-      ) : (
-        <div className="divide-y">
-          {sorted.map((t) => {
-            const overdue = isOverdue(t.due_date, t.status);
-            return (
-              <button
-                key={t.id}
-                onClick={() => setDetailId(t.id)}
-                className="w-full py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 text-left hover:bg-muted/40 transition rounded px-2"
-              >
-                <div className="flex-shrink-0 flex gap-1 pt-0.5">
-                  <PriorityBadge value={t.priority} />
-                </div>
-                <div className="min-w-0">
-                  <div className="font-medium text-sm flex items-start gap-2">
-                    <span className="line-clamp-2 break-words">{t.title}</span>
-                    {overdue && <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />}
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate mt-0.5">
-                    {t.assigned_to ? profilesMap[t.assigned_to] ?? "…" : "Non assigné"}
-                    {" · "}
-                    <span className={overdue ? "text-red-600 font-medium" : ""}>
-                      {t.due_date ? (overdue ? "En retard : " : "Échéance : ") : ""}
-                      {t.due_date ? fmtDue(t.due_date) : "Aucune échéance"}
-                    </span>
-                  </div>
-                </div>
-                <div className="shrink-0"><StatusBadge value={t.status} /></div>
-              </button>
-
-            );
-          })}
-        </div>
-      )}
+      <div className="space-y-5">
+        <Section title="En retard" icon={<AlertTriangle className="h-4 w-4 text-red-600" />} items={overdue} empty="Aucune tâche en retard." />
+        <Section title="Aujourd'hui" items={today} empty="Aucune échéance aujourd'hui." />
+        <Section title="Tâches automatiques" icon={<Bot className="h-4 w-4 text-violet-600" />} items={autos} empty="Aucune tâche automatique en cours." />
+      </div>
 
       <AgencyTaskFormDialog open={createOpen} onOpenChange={setCreateOpen} />
       <AgencyTaskDetailDialog taskId={detailId} open={!!detailId} onOpenChange={(o) => !o && setDetailId(null)} />
