@@ -700,35 +700,44 @@ function CalendrierQualiopi() {
           <DialogHeader><DialogTitle>Aperçu de l'import</DialogTitle></DialogHeader>
           {importPreview && (
             <div className="space-y-3 text-sm">
-              <div className="flex gap-4">
-                <Badge variant="outline">{importPreview.events.length} évènements calendrier</Badge>
-                <Badge variant="outline">{importPreview.pendings.length} demandes en cours</Badge>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{importPreview.newEvents.length} nouveaux audits</Badge>
+                <Badge variant="outline">{importPreview.updEvents.length} audits mis à jour</Badge>
+                <Badge variant="outline">{importPreview.newPendings.length} nouvelles demandes</Badge>
+                <Badge variant="outline">{importPreview.updPendings.length} demandes mises à jour</Badge>
               </div>
-              {importPreview.events.length > 0 && (
+              {[...importPreview.newEvents, ...importPreview.updEvents].length > 0 && (
                 <div className="max-h-60 overflow-auto border rounded-md">
                   <table className="w-full text-xs">
-                    <thead className="bg-muted/40 sticky top-0"><tr><th className="p-2 text-left">Date</th><th className="p-2 text-left">Organisme</th><th className="p-2 text-left">Formation</th><th className="p-2 text-left">Auditeur</th><th className="p-2 text-left">Certificateur</th></tr></thead>
+                    <thead className="bg-muted/40 sticky top-0"><tr><th className="p-2 text-left">Action</th><th className="p-2 text-left">Date</th><th className="p-2 text-left">Organisme</th><th className="p-2 text-left">Formation</th><th className="p-2 text-left">Auditeur</th><th className="p-2 text-left">Certificateur</th></tr></thead>
                     <tbody>
-                      {importPreview.events.slice(0, 100).map((e, i) => (
-                        <tr key={i} className="border-t"><td className="p-2">{e.audit_date}</td><td className="p-2">{e.organism_name}</td><td className="p-2">{e.formation}</td><td className="p-2">{e.auditor_name}</td><td className="p-2">{e.certifier_name}</td></tr>
+                      {[
+                        ...importPreview.newEvents.map((e: any) => ({ ...e, _kind: "Ajout" })),
+                        ...importPreview.updEvents.map((e: any) => ({ ...e, _kind: "Mise à jour" })),
+                      ].slice(0, 150).map((e: any, i: number) => (
+                        <tr key={i} className="border-t"><td className="p-2">{e._kind}</td><td className="p-2">{e.audit_date}</td><td className="p-2">{e.organism_name}</td><td className="p-2">{e.formation}</td><td className="p-2">{e.auditor_name}</td><td className="p-2">{e.certifier_name}</td></tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               )}
-              {importPreview.pendings.length > 0 && (
+              {[...importPreview.newPendings, ...importPreview.updPendings].length > 0 && (
                 <div className="max-h-40 overflow-auto border rounded-md">
                   <table className="w-full text-xs">
-                    <thead className="bg-muted/40 sticky top-0"><tr><th className="p-2 text-left">Organisme</th><th className="p-2 text-left">Certificateur</th><th className="p-2 text-left">Observation</th></tr></thead>
+                    <thead className="bg-muted/40 sticky top-0"><tr><th className="p-2 text-left">Action</th><th className="p-2 text-left">Organisme</th><th className="p-2 text-left">Certificateur</th><th className="p-2 text-left">Observation</th></tr></thead>
                     <tbody>
-                      {importPreview.pendings.slice(0, 100).map((p, i) => (
-                        <tr key={i} className="border-t"><td className="p-2">{p.organism_name}</td><td className="p-2">{p.certifier}</td><td className="p-2">{p.observation}</td></tr>
+                      {[
+                        ...importPreview.newPendings.map((p: any) => ({ ...p, _kind: "Ajout" })),
+                        ...importPreview.updPendings.map((p: any) => ({ ...p, _kind: "Mise à jour" })),
+                      ].slice(0, 150).map((p: any, i: number) => (
+                        <tr key={i} className="border-t"><td className="p-2">{p._kind}</td><td className="p-2">{p.organism_name}</td><td className="p-2">{p.certifier}</td><td className="p-2">{p.observation}</td></tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               )}
             </div>
+
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setImportPreview(null)}><X className="h-4 w-4 mr-1" /> Annuler</Button>
