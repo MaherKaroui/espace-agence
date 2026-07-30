@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { DossierLinkedTask } from "@/components/dossier-linked-task";
+import { DossierAuditCard } from "@/components/dossier-audit-card";
 import { DossierExternalIntervenants } from "@/components/dossier-external-intervenants";
 import { DossierExternalChat } from "@/components/dossier-external-chat";
 import { QualiopiRequestsPanel } from "@/components/qualiopi-requests-panel";
