@@ -9,7 +9,10 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "cap:sync": "cap sync",
+    "cap:android": "cap run android",
+    "cap:ios": "cap run ios"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.5",
