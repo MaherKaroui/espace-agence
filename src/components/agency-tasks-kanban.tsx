@@ -238,10 +238,13 @@ export function AgencyTasksKanbanBoard({
     saveOrder(nextOrder);
     setStatusOverride((o) => ({ ...o, [activeCardId]: targetLane }));
 
-    const patch: Record<string, any> = { status: targetLane };
-    patch.completed_at = targetLane === "terminee" ? new Date().toISOString() : null;
-
-    const { error } = await supabase.from("agency_tasks").update(patch).eq("id", activeCardId);
+    const { error } = await supabase
+      .from("agency_tasks")
+      .update({
+        status: targetLane as Status,
+        completed_at: targetLane === "terminee" ? new Date().toISOString() : null,
+      })
+      .eq("id", activeCardId);
 
     const clear = () => setStatusOverride((o) => { const n = { ...o }; delete n[activeCardId]; return n; });
 
