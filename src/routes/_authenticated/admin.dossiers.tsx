@@ -353,6 +353,8 @@ function AdminDossiers() {
           inconsistencyById={inconsistencyById}
           poleById={poleById}
           externalUnread={externalUnread as Record<string, number>}
+          canEdit={isStaff}
+
         />
       ) : (
         <div className="space-y-6">
