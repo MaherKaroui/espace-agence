@@ -80,6 +80,16 @@ const LANES: { key: string; label: string; statuts: string[] }[] = [
 function laneOf(statut: string | null | undefined): string {
   return LANES.find((l) => l.statuts.includes(statut ?? ""))?.key ?? "todo";
 }
+function statutForLane(laneKey: string): string {
+  const map: Record<string, string> = {
+    todo: "en_attente",
+    doing: "en_cours_traitement",
+    done: "termine",
+    ko: "refuse",
+  };
+  return map[laneKey] ?? "en_attente";
+}
+
 
 export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   head: () => ({ meta: [{ title: "Dossiers — Admin" }] }),
