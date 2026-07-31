@@ -16,6 +16,7 @@ import {
 } from "@/components/agency-task-badges";
 import { AgencyTaskFormDialog } from "@/components/agency-task-form-dialog";
 import { AgencyTaskDetailDialog } from "@/components/agency-task-detail-dialog";
+import { AgencyTasksKanbanBoard } from "@/components/agency-tasks-kanban";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 
