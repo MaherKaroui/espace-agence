@@ -118,7 +118,7 @@ function AdminDossiers() {
   const [poleFilter, setPoleFilter] = useState<string>("all");
   const [showArchived, setShowArchived] = useState(false);
   const { user } = useAuth();
-  const { isDirectionOrAdmin } = useRole();
+  const { isDirectionOrAdmin, isStaff } = useRole();
 
   const { data: myPoleIds, isLoading: polesLoading } = useQuery({
     queryKey: ["my-pole-ids", user?.id],
