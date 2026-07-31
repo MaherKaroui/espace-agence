@@ -16,6 +16,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel, CATEGORIES, requiredDocsFor, docMatches } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { getExternalUnreadCounts } from "@/lib/qualiopi-notifications.functions";
+import { DossiersKanbanBoard } from "@/components/dossiers-kanban";
+
 
 type DocRow = {
   id: string;
