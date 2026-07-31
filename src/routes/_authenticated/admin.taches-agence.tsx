@@ -16,6 +16,7 @@ import {
 } from "@/components/agency-task-badges";
 import { AgencyTaskFormDialog } from "@/components/agency-task-form-dialog";
 import { AgencyTaskDetailDialog } from "@/components/agency-task-detail-dialog";
+import { AgencyTasksKanbanBoard } from "@/components/agency-tasks-kanban";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -346,24 +347,14 @@ function AgencyTasksPage() {
 
         <TabsContent value={tab} className="mt-4">
           {view === "kanban" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-              {KANBAN_COLUMNS.map((col) => {
-                const items = filtered.filter((t) => t.status === col.status);
-                return (
-                  <div key={col.status} className="rounded-lg border bg-muted/30 p-2 space-y-2">
-                    <div className="flex items-center justify-between px-1 py-1">
-                      <span className="text-sm font-medium">{col.label}</span>
-                      <span className="text-xs text-muted-foreground">{items.length}</span>
-                    </div>
-                    {items.length === 0 ? (
-                      <div className="text-xs text-muted-foreground px-1 pb-2">—</div>
-                    ) : (
-                      items.map((t) => renderCard(t, true))
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <AgencyTasksKanbanBoard
+              tasks={filtered}
+              lanes={KANBAN_COLUMNS}
+              canEdit={isStaff}
+              profilesMap={profilesMap}
+              polesMap={polesMap}
+              onOpen={(id) => setDetailId(id)}
+            />
           ) : filtered.length === 0 ? (
             <Card className="p-8 text-center text-sm text-muted-foreground">Aucune tâche à afficher.</Card>
           ) : (
