@@ -447,117 +447,36 @@ function DossierRow({ d, stats, inc, poleColor, unread = 0 }: {
   );
 }
 
-function KanbanView({ items, statsById, inconsistencyById, poleById, externalUnread = {} }: {
+function KanbanView({ items, statsById, inconsistencyById, poleById, externalUnread = {}, canEdit }: {
   items: any[];
   statsById: Record<string, ReviewStats>;
   inconsistencyById: Record<string, Inconsistency>;
   poleById: Map<string, any>;
   externalUnread?: Record<string, number>;
+  canEdit: boolean;
 }) {
-  const byLane = useMemo(() => {
-    const m: Record<string, any[]> = { todo: [], doing: [], done: [], ko: [] };
-    for (const d of items) m[laneOf(d.statut)].push(d);
-    return m;
-  }, [items]);
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      {LANES.map((lane) => {
-        const list = byLane[lane.key] ?? [];
-        return (
-          <div key={lane.key} className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="font-display text-sm uppercase tracking-wider text-muted-foreground">{lane.label}</h3>
-              <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-muted text-xs font-medium">
-                {list.length}
-              </span>
-            </div>
-            <div className="space-y-2 min-h-24">
-              {list.length === 0 ? (
-                <Card className="p-4 border-dashed text-center text-xs text-muted-foreground">Vide</Card>
-              ) : list.map((d: any) => {
-                const pole = poleById.get(d.pole_id);
-                const color = pole?.couleur ?? "#94a3b8";
-                const stats = statsById[d.id];
-                const inc = inconsistencyById[d.id];
-                const days = daysSince(d.updated_at);
-                const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
-                const unread = externalUnread[d.id] ?? 0;
-                return (
-                  <Link key={d.id}
-                    to={`/dossiers/${d.id}${unread > 0 ? "#audit-chat" : ""}`}
-                    className="block relative rounded-lg border hover:shadow-md hover:-translate-y-0.5 transition-all overflow-hidden"
-                    style={{
-                      backgroundColor: `color-mix(in oklab, ${color} 5%, var(--card))`,
-                      borderColor: `color-mix(in oklab, ${color} 25%, var(--border))`,
-                    }}>
-                    <span className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: color }} aria-hidden />
-                    <div className="p-3 pl-4 space-y-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider border"
-                          style={{
-                            color,
-                            borderColor: `color-mix(in oklab, ${color} 35%, transparent)`,
-                            backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
-                          }}
-                        >
-                          {pole?.nom ?? "Sans pôle"}
-                        </span>
-                        {unread > 0 && (
-                          <Badge className="bg-primary text-primary-foreground text-[10px] py-0 h-5 gap-1">
-                            <MessageSquare className="h-2.5 w-2.5" /> {unread}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="font-medium text-sm line-clamp-2">{d.titre}</div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {d.profiles?.prenom} {d.profiles?.nom}
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {stats && stats.total > 0 && (
-                          <Badge variant="outline" className="text-[10px] gap-1 py-0 h-5">
-                            <FileText className="h-2.5 w-2.5" /> {stats.validated}/{stats.total}
-                          </Badge>
-                        )}
-                        {stats?.toFix ? (
-                          <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] py-0 h-5">
-                            {stats.toFix} à corriger
-                          </Badge>
-                        ) : null}
-                        {stats?.missing ? (
-                          <Badge variant="outline" className="bg-warning/15 text-warning-foreground border-warning/30 text-[10px] py-0 h-5">
-                            {stats.missing} manquant{stats.missing > 1 ? "s" : ""}
-                          </Badge>
-                        ) : null}
-                        {inactive && (
-                          <Badge variant="outline" className="bg-warning/15 text-warning-foreground border-warning/30 text-[10px] py-0 h-5 gap-1">
-                            <Clock className="h-2.5 w-2.5" /> {days}j
-                          </Badge>
-                        )}
-                        {(inc === "done_incomplete" || inc === "zero_but_validated") && (
-                          <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] py-0 h-5 gap-1">
-                            <AlertTriangle className="h-2.5 w-2.5" /> Alerte
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-                          <div className="h-full rounded-full" style={{ width: `${d.avancement ?? 0}%`, backgroundColor: color }} />
-                        </div>
-                        <span className="text-[10px] text-muted-foreground tabular-nums">{d.avancement ?? 0}%</span>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground px-1">
+        {canEdit
+          ? "Glissez une carte (poignée ⋮⋮) vers une autre colonne pour changer son statut."
+          : "Lecture seule : vous n'avez pas les droits pour déplacer les dossiers."}
+      </p>
+      <DossiersKanbanBoard
+        items={items}
+        lanes={LANES}
+        laneOf={laneOf}
+        statusForLane={statutForLane}
+        canEdit={canEdit}
+        statsById={statsById}
+        inconsistencyById={inconsistencyById}
+        poleById={poleById}
+        externalUnread={externalUnread}
+      />
     </div>
   );
 }
+
 
 function ReviewSummary({ stats }: { stats: ReviewStats | undefined }) {
   if (!stats || stats.total === 0) return null;
