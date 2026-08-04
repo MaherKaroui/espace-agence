@@ -259,6 +259,9 @@ export function CreateGroupDialog({
       const { error: mErr } = await supabase.from("conversation_members").insert(members);
       if (mErr) throw mErr;
       toast.success("Groupe créé");
+      void import("@/lib/email/notify-group").then((m) =>
+        m.notifyGroupMembersAdded("client", conv.id, Array.from(selected), titre.trim()),
+      );
       setTitre(""); setSelected(new Set());
       onCreated(conv.id);
     } catch (e: any) {

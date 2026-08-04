@@ -141,6 +141,9 @@ export function GroupChatWindow({
         attachment_path, attachment_name, attachment_mime,
       });
       if (error) throw error;
+      void import("@/lib/email/notify-group").then((m) =>
+        m.notifyGroupNewMessage("client", conversationId, content || attachment_name || undefined),
+      );
     },
     onSuccess: () => { setText(""); qc.invalidateQueries({ queryKey: ["group-messages", conversationId] }); },
     onError: (e: any) => toast.error(e.message),

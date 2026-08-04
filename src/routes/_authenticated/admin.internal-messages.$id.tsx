@@ -182,6 +182,9 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
         mentions_entities: entities as any,
       });
       if (error) throw error;
+      void import("@/lib/email/notify-group").then((m) =>
+        m.notifyGroupNewMessage("internal", id, text || attachment_name || undefined),
+      );
     },
     onSuccess: () => {
       setContent("");

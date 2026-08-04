@@ -106,6 +106,9 @@ function GroupePage() {
     const { error } = await supabase.from("conversation_members").insert(rows);
     if (error) return toast.error(error.message);
     toast.success("Membres ajoutés");
+    void import("@/lib/email/notify-group").then((m) =>
+      m.notifyGroupMembersAdded("client", id, Array.from(addSelected)),
+    );
     setAddSelected(new Set());
     setOpenAdd(false);
     qc.invalidateQueries({ queryKey: ["conversation-members", id] });
