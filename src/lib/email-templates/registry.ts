@@ -18,6 +18,8 @@ import { template as teamClientMessage } from './team-client-message'
 import { template as clientDocumentRappel } from './client-document-rappel'
 import { template as clientDossierInactif } from './client-dossier-inactif'
 import { template as clientRdvRappel } from './client-rdv-rappel'
+import { template as groupInvitation } from './group-invitation'
+import { template as groupNouveauMessage } from './group-nouveau-message'
 
 export interface TemplateEntry {
   component: ComponentType<any>
