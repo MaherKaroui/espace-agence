@@ -50,7 +50,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'client-document-rappel': clientDocumentRappel,
   'client-dossier-inactif': clientDossierInactif,
   'client-rdv-rappel': clientRdvRappel,
-  'client-rdv-rappel': clientRdvRappel,
   'group-invitation': groupInvitation,
   'group-nouveau-message': groupNouveauMessage,
 }
