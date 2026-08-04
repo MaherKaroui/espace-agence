@@ -460,6 +460,9 @@ function NewInternalConversationDialog() {
       }),
     onSuccess: (r: any) => {
       toast.success(gType === "announcement" ? "Canal d'annonces créé" : "Groupe créé");
+      void import("@/lib/email/notify-group").then((m) =>
+        m.notifyGroupMembersAdded("internal", r.id, Array.from(gMembers), gTitre.trim()),
+      );
       setOpen(false);
       setGTitre("");
       setGDescription("");
