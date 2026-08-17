@@ -88,6 +88,38 @@ function GroupesIndex() {
     },
   });
 
+  // Membres de chaque groupe → permet d'agréger l'activité (dossiers, tâches,
+  // demandes, documents) des clients présents dans la conversation.
+  const convIds = useMemo(() => conversations.map((c) => c.id), [conversations]);
+  const { data: membersByConv = {} } = useQuery({
+    queryKey: ["group-members-map", convIds.join(",")],
+    enabled: convIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("conversation_members")
+        .select("conversation_id, user_id")
+        .in("conversation_id", convIds);
+      const map: Record<string, string[]> = {};
+      for (const r of (data ?? []) as { conversation_id: string; user_id: string }[]) {
+        (map[r.conversation_id] ??= []).push(r.user_id);
+      }
+      return map;
+    },
+  });
+  const allMemberIds = useMemo(
+    () => Array.from(new Set(Object.values(membersByConv).flat())),
+    [membersByConv],
+  );
+  const { data: activityByUser } = useClientsActivity(allMemberIds);
+  const activityByConv = useMemo(() => {
+    const map: Record<string, ClientActivity> = {};
+    if (!activityByUser) return map;
+    for (const [cid, uids] of Object.entries(membersByConv)) {
+      map[cid] = mergeActivity(uids.map((u) => activityByUser.get(u)));
+    }
+    return map;
+  }, [membersByConv, activityByUser]);
+
   const tree = useMemo(() => buildTree(conversations), [conversations]);
 
   return (
