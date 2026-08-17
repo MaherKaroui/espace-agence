@@ -63,20 +63,38 @@ function AdminMessages() {
       const { data: profiles } = await supabase.from("profiles").select("*").is("archived_at", null);
       const { data: msgs } = await supabase
         .from("messages")
-        .select("client_id, content, created_at, from_agence, read_at, deleted_at")
+        .select("client_id, content, created_at, from_agence, read_at, read_by, deleted_at")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       const last = new Map<string, any>();
       const unread = new Map<string, number>();
+      const lastSeen = new Map<string, any>();
       for (const m of (msgs ?? []) as any[]) {
         if (!last.has(m.client_id)) last.set(m.client_id, m);
         // Message client vers agence, non lu = à traiter
         if (!m.from_agence && !m.read_at) {
           unread.set(m.client_id, (unread.get(m.client_id) ?? 0) + 1);
         }
+        if (!m.from_agence && m.read_at && !lastSeen.has(m.client_id)) lastSeen.set(m.client_id, m);
+      }
+      const readerIds = [...new Set([...lastSeen.values()].map((m) => m.read_by).filter(Boolean))];
+      const readers = new Map<string, any>();
+      if (readerIds.length > 0) {
+        const { data: rp } = await supabase.from("profiles").select("id, prenom, nom, email").in("id", readerIds as string[]);
+        ((rp ?? []) as any[]).forEach((p) => readers.set(p.id, p));
       }
       return (profiles ?? [])
-        .map((p: any) => ({ ...p, last: last.get(p.id), unread: unread.get(p.id) ?? 0 }))
+        .map((p: any) => {
+          const seen = lastSeen.get(p.id);
+          const reader = seen?.read_by ? readers.get(seen.read_by) : null;
+          return {
+            ...p,
+            last: last.get(p.id),
+            unread: unread.get(p.id) ?? 0,
+            seenAt: seen?.read_at ?? null,
+            seenBy: reader ? `${reader.prenom ?? ""} ${reader.nom ?? ""}`.trim() || reader.email : null,
+          };
+        })
         .filter((t: any) => !!t.last)
         .sort((a: any, b: any) => (b.last?.created_at ?? "").localeCompare(a.last?.created_at ?? ""));
     },
