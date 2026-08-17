@@ -2432,6 +2432,8 @@ export type Database = {
         | "valide"
         | "refuse"
         | "termine"
+        | "planification"
+        | "audit_realise"
       notification_type:
         | "message"
         | "document_depose"
@@ -2645,6 +2647,8 @@ export const Constants = {
         "valide",
         "refuse",
         "termine",
+        "planification",
+        "audit_realise",
       ],
       notification_type: [
         "message",
