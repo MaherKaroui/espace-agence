@@ -125,6 +125,7 @@ function AdminDossiers() {
   const [showArchived, setShowArchived] = useState(false);
   const { user } = useAuth();
   const { isDirectionOrAdmin, isStaff } = useRole();
+  const qc = useQueryClient();
 
   const { data: myPoleIds, isLoading: polesLoading } = useQuery({
     queryKey: ["my-pole-ids", user?.id],
