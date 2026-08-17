@@ -153,7 +153,10 @@ function RequiredRow({
     window.open(data.signedUrl, "_blank");
   };
 
+  const autoFileDrive = useServerFn(autoFileDocumentToDrive);
+
   const upload = useMutation({
+
     mutationFn: async (file: File) => {
       setBusy(true);
       if (doc) {
