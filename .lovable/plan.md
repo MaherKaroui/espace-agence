@@ -1,71 +1,37 @@
-# Lot D — Finalisation Qualiopi avant publication
+# IZISuivis — Corrections & évolutions (11 points)
 
-Objectif : compléter les 6 points manquants sans casser la messagerie client existante ni les notifications déjà en place.
+Le périmètre demandé est large. Je propose de le livrer en 5 lots, dans cet ordre, chacun testable.
 
-## 1) Notifications Qualiopi temps réel
+## Lot 1 — Statuts, notifications & renommage (points 2, 9, 6)
+- Workflow de dossier unifié : Demande créée → En cours de traitement → **Planification** → Audit réalisé → Clôturé (ajout des états manquants, migration sans perte des données existantes).
+- À chaque changement d'état : notification in-app + e-mail au client **et** à Nadine (adresse configurable dans les réglages e-mail), avec anti-doublon par clé d'idempotence.
+- Intitulés d'alertes normalisés : `IZISUIVI – Nouveau RDV`, `IZISUIVI – Nouvelle demande Qualiopi`, `IZISUIVI – Nouveau dossier EDOF`, `IZISUIVI – Contrôle à traiter`, avec pastille de couleur du pôle.
+- Renommage automatique des titres : `NOM DE L'OF - DEMANDE EDOF` / `- DEMANDE QUALIOPI` / `- CONTRÔLE` / `- AUTRE`, appliqué à la création côté client et côté agence (nom de l'OF repris de la fiche client si absent du formulaire).
 
-Migration SQL :
-- Ajouter au type `notification_type` les valeurs : `qualiopi_message`, `qualiopi_demande`, `qualiopi_document`, `qualiopi_validation`, `qualiopi_refus`, `qualiopi_echeance`, `qualiopi_retard`.
-- Fonction `qualiopi_dossier_recipients(_dossier uuid)` retournant tous les user_ids autorisés (staff du pôle + admins + direction + auditeurs/certificateurs affectés), utilisée par les triggers.
-- Trigger `AFTER INSERT` sur `qualiopi_requests` → notifie tous les destinataires sauf l'auteur (type `qualiopi_demande`).
-- Trigger `AFTER INSERT` sur `qualiopi_request_documents` → `qualiopi_document`.
-- Trigger `AFTER UPDATE OF statut` sur `qualiopi_requests` → `qualiopi_validation` ou `qualiopi_refus` (avec motif dans le message).
-- Trigger `AFTER INSERT` sur `internal_messages` pour conversations `type = 'external'` → `qualiopi_message` (link = `/audits/$id` pour externes, `/admin/dossiers/$id` pour staff, calculé côté fonction serveur qui pousse la notif — ou link générique `/dossiers/$id` accepté par les deux).
-- Chaque notification crée une ligne `notifications` (déjà branchée sur email + web push existants via triggers/queues actuelles).
+## Lot 2 — Calendrier Qualiopi automatique (point 3)
+- Passage au statut **Planification** → création automatique d'un événement dans le Calendrier Qualiopi (client, OF, date, responsable, statut) et retrait du dossier de la liste « demandes en cours ».
+- Lien bidirectionnel dossier ↔ événement (pas de doublon si l'événement existe déjà).
 
-Côté client :
-- Étendre `src/lib/notification-types.ts` avec les nouveaux types (icône `ShieldCheck` / `FileText` / `MessageSquare` / `CheckCircle2` / `XCircle` / `Clock`).
-- `NotificationsRealtime` prend déjà en charge automatiquement (préférences par catégorie).
+## Lot 3 — Contexte dans les conversations + historique (points 1, 4)
+- Panneau latéral (ou bloc repliable sur mobile) dans la messagerie client, les groupes et les canaux internes : demandes liées, tâches associées, statut d'avancement, personnes assignées, pièces jointes.
+- Historique « qui a fait quoi, quand » affiché sur les demandes, dossiers et tâches (créé par / modifié par + date-heure), alimenté par les journaux existants.
 
-Journalisation : `push_delivery_logs` déjà utilisé par le fan-out existant, aucune modification requise.
+## Lot 4 — Tâches : pièces jointes, assignation multiple, rappels (points 5, 7, 10)
+- Pièces jointes multiples sur les tâches (images, PDF, captures, autres), visibles dans la tâche, stockage sécurisé.
+- Assignation multiple sur dossiers et tâches : chaque assigné reçoit les notifications du projet.
+- Rappels automatiques par pôle avant échéance (tâche planifiée quotidienne), relance des responsables, sans doublon.
 
-## 2) Lecture / non-lus conversations externes
+## Lot 5 — Google Drive (points 8, 11)
+- Connexion Google Drive par utilisateur (connecteur officiel) ou compte agence unique — à confirmer.
+- Classement automatique des documents déposés par le client : `Client / OF / Type de demande / Dossier`.
+- Rangement des dossiers Qualiopi existants dans `QUALIOPI À FAIRE PASSER` (script de rangement + bouton manuel de vérification).
 
-Réutiliser l'existant `internal_conversation_members.last_read_at` (déjà présent). Ajouter :
-- Server fn `markExternalConversationRead(dossierId)` → met à jour `last_read_at = now()`.
-- Server fn `getExternalUnreadCounts()` → map `dossierId → nb messages depuis last_read_at`.
-- Dans `DossierExternalChat` : appel `markExternalConversationRead` à l'ouverture et sur nouveau message reçu.
-- Dans `/audits` (index) : badge compteur par ligne de dossier.
-- Dans la fiche dossier admin (`dossiers.$id.tsx`) : badge total non-lus sur l'onglet/section "Canal d'audit".
+## Points techniques
+- Migrations additives uniquement : aucun `DROP`, aucune donnée ni conversation supprimée.
+- Toutes les notifications passent par la couche existante (`notifyEmail` + notifications in-app + web push) avec clé d'idempotence pour éviter les doublons.
+- Automatisations serveur via server functions / triggers ; rappels via tâche planifiée.
+- Tests du parcours complet : création demande → changement de statut → notifications client + Nadine → planification → calendrier → retrait des demandes en cours → classement Drive.
 
-## 3) Export rapport Qualiopi
-
-Vue imprimable (route dédiée + bouton dans `QualiopiRequestsPanel`) :
-- Nouvelle route `src/routes/_authenticated/dossiers.$id.qualiopi-rapport.tsx` (lecture seule, mise en page A4, styles print).
-- Contenu : entête dossier, tableau des demandes par critère/indicateur, statuts, motifs de refus, historique événements, versions de documents (nom + version + date + auteur).
-- Bouton "Exporter (imprimer / PDF)" → `window.print()`.
-- Bouton "Exporter CSV" → génère un CSV côté client à partir des mêmes données.
-
-## 4) Relances automatiques
-
-- Colonne `due_date` déjà présente sur `qualiopi_requests`, ajouter `last_reminder_at timestamptz`.
-- Server function `sendQualiopiReminder(requestId)` : notifie les participants (via helper existant), garde-fou 24h, log dans `qualiopi_request_events` (action `reminder_sent`).
-- Bouton "Relancer" dans `QualiopiRequestsPanel` sur chaque demande `en_attente` ou en retard.
-- Job pg_cron quotidien (07:00 Europe/Paris) : détecte `due_date - now() < 2 days` (échéance proche) et `due_date < now()` (retard) sur statut `en_attente`, appelle `sendQualiopiReminder` en respectant l'anti-spam.
-
-## 5) Filtres & tri liste Audits
-
-Dans `src/routes/_authenticated/audits.index.tsx` :
-- Barre de filtres : statut dossier, client (organisme_nom), rôle (auditeur/certificateur), retard (dossiers avec ≥1 demande en retard).
-- Tri : plus récent, échéance la plus proche, retard en premier.
-- État conservé en `useState` local + query params.
-
-## 6) Vérification finale
-
-- `tsgo` sur les fichiers modifiés.
-- Vérifier les policies RLS existantes (aucun `TO anon` ajouté).
-- Rapide fumigation preview : ouvrir `/audits`, `/audits/$id`, `/admin/dossiers/$id`, s'assurer que la messagerie client `/admin/messages` reste intacte.
-
-## Détails techniques
-
-- Migrations dans un seul appel `supabase--migration` (types enum + fonction destinataires + 4 triggers + colonne `last_reminder_at` + cron).
-- Aucune modification aux fichiers auto-générés (`client.ts`, `types.ts` sera régénéré après la migration).
-- Nouveaux fichiers :
-  - `src/lib/qualiopi-notifications.functions.ts` (mark read, unread counts, send reminder).
-  - `src/routes/_authenticated/dossiers.$id.qualiopi-rapport.tsx`.
-- Fichiers modifiés :
-  - `src/lib/notification-types.ts`, `src/components/qualiopi-requests-panel.tsx`, `src/components/dossier-external-chat.tsx`, `src/routes/_authenticated/audits.index.tsx`, `src/routes/_authenticated/audits.$id.tsx`, `src/routes/_authenticated/dossiers.$id.tsx`.
-
-## Livraison
-
-Après approbation : je lance la migration, code les fichiers en parallèle, puis vérifie TypeScript et preview.
+## À confirmer avant de démarrer
+1. L'adresse e-mail exacte de Nadine (ou usage de l'e-mail admin déjà configuré).
+2. Google Drive : compte unique de l'agence, ou chaque membre connecte son propre Drive ?
