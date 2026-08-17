@@ -29,7 +29,7 @@ import { DossierLinkedTask } from "@/components/dossier-linked-task";
 import { DossierDriveSync } from "@/components/dossier-drive-sync";
 import { DossierExternalIntervenants } from "@/components/dossier-external-intervenants";
 import { DossierJuridiqueAssignation } from "@/components/dossier-juridique-assignation";
-import { listDossierIntervenants } from "@/lib/dossier-assignments.functions";
+import { listDossierIntervenants, listJuridiqueAssignments } from "@/lib/dossier-assignments.functions";
 import { DossierExternalChat } from "@/components/dossier-external-chat";
 import { QualiopiRequestsPanel } from "@/components/qualiopi-requests-panel";
 
@@ -116,6 +116,16 @@ function DossierDetail() {
     enabled: isAdmin,
   });
   const hasIntervenants = intervenants.length > 0;
+
+  // Dossier juridique : la tâche liée n'apparaît qu'une fois une personne du pôle juridique assignée.
+  const listJuridiqueFn = useServerFn(listJuridiqueAssignments);
+  const { data: juridiqueAssignees = [] } = useQuery({
+    queryKey: ["dossier-juridique-assignees", id],
+    queryFn: () => listJuridiqueFn({ data: { dossierId: id } }),
+    enabled: isAdmin && dossier?.categorie === "juridique",
+  });
+  const juridiqueReady =
+    dossier?.categorie !== "juridique" || juridiqueAssignees.some((a: any) => a.active);
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
@@ -312,7 +322,7 @@ function DossierDetail() {
           <DossierDriveSync dossierId={dossier.id} />
         </div>
       )}
-      {isAdmin && <DossierLinkedTask dossierId={dossier.id} />}
+      {isAdmin && juridiqueReady && <DossierLinkedTask dossierId={dossier.id} />}
       {isAdmin && dossier.categorie === "juridique" && (
         <DossierJuridiqueAssignation
           dossierId={dossier.id}
