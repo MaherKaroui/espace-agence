@@ -14,6 +14,8 @@ import {
   PriorityBadge, StatusBadge, OriginBadge, daysLate, taskTone, TONE_CARD_CLASSES,
   STATUS_LABELS, STATUS_ORDER, TASK_TYPE_RULES,
 } from "./agency-task-badges";
+import { AgencyTaskAttachments } from "@/components/agency-task-attachments";
+import { AgencyTaskAssigneesList } from "@/components/agency-task-assignees-list";
 import { AgencyTaskFormDialog } from "./agency-task-form-dialog";
 import { cn } from "@/lib/utils";
 
@@ -187,6 +189,10 @@ export function AgencyTaskDetailDialog({
                 {task.archived_at && <div><span className="text-muted-foreground">Archivé le :</span> {fmtDate(task.archived_at)}</div>}
               </div>
             </Card>
+
+            <AgencyTaskAssigneesList taskId={task.id} mainAssignee={task.assigned_to} />
+
+            <AgencyTaskAttachments taskId={task.id} />
 
             {task.internal_comment && (
               <Card className="p-3 bg-muted/50 text-sm whitespace-pre-wrap">{task.internal_comment}</Card>
