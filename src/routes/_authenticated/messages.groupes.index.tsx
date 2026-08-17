@@ -238,7 +238,7 @@ function TreeNode({ node, depth, unreadByConv, activityByConv }: {
       </div>
       {hasChildren && expanded && (
         <ul>
-          {node.children.map((c) => <TreeNode key={c.id} node={c} depth={depth + 1} unreadByConv={unreadByConv} />)}
+          {node.children.map((c) => <TreeNode key={c.id} node={c} depth={depth + 1} unreadByConv={unreadByConv} activityByConv={activityByConv} />)}
         </ul>
       )}
     </li>
