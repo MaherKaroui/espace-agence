@@ -14,6 +14,76 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_task_assignees: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_task_assignees_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "agency_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_task_attachments: {
+        Row: {
+          created_at: string
+          file_size: number | null
+          filename: string
+          id: string
+          mime_type: string | null
+          storage_path: string
+          task_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_size?: number | null
+          filename: string
+          id?: string
+          mime_type?: string | null
+          storage_path: string
+          task_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_size?: number | null
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          storage_path?: string
+          task_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_task_attachments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "agency_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agency_task_comments: {
         Row: {
           content: string
@@ -68,6 +138,7 @@ export type Database = {
           task_type: string | null
           title: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           archived_at?: string | null
@@ -90,6 +161,7 @@ export type Database = {
           task_type?: string | null
           title: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           archived_at?: string | null
@@ -112,6 +184,7 @@ export type Database = {
           task_type?: string | null
           title?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -549,6 +622,7 @@ export type Database = {
           client_id: string
           commentaire_agence: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           has_stagiaires: boolean
           id: string
@@ -570,6 +644,7 @@ export type Database = {
           statut: Database["public"]["Enums"]["dossier_statut"]
           titre: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           archived_at?: string | null
@@ -579,6 +654,7 @@ export type Database = {
           client_id: string
           commentaire_agence?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           has_stagiaires?: boolean
           id?: string
@@ -600,6 +676,7 @@ export type Database = {
           statut?: Database["public"]["Enums"]["dossier_statut"]
           titre: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           archived_at?: string | null
@@ -609,6 +686,7 @@ export type Database = {
           client_id?: string
           commentaire_agence?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           has_stagiaires?: boolean
           id?: string
@@ -630,6 +708,7 @@ export type Database = {
           statut?: Database["public"]["Enums"]["dossier_statut"]
           titre?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
