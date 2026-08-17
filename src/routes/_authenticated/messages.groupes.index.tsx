@@ -16,6 +16,9 @@ import {
 import { Users2, Plus, ChevronRight, ChevronDown, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import {
+  useClientsActivity, mergeActivity, ActivityBadges, type ClientActivity,
+} from "@/components/conversation-activity";
 
 
 export const Route = createFileRoute("/_authenticated/messages/groupes/")({
