@@ -128,13 +128,8 @@ function CardContent({ d, poleById, statsById, inconsistencyById, externalUnread
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full" style={{ width: `${d.avancement ?? 0}%`, backgroundColor: color }} />
-          </div>
-          <span className="text-[10px] text-muted-foreground tabular-nums">{d.avancement ?? 0}%</span>
-        </div>
       </div>
+
     </div>
   );
 }
@@ -164,17 +159,17 @@ function KanbanColumn({ lane, ids, children, isOver }: {
 }) {
   const { setNodeRef } = useDroppable({ id: `lane:${lane.key}`, data: { type: "lane", laneKey: lane.key } });
   return (
-    <div className="space-y-2 min-w-0">
-      <div className="flex items-center justify-between px-1">
-        <h3 className="font-display text-sm uppercase tracking-wider text-muted-foreground">{lane.label}</h3>
-        <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-muted text-xs font-medium">
+    <div className="flex flex-col w-[300px] shrink-0 snap-start rounded-xl border bg-muted/30 max-h-[70vh]">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-muted/50 rounded-t-xl sticky top-0 z-10">
+        <h3 className="font-display text-xs uppercase tracking-wider text-muted-foreground truncate">{lane.label}</h3>
+        <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-background text-xs font-medium shrink-0">
           {ids.length}
         </span>
       </div>
       <div
         ref={setNodeRef}
         className={cn(
-          "space-y-2 min-h-24 rounded-lg p-1 transition-colors border border-transparent",
+          "flex-1 overflow-y-auto space-y-2 min-h-24 p-2 transition-colors border border-transparent rounded-b-xl",
           isOver && "bg-primary/5 border-primary/30 border-dashed",
         )}
       >
@@ -182,11 +177,12 @@ function KanbanColumn({ lane, ids, children, isOver }: {
           {children}
         </SortableContext>
         {ids.length === 0 && (
-          <Card className="p-4 border-dashed text-center text-xs text-muted-foreground">Déposez un dossier ici</Card>
+          <Card className="p-4 border-dashed bg-transparent text-center text-xs text-muted-foreground">Déposez un dossier ici</Card>
         )}
       </div>
     </div>
   );
+
 }
 
 export function DossiersKanbanBoard({
@@ -335,7 +331,7 @@ export function DossiersKanbanBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={() => { setActiveId(null); setOverLane(null); }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="flex gap-4 overflow-x-auto pb-3 snap-x -mx-1 px-1">
         {lanes.map((lane) => {
           const list = columns[lane.key] ?? [];
           return (
