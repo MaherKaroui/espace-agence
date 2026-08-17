@@ -297,6 +297,11 @@ function DossierDetail() {
       )}
 
 
+      {isAdmin && (
+        <div className="flex justify-end">
+          <DossierDriveSync dossierId={dossier.id} />
+        </div>
+      )}
       {isAdmin && <DossierLinkedTask dossierId={dossier.id} />}
       {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
       {isAdmin && hasIntervenants && (
