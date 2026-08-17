@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Trash2, User, Volume2, VolumeX } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePresence, PresenceAvatar, PresenceLabel } from "@/components/presence-indicator";
 import { mentionsToPlainText } from "@/lib/mentions";
@@ -37,7 +37,7 @@ function AdminMessages() {
   const { isAdmin } = useRole();
   const { user } = useAuth();
   const [q, setQ] = useState("");
-  const [onlyUnread, setOnlyUnread] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | "unread" | "read">("all");
   const [muted, setMuted] = useState(false);
   useEffect(() => { setMuted(isNotifSoundMuted()); }, []);
 
@@ -63,20 +63,38 @@ function AdminMessages() {
       const { data: profiles } = await supabase.from("profiles").select("*").is("archived_at", null);
       const { data: msgs } = await supabase
         .from("messages")
-        .select("client_id, content, created_at, from_agence, read_at, deleted_at")
+        .select("client_id, content, created_at, from_agence, read_at, read_by, deleted_at")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       const last = new Map<string, any>();
       const unread = new Map<string, number>();
+      const lastSeen = new Map<string, any>();
       for (const m of (msgs ?? []) as any[]) {
         if (!last.has(m.client_id)) last.set(m.client_id, m);
         // Message client vers agence, non lu = à traiter
         if (!m.from_agence && !m.read_at) {
           unread.set(m.client_id, (unread.get(m.client_id) ?? 0) + 1);
         }
+        if (!m.from_agence && m.read_at && !lastSeen.has(m.client_id)) lastSeen.set(m.client_id, m);
+      }
+      const readerIds = [...new Set([...lastSeen.values()].map((m) => m.read_by).filter(Boolean))];
+      const readers = new Map<string, any>();
+      if (readerIds.length > 0) {
+        const { data: rp } = await supabase.from("profiles").select("id, prenom, nom, email").in("id", readerIds as string[]);
+        ((rp ?? []) as any[]).forEach((p) => readers.set(p.id, p));
       }
       return (profiles ?? [])
-        .map((p: any) => ({ ...p, last: last.get(p.id), unread: unread.get(p.id) ?? 0 }))
+        .map((p: any) => {
+          const seen = lastSeen.get(p.id);
+          const reader = seen?.read_by ? readers.get(seen.read_by) : null;
+          return {
+            ...p,
+            last: last.get(p.id),
+            unread: unread.get(p.id) ?? 0,
+            seenAt: seen?.read_at ?? null,
+            seenBy: reader ? `${reader.prenom ?? ""} ${reader.nom ?? ""}`.trim() || reader.email : null,
+          };
+        })
         .filter((t: any) => !!t.last)
         .sort((a: any, b: any) => (b.last?.created_at ?? "").localeCompare(a.last?.created_at ?? ""));
     },
@@ -103,12 +121,13 @@ function AdminMessages() {
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     return (threads as any[]).filter((t) => {
-      if (onlyUnread && !(t.unread > 0)) return false;
+      if (statusFilter === "unread" && !(t.unread > 0)) return false;
+      if (statusFilter === "read" && t.unread > 0) return false;
       if (!term) return true;
       const s = `${t.prenom ?? ""} ${t.nom ?? ""} ${t.email ?? ""} ${t.entreprise ?? ""}`.toLowerCase();
       return s.includes(term);
     });
-  }, [threads, q, onlyUnread]);
+  }, [threads, q, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -117,7 +136,7 @@ function AdminMessages() {
           <h1 className="font-display text-3xl">Messagerie clients</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {threads.length} discussion{threads.length > 1 ? "s" : ""}
-            {totalUnread > 0 && <> · <span className="text-primary font-medium">{totalUnread} non lu{totalUnread > 1 ? "s" : ""}</span></>}
+            {" · "}<span className={totalUnread > 0 ? "text-primary font-medium" : ""}>Messages non vus : {totalUnread}</span>
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -136,14 +155,26 @@ function AdminMessages() {
             {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             {muted ? "Son coupé" : "Son actif"}
           </Button>
-          <Button
-            variant={onlyUnread ? "default" : "outline"}
-            size="sm"
-            onClick={() => setOnlyUnread((v) => !v)}
-            className="gap-2"
-          >
-            Non lus {totalUnread > 0 && <Badge variant="secondary" className="ml-1">{totalUnread}</Badge>}
-          </Button>
+          <div className="flex items-center gap-1 rounded-lg border p-1">
+            {([
+              { key: "all", label: "Tous" },
+              { key: "unread", label: "Non vus" },
+              { key: "read", label: "Vus" },
+            ] as const).map((f) => (
+              <Button
+                key={f.key}
+                variant={statusFilter === f.key ? "default" : "ghost"}
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setStatusFilter(f.key)}
+              >
+                {f.label}
+                {f.key === "unread" && totalUnread > 0 && (
+                  <Badge variant="secondary">{totalUnread}</Badge>
+                )}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -160,29 +191,51 @@ function AdminMessages() {
       <Card className="divide-y">
         {filtered.length === 0 && (
           <div className="p-8 text-center text-sm text-muted-foreground">
-            {onlyUnread ? "Aucune discussion non lue." : "Aucune discussion."}
+            {statusFilter === "unread"
+              ? "Aucune discussion non vue."
+              : statusFilter === "read"
+                ? "Aucune discussion vue."
+                : "Aucune discussion."}
           </div>
         )}
         {filtered.map((t: any) => {
           const p = presence?.get(t.id);
           const name = `${t.prenom ?? ""} ${t.nom ?? ""}`.trim() || t.email || "Client sans nom";
+          const unseen = t.unread > 0;
           return (
-            <div key={t.id} className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 hover:bg-muted/30">
+            <div
+              key={t.id}
+              className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-l-4 transition-colors ${
+                unseen
+                  ? "bg-primary/5 border-l-primary hover:bg-primary/10"
+                  : "bg-muted/20 border-l-border hover:bg-muted/40"
+              }`}
+            >
               <Link to="/admin/messages/$clientId" params={{ clientId: t.id }} className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <PresenceAvatar online={p?.online}>
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><User className="h-5 w-5 text-primary" /></div>
                 </PresenceAvatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className={`truncate min-w-0 ${t.unread > 0 ? "font-semibold" : "font-medium"}`}>{name}</div>
+                    <div className={`truncate min-w-0 ${unseen ? "font-semibold" : "font-medium"}`}>{name}</div>
                     <span className="hidden sm:inline"><PresenceLabel row={p} /></span>
+                    {unseen ? (
+                      <Badge className="text-[10px] shrink-0">Non vu</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] shrink-0 text-muted-foreground">Vu</Badge>
+                    )}
                     {t.unread > 0 && (
-                      <Badge className="h-5 min-w-5 px-1.5 rounded-full text-xs shrink-0">{t.unread}</Badge>
+                      <Badge variant="secondary" className="h-5 min-w-5 px-1.5 rounded-full text-xs shrink-0">{t.unread}</Badge>
                     )}
                   </div>
-                  <div className={`text-xs truncate ${t.unread > 0 ? "text-foreground" : "text-muted-foreground"}`}>
+                  <div className={`text-xs truncate ${unseen ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                     {t.last ? (t.last.from_agence ? "Vous : " : "") + (mentionsToPlainText(t.last.content) || "Pièce jointe") : "Aucun message"}
                   </div>
+                  {!unseen && t.seenAt && (
+                    <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      Vu{t.seenBy ? ` par ${t.seenBy}` : ""} le {format(new Date(t.seenAt), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
+                    </div>
+                  )}
                   {t.last && (
                     <div className="sm:hidden text-[11px] text-muted-foreground mt-0.5 truncate">
                       {formatDistanceToNow(new Date(t.last.created_at), { addSuffix: true, locale: fr })}
