@@ -83,3 +83,44 @@ export async function syncExternalConversationMember(
       .eq("user_id", userId);
   }
 }
+
+/**
+ * Réaffecte la tâche agence auto ("nouveau_dossier") d'un dossier juridique
+ * à la personne juridique assignée (et l'ajoute aux assignés multiples).
+ */
+export async function reassignAutoTaskToJuridique(
+  dossierId: string,
+  userId: string | null,
+  actorId: string,
+) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { data: task } = await supabaseAdmin
+    .from("agency_tasks")
+    .select("id, assigned_to")
+    .eq("dossier_id", dossierId)
+    .eq("task_type", "nouveau_dossier")
+    .maybeSingle();
+  if (!task) return;
+
+  if (!userId) {
+    // Plus personne d'assigné : on repasse la tâche en non assignée
+    await supabaseAdmin
+      .from("agency_tasks")
+      .update({ assigned_to: null, updated_by: actorId })
+      .eq("id", task.id);
+    return;
+  }
+
+  await supabaseAdmin
+    .from("agency_tasks")
+    .update({ assigned_to: userId, updated_by: actorId })
+    .eq("id", task.id);
+
+  await supabaseAdmin
+    .from("agency_task_assignees")
+    .upsert([{ task_id: task.id, user_id: userId, added_by: actorId }], {
+      onConflict: "task_id,user_id",
+      ignoreDuplicates: true,
+    });
+}

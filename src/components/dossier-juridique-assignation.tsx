@@ -36,6 +36,8 @@ export function DossierJuridiqueAssignation({ dossierId, canEdit }: { dossierId:
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["dossier-juridique", dossierId] });
     qc.invalidateQueries({ queryKey: ["dossiers-mine"] });
+    qc.invalidateQueries({ queryKey: ["dossier-linked-task", dossierId] });
+    qc.invalidateQueries({ queryKey: ["dossier-linked-task-assignee"] });
   };
 
   const revokeMut = useMutation({
