@@ -1249,6 +1249,7 @@ export type Database = {
           id: string
           is_system: boolean
           read_at: string | null
+          read_by: string | null
           sender_id: string
         }
         Insert: {
@@ -1267,6 +1268,7 @@ export type Database = {
           id?: string
           is_system?: boolean
           read_at?: string | null
+          read_by?: string | null
           sender_id: string
         }
         Update: {
@@ -1285,6 +1287,7 @@ export type Database = {
           id?: string
           is_system?: boolean
           read_at?: string | null
+          read_by?: string | null
           sender_id?: string
         }
         Relationships: []
