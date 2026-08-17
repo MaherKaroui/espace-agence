@@ -19,7 +19,7 @@ export const Route = createFileRoute("/auth")({
   // Page d'auth entièrement client-side : évite un mismatch d'hydratation
   // React (#418) car la session Supabase n'est disponible que côté client.
   ssr: false,
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: { next?: unknown }) => ({
     next: typeof s.next === "string" ? s.next : undefined,
   }),
   head: () => ({
