@@ -122,7 +122,6 @@ function AdminDossiers() {
   const [view, setView] = useState<ViewMode>("list");
   const [poleFilter, setPoleFilter] = useState<string>("all");
   const [showArchived, setShowArchived] = useState(false);
-  const [myJuridiqueOnly, setMyJuridiqueOnly] = useState(false);
   const { user } = useAuth();
   const { isDirectionOrAdmin, isStaff } = useRole();
 
