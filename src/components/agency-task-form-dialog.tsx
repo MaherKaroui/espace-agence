@@ -37,6 +37,8 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
   const [status, setStatus] = useState<Status>("a_faire");
   const [dueDate, setDueDate] = useState("");
   const [assignedTo, setAssignedTo] = useState<string>(NONE);
+  const [coAssignees, setCoAssignees] = useState<string[]>([]);
+  const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [poleId, setPoleId] = useState<string>(NONE);
   const [clientId, setClientId] = useState<string>(NONE);
   const [dossierId, setDossierId] = useState<string>(NONE);
@@ -50,11 +52,21 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
     setStatus(task?.status ?? "a_faire");
     setDueDate(task?.due_date ? task.due_date.slice(0, 16) : "");
     setAssignedTo(task?.assigned_to ?? NONE);
+    setRemindersEnabled((task as any)?.reminders_enabled ?? true);
     setPoleId(task?.pole_id ?? defaultPoleId ?? NONE);
     setClientId(task?.client_id ?? NONE);
     setDossierId(task?.dossier_id ?? NONE);
     setInternalComment(task?.internal_comment ?? "");
+    setCoAssignees([]);
+    if (task?.id) {
+      supabase
+        .from("agency_task_assignees")
+        .select("user_id")
+        .eq("task_id", task.id)
+        .then(({ data }) => setCoAssignees((data ?? []).map((r) => r.user_id)));
+    }
   }, [open, task, defaultPoleId]);
+
 
   const { data: poles = [] } = useQuery({
     queryKey: ["agency-task-poles"],
@@ -121,20 +133,50 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
         client_id: clientId === NONE ? null : clientId,
         dossier_id: dossierId === NONE ? null : dossierId,
         internal_comment: internalComment.trim() || null,
+        reminders_enabled: remindersEnabled,
       };
 
+      let taskId = task?.id ?? null;
       if (isEdit && task) {
         const { error } = await supabase.from("agency_tasks").update(payload).eq("id", task.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("agency_tasks").insert({ ...payload, created_by: user.id });
+        const { data, error } = await supabase
+          .from("agency_tasks")
+          .insert({ ...payload, created_by: user.id })
+          .select("id")
+          .single();
         if (error) throw error;
+        taskId = data.id;
+      }
+
+      // Assignés supplémentaires (multi-assignation)
+      if (taskId) {
+        const { data: existing } = await supabase
+          .from("agency_task_assignees")
+          .select("user_id")
+          .eq("task_id", taskId);
+        const current = new Set((existing ?? []).map((r) => r.user_id));
+        const target = new Set(coAssignees.filter((id) => id !== (assignedTo === NONE ? null : assignedTo)));
+        const toAdd = [...target].filter((id) => !current.has(id));
+        const toRemove = [...current].filter((id) => !target.has(id));
+        if (toAdd.length) {
+          const { error } = await supabase
+            .from("agency_task_assignees")
+            .insert(toAdd.map((uid) => ({ task_id: taskId!, user_id: uid, added_by: user.id })));
+          if (error) throw error;
+        }
+        if (toRemove.length) {
+          await supabase.from("agency_task_assignees").delete().eq("task_id", taskId).in("user_id", toRemove);
+        }
       }
     },
+
     onSuccess: () => {
       toast.success(isEdit ? "Tâche mise à jour" : "Tâche créée");
       qc.invalidateQueries({ queryKey: ["agency-tasks"] });
       qc.invalidateQueries({ queryKey: ["agency-tasks-kpis"] });
+      qc.invalidateQueries({ queryKey: ["agency-task-assignees"] });
       onOpenChange(false);
     },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
@@ -204,6 +246,41 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
               </Select>
             </div>
           </div>
+
+          <div className="space-y-2">
+            <Label>Autres personnes assignées</Label>
+            <div className="max-h-40 overflow-y-auto rounded-md border p-2 space-y-1">
+              {staff.filter((s) => s.id !== assignedTo).map((s) => (
+                <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-primary"
+                    checked={coAssignees.includes(s.id)}
+                    onChange={(e) =>
+                      setCoAssignees((prev) => (e.target.checked ? [...prev, s.id] : prev.filter((x) => x !== s.id)))
+                    }
+                  />
+                  {s.label}
+                </label>
+              ))}
+              {staff.length === 0 && <div className="text-xs text-muted-foreground">Aucun membre disponible.</div>}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Chaque personne assignée reçoit les notifications et les rappels de la tâche.
+            </p>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-primary"
+              checked={remindersEnabled}
+              onChange={(e) => setRemindersEnabled(e.target.checked)}
+            />
+            Rappels automatiques (J-2, J-1, jour J puis en cas de retard)
+          </label>
+
+
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
