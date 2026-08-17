@@ -331,7 +331,7 @@ export function DossiersKanbanBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={() => { setActiveId(null); setOverLane(null); }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="flex gap-4 overflow-x-auto pb-3 snap-x -mx-1 px-1">
         {lanes.map((lane) => {
           const list = columns[lane.key] ?? [];
           return (
