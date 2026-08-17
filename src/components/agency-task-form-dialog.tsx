@@ -133,16 +133,45 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
         client_id: clientId === NONE ? null : clientId,
         dossier_id: dossierId === NONE ? null : dossierId,
         internal_comment: internalComment.trim() || null,
+        reminders_enabled: remindersEnabled,
       };
 
+      let taskId = task?.id ?? null;
       if (isEdit && task) {
         const { error } = await supabase.from("agency_tasks").update(payload).eq("id", task.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("agency_tasks").insert({ ...payload, created_by: user.id });
+        const { data, error } = await supabase
+          .from("agency_tasks")
+          .insert({ ...payload, created_by: user.id })
+          .select("id")
+          .single();
         if (error) throw error;
+        taskId = data.id;
+      }
+
+      // Assignés supplémentaires (multi-assignation)
+      if (taskId) {
+        const { data: existing } = await supabase
+          .from("agency_task_assignees")
+          .select("user_id")
+          .eq("task_id", taskId);
+        const current = new Set((existing ?? []).map((r) => r.user_id));
+        const target = new Set(coAssignees.filter((id) => id !== (assignedTo === NONE ? null : assignedTo)));
+        const toAdd = [...target].filter((id) => !current.has(id));
+        const toRemove = [...current].filter((id) => !target.has(id));
+        if (toAdd.length) {
+          const { error } = await supabase
+            .from("agency_task_assignees")
+            .insert(toAdd.map((uid) => ({ task_id: taskId!, user_id: uid, added_by: user.id })));
+          if (error) throw error;
+        }
+        if (toRemove.length) {
+          await supabase.from("agency_task_assignees").delete().eq("task_id", taskId).in("user_id", toRemove);
+        }
       }
     },
+
     onSuccess: () => {
       toast.success(isEdit ? "Tâche mise à jour" : "Tâche créée");
       qc.invalidateQueries({ queryKey: ["agency-tasks"] });
