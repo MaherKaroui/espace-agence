@@ -62,6 +62,44 @@ export function MentionTextarea({
   const [items, setItems] = useState<Candidate[]>([]);
   const [active, setActive] = useState(0);
 
+  // Texte affiché à l'utilisateur : « @Nom » / « #Nom » lisibles, sans identifiants.
+  const [display, setDisplay] = useState("");
+  // Mémoire des mentions choisies : libellé affiché → identifiant réel.
+  const registry = useRef<Map<string, { id: string; kind: Kind }>>(new Map());
+
+  const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  /** Convertit le texte lisible en contenu balisé (tokens avec ids). */
+  const encode = (text: string) => {
+    let out = text;
+    const entries = Array.from(registry.current.entries()).sort((a, b) => b[0].length - a[0].length);
+    for (const [label, m] of entries) {
+      const prefix = m.kind === "user" ? "@" : "#";
+      const token = m.kind === "user" ? `@[${label}](user:${m.id})` : `#[${label}](${m.kind}:${m.id})`;
+      out = out.split(`${prefix}${label}`).join(token);
+    }
+    return out;
+  };
+
+  /** Convertit un contenu balisé en texte lisible (et réenregistre les mentions). */
+  const decode = (text: string) =>
+    text
+      .replace(/@\[([^\]]+)\]\(user:([0-9a-fA-F-]+)\)/g, (_m, label: string, id: string) => {
+        registry.current.set(label, { id, kind: "user" });
+        return `@${label}`;
+      })
+      .replace(/#\[([^\]]+)\]\((client|dossier|task|pole):([0-9a-fA-F-]+)\)/g, (_m, label: string, kind: string, id: string) => {
+        registry.current.set(label, { id, kind: kind as Kind });
+        return `#${label}`;
+      });
+
+  // Synchronise si le parent réinitialise ou fixe la valeur de l'extérieur.
+  useEffect(() => {
+    if (encode(display) !== value) setDisplay(decode(value));
+    if (!value) registry.current.clear();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
   const detectTrigger = (text: string, caret: number) => {
     for (let i = caret - 1; i >= 0; i--) {
       const ch = text[i];
@@ -74,7 +112,8 @@ export function MentionTextarea({
   };
 
   const handleChange = (v: string) => {
-    onChange(v);
+    setDisplay(v);
+    onChange(encode(v));
     const el = ref.current;
     const caret = el?.selectionStart ?? v.length;
     setTrigger(detectTrigger(v, caret));
@@ -106,24 +145,24 @@ export function MentionTextarea({
 
   const insertMention = (c: Candidate) => {
     if (!trigger) return;
-    const before = value.slice(0, trigger.start);
-    const after = value.slice(ref.current?.selectionStart ?? value.length);
-    const token =
-      c.kind === "user"
-        ? `@[${c.label}](user:${c.id}) `
-        : `#[${c.label}](${c.kind}:${c.id}) `;
-    const next = `${before}${token}${after}`;
-    onChange(next);
+    registry.current.set(c.label, { id: c.id, kind: c.kind });
+    const before = display.slice(0, trigger.start);
+    const after = display.slice(ref.current?.selectionStart ?? display.length);
+    const visible = `${c.kind === "user" ? "@" : "#"}${c.label} `;
+    const next = `${before}${visible}${after}`;
+    setDisplay(next);
+    onChange(encode(next));
     setTrigger(null);
     setItems([]);
     requestAnimationFrame(() => {
       const el = ref.current;
       if (!el) return;
-      const pos = before.length + token.length;
+      const pos = before.length + visible.length;
       el.focus();
       el.setSelectionRange(pos, pos);
     });
   };
+
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (trigger && items.length > 0) {
