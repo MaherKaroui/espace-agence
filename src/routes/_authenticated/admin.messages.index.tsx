@@ -121,12 +121,13 @@ function AdminMessages() {
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     return (threads as any[]).filter((t) => {
-      if (onlyUnread && !(t.unread > 0)) return false;
+      if (statusFilter === "unread" && !(t.unread > 0)) return false;
+      if (statusFilter === "read" && t.unread > 0) return false;
       if (!term) return true;
       const s = `${t.prenom ?? ""} ${t.nom ?? ""} ${t.email ?? ""} ${t.entreprise ?? ""}`.toLowerCase();
       return s.includes(term);
     });
-  }, [threads, q, onlyUnread]);
+  }, [threads, q, statusFilter]);
 
   return (
     <div className="space-y-6">
