@@ -288,25 +288,31 @@ function AdminDossiers() {
             )}
           </p>
         </div>
-        <div className="inline-flex rounded-md border border-input overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setView("list")}
-            className={cn("h-9 px-3 inline-flex items-center gap-2 text-sm",
-              view === "list" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted/50")}
-            aria-pressed={view === "list"}
-          >
-            <ListIcon className="h-4 w-4" /> Liste
-          </button>
-          <button
-            type="button"
-            onClick={() => setView("kanban")}
-            className={cn("h-9 px-3 inline-flex items-center gap-2 text-sm border-l border-input",
-              view === "kanban" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted/50")}
-            aria-pressed={view === "kanban"}
-          >
-            <LayoutGrid className="h-4 w-4" /> Kanban
-          </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <CreateDossierDialog
+            stayInPlace
+            onCreated={() => qc.invalidateQueries({ queryKey: ["admin-dossiers"] })}
+          />
+          <div className="inline-flex rounded-md border border-input overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setView("list")}
+              className={cn("h-9 px-3 inline-flex items-center gap-2 text-sm",
+                view === "list" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted/50")}
+              aria-pressed={view === "list"}
+            >
+              <ListIcon className="h-4 w-4" /> Liste
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("kanban")}
+              className={cn("h-9 px-3 inline-flex items-center gap-2 text-sm border-l border-input",
+                view === "kanban" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted/50")}
+              aria-pressed={view === "kanban"}
+            >
+              <LayoutGrid className="h-4 w-4" /> Kanban
+            </button>
+          </div>
         </div>
       </div>
 
