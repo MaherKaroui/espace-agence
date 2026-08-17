@@ -37,7 +37,7 @@ function AdminMessages() {
   const { isAdmin } = useRole();
   const { user } = useAuth();
   const [q, setQ] = useState("");
-  const [onlyUnread, setOnlyUnread] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | "unread" | "read">("all");
   const [muted, setMuted] = useState(false);
   useEffect(() => { setMuted(isNotifSoundMuted()); }, []);
 
