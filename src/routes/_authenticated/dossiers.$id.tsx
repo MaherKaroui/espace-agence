@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TasksPanel } from "@/components/tasks-panel";
 import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { DossierLinkedTask } from "@/components/dossier-linked-task";
+import { DossierDriveSync } from "@/components/dossier-drive-sync";
 import { DossierExternalIntervenants } from "@/components/dossier-external-intervenants";
 import { listDossierIntervenants } from "@/lib/dossier-assignments.functions";
 import { DossierExternalChat } from "@/components/dossier-external-chat";
