@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Trash2, User, Volume2, VolumeX } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { usePresence, PresenceAvatar, PresenceLabel } from "@/components/presence-indicator";
 import { mentionsToPlainText } from "@/lib/mentions";
@@ -136,7 +136,7 @@ function AdminMessages() {
           <h1 className="font-display text-3xl">Messagerie clients</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {threads.length} discussion{threads.length > 1 ? "s" : ""}
-            {totalUnread > 0 && <> · <span className="text-primary font-medium">{totalUnread} non lu{totalUnread > 1 ? "s" : ""}</span></>}
+            {" · "}<span className={totalUnread > 0 ? "text-primary font-medium" : ""}>Messages non vus : {totalUnread}</span>
           </p>
         </div>
         <div className="flex items-center gap-2">
