@@ -10,6 +10,8 @@ export const STATUT_LABELS: Record<string, { label: string; explication: string 
   documents_manquants: { label: 'Documents manquants', explication: "Il manque encore des documents pour traiter votre dossier. Consultez la liste dans votre espace." },
   en_cours_etude: { label: "En cours d'étude", explication: "Notre équipe étudie actuellement votre dossier." },
   en_cours_traitement: { label: 'En cours de traitement', explication: "Votre dossier est en cours de traitement. Nous vous tiendrons informé·e des prochaines étapes." },
+  planification: { label: 'Planification', explication: "Votre audit est en cours de planification. Nous revenons vers vous avec une date." },
+  audit_realise: { label: 'Audit réalisé', explication: "L'audit a bien été réalisé. Nous poursuivons le suivi de votre dossier." },
   a_completer: { label: 'À compléter', explication: "Une action de votre part est attendue. Merci de consulter votre dossier." },
   valide: { label: 'Validé', explication: "Votre dossier a été validé. Nous poursuivons les démarches associées." },
   refuse: { label: 'Refusé', explication: "Votre dossier n'a pas pu aboutir. Un conseiller reviendra vers vous rapidement." },

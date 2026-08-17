@@ -29,11 +29,20 @@ export const STATUTS = [
   { value: "documents_manquants", label: "Documents manquants", tone: "warning" },
   { value: "en_cours_etude", label: "En cours d'étude", tone: "info" },
   { value: "en_cours_traitement", label: "En cours de traitement", tone: "info" },
+  { value: "planification", label: "Planification", tone: "info" },
+  { value: "audit_realise", label: "Audit réalisé", tone: "success" },
   { value: "a_completer", label: "À compléter", tone: "warning" },
   { value: "valide", label: "Validé", tone: "success" },
   { value: "refuse", label: "Refusé", tone: "destructive" },
-  { value: "termine", label: "Terminé", tone: "success" },
+  { value: "termine", label: "Dossier clôturé", tone: "success" },
 ] as const;
+
+/** Statuts considérés comme « demande terminée » (sortie des listes en cours). */
+export const STATUTS_CLOS: string[] = ["termine", "annule", "refuse", "audit_realise"];
+
+/** Statuts affichés dans la liste « demandes en cours ». */
+export const isEnCours = (statut: string) => !STATUTS_CLOS.includes(statut) && statut !== "planification";
+
 
 export type Statut = (typeof STATUTS)[number]["value"];
 

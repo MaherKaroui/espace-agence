@@ -76,7 +76,9 @@ function daysSince(iso: string | null | undefined): number | null {
 const LANES: { key: string; label: string; statuts: string[] }[] = [
   { key: "todo", label: "À traiter", statuts: ["en_attente", "documents_manquants", "a_completer"] },
   { key: "doing", label: "En cours", statuts: ["en_cours_etude", "en_cours_traitement"] },
-  { key: "done", label: "Terminés", statuts: ["termine", "valide"] },
+  { key: "planif", label: "Planification", statuts: ["planification"] },
+  { key: "audit", label: "Audit réalisé", statuts: ["audit_realise"] },
+  { key: "done", label: "Clôturés", statuts: ["termine", "valide"] },
   { key: "ko", label: "Refusés", statuts: ["refuse"] },
 ];
 function laneOf(statut: string | null | undefined): string {
@@ -86,11 +88,14 @@ function statutForLane(laneKey: string): string {
   const map: Record<string, string> = {
     todo: "en_attente",
     doing: "en_cours_traitement",
+    planif: "planification",
+    audit: "audit_realise",
     done: "termine",
     ko: "refuse",
   };
   return map[laneKey] ?? "en_attente";
 }
+
 
 
 export const Route = createFileRoute("/_authenticated/admin/dossiers")({
@@ -403,7 +408,9 @@ function DossierRow({ d, stats, inc, poleColor, unread = 0 }: {
   const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
   return (
     <Link
-      to={`/dossiers/${d.id}${unread > 0 ? "#audit-chat" : ""}`}
+      to="/dossiers/$id"
+      params={{ id: d.id }}
+      hash={unread > 0 ? "audit-chat" : undefined}
       className="block p-4 hover:bg-muted/40 relative transition-colors"
       style={{ backgroundColor: `color-mix(in oklab, ${poleColor} 5%, transparent)` }}
     >
