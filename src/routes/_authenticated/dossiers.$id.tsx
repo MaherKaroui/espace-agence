@@ -136,7 +136,7 @@ function DossierDetail() {
         classify({ data: { documentId: inserted.id } })
           .then(() => qc.invalidateQueries({ queryKey: ["documents", id] }))
           .catch((e) => console.warn("Classification échouée", e));
-        autoFile({ data: { documentId: inserted.id } }).catch((e) =>
+        autoFile({ data: { documentId: inserted.id } }).catch((e: unknown) =>
           console.warn("Classement Drive échoué", e),
         );
       }

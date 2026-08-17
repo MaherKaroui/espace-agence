@@ -186,7 +186,7 @@ function RequiredRow({
       if (error) throw error;
       // Classement automatique dans le Drive de l'agence (non bloquant)
       if (inserted?.id) {
-        autoFileDrive({ data: { documentId: inserted.id } }).catch((e) =>
+        autoFileDrive({ data: { documentId: inserted.id } }).catch((e: unknown) =>
           console.warn("Classement Drive échoué", e),
         );
       }
