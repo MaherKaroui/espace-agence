@@ -230,8 +230,11 @@ function TreeNode({ node, depth, unreadByConv, activityByConv }: {
               </span>
             )}
           </span>
-          <span className="text-[11px] sm:text-xs text-muted-foreground shrink-0 sm:ml-2 pl-6 sm:pl-0 truncate">
-            {formatDistanceToNow(new Date(node.updated_at), { locale: fr, addSuffix: true })}
+          <span className="flex items-center gap-2 shrink-0 pl-6 sm:pl-0 sm:ml-2">
+            <ActivityBadges activity={activityByConv[node.id]} />
+            <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
+              {formatDistanceToNow(new Date(node.updated_at), { locale: fr, addSuffix: true })}
+            </span>
           </span>
         </Link>
 
