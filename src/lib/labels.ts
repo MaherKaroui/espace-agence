@@ -46,6 +46,17 @@ export const isEnCours = (statut: string) => !STATUTS_CLOS.includes(statut) && s
 
 export type Statut = (typeof STATUTS)[number]["value"];
 
+/** Statuts réservés aux dossiers Qualiopi (planification d'audit). */
+export const STATUTS_QUALIOPI_ONLY: string[] = ["planification", "audit_realise"];
+
+/** Le statut est-il pertinent pour cette catégorie de dossier ? */
+export const statutAppliesTo = (statut: string, categorie?: string | null): boolean =>
+  !STATUTS_QUALIOPI_ONLY.includes(statut) || categorie === "qualiopi";
+
+/** Statuts sélectionnables pour une catégorie donnée. */
+export const statutsFor = (categorie?: string | null) =>
+  STATUTS.filter((s) => statutAppliesTo(s.value, categorie));
+
 export const categorieLabel = (v: string) => CATEGORIES.find((c) => c.value === v)?.label ?? v;
 export const statutLabel = (v: string) => STATUTS.find((s) => s.value === v)?.label ?? v;
 export const statutTone = (v: string): string => STATUTS.find((s) => s.value === v)?.tone ?? "muted";

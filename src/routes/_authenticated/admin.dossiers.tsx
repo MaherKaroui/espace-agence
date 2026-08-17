@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, FolderOpen, CheckCircle2, AlertTriangle, Circle, ClipboardCheck,
-  LayoutGrid, List as ListIcon, Clock, FileText, MessageSquare,
+  LayoutGrid, List as ListIcon, Clock, FileText, MessageSquare, Scale,
 } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel, CATEGORIES, requiredDocsFor, docMatches } from "@/lib/labels";
@@ -122,6 +122,7 @@ function AdminDossiers() {
   const [view, setView] = useState<ViewMode>("list");
   const [poleFilter, setPoleFilter] = useState<string>("all");
   const [showArchived, setShowArchived] = useState(false);
+  const [myJuridiqueOnly, setMyJuridiqueOnly] = useState(false);
   const { user } = useAuth();
   const { isDirectionOrAdmin, isStaff } = useRole();
 
@@ -187,6 +188,37 @@ function AdminDossiers() {
     },
   });
 
+  // Assignations juridiques (qui est responsable de quel dossier juridique)
+  const { data: juridiqueByDossier = {} } = useQuery({
+    queryKey: ["admin-dossiers-juridique", dossierIds.join(",")],
+    enabled: dossierIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("dossier_assignments")
+        .select("dossier_id, user_id")
+        .eq("role", "juridique")
+        .eq("active", true)
+        .in("dossier_id", dossierIds);
+      if (error) throw error;
+      const userIds = [...new Set((data ?? []).map((a: any) => a.user_id))];
+      let byUser = new Map<string, any>();
+      if (userIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles").select("id, nom, prenom, email").in("id", userIds);
+        byUser = new Map((profs ?? []).map((p: any) => [p.id, p]));
+      }
+      const m: Record<string, { user_id: string; name: string }[]> = {};
+      for (const a of (data ?? []) as any[]) {
+        const p = byUser.get(a.user_id);
+        (m[a.dossier_id] ??= []).push({
+          user_id: a.user_id,
+          name: p ? `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email : "Utilisateur",
+        });
+      }
+      return m;
+    },
+  });
+
   const unreadFn = useServerFn(getExternalUnreadCounts);
   const { data: externalUnread = {} } = useQuery({
     queryKey: ["admin-dossiers-external-unread"],
@@ -212,6 +244,10 @@ function AdminDossiers() {
     if (cat !== "all" && r.categorie !== cat) return false;
     if (poleFilter !== "all" && r.pole_id !== poleFilter) return false;
     if (reviewOnly && !statsById[r.id]?.needsAction) return false;
+    if (myJuridiqueOnly) {
+      const assignees = (juridiqueByDossier as any)[r.id] ?? [];
+      if (r.categorie !== "juridique" || !assignees.some((a: any) => a.user_id === user?.id)) return false;
+    }
     const s = statsById[r.id];
     switch (quality) {
       case "to_fix": if (!s || s.toFix === 0) return false; break;
@@ -327,6 +363,17 @@ function AdminDossiers() {
           <FolderOpen className="h-4 w-4" />
           {showArchived ? "Archives" : `Archives${archivedCount > 0 ? ` (${archivedCount})` : ""}`}
         </button>
+        <button
+          type="button"
+          onClick={() => setMyJuridiqueOnly((v) => !v)}
+          className={cn("h-10 px-3 rounded-md border text-sm inline-flex items-center gap-2 transition-colors",
+            myJuridiqueOnly ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background border-input hover:bg-muted/50")}
+          aria-pressed={myJuridiqueOnly}
+        >
+          <Scale className="h-4 w-4" />
+          Mes dossiers juridiques
+        </button>
       </div>
 
       {dossiersError ? (
@@ -389,6 +436,7 @@ function AdminDossiers() {
                       inc={inconsistencyById[d.id]}
                       poleColor={color}
                       unread={(externalUnread as Record<string, number>)[d.id] ?? 0}
+                      juridiqueAssignees={(juridiqueByDossier as any)[d.id] ?? []}
                     />
                   ))}
                 </Card>
@@ -401,8 +449,9 @@ function AdminDossiers() {
   );
 }
 
-function DossierRow({ d, stats, inc, poleColor, unread = 0 }: {
+function DossierRow({ d, stats, inc, poleColor, unread = 0, juridiqueAssignees = [] }: {
   d: any; stats: ReviewStats | undefined; inc: Inconsistency; poleColor: string; unread?: number;
+  juridiqueAssignees?: { user_id: string; name: string }[];
 }) {
   const days = daysSince(d.updated_at);
   const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
@@ -455,6 +504,18 @@ function DossierRow({ d, stats, inc, poleColor, unread = 0 }: {
           <div className="text-xs text-muted-foreground mt-0.5">
             {d.profiles?.prenom} {d.profiles?.nom} · {d.profiles?.email}
           </div>
+          {d.categorie === "juridique" && (
+            <div className="text-xs mt-1 flex items-center gap-1.5 flex-wrap">
+              <Scale className="h-3 w-3 text-muted-foreground" />
+              {juridiqueAssignees.length === 0 ? (
+                <Badge variant="outline" className="text-[10px]">Non assigné</Badge>
+              ) : (
+                <span className="text-muted-foreground">
+                  Assigné à : {juridiqueAssignees.map((a) => a.name).join(", ")}
+                </span>
+              )}
+            </div>
+          )}
           <div className="mt-2 flex items-center gap-2">
             <div className="h-1.5 flex-1 max-w-40 rounded-full bg-muted overflow-hidden">
               <div className="h-full rounded-full transition-all"
@@ -476,6 +537,11 @@ function KanbanView({ items, statsById, inconsistencyById, poleById, externalUnr
   externalUnread?: Record<string, number>;
   canEdit: boolean;
 }) {
+  // Les colonnes « Planification » et « Audit réalisé » ne concernent que les dossiers Qualiopi.
+  const hasQualiopi = items.some(
+    (d) => d.categorie === "qualiopi" || ["planification", "audit_realise"].includes(d.statut),
+  );
+  const visibleLanes = hasQualiopi ? LANES : LANES.filter((l) => !["planif", "audit"].includes(l.key));
   return (
     <div className="space-y-2">
       <p className="text-xs text-muted-foreground px-1">
@@ -485,7 +551,7 @@ function KanbanView({ items, statsById, inconsistencyById, poleById, externalUnr
       </p>
       <DossiersKanbanBoard
         items={items}
-        lanes={LANES}
+        lanes={visibleLanes}
         laneOf={laneOf}
         statusForLane={statutForLane}
         canEdit={canEdit}

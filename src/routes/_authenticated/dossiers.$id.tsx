@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { categorieLabel, STATUTS } from "@/lib/labels";
+import { categorieLabel, statutsFor } from "@/lib/labels";
 import { buildDossierTitre } from "@/lib/dossier-title";
 import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2, LifeBuoy, MessageSquare, Eye, Link2, Send } from "lucide-react";
 import {
@@ -28,6 +28,7 @@ import { VideoPlayer, isVideoMime } from "@/components/video-player";
 import { DossierLinkedTask } from "@/components/dossier-linked-task";
 import { DossierDriveSync } from "@/components/dossier-drive-sync";
 import { DossierExternalIntervenants } from "@/components/dossier-external-intervenants";
+import { DossierJuridiqueAssignation } from "@/components/dossier-juridique-assignation";
 import { listDossierIntervenants } from "@/lib/dossier-assignments.functions";
 import { DossierExternalChat } from "@/components/dossier-external-chat";
 import { QualiopiRequestsPanel } from "@/components/qualiopi-requests-panel";
@@ -59,7 +60,7 @@ function DossierDetail() {
 
   // Any agency staff (admin / direction / manager / consultant) sees the
   // management UI. RLS restricts non-admins to dossiers in their poles.
-  const { isStaff: isAdmin } = useRole();
+  const { isStaff: isAdmin, isAdmin: isSuperAdmin, isDirection, isManager } = useRole();
   const nav = useNavigate();
   const qc = useQueryClient();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -312,6 +313,12 @@ function DossierDetail() {
         </div>
       )}
       {isAdmin && <DossierLinkedTask dossierId={dossier.id} />}
+      {isAdmin && dossier.categorie === "juridique" && (
+        <DossierJuridiqueAssignation
+          dossierId={dossier.id}
+          canEdit={isSuperAdmin || isDirection || isManager}
+        />
+      )}
       {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
       {isAdmin && hasIntervenants && (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -378,7 +385,7 @@ function DossierDetail() {
               <Select defaultValue={dossier.statut} onValueChange={(v) => updateDossier.mutate({ statut: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {STATUTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  {statutsFor(dossier.categorie).map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
