@@ -19,6 +19,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { isNotifSoundMuted, setNotifSoundMuted, playNotifSound } from "@/lib/notif-sound";
+import { useClientsActivity, ActivityBadges } from "@/components/conversation-activity";
 
 export const Route = createFileRoute("/_authenticated/admin/messages/")({
   head: () => ({ meta: [{ title: "Messagerie clients" }] }),
