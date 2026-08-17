@@ -403,7 +403,9 @@ function DossierRow({ d, stats, inc, poleColor, unread = 0 }: {
   const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
   return (
     <Link
-      to={`/dossiers/${d.id}${unread > 0 ? "#audit-chat" : ""}`}
+      to="/dossiers/$id"
+      params={{ id: d.id }}
+      hash={unread > 0 ? "audit-chat" : undefined}
       className="block p-4 hover:bg-muted/40 relative transition-colors"
       style={{ backgroundColor: `color-mix(in oklab, ${poleColor} 5%, transparent)` }}
     >
