@@ -244,10 +244,6 @@ function AdminDossiers() {
     if (cat !== "all" && r.categorie !== cat) return false;
     if (poleFilter !== "all" && r.pole_id !== poleFilter) return false;
     if (reviewOnly && !statsById[r.id]?.needsAction) return false;
-    if (myJuridiqueOnly) {
-      const assignees = (juridiqueByDossier as any)[r.id] ?? [];
-      if (r.categorie !== "juridique" || !assignees.some((a: any) => a.user_id === user?.id)) return false;
-    }
     const s = statsById[r.id];
     switch (quality) {
       case "to_fix": if (!s || s.toFix === 0) return false; break;
