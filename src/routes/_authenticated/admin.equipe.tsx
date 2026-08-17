@@ -394,8 +394,11 @@ function DisableAction({ member, onConfirm }: { member: TeamMember; onConfirm: (
   );
 }
 
+const EDITABLE_ROLES = [...STAFF_ROLES, { value: "client", label: "Client" }] as const;
+type EditableRole = (typeof EDITABLE_ROLES)[number]["value"];
+
 function EditRoleDialog({ open, onOpenChange, member, onDone }: { open: boolean; onOpenChange: (v: boolean) => void; member: TeamMember; onDone: () => void }) {
-  const [role, setRole] = useState<StaffRole>(primaryRole(member.roles) ?? "consultant");
+  const [role, setRole] = useState<EditableRole>(primaryRole(member.roles) ?? "consultant");
   const updateFn = useServerFn(updateTeamRole);
   const mut = useMutation({
     mutationFn: () => updateFn({ data: { userId: member.id, role } }),
@@ -408,17 +411,23 @@ function EditRoleDialog({ open, onOpenChange, member, onDone }: { open: boolean;
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Modifier le rôle</DialogTitle>
-          <DialogDescription>Rôle principal de {member.email}. Les autres rôles staff seront remplacés.</DialogDescription>
+          <DialogDescription>Rôle principal de {member.email}. Les autres rôles seront remplacés.</DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
           <Label>Rôle</Label>
-          <Select value={role} onValueChange={(v) => setRole(v as StaffRole)}>
+          <Select value={role} onValueChange={(v) => setRole(v as EditableRole)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {STAFF_ROLES.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+              {EDITABLE_ROLES.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          {role === "client" && (
+            <p className="text-xs text-muted-foreground">
+              Ce membre deviendra un client : il quittera la liste de l'équipe et perdra les accès agence.
+            </p>
+          )}
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
           <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
