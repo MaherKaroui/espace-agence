@@ -39,6 +39,8 @@ import { computeAvancement } from "@/lib/next-action";
 
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
+import { autoFileDocumentToDrive } from "@/lib/drive-auto.functions";
+
 import { inviteClient } from "@/lib/admin-clients.functions";
 
 import { formatDistanceToNow } from "date-fns";
@@ -101,6 +103,8 @@ function DossierDetail() {
 
 
   const classify = useServerFn(classifyDocument);
+  const autoFile = useServerFn(autoFileDocumentToDrive);
+
 
   // Le canal d'audit et les demandes Qualiopi n'apparaissent qu'une fois
   // au moins un intervenant externe affecté au dossier.
@@ -127,12 +131,16 @@ function DossierDetail() {
         from_agence: isAdmin,
       }).select("id").single();
       if (error) throw error;
-      // Classification IA en arrière-plan (n'échoue pas l'upload)
+      // Classification IA + classement Drive en arrière-plan (n'échoue pas l'upload)
       if (inserted?.id) {
         classify({ data: { documentId: inserted.id } })
           .then(() => qc.invalidateQueries({ queryKey: ["documents", id] }))
           .catch((e) => console.warn("Classification échouée", e));
+        autoFile({ data: { documentId: inserted.id } }).catch((e: unknown) =>
+          console.warn("Classement Drive échoué", e),
+        );
       }
+
     },
     onSuccess: () => {
       toast.success("Document ajouté — analyse en cours…");
