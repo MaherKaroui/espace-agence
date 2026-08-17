@@ -60,6 +60,7 @@ function PreferencesPage() {
         </p>
       </div>
       <WebPushToggle />
+      {isStaff && <GoogleDriveConnect />}
 
       <Card className="divide-y">
         {visible.map((c) => {
