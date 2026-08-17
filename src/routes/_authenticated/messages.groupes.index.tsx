@@ -161,7 +161,7 @@ function GroupesIndex() {
           </div>
         ) : (
           <ul className="space-y-1">
-            {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} unreadByConv={unreadByConv} />)}
+            {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} unreadByConv={unreadByConv} activityByConv={activityByConv} />)}
           </ul>
         )}
       </Card>
