@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { EVENT_CATEGORIES, type EventCategory } from "@/lib/notification-types";
 import { toast } from "sonner";
 import { WebPushToggle } from "@/components/web-push-toggle";
+import { GoogleDriveConnect } from "@/components/google-drive-connect";
 
 export const Route = createFileRoute("/_authenticated/preferences")({
   head: () => ({ meta: [{ title: "Préférences de notifications" }] }),
@@ -60,6 +61,7 @@ function PreferencesPage() {
         </p>
       </div>
       <WebPushToggle />
+      {isStaff && <GoogleDriveConnect />}
 
       <Card className="divide-y">
         {visible.map((c) => {
