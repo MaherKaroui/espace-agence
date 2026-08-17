@@ -166,7 +166,7 @@ function RequiredRow({
         .from("documents")
         .upload(path, file, { contentType: file.type || undefined, upsert: false });
       if (upErr) throw upErr;
-      const { error } = await supabase.from("documents").insert({
+      const { data: inserted, error } = await supabase.from("documents").insert({
         dossier_id: dossierId,
         uploader_id: user!.id,
         nom: renamed,
@@ -176,12 +176,19 @@ function RequiredRow({
         from_agence: isAdmin,
         detected_type: req.key,
         statut: "en_attente",
-      });
+      }).select("id").single();
       if (error) throw error;
+      // Classement automatique dans le Drive de l'agence (non bloquant)
+      if (inserted?.id) {
+        autoFileDrive({ data: { documentId: inserted.id } }).catch((e) =>
+          console.warn("Classement Drive échoué", e),
+        );
+      }
       // Notifier l'équipe si le dépôt vient du client
       if (!isAdmin) {
         try { notifyTeamDocumentDepose(dossierId, renamed); } catch { /* silencieux */ }
       }
+
     },
     onSuccess: () => {
       toast.success(doc ? "Document remplacé — l'agence va le vérifier" : "Merci ! L'agence va vérifier votre document");
