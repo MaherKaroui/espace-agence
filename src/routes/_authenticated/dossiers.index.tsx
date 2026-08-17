@@ -41,7 +41,9 @@ export const Route = createFileRoute("/_authenticated/dossiers/")({
 
 function DossiersPage() {
   const { user } = useAuth();
-  const { isAdmin } = useRole();
+  const { isAdmin, isStaff } = useRole();
+  // Toute l'équipe agence peut créer des dossiers, comme un admin.
+  const asStaff = isAdmin || isStaff;
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -63,7 +65,7 @@ function DossiersPage() {
     enabled: !!user,
     queryFn: async () => {
       const q = supabase.from("dossiers").select("*").order("updated_at", { ascending: false });
-      const { data, error } = isAdmin ? await q : await q.eq("client_id", user!.id);
+      const { data, error } = asStaff ? await q : await q.eq("client_id", user!.id);
       if (error) throw error;
       return data ?? [];
     },
@@ -242,7 +244,7 @@ function DossiersPage() {
     },
   });
 
-  const displayedDossiers = isAdmin ? filtered : dossiers;
+  const displayedDossiers = asStaff ? filtered : dossiers;
 
   const dossierWithAction = displayedDossiers.map((d) => {
     const docs = allDocs.filter((doc: any) => doc.dossier_id === d.id) as any;
@@ -271,12 +273,12 @@ function DossiersPage() {
     return na.kind === "attente_agence" || na.kind === "aucune";
   };
   const aFaire = dossierWithAction.filter(({ d, na }) =>
-    isAdmin
+    asStaff
       ? !isDone(d.statut) && !isEnCoursStatut(d.statut)
       : !isDone(d.statut) && !allRequiredAccepted(d, na),
   );
   const enCours = dossierWithAction.filter(({ d, na }) =>
-    isAdmin
+    asStaff
       ? !isDone(d.statut) && isEnCoursStatut(d.statut)
       : !isDone(d.statut) && allRequiredAccepted(d, na),
   );
@@ -293,18 +295,18 @@ function DossiersPage() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> {isAdmin ? "Nouveau dossier" : "Faire une demande à l'agence"}</Button>
+            <Button><Plus className="h-4 w-4 mr-2" /> {asStaff ? "Nouveau dossier" : "Faire une demande à l'agence"}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{isAdmin ? "Nouveau dossier" : "De quoi avez-vous besoin ?"}</DialogTitle>
-              {!isAdmin && (
+              <DialogTitle>{asStaff ? "Nouveau dossier" : "De quoi avez-vous besoin ?"}</DialogTitle>
+              {!asStaff && (
                 <p className="text-sm text-muted-foreground pt-1">
                   Choisissez ce dont vous avez besoin. Si vous ne savez pas, sélectionnez « Je ne sais pas ».
                 </p>
               )}
             </DialogHeader>
-            {isAdmin ? (
+            {asStaff ? (
               <form onSubmit={submitAdmin} className="space-y-4">
                 <div>
                   <Label htmlFor="organisme_nom">Nom de l'organisme de formation <span className="text-destructive">*</span></Label>
@@ -382,7 +384,7 @@ function DossiersPage() {
 
       {isLoading ? (
         <Card className="p-8 text-center text-muted-foreground">Chargement…</Card>
-      ) : isAdmin ? (
+      ) : asStaff ? (
         <>
           <div className="flex flex-wrap gap-2">
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Tous</FilterChip>
