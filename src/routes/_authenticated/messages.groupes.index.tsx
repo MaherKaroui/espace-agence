@@ -190,7 +190,10 @@ function buildTree(list: Conv[]): Node[] {
   return roots;
 }
 
-function TreeNode({ node, depth, unreadByConv }: { node: Node; depth: number; unreadByConv: Record<string, number> }) {
+function TreeNode({ node, depth, unreadByConv, activityByConv }: {
+  node: Node; depth: number; unreadByConv: Record<string, number>;
+  activityByConv: Record<string, ClientActivity>;
+}) {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.children.length > 0;
   const ownUnread = unreadByConv[node.id] ?? 0;
