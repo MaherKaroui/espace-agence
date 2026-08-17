@@ -37,6 +37,8 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
   const [status, setStatus] = useState<Status>("a_faire");
   const [dueDate, setDueDate] = useState("");
   const [assignedTo, setAssignedTo] = useState<string>(NONE);
+  const [coAssignees, setCoAssignees] = useState<string[]>([]);
+  const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [poleId, setPoleId] = useState<string>(NONE);
   const [clientId, setClientId] = useState<string>(NONE);
   const [dossierId, setDossierId] = useState<string>(NONE);
@@ -50,11 +52,21 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
     setStatus(task?.status ?? "a_faire");
     setDueDate(task?.due_date ? task.due_date.slice(0, 16) : "");
     setAssignedTo(task?.assigned_to ?? NONE);
+    setRemindersEnabled((task as any)?.reminders_enabled ?? true);
     setPoleId(task?.pole_id ?? defaultPoleId ?? NONE);
     setClientId(task?.client_id ?? NONE);
     setDossierId(task?.dossier_id ?? NONE);
     setInternalComment(task?.internal_comment ?? "");
+    setCoAssignees([]);
+    if (task?.id) {
+      supabase
+        .from("agency_task_assignees")
+        .select("user_id")
+        .eq("task_id", task.id)
+        .then(({ data }) => setCoAssignees((data ?? []).map((r) => r.user_id)));
+    }
   }, [open, task, defaultPoleId]);
+
 
   const { data: poles = [] } = useQuery({
     queryKey: ["agency-task-poles"],
