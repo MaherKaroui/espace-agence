@@ -16,6 +16,9 @@ import {
 import { Users2, Plus, ChevronRight, ChevronDown, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import {
+  useClientsActivity, mergeActivity, ActivityBadges, type ClientActivity,
+} from "@/components/conversation-activity";
 
 
 export const Route = createFileRoute("/_authenticated/messages/groupes/")({
@@ -88,6 +91,38 @@ function GroupesIndex() {
     },
   });
 
+  // Membres de chaque groupe → permet d'agréger l'activité (dossiers, tâches,
+  // demandes, documents) des clients présents dans la conversation.
+  const convIds = useMemo(() => conversations.map((c) => c.id), [conversations]);
+  const { data: membersByConv = {} } = useQuery({
+    queryKey: ["group-members-map", convIds.join(",")],
+    enabled: convIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("conversation_members")
+        .select("conversation_id, user_id")
+        .in("conversation_id", convIds);
+      const map: Record<string, string[]> = {};
+      for (const r of (data ?? []) as { conversation_id: string; user_id: string }[]) {
+        (map[r.conversation_id] ??= []).push(r.user_id);
+      }
+      return map;
+    },
+  });
+  const allMemberIds = useMemo(
+    () => Array.from(new Set(Object.values(membersByConv).flat())),
+    [membersByConv],
+  );
+  const { data: activityByUser } = useClientsActivity(allMemberIds);
+  const activityByConv = useMemo(() => {
+    const map: Record<string, ClientActivity> = {};
+    if (!activityByUser) return map;
+    for (const [cid, uids] of Object.entries(membersByConv)) {
+      map[cid] = mergeActivity(uids.map((u) => activityByUser.get(u)));
+    }
+    return map;
+  }, [membersByConv, activityByUser]);
+
   const tree = useMemo(() => buildTree(conversations), [conversations]);
 
   return (
@@ -126,7 +161,7 @@ function GroupesIndex() {
           </div>
         ) : (
           <ul className="space-y-1">
-            {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} unreadByConv={unreadByConv} />)}
+            {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} unreadByConv={unreadByConv} activityByConv={activityByConv} />)}
           </ul>
         )}
       </Card>
@@ -155,7 +190,10 @@ function buildTree(list: Conv[]): Node[] {
   return roots;
 }
 
-function TreeNode({ node, depth, unreadByConv }: { node: Node; depth: number; unreadByConv: Record<string, number> }) {
+function TreeNode({ node, depth, unreadByConv, activityByConv }: {
+  node: Node; depth: number; unreadByConv: Record<string, number>;
+  activityByConv: Record<string, ClientActivity>;
+}) {
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.children.length > 0;
   const ownUnread = unreadByConv[node.id] ?? 0;
@@ -192,15 +230,18 @@ function TreeNode({ node, depth, unreadByConv }: { node: Node; depth: number; un
               </span>
             )}
           </span>
-          <span className="text-[11px] sm:text-xs text-muted-foreground shrink-0 sm:ml-2 pl-6 sm:pl-0 truncate">
-            {formatDistanceToNow(new Date(node.updated_at), { locale: fr, addSuffix: true })}
+          <span className="flex items-center gap-2 shrink-0 pl-6 sm:pl-0 sm:ml-2">
+            <ActivityBadges activity={activityByConv[node.id]} />
+            <span className="text-[11px] sm:text-xs text-muted-foreground truncate">
+              {formatDistanceToNow(new Date(node.updated_at), { locale: fr, addSuffix: true })}
+            </span>
           </span>
         </Link>
 
       </div>
       {hasChildren && expanded && (
         <ul>
-          {node.children.map((c) => <TreeNode key={c.id} node={c} depth={depth + 1} unreadByConv={unreadByConv} />)}
+          {node.children.map((c) => <TreeNode key={c.id} node={c} depth={depth + 1} unreadByConv={unreadByConv} activityByConv={activityByConv} />)}
         </ul>
       )}
     </li>
