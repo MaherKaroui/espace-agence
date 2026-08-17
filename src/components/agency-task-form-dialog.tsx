@@ -246,6 +246,41 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label>Autres personnes assignées</Label>
+            <div className="max-h-40 overflow-y-auto rounded-md border p-2 space-y-1">
+              {staff.filter((s) => s.id !== assignedTo).map((s) => (
+                <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-primary"
+                    checked={coAssignees.includes(s.id)}
+                    onChange={(e) =>
+                      setCoAssignees((prev) => (e.target.checked ? [...prev, s.id] : prev.filter((x) => x !== s.id)))
+                    }
+                  />
+                  {s.label}
+                </label>
+              ))}
+              {staff.length === 0 && <div className="text-xs text-muted-foreground">Aucun membre disponible.</div>}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Chaque personne assignée reçoit les notifications et les rappels de la tâche.
+            </p>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-primary"
+              checked={remindersEnabled}
+              onChange={(e) => setRemindersEnabled(e.target.checked)}
+            />
+            Rappels automatiques (J-2, J-1, jour J puis en cas de retard)
+          </label>
+
+
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Pôle</Label>
