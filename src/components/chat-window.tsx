@@ -115,7 +115,11 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
     if (!user) return;
     const unread = messages.filter((m) => !m.read_at && m.sender_id !== user.id);
     if (unread.length === 0) return;
-    supabase.from("messages").update({ read_at: new Date().toISOString() }).in("id", unread.map((m) => m.id)).then();
+    supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString(), read_by: user.id } as any)
+      .in("id", unread.map((m) => m.id))
+      .then();
   }, [messages, user]);
 
   const send = useMutation({
