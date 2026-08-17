@@ -122,7 +122,6 @@ function AdminDossiers() {
   const [view, setView] = useState<ViewMode>("list");
   const [poleFilter, setPoleFilter] = useState<string>("all");
   const [showArchived, setShowArchived] = useState(false);
-  const [myJuridiqueOnly, setMyJuridiqueOnly] = useState(false);
   const { user } = useAuth();
   const { isDirectionOrAdmin, isStaff } = useRole();
 
@@ -244,10 +243,6 @@ function AdminDossiers() {
     if (cat !== "all" && r.categorie !== cat) return false;
     if (poleFilter !== "all" && r.pole_id !== poleFilter) return false;
     if (reviewOnly && !statsById[r.id]?.needsAction) return false;
-    if (myJuridiqueOnly) {
-      const assignees = (juridiqueByDossier as any)[r.id] ?? [];
-      if (r.categorie !== "juridique" || !assignees.some((a: any) => a.user_id === user?.id)) return false;
-    }
     const s = statsById[r.id];
     switch (quality) {
       case "to_fix": if (!s || s.toFix === 0) return false; break;
@@ -362,17 +357,6 @@ function AdminDossiers() {
         >
           <FolderOpen className="h-4 w-4" />
           {showArchived ? "Archives" : `Archives${archivedCount > 0 ? ` (${archivedCount})` : ""}`}
-        </button>
-        <button
-          type="button"
-          onClick={() => setMyJuridiqueOnly((v) => !v)}
-          className={cn("h-10 px-3 rounded-md border text-sm inline-flex items-center gap-2 transition-colors",
-            myJuridiqueOnly ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background border-input hover:bg-muted/50")}
-          aria-pressed={myJuridiqueOnly}
-        >
-          <Scale className="h-4 w-4" />
-          Mes dossiers juridiques
         </button>
       </div>
 
