@@ -191,29 +191,51 @@ function AdminMessages() {
       <Card className="divide-y">
         {filtered.length === 0 && (
           <div className="p-8 text-center text-sm text-muted-foreground">
-            {onlyUnread ? "Aucune discussion non lue." : "Aucune discussion."}
+            {statusFilter === "unread"
+              ? "Aucune discussion non vue."
+              : statusFilter === "read"
+                ? "Aucune discussion vue."
+                : "Aucune discussion."}
           </div>
         )}
         {filtered.map((t: any) => {
           const p = presence?.get(t.id);
           const name = `${t.prenom ?? ""} ${t.nom ?? ""}`.trim() || t.email || "Client sans nom";
+          const unseen = t.unread > 0;
           return (
-            <div key={t.id} className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 hover:bg-muted/30">
+            <div
+              key={t.id}
+              className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-l-4 transition-colors ${
+                unseen
+                  ? "bg-primary/5 border-l-primary hover:bg-primary/10"
+                  : "bg-muted/20 border-l-border hover:bg-muted/40"
+              }`}
+            >
               <Link to="/admin/messages/$clientId" params={{ clientId: t.id }} className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <PresenceAvatar online={p?.online}>
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"><User className="h-5 w-5 text-primary" /></div>
                 </PresenceAvatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className={`truncate min-w-0 ${t.unread > 0 ? "font-semibold" : "font-medium"}`}>{name}</div>
+                    <div className={`truncate min-w-0 ${unseen ? "font-semibold" : "font-medium"}`}>{name}</div>
                     <span className="hidden sm:inline"><PresenceLabel row={p} /></span>
+                    {unseen ? (
+                      <Badge className="text-[10px] shrink-0">Non vu</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] shrink-0 text-muted-foreground">Vu</Badge>
+                    )}
                     {t.unread > 0 && (
-                      <Badge className="h-5 min-w-5 px-1.5 rounded-full text-xs shrink-0">{t.unread}</Badge>
+                      <Badge variant="secondary" className="h-5 min-w-5 px-1.5 rounded-full text-xs shrink-0">{t.unread}</Badge>
                     )}
                   </div>
-                  <div className={`text-xs truncate ${t.unread > 0 ? "text-foreground" : "text-muted-foreground"}`}>
+                  <div className={`text-xs truncate ${unseen ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                     {t.last ? (t.last.from_agence ? "Vous : " : "") + (mentionsToPlainText(t.last.content) || "Pièce jointe") : "Aucun message"}
                   </div>
+                  {!unseen && t.seenAt && (
+                    <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      Vu{t.seenBy ? ` par ${t.seenBy}` : ""} le {format(new Date(t.seenAt), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
+                    </div>
+                  )}
                   {t.last && (
                     <div className="sm:hidden text-[11px] text-muted-foreground mt-0.5 truncate">
                       {formatDistanceToNow(new Date(t.last.created_at), { addSuffix: true, locale: fr })}
