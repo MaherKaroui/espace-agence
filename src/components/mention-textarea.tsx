@@ -273,9 +273,15 @@ export function MentionTextarea({
   }, [value]);
 
   const removeMention = (token: string) => {
-    // Retire le token + un espace de séparation éventuel.
-    const re = new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s?", "g");
-    onChange(value.replace(re, ""));
+    // On retire la version lisible affichée dans la zone de saisie.
+    const label = token.match(/^[@#]\[([^\]]+)\]/)?.[1];
+    if (!label) return;
+    const visible = `${token.startsWith("@") ? "@" : "#"}${label}`;
+    const re = new RegExp(escapeRe(visible) + "\\s?", "g");
+    const next = display.replace(re, "");
+    registry.current.delete(label);
+    setDisplay(next);
+    onChange(encode(next));
     requestAnimationFrame(() => ref.current?.focus());
   };
 
@@ -286,8 +292,9 @@ export function MentionTextarea({
         ref={ref}
         rows={rows}
         placeholder={placeholder ?? defaultPh}
-        value={value}
+        value={display}
         onChange={(e) => handleChange(e.target.value)}
+
         onKeyDown={onKeyDown}
         disabled={disabled}
       />
