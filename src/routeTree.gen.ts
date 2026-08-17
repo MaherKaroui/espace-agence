@@ -30,6 +30,7 @@ import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
 import { Route as AuthenticatedAuditsIndexRouteImport } from './routes/_authenticated/audits.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as OauthGoogleDriveReturnRouteImport } from './routes/oauth/google-drive/return'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
 import { Route as AuthenticatedAuditsIdRouteImport } from './routes/_authenticated/audits.$id'
@@ -177,6 +178,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const OauthGoogleDriveReturnRoute = OauthGoogleDriveReturnRouteImport.update({
+  id: '/oauth/google-drive/return',
+  path: '/oauth/google-drive/return',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
@@ -412,6 +418,7 @@ export interface FileRoutesByFullPath {
   '/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/audits/': typeof AuthenticatedAuditsIndexRoute
   '/dossiers/': typeof AuthenticatedDossiersIndexRoute
@@ -469,6 +476,7 @@ export interface FileRoutesByTo {
   '/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/audits': typeof AuthenticatedAuditsIndexRoute
   '/dossiers': typeof AuthenticatedDossiersIndexRoute
@@ -528,6 +536,7 @@ export interface FileRoutesById {
   '/_authenticated/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/audits/': typeof AuthenticatedAuditsIndexRoute
   '/_authenticated/dossiers/': typeof AuthenticatedDossiersIndexRoute
@@ -587,6 +596,7 @@ export interface FileRouteTypes {
     | '/audits/$id'
     | '/dossiers/$id'
     | '/lovable/email/suppression'
+    | '/oauth/google-drive/return'
     | '/admin/'
     | '/audits/'
     | '/dossiers/'
@@ -644,6 +654,7 @@ export interface FileRouteTypes {
     | '/audits/$id'
     | '/dossiers/$id'
     | '/lovable/email/suppression'
+    | '/oauth/google-drive/return'
     | '/admin'
     | '/audits'
     | '/dossiers'
@@ -702,6 +713,7 @@ export interface FileRouteTypes {
     | '/_authenticated/audits/$id'
     | '/_authenticated/dossiers/$id'
     | '/lovable/email/suppression'
+    | '/oauth/google-drive/return'
     | '/_authenticated/admin/'
     | '/_authenticated/audits/'
     | '/_authenticated/dossiers/'
@@ -743,6 +755,7 @@ export interface RootRouteChildren {
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  OauthGoogleDriveReturnRoute: typeof OauthGoogleDriveReturnRoute
   ApiPublicHooksPurgeEphemeralRoute: typeof ApiPublicHooksPurgeEphemeralRoute
   ApiPublicHooksPushFanoutRoute: typeof ApiPublicHooksPushFanoutRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
@@ -901,6 +914,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/oauth/google-drive/return': {
+      id: '/oauth/google-drive/return'
+      path: '/oauth/google-drive/return'
+      fullPath: '/oauth/google-drive/return'
+      preLoaderRoute: typeof OauthGoogleDriveReturnRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
@@ -1261,6 +1281,7 @@ const rootRouteChildren: RootRouteChildren = {
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  OauthGoogleDriveReturnRoute: OauthGoogleDriveReturnRoute,
   ApiPublicHooksPurgeEphemeralRoute: ApiPublicHooksPurgeEphemeralRoute,
   ApiPublicHooksPushFanoutRoute: ApiPublicHooksPushFanoutRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
