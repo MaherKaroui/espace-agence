@@ -176,6 +176,7 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
       toast.success(isEdit ? "Tâche mise à jour" : "Tâche créée");
       qc.invalidateQueries({ queryKey: ["agency-tasks"] });
       qc.invalidateQueries({ queryKey: ["agency-tasks-kpis"] });
+      qc.invalidateQueries({ queryKey: ["agency-task-assignees"] });
       onOpenChange(false);
     },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
