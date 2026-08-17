@@ -336,7 +336,7 @@ export const updateTeamRole = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        role: z.enum(STAFF_ROLES),
+        role: z.enum([...STAFF_ROLES, "client"] as const),
       })
       .parse(data),
   )
