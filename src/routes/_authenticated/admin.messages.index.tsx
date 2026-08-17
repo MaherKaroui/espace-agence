@@ -233,6 +233,7 @@ function AdminMessages() {
                   <div className={`text-xs truncate ${unseen ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                     {t.last ? (t.last.from_agence ? "Vous : " : "") + (mentionsToPlainText(t.last.content) || "Pièce jointe") : "Aucun message"}
                   </div>
+                  <ActivityBadges activity={activity?.get(t.id)} className="mt-1" />
                   {!unseen && t.seenAt && (
                     <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
                       Vu{t.seenBy ? ` par ${t.seenBy}` : ""} le {format(new Date(t.seenAt), "dd/MM/yyyy 'à' HH:mm", { locale: fr })}
