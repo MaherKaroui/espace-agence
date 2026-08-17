@@ -76,7 +76,9 @@ function daysSince(iso: string | null | undefined): number | null {
 const LANES: { key: string; label: string; statuts: string[] }[] = [
   { key: "todo", label: "À traiter", statuts: ["en_attente", "documents_manquants", "a_completer"] },
   { key: "doing", label: "En cours", statuts: ["en_cours_etude", "en_cours_traitement"] },
-  { key: "done", label: "Terminés", statuts: ["termine", "valide"] },
+  { key: "planif", label: "Planification", statuts: ["planification"] },
+  { key: "audit", label: "Audit réalisé", statuts: ["audit_realise"] },
+  { key: "done", label: "Clôturés", statuts: ["termine", "valide"] },
   { key: "ko", label: "Refusés", statuts: ["refuse"] },
 ];
 function laneOf(statut: string | null | undefined): string {
@@ -86,11 +88,14 @@ function statutForLane(laneKey: string): string {
   const map: Record<string, string> = {
     todo: "en_attente",
     doing: "en_cours_traitement",
+    planif: "planification",
+    audit: "audit_realise",
     done: "termine",
     ko: "refuse",
   };
   return map[laneKey] ?? "en_attente";
 }
+
 
 
 export const Route = createFileRoute("/_authenticated/admin/dossiers")({
