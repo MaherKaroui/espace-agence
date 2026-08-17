@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { syncExternalConversationMember } from "./dossier-assignments.server";
+import { syncExternalConversationMember, reassignAutoTaskToJuridique } from "./dossier-assignments.server";
 
 export type AssignmentRole = "auditeur" | "certificateur" | "juridique";
 
@@ -153,6 +153,7 @@ export const assignIntervenant = createServerFn({ method: "POST" })
         if (error) throw new Error(error.message);
       }
       if (data.role !== "juridique") await syncExternalConversationMember(data.dossierId, data.userId, true);
+      else await reassignAutoTaskToJuridique(data.dossierId, data.userId, userId);
       return { ok: true, id: existing.id };
     }
 
@@ -168,6 +169,7 @@ export const assignIntervenant = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     if (data.role !== "juridique") await syncExternalConversationMember(data.dossierId, data.userId, true);
+    else await reassignAutoTaskToJuridique(data.dossierId, data.userId, userId);
     return { ok: true, id: inserted.id };
   });
 
@@ -191,7 +193,19 @@ export const revokeIntervenant = createServerFn({ method: "POST" })
       .update({ active: false, revoked_at: new Date().toISOString() })
       .eq("id", data.assignmentId);
     if (error) throw new Error(error.message);
-    if ((a as any).role !== "juridique") await syncExternalConversationMember(a.dossier_id, a.user_id, false);
+    if ((a as any).role !== "juridique") {
+      await syncExternalConversationMember(a.dossier_id, a.user_id, false);
+    } else {
+      const { data: remaining } = await supabase
+        .from("dossier_assignments")
+        .select("user_id")
+        .eq("dossier_id", a.dossier_id)
+        .eq("role", "juridique")
+        .eq("active", true)
+        .order("assigned_at", { ascending: false })
+        .limit(1);
+      await reassignAutoTaskToJuridique(a.dossier_id, remaining?.[0]?.user_id ?? null, userId);
+    }
     return { ok: true };
   });
 
