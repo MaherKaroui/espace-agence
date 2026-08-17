@@ -102,6 +102,7 @@ function AdminMessages() {
 
 
   const { data: presence } = usePresence(threads.map((t: any) => t.id));
+  const { data: activity } = useClientsActivity(threads.map((t: any) => t.id));
 
   const deleteThread = async (clientId: string) => {
     const { error } = await supabase
