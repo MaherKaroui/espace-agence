@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,6 +17,7 @@ import { categorieLabel, CATEGORIES, requiredDocsFor, docMatches } from "@/lib/l
 import { cn } from "@/lib/utils";
 import { getExternalUnreadCounts } from "@/lib/qualiopi-notifications.functions";
 import { DossiersKanbanBoard } from "@/components/dossiers-kanban";
+import { CreateDossierDialog } from "@/components/create-dossier-dialog";
 
 
 type DocRow = {
@@ -124,6 +125,7 @@ function AdminDossiers() {
   const [showArchived, setShowArchived] = useState(false);
   const { user } = useAuth();
   const { isDirectionOrAdmin, isStaff } = useRole();
+  const qc = useQueryClient();
 
   const { data: myPoleIds, isLoading: polesLoading } = useQuery({
     queryKey: ["my-pole-ids", user?.id],
@@ -288,25 +290,31 @@ function AdminDossiers() {
             )}
           </p>
         </div>
-        <div className="inline-flex rounded-md border border-input overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setView("list")}
-            className={cn("h-9 px-3 inline-flex items-center gap-2 text-sm",
-              view === "list" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted/50")}
-            aria-pressed={view === "list"}
-          >
-            <ListIcon className="h-4 w-4" /> Liste
-          </button>
-          <button
-            type="button"
-            onClick={() => setView("kanban")}
-            className={cn("h-9 px-3 inline-flex items-center gap-2 text-sm border-l border-input",
-              view === "kanban" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted/50")}
-            aria-pressed={view === "kanban"}
-          >
-            <LayoutGrid className="h-4 w-4" /> Kanban
-          </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <CreateDossierDialog
+            stayInPlace
+            onCreated={() => qc.invalidateQueries({ queryKey: ["admin-dossiers"] })}
+          />
+          <div className="inline-flex rounded-md border border-input overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setView("list")}
+              className={cn("h-9 px-3 inline-flex items-center gap-2 text-sm",
+                view === "list" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted/50")}
+              aria-pressed={view === "list"}
+            >
+              <ListIcon className="h-4 w-4" /> Liste
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("kanban")}
+              className={cn("h-9 px-3 inline-flex items-center gap-2 text-sm border-l border-input",
+                view === "kanban" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted/50")}
+              aria-pressed={view === "kanban"}
+            >
+              <LayoutGrid className="h-4 w-4" /> Kanban
+            </button>
+          </div>
         </div>
       </div>
 
