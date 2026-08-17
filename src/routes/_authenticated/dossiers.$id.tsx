@@ -319,8 +319,8 @@ function DossierDetail() {
           canEdit={isSuperAdmin || isDirection || isManager}
         />
       )}
-      {isAdmin && <DossierExternalIntervenants dossierId={dossier.id} />}
-      {isAdmin && hasIntervenants && (
+      {isAdmin && dossier.categorie === "qualiopi" && <DossierExternalIntervenants dossierId={dossier.id} />}
+      {isAdmin && dossier.categorie === "qualiopi" && hasIntervenants && (
         <div className="grid gap-4 lg:grid-cols-2">
           <div id="audit-chat" className="scroll-mt-20"><DossierExternalChat dossierId={dossier.id} /></div>
           <div id="qualiopi" className="scroll-mt-20"><QualiopiRequestsPanel dossierId={dossier.id} /></div>
