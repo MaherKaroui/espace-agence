@@ -17,6 +17,7 @@ import { categorieLabel, CATEGORIES, requiredDocsFor, docMatches } from "@/lib/l
 import { cn } from "@/lib/utils";
 import { getExternalUnreadCounts } from "@/lib/qualiopi-notifications.functions";
 import { DossiersKanbanBoard } from "@/components/dossiers-kanban";
+import { CreateDossierDialog } from "@/components/create-dossier-dialog";
 
 
 type DocRow = {
