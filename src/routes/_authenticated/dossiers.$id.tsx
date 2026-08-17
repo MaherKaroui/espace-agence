@@ -39,6 +39,8 @@ import { computeAvancement } from "@/lib/next-action";
 
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
+import { autoFileDocumentToDrive } from "@/lib/drive-auto.functions";
+
 import { inviteClient } from "@/lib/admin-clients.functions";
 
 import { formatDistanceToNow } from "date-fns";
