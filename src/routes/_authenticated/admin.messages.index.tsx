@@ -155,14 +155,26 @@ function AdminMessages() {
             {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             {muted ? "Son coupé" : "Son actif"}
           </Button>
-          <Button
-            variant={onlyUnread ? "default" : "outline"}
-            size="sm"
-            onClick={() => setOnlyUnread((v) => !v)}
-            className="gap-2"
-          >
-            Non lus {totalUnread > 0 && <Badge variant="secondary" className="ml-1">{totalUnread}</Badge>}
-          </Button>
+          <div className="flex items-center gap-1 rounded-lg border p-1">
+            {([
+              { key: "all", label: "Tous" },
+              { key: "unread", label: "Non vus" },
+              { key: "read", label: "Vus" },
+            ] as const).map((f) => (
+              <Button
+                key={f.key}
+                variant={statusFilter === f.key ? "default" : "ghost"}
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setStatusFilter(f.key)}
+              >
+                {f.label}
+                {f.key === "unread" && totalUnread > 0 && (
+                  <Badge variant="secondary">{totalUnread}</Badge>
+                )}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
