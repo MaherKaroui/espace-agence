@@ -128,13 +128,8 @@ function CardContent({ d, poleById, statsById, inconsistencyById, externalUnread
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full" style={{ width: `${d.avancement ?? 0}%`, backgroundColor: color }} />
-          </div>
-          <span className="text-[10px] text-muted-foreground tabular-nums">{d.avancement ?? 0}%</span>
-        </div>
       </div>
+
     </div>
   );
 }
