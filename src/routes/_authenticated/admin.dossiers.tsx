@@ -258,7 +258,6 @@ function AdminDossiers() {
   const totalToReview = (rows as any[]).reduce((n, d) => n + (statsById[d.id]?.needsAction ? 1 : 0), 0);
   const inconsistencies = (rows as any[]).filter((d) => inconsistencyById[d.id]);
   const doneIncompleteCount = inconsistencies.filter((d) => inconsistencyById[d.id] === "done_incomplete").length;
-  const zeroValidatedCount = inconsistencies.filter((d) => inconsistencyById[d.id] === "zero_but_validated").length;
 
   return (
     <div className="space-y-6">
@@ -270,7 +269,7 @@ function AdminDossiers() {
           <p className="text-muted-foreground mt-1">
             {filtered.length} dossier{filtered.length > 1 ? "s" : ""} · {visibleGroups.length} pôle{visibleGroups.length > 1 ? "s" : ""}
             {totalToReview > 0 && (
-              <> · <span className="text-warning-foreground font-medium">{totalToReview} à revoir</span></>
+              <> · <span className="text-warning-foreground font-medium">{totalToReview} incomplet{totalToReview > 1 ? "s" : ""}</span></>
             )}
           </p>
         </div>
