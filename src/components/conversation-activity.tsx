@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { FolderOpen, ListChecks, FileClock, HelpCircle, CheckCircle2 } from "lucide-react";
+import { FolderOpen, ListChecks, HelpCircle, CheckCircle2 } from "lucide-react";
 
 export type ClientActivity = {
   dossiersEnCours: number;
