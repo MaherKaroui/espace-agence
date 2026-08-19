@@ -79,20 +79,20 @@ function DossierDetail() {
     queryFn: async () => {
       const { data, error } = await supabase.from("documents").select("*").eq("dossier_id", id).order("created_at", { ascending: false });
       if (error) throw error;
-      return toTaches<any>(data);
+      return data ?? [];
     },
   });
-
-  const taches = toTaches<any>(tachesData);
 
   const { data: tachesData } = useQuery({
     queryKey: ["taches", id],
     queryFn: async () => {
       const { data, error } = await supabase.from("taches").select("id,titre,statut,cote_client,verrouillee,updated_at").eq("dossier_id", id);
       if (error) throw error;
-      return data ?? [];
+      return toTaches<any>(data);
     },
   });
+
+  const taches = toTaches<any>(tachesData);
 
   const { data: clientProfile } = useQuery({
     queryKey: ["dossier-client", (dossier as any)?.client_id],
