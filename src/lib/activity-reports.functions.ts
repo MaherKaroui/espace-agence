@@ -77,7 +77,7 @@ export const getActivityReports = createServerFn({ method: "GET" })
       if (!arr.some((x) => x.id === t.id)) arr.push(t);
       byUser.set(uid, arr);
     };
-    const taskById = new Map(taskList.map((t: any) => [t.id, t]));
+    const taskById = new Map<string, any>(taskList.map((t: any) => [t.id, t]));
     for (const t of taskList) push(t.assigned_to, t);
     for (const a of extraAssignees ?? []) {
       const t = taskById.get(a.task_id);
@@ -104,9 +104,9 @@ export const getActivityReports = createServerFn({ method: "GET" })
         ? supabaseAdmin.from("poles").select("id, nom, couleur").in("id", [...poleIds])
         : Promise.resolve({ data: [] } as any),
     ]);
-    const cMap = new Map((clients ?? []).map((c: any) => [c.id, c]));
-    const dMap = new Map((dossiers ?? []).map((d: any) => [d.id, d]));
-    const pMap = new Map((poles ?? []).map((p: any) => [p.id, p]));
+    const cMap = new Map<string, any>((clients ?? []).map((c: any) => [c.id, c]));
+    const dMap = new Map<string, any>((dossiers ?? []).map((d: any) => [d.id, d]));
+    const pMap = new Map<string, any>((poles ?? []).map((p: any) => [p.id, p]));
 
     const label = (t: any) => {
       const d = t.dossier_id ? dMap.get(t.dossier_id) : null;
