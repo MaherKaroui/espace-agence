@@ -21,6 +21,8 @@ import { template as clientRdvRappel } from './client-rdv-rappel'
 import { template as groupInvitation } from './group-invitation'
 import { template as groupNouveauMessage } from './group-nouveau-message'
 import { template as rapportActivite } from './rapport-activite'
+import { template as supervisionRapport } from './supervision-rapport'
+import { template as supervisionAlerte } from './supervision-alerte'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -54,4 +56,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'group-invitation': groupInvitation,
   'group-nouveau-message': groupNouveauMessage,
   'rapport-activite': rapportActivite,
+  'supervision-rapport': supervisionRapport,
+  'supervision-alerte': supervisionAlerte,
 }

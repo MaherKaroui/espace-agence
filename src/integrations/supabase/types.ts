@@ -210,6 +210,119 @@ export type Database = {
           },
         ]
       }
+      ai_reports: {
+        Row: {
+          created_at: string
+          diagnostic: string | null
+          health_score: number
+          id: string
+          problems: Json
+          report_date: string
+          stats: Json
+        }
+        Insert: {
+          created_at?: string
+          diagnostic?: string | null
+          health_score?: number
+          id?: string
+          problems?: Json
+          report_date?: string
+          stats?: Json
+        }
+        Update: {
+          created_at?: string
+          diagnostic?: string | null
+          health_score?: number
+          id?: string
+          problems?: Json
+          report_date?: string
+          stats?: Json
+        }
+        Relationships: []
+      }
+      ai_suggestions: {
+        Row: {
+          action: string | null
+          created_at: string
+          id: string
+          impact: string | null
+          priorite: string
+          report_id: string | null
+          statut: string
+          titre: string
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string
+          id?: string
+          impact?: string | null
+          priorite?: string
+          report_id?: string | null
+          statut?: string
+          titre: string
+        }
+        Update: {
+          action?: string | null
+          created_at?: string
+          id?: string
+          impact?: string | null
+          priorite?: string
+          report_id?: string | null
+          statut?: string
+          titre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_suggestions_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "ai_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_errors: {
+        Row: {
+          created_at: string
+          gravite: string
+          id: string
+          message: string
+          metadata: Json
+          navigateur: string | null
+          stack: string | null
+          statut: string
+          type: string
+          url_page: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          gravite?: string
+          id?: string
+          message: string
+          metadata?: Json
+          navigateur?: string | null
+          stack?: string | null
+          statut?: string
+          type: string
+          url_page?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          gravite?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          navigateur?: string | null
+          stack?: string | null
+          statut?: string
+          type?: string
+          url_page?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       app_user_connections: {
         Row: {
           connection_key_ciphertext: string
@@ -492,6 +605,39 @@ export type Database = {
           summary_json?: Json
           updated_at?: string
           user_reports_json?: Json
+        }
+        Relationships: []
+      }
+      data_anomalies: {
+        Row: {
+          check_date: string
+          count: number
+          created_at: string
+          details: Json
+          gravite: string
+          id: string
+          kind: string
+          label: string
+        }
+        Insert: {
+          check_date?: string
+          count?: number
+          created_at?: string
+          details?: Json
+          gravite?: string
+          id?: string
+          kind: string
+          label: string
+        }
+        Update: {
+          check_date?: string
+          count?: number
+          created_at?: string
+          details?: Json
+          gravite?: string
+          id?: string
+          kind?: string
+          label?: string
         }
         Relationships: []
       }
@@ -942,6 +1088,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      health_checks: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          http_status: number | null
+          id: string
+          is_up: boolean
+          pages: Json
+          response_time_ms: number | null
+          ssl_expires_at: string | null
+          ssl_valid: boolean | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          is_up?: boolean
+          pages?: Json
+          response_time_ms?: number | null
+          ssl_expires_at?: string | null
+          ssl_valid?: boolean | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          is_up?: boolean
+          pages?: Json
+          response_time_ms?: number | null
+          ssl_expires_at?: string | null
+          ssl_valid?: boolean | null
+          url?: string
+        }
+        Relationships: []
       }
       internal_conversation_members: {
         Row: {
@@ -2017,6 +2202,51 @@ export type Database = {
           mask_emails?: boolean
           mask_phones?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      supervision_alerts: {
+        Row: {
+          alert_key: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          alert_key: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          alert_key?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      supervision_emails: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          recipient: string
+          status: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          recipient: string
+          status?: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          recipient?: string
+          status?: string
+          type?: string
         }
         Relationships: []
       }
