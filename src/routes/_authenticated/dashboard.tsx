@@ -89,7 +89,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id,nom,detected_type,statut,commentaire,dossier_id")
+        .select("id,nom,detected_type,dossier_id")
         .in("dossier_id", dossierIds);
       if (error) throw error;
       return data ?? [];

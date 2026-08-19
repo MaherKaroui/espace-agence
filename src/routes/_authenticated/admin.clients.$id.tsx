@@ -94,7 +94,7 @@ function ClientDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id, dossier_id, nom, storage_path, mime_type, taille, detected_type, statut, from_agence, created_at")
+        .select("id, dossier_id, nom, storage_path, mime_type, taille, detected_type, from_agence, created_at")
         .in("dossier_id", dossierIdList)
         .eq("from_agence", false)
         .order("created_at", { ascending: false });
