@@ -137,7 +137,7 @@ export function installErrorLogger() {
             gravite: res.status >= 500 ? "critique" : "majeur",
             metadata: { status: res.status, ms },
           });
-        } else if (ms > SLOW_MS) {
+        } else if (ms > SLOW_MS && !isSlowExempt(url)) {
           logAppError({
             type: "slow_request",
             message: `Requête lente (${ms} ms) — ${url.split("?")[0]}`,
