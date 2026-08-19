@@ -119,6 +119,9 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
       if (!user) throw new Error("Non authentifié");
       if (!title.trim()) throw new Error("Le titre est requis");
       if (!isAdmin && !isDirection && poleId === NONE) throw new Error("Un pôle est requis");
+      if (assignedTo === NONE) throw new Error("Un responsable doit être assigné à la tâche");
+      if (!dueDate) throw new Error("Une date d'échéance est requise");
+
 
       const payload = {
         title: title.trim(),
@@ -229,13 +232,14 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Date limite</Label>
-              <Input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              <Label>Date limite <span className="text-destructive">*</span></Label>
+              <Input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} aria-required="true" />
+              {!dueDate && <p className="text-xs text-muted-foreground">Obligatoire pour le suivi des retards.</p>}
             </div>
             <div className="space-y-2">
-              <Label>Assigné à</Label>
+              <Label>Assigné à <span className="text-destructive">*</span></Label>
               <Select value={assignedTo} onValueChange={setAssignedTo}>
-                <SelectTrigger><SelectValue placeholder="Personne" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Choisir un responsable" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NONE}>— Non assigné —</SelectItem>
                   {staff.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}

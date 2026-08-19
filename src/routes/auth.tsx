@@ -16,9 +16,9 @@ import { APP_URL } from "@/lib/app-url";
 
 
 export const Route = createFileRoute("/auth")({
-  // Page d'auth entièrement client-side : évite un mismatch d'hydratation
-  // React (#418) car la session Supabase n'est disponible que côté client.
-  ssr: false,
+  // SSR activé : le rendu ne dépend d'aucune donnée navigateur (la session
+  // Supabase n'est lue que dans un useEffect). Avec ssr:false le serveur
+  // n'envoyait qu'un fallback, ce qui provoquait un mismatch d'hydratation.
   validateSearch: (s: Record<string, unknown>): { next?: string } =>
     typeof s.next === "string" ? { next: s.next } : {},
   head: () => ({
