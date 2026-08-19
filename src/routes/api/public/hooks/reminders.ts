@@ -112,7 +112,6 @@ export const Route = createFileRoute('/api/public/hooks/reminders')({
             .from('documents')
             .select('id, nom, dossier_id, created_at, dossiers!inner(id, titre, client_id, statut)')
             .eq('from_agence', true)
-            .eq('statut', 'en_attente')
             .is('storage_path', null)
             .lt('created_at', hAgo(24))
             .gt('created_at', hAgo(24 * 30))
