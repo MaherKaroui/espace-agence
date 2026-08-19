@@ -275,17 +275,20 @@ export function CreateDossierDialog({
           </div>
           <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
             <div className="font-medium text-sm">Coordonnées de l'organisme de formation</div>
+            <p className="text-xs text-muted-foreground">
+              L'e-mail et le téléphone sont obligatoires : ils conditionnent l'envoi des relances et la conformité du dossier.
+            </p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <Label htmlFor="of-email-admin">E-mail de l'OF</Label>
-                <Input id="of-email-admin" name="organisme_email" type="email" />
+                <Label htmlFor="of-email-admin">E-mail de l'OF <span className="text-destructive">*</span></Label>
+                <Input id="of-email-admin" name="organisme_email" type="email" required aria-required="true" placeholder="contact@organisme.fr" />
               </div>
               <div>
-                <Label htmlFor="of-tel-admin">Téléphone de l'OF</Label>
-                <Input id="of-tel-admin" name="organisme_telephone" type="tel" />
+                <Label htmlFor="of-tel-admin">Téléphone de l'OF <span className="text-destructive">*</span></Label>
+                <Input id="of-tel-admin" name="organisme_telephone" type="tel" required aria-required="true" placeholder="01 23 45 67 89" />
               </div>
               <div className="sm:col-span-2">
-                <Label htmlFor="of-site-admin">Site web</Label>
+                <Label htmlFor="of-site-admin">Site web (optionnel)</Label>
                 <Input id="of-site-admin" name="site_web" type="url" />
               </div>
             </div>
