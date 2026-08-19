@@ -160,6 +160,14 @@ export function CreateDossierDialog({
       toast.error("Choisissez le type juridique");
       return;
     }
+    if (!organisme_email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(organisme_email)) {
+      toast.error("E-mail de l'OF requis et valide");
+      return;
+    }
+    if (!organisme_telephone || organisme_telephone.replace(/\D/g, "").length < 8) {
+      toast.error("Téléphone de l'OF requis (8 chiffres minimum)");
+      return;
+    }
     const titre = buildDossierTitre(categorie, organisme_nom, juridique_type);
     create.mutate({
       titre,
