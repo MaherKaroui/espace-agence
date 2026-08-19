@@ -46,6 +46,7 @@ import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminDirectionRouteImport } from './routes/_authenticated/admin.direction'
 import { Route as AuthenticatedAdminCalendrierQualiopiRouteImport } from './routes/_authenticated/admin.calendrier-qualiopi'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
+import { Route as AuthenticatedAdminAgentIaRouteImport } from './routes/_authenticated/admin.agent-ia'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedMessagesGroupesIndexRouteImport } from './routes/_authenticated/messages.groupes.index'
@@ -272,6 +273,12 @@ const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
   path: '/admin/audit',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminAgentIaRoute =
+  AuthenticatedAdminAgentIaRouteImport.update({
+    id: '/admin/agent-ia',
+    path: '/admin/agent-ia',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -432,6 +439,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/agent-ia': typeof AuthenticatedAdminAgentIaRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/calendrier-qualiopi': typeof AuthenticatedAdminCalendrierQualiopiRoute
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
@@ -494,6 +502,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/agent-ia': typeof AuthenticatedAdminAgentIaRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/calendrier-qualiopi': typeof AuthenticatedAdminCalendrierQualiopiRoute
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
@@ -558,6 +567,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/agent-ia': typeof AuthenticatedAdminAgentIaRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/calendrier-qualiopi': typeof AuthenticatedAdminCalendrierQualiopiRoute
   '/_authenticated/admin/direction': typeof AuthenticatedAdminDirectionRoute
@@ -622,6 +632,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/agent-ia'
     | '/admin/audit'
     | '/admin/calendrier-qualiopi'
     | '/admin/direction'
@@ -684,6 +695,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/agent-ia'
     | '/admin/audit'
     | '/admin/calendrier-qualiopi'
     | '/admin/direction'
@@ -747,6 +759,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/agent-ia'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/calendrier-qualiopi'
     | '/_authenticated/admin/direction'
@@ -1082,6 +1095,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/agent-ia': {
+      id: '/_authenticated/admin/agent-ia'
+      path: '/admin/agent-ia'
+      fullPath: '/admin/agent-ia'
+      preLoaderRoute: typeof AuthenticatedAdminAgentIaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -1273,6 +1293,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPreferencesRoute: typeof AuthenticatedPreferencesRoute
   AuthenticatedRendezVousRoute: typeof AuthenticatedRendezVousRoute
+  AuthenticatedAdminAgentIaRoute: typeof AuthenticatedAdminAgentIaRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminCalendrierQualiopiRoute: typeof AuthenticatedAdminCalendrierQualiopiRoute
   AuthenticatedAdminDirectionRoute: typeof AuthenticatedAdminDirectionRoute
@@ -1309,6 +1330,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPreferencesRoute: AuthenticatedPreferencesRoute,
   AuthenticatedRendezVousRoute: AuthenticatedRendezVousRoute,
+  AuthenticatedAdminAgentIaRoute: AuthenticatedAdminAgentIaRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminCalendrierQualiopiRoute:
     AuthenticatedAdminCalendrierQualiopiRoute,
