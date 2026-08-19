@@ -45,3 +45,17 @@ export function etapesLabelFromPercent(avancement: number | null | undefined): s
   const done = Math.round((pct / 100) * ETAPES_TOTAL);
   return `Étapes du dossier (${done}/${ETAPES_TOTAL})`;
 }
+
+/** Normalise n'importe quelle source (objet, null, undefined…) en tableau sûr. */
+export function toTaches<T = any>(taches: unknown): T[] {
+  if (Array.isArray(taches)) return taches as T[];
+  if (taches && typeof taches === "object") {
+    const values = Object.values(taches as Record<string, unknown>);
+    // Jointure Supabase renvoyée en objet unique -> on l'enveloppe.
+    if (values.length && values.every((v) => v && typeof v === "object" && !Array.isArray(v))) {
+      return values as T[];
+    }
+    if ("statut" in (taches as any)) return [taches as T];
+  }
+  return [];
+}
