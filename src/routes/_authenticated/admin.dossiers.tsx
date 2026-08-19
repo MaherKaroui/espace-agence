@@ -332,7 +332,7 @@ function AdminDossiers() {
           aria-pressed={reviewOnly}
         >
           <ClipboardCheck className="h-4 w-4" />
-          {reviewOnly ? "À revoir uniquement" : "À revoir"}
+          {reviewOnly ? "Incomplets uniquement" : "Incomplets"}
         </button>
         <button
           type="button"
