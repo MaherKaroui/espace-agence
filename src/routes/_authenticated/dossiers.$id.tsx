@@ -36,7 +36,7 @@ import { QualiopiRequestsPanel } from "@/components/qualiopi-requests-panel";
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
-import { computeAvancement, etapesLabel } from "@/lib/dossier-progress";
+import { computeAvancement, etapesLabel, toTaches } from "@/lib/dossier-progress";
 
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
@@ -83,14 +83,16 @@ function DossierDetail() {
     },
   });
 
-  const { data: taches = [] } = useQuery({
+  const { data: tachesData } = useQuery({
     queryKey: ["taches", id],
     queryFn: async () => {
       const { data, error } = await supabase.from("taches").select("id,titre,statut,cote_client,verrouillee,updated_at").eq("dossier_id", id);
       if (error) throw error;
-      return data ?? [];
+      return toTaches<any>(data);
     },
   });
+
+  const taches = toTaches<any>(tachesData);
 
   const { data: clientProfile } = useQuery({
     queryKey: ["dossier-client", (dossier as any)?.client_id],
@@ -757,8 +759,9 @@ function ClientProgressSummary({
   avancement: number;
   taches: Array<{ statut: string }>;
 }) {
-  const total = taches.length;
-  const done = taches.filter((t) => t.statut === "termine").length;
+  const list = toTaches<{ statut: string }>(taches);
+  const total = list.length;
+  const done = list.filter((t) => t.statut === "termine").length;
 
   let phrase: string;
   if (total === 0) {

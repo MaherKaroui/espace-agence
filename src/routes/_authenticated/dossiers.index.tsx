@@ -17,7 +17,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, JURIDIQUE_TYPES, categorieLabel, requiredDocsFor } from "@/lib/labels";
 import { buildDossierTitre, baseTitreFor } from "@/lib/dossier-title";
 import { computeNextAction } from "@/lib/next-action";
-import { computeAvancement, etapesLabel } from "@/lib/dossier-progress";
+import { computeAvancement, etapesLabel, toTaches } from "@/lib/dossier-progress";
 import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -249,7 +249,7 @@ function DossiersPage() {
 
   const dossierWithAction = displayedDossiers.map((d) => {
     const docs = allDocs.filter((doc: any) => doc.dossier_id === d.id) as any;
-    const tks = allTaches.filter((t: any) => t.dossier_id === d.id) as any;
+    const tks = toTaches<any>(allTaches).filter((t: any) => t.dossier_id === d.id) as any;
     const na = computeNextAction(d.categorie, docs, tks, d.statut);
     // Toujours calculer côté client pour garantir la cohérence entre
     // toutes les vues (dashboard, liste, détail, admin). Même formule partout.

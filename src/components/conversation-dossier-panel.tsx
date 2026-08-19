@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
-import { computeAvancement, etapesLabel } from "@/lib/dossier-progress";
+import { computeAvancement, etapesLabel, toTaches } from "@/lib/dossier-progress";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -96,7 +96,7 @@ function DossierPanelContent({
         .eq("client_id", clientId)
         .is("archived_at", null)
         .order("updated_at", { ascending: false });
-      return (data ?? []) as any[];
+      return data ?? [];
     },
   });
 
@@ -106,7 +106,7 @@ function DossierPanelContent({
     [dossiers, selectedId],
   );
 
-  const { data: taches = [] } = useQuery({
+  const { data: tachesData } = useQuery({
     queryKey: ["conv-panel-taches", dossier?.id],
     enabled: !!dossier?.id,
     queryFn: async () => {
@@ -115,9 +115,11 @@ function DossierPanelContent({
         .select("id, titre, statut, ordre, assigne_id, completed_at, updated_at")
         .eq("dossier_id", dossier!.id)
         .order("ordre", { ascending: true });
-      return (data ?? []) as any[];
+      return toTaches<any>(data);
     },
   });
+
+  const taches = toTaches<any>(tachesData);
 
   const { data: documents = [] } = useQuery({
     queryKey: ["conv-panel-docs", dossier?.id],
