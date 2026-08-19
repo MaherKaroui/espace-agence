@@ -16,7 +16,8 @@ import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, JURIDIQUE_TYPES, categorieLabel, requiredDocsFor } from "@/lib/labels";
 import { buildDossierTitre, baseTitreFor } from "@/lib/dossier-title";
-import { computeNextAction, computeAvancement } from "@/lib/next-action";
+import { computeNextAction } from "@/lib/next-action";
+import { computeAvancement, etapesLabel } from "@/lib/dossier-progress";
 import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -225,7 +226,7 @@ function DossiersPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("id,nom,detected_type,statut,commentaire,dossier_id")
+        .select("id,nom,detected_type,dossier_id")
         .in("dossier_id", dossierIds);
       if (error) throw error;
       return data ?? [];
@@ -252,9 +253,9 @@ function DossiersPage() {
     const na = computeNextAction(d.categorie, docs, tks, d.statut);
     // Toujours calculer côté client pour garantir la cohérence entre
     // toutes les vues (dashboard, liste, détail, admin). Même formule partout.
-    const avancement = computeAvancement(d.categorie, docs, tks, d.statut);
+    const avancement = computeAvancement(tks, d.statut);
 
-    return { d: { ...d, avancement }, na };
+    return { d: { ...d, avancement, _etapesLabel: etapesLabel(tks) }, na };
   });
 
   const isDone = (s: string) => ["termine", "valide"].includes(s);
@@ -510,7 +511,7 @@ function ClientSection({
                 )}
                 <div className="mt-3">
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                    <span>Avancement</span><span>{d.avancement}%</span>
+                    <span>{d._etapesLabel}</span><span>{d.avancement}%</span>
                   </div>
                   <Progress value={d.avancement} className="h-1.5" />
                 </div>

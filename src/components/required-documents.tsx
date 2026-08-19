@@ -5,63 +5,30 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  CheckCircle2, Circle, Download, Upload, RefreshCw, AlertTriangle, XCircle,
-  MessageSquare, HelpCircle, HandHelping,
-} from "lucide-react";
+import { CheckCircle2, Circle, Download, Upload, RefreshCw, HelpCircle } from "lucide-react";
 import { requiredDocsFor, docMatches, type RequiredDoc } from "@/lib/labels";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { cn } from "@/lib/utils";
-import { notifyEmail } from "@/lib/email/notify";
 import { notifyTeamDocumentDepose } from "@/lib/email/notify-team";
 import { useServerFn } from "@tanstack/react-start";
 import { autoFileDocumentToDrive } from "@/lib/drive-auto.functions";
-
-
 
 type Doc = {
   id: string;
   nom: string;
   storage_path: string | null;
   detected_type?: string | null;
-  statut?: string | null;
-  commentaire?: string | null;
 };
 
 interface Props {
   dossierId: string;
   categorie: string;
   documents: Doc[];
-}
-
-const REVIEW_STATUSES = [
-  { value: "en_attente", label: "En attente", tone: "muted" as const, icon: Circle },
-  { value: "accepte", label: "Accepté", tone: "success" as const, icon: CheckCircle2 },
-  { value: "a_corriger", label: "À corriger", tone: "warning" as const, icon: AlertTriangle },
-  { value: "refuse", label: "Refusé", tone: "destructive" as const, icon: XCircle },
-  { value: "client_manquant", label: "Déclaré manquant par le client", tone: "warning" as const, icon: XCircle },
-];
-
-export function reviewStatusMeta(v?: string | null) {
-  return REVIEW_STATUSES.find((s) => s.value === v) ?? REVIEW_STATUSES[0];
-}
-
-// Statut affiché au client, plus rassurant qu'un enum technique.
-function friendlyClientStatus(doc: Doc | null) {
-  if (!doc) return { label: "À envoyer", dot: "bg-amber-500", cls: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30" };
-  const s = doc.statut ?? "en_attente";
-  if (s === "accepte") return { label: "Validé", dot: "bg-emerald-500", cls: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" };
-  if (s === "a_corriger") return { label: "À corriger", dot: "bg-red-500", cls: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30" };
-  if (s === "refuse") return { label: "À corriger", dot: "bg-red-500", cls: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30" };
-  if (s === "client_manquant") return { label: "Vous avez indiqué ne pas l'avoir", dot: "bg-orange-500", cls: "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/30" };
-  return { label: "Envoyé, en attente", dot: "bg-blue-500", cls: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30" };
 }
 
 export function RequiredDocuments({ dossierId, categorie, documents }: Props) {
@@ -74,16 +41,15 @@ export function RequiredDocuments({ dossierId, categorie, documents }: Props) {
     return { ...r, doc: found ?? null };
   });
 
-  const done = items.filter((i) => i.doc && i.doc.statut === "accepte").length;
-  const missing = items.filter((i) => !i.doc).length;
-  const toFix = items.filter((i) => i.doc && (i.doc.statut === "refuse" || i.doc.statut === "a_corriger")).length;
+  const received = items.filter((i) => i.doc).length;
+  const missing = items.length - received;
 
   const title = isAdmin ? "Documents requis" : "Documents à envoyer";
   const subtitle = isAdmin
-    ? `${done}/${items.length} validés${missing ? ` · ${missing} manquant${missing > 1 ? "s" : ""}` : ""}${toFix ? ` · ${toFix} à corriger` : ""}`
-    : missing === 0 && toFix === 0
-    ? "Tous vos documents ont été envoyés — l'agence vérifie."
-    : `Il vous reste ${missing + toFix} document${(missing + toFix) > 1 ? "s" : ""} à envoyer.`;
+    ? `${received}/${items.length} reçus${missing ? ` · ${missing} manquant${missing > 1 ? "s" : ""}` : ""}`
+    : missing === 0
+      ? "Tous vos documents ont bien été envoyés."
+      : `Il vous reste ${missing} document${missing > 1 ? "s" : ""} à envoyer.`;
 
   return (
     <Card className="p-6">
@@ -117,11 +83,10 @@ function RequiredRow({
   const { user } = useAuth();
   const { isStaff: isAdmin } = useRole();
   const qc = useQueryClient();
-  
+
   const fileInput = useRef<HTMLInputElement>(null);
   const rowRef = useRef<HTMLLIElement>(null);
   const [busy, setBusy] = useState(false);
-  const [showComment, setShowComment] = useState(false);
   const [uploadDialog, setUploadDialog] = useState(false);
   const [hintDialog, setHintDialog] = useState(false);
 
@@ -138,11 +103,6 @@ function RequiredRow({
     return () => window.removeEventListener("required-doc-upload", onOpen as EventListener);
   }, [req.key]);
 
-
-  const friendly = friendlyClientStatus(doc);
-  const adminMeta = reviewStatusMeta(doc?.statut);
-  const AdminIcon = doc ? adminMeta.icon : Circle;
-
   const download = async () => {
     if (!doc || !doc.storage_path) return;
     const { data, error } = await supabase.storage
@@ -156,7 +116,6 @@ function RequiredRow({
   const autoFileDrive = useServerFn(autoFileDocumentToDrive);
 
   const upload = useMutation({
-
     mutationFn: async (file: File) => {
       setBusy(true);
       if (doc) {
@@ -181,7 +140,6 @@ function RequiredRow({
         mime_type: file.type,
         from_agence: isAdmin,
         detected_type: req.key,
-        statut: "en_attente",
       }).select("id").single();
       if (error) throw error;
       // Classement automatique dans le Drive de l'agence (non bloquant)
@@ -194,56 +152,14 @@ function RequiredRow({
       if (!isAdmin) {
         try { notifyTeamDocumentDepose(dossierId, renamed); } catch { /* silencieux */ }
       }
-
     },
     onSuccess: () => {
-      toast.success(doc ? "Document remplacé — l'agence va le vérifier" : "Merci ! L'agence va vérifier votre document");
+      toast.success(doc ? "Document remplacé" : "Document envoyé — merci !");
       qc.invalidateQueries({ queryKey: ["documents", dossierId] });
       setUploadDialog(false);
     },
     onError: (e: any) => toast.error(e.message),
     onSettled: () => setBusy(false),
-  });
-
-  const setStatus = useMutation({
-    mutationFn: async (patch: { statut?: string; commentaire?: string }) => {
-      if (!doc) return;
-      const oldStatut = doc.statut;
-      const { error } = await supabase.from("documents").update(patch).eq("id", doc.id);
-      if (error) throw error;
-      // Notify client when agence transitions the document status
-      if (isAdmin && patch.statut && patch.statut !== oldStatut) {
-        const { data: dossierRow } = await supabase
-          .from("dossiers").select("titre, client_id").eq("id", dossierId).maybeSingle();
-        if (dossierRow?.client_id) {
-          const { data: prof } = await supabase
-            .from("profiles").select("prenom, email").eq("id", dossierRow.client_id).maybeSingle();
-          if (prof?.email) {
-            const isValide = patch.statut === "accepte";
-            const isRefuse = patch.statut === "refuse" || patch.statut === "a_corriger";
-            if (isValide || isRefuse) {
-              notifyEmail({
-                templateName: isValide ? "client-document-valide" : "client-document-refuse",
-                recipientEmail: prof.email,
-                idempotencyKey: `doc-${doc.id}-${patch.statut}`,
-                templateData: {
-                  prenom: prof.prenom || "",
-                  dossierTitre: dossierRow.titre,
-                  documentNom: doc.nom,
-                  commentaire: patch.commentaire || doc.commentaire || "",
-                  dossierId,
-                },
-              });
-            }
-          }
-        }
-      }
-    },
-    onSuccess: () => {
-      toast.success("Revue enregistrée");
-      qc.invalidateQueries({ queryKey: ["documents", dossierId] });
-    },
-    onError: (e: any) => toast.error(e.message),
   });
 
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -252,103 +168,29 @@ function RequiredRow({
     e.target.value = "";
   };
 
-  // Marque un document comme "déclaré manquant par le client".
-  // L'agence recevra la déclaration et pourra ensuite valider (dispense)
-  // ou demander malgré tout au client de fournir le document.
-  const [missingDialog, setMissingDialog] = useState(false);
-  const [missingReason, setMissingReason] = useState("");
-  const declareMissing = useMutation({
-    mutationFn: async () => {
-      // Si un doc existait déjà (ex : ancien fichier), on le remplace par un
-      // placeholder "manquant".
-      if (doc) {
-        if (doc.storage_path) {
-          await supabase.storage.from("documents").remove([doc.storage_path]);
-        }
-        await supabase.from("documents").delete().eq("id", doc.id);
-      }
-      const { error } = await supabase.from("documents").insert({
-        dossier_id: dossierId,
-        uploader_id: user!.id,
-        nom: `${req.label} — non détenu`,
-        storage_path: null,
-        from_agence: false,
-        detected_type: req.key,
-        statut: "client_manquant",
-        commentaire: missingReason.trim() || null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("L'agence a été informée. Elle reviendra vers vous.");
-      qc.invalidateQueries({ queryKey: ["documents", dossierId] });
-      setMissingDialog(false);
-      setMissingReason("");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  const askAgence = () => setMissingDialog(true);
-
-  // Staff : accepter un document requis sans qu'un fichier n'ait été envoyé
-  // (dispense proactive). Crée une ligne placeholder avec statut = accepte.
-  const acceptWithoutFile = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("documents").insert({
-        dossier_id: dossierId,
-        uploader_id: user!.id,
-        nom: `${req.label} — dispensé par l'agence`,
-        storage_path: null,
-        from_agence: true,
-        detected_type: req.key,
-        statut: "accepte",
-        commentaire: "Document dispensé par l'agence (aucun fichier requis).",
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Document marqué comme accepté (dispense).");
-      qc.invalidateQueries({ queryKey: ["documents", dossierId] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-
-  const badgeClass: Record<string, string> = {
-    success: "bg-success/15 text-success border-success/20",
-    warning: "bg-warning/15 text-warning-foreground border-warning/30",
-    destructive: "bg-destructive/15 text-destructive border-destructive/20",
-    muted: "bg-muted text-muted-foreground border-border",
-  };
-  const toneClass: Record<string, string> = {
-    success: "text-success",
-    warning: "text-warning-foreground",
-    destructive: "text-destructive",
-    muted: "text-muted-foreground",
-  };
-
   return (
     <li ref={rowRef} className="py-4 text-sm">
-
       <div className="flex flex-wrap items-start gap-3">
-        {isAdmin ? (
-          <AdminIcon className={cn("h-5 w-5 shrink-0 mt-0.5", doc ? toneClass[adminMeta.tone] : "text-muted-foreground")} />
+        {doc ? (
+          <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 text-success" />
         ) : (
-          <span className={cn("h-3 w-3 rounded-full shrink-0 mt-1.5", friendly.dot)} aria-hidden />
+          <Circle className="h-5 w-5 shrink-0 mt-0.5 text-muted-foreground" />
         )}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium">{req.label}</span>
-            {isAdmin && doc ? (
-              <Badge variant="outline" className={cn("font-medium", badgeClass[adminMeta.tone])}>
-                {adminMeta.label}
-              </Badge>
-            ) : (
-              <Badge variant="outline" className={cn("font-medium", friendly.cls)}>
-                {friendly.label}
-              </Badge>
-            )}
+            <Badge
+              variant="outline"
+              className={cn(
+                "font-medium",
+                doc
+                  ? "bg-success/15 text-success border-success/20"
+                  : "bg-muted text-muted-foreground border-border",
+              )}
+            >
+              {doc ? "Reçu" : "À envoyer"}
+            </Badge>
             {!isAdmin && req.hint && (
               <Button
                 size="sm"
@@ -362,60 +204,23 @@ function RequiredRow({
             )}
           </div>
 
-
           {!isAdmin && !doc && req.hint && (
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{req.hint}</p>
           )}
 
-          {doc && <div className="text-xs text-muted-foreground mt-1 truncate">Fichier envoyé : {doc.nom}</div>}
-
-          {doc?.commentaire && !isAdmin && (
-            <div className="mt-2 text-xs bg-muted/50 rounded p-2 border-l-2 border-warning">
-              <span className="font-medium">Commentaire de l'agence : </span>{doc.commentaire}
-            </div>
-          )}
+          {doc && <div className="text-xs text-muted-foreground mt-1 truncate">Fichier : {doc.nom}</div>}
         </div>
 
         <input ref={fileInput} type="file" hidden onChange={onPick} />
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          {doc && doc.statut === "client_manquant" ? (
-            isAdmin ? (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setStatus.mutate({ statut: "accepte", commentaire: "Le client ne dispose pas de ce document — dispensé par l'agence." })}
-                  title="Le client est dispensé de ce document"
-                  className="border-success/40 text-success hover:bg-success/10"
-                >
-                  <CheckCircle2 className="h-4 w-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Ça passe</span>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setStatus.mutate({ statut: "a_corriger", commentaire: "Ce document reste nécessaire — merci de nous le fournir." })}
-                  title="Le client doit malgré tout fournir ce document"
-                  className="border-destructive/40 text-destructive hover:bg-destructive/10"
-                >
-                  <XCircle className="h-4 w-4 sm:mr-1" />
-                  <span className="hidden sm:inline">À fournir</span>
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setShowComment((v) => !v)} title="Ajouter un commentaire">
-                  <MessageSquare className="h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <Button size="sm" variant="outline" onClick={() => setUploadDialog(true)} disabled={busy}>
-                <Upload className="h-4 w-4 mr-1" /> Finalement, je l'ai
-              </Button>
-            )
-          ) : doc ? (
+          {doc ? (
             <>
-              <Button size="sm" variant="outline" onClick={download} title="Télécharger">
-                <Download className="h-4 w-4" />
-              </Button>
+              {doc.storage_path && (
+                <Button size="sm" variant="outline" onClick={download} title="Télécharger">
+                  <Download className="h-4 w-4" />
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant={isAdmin ? "ghost" : "outline"}
@@ -426,66 +231,18 @@ function RequiredRow({
                 <RefreshCw className="h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">{isAdmin ? "" : "Remplacer"}</span>
               </Button>
-              {isAdmin && (
-                <Button size="sm" variant="ghost" onClick={() => setShowComment((v) => !v)} title="Revue">
-                  <MessageSquare className="h-4 w-4" />
-                </Button>
-              )}
             </>
           ) : isAdmin ? (
-            <>
-              <Button size="sm" onClick={() => fileInput.current?.click()} disabled={busy}>
-                <Upload className="h-4 w-4 mr-1" /> Déposer
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => acceptWithoutFile.mutate()}
-                disabled={acceptWithoutFile.isPending}
-                className="border-success/40 text-success hover:bg-success/10"
-                title="Accepter ce document sans fichier (dispense)"
-              >
-                <CheckCircle2 className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">Accepter quand même</span>
-              </Button>
-            </>
+            <Button size="sm" onClick={() => fileInput.current?.click()} disabled={busy}>
+              <Upload className="h-4 w-4 mr-1" /> Déposer
+            </Button>
           ) : (
-            <>
-              <Button size="sm" onClick={() => setUploadDialog(true)} disabled={busy}>
-                <Upload className="h-4 w-4 mr-1" /> Ajouter un fichier
-              </Button>
-              <Button size="sm" variant="ghost" onClick={askAgence} title="Je ne l'ai pas">
-                <HandHelping className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">Je ne l'ai pas</span>
-              </Button>
-            </>
+            <Button size="sm" onClick={() => setUploadDialog(true)} disabled={busy}>
+              <Upload className="h-4 w-4 mr-1" /> Ajouter un fichier
+            </Button>
           )}
         </div>
       </div>
-
-
-      {isAdmin && doc && showComment && (
-        <div className="mt-3 ml-8 grid gap-2 sm:grid-cols-[180px_1fr] items-start">
-          <Select
-            defaultValue={doc.statut ?? "en_attente"}
-            onValueChange={(v) => setStatus.mutate({ statut: v })}
-          >
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {REVIEW_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Textarea
-            rows={2}
-            placeholder="Commentaire visible par le client (ex : KBIS trop ancien, à renvoyer récent de moins de 3 mois)"
-            defaultValue={doc.commentaire ?? ""}
-            onBlur={(e) => {
-              const v = e.target.value.trim();
-              if (v !== (doc.commentaire ?? "")) setStatus.mutate({ commentaire: v || undefined });
-            }}
-          />
-        </div>
-      )}
 
       {!isAdmin && (
         <Dialog open={uploadDialog} onOpenChange={setUploadDialog}>
@@ -498,10 +255,7 @@ function RequiredRow({
                 {req.hint && <span className="block text-xs pt-2 border-t mt-2">{req.hint}</span>}
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="ghost" onClick={() => { setUploadDialog(false); askAgence(); }}>
-                Je n'ai pas ce document
-              </Button>
+            <DialogFooter>
               <Button onClick={() => fileInput.current?.click()} disabled={busy}>
                 <Upload className="h-4 w-4 mr-1" />
                 {busy ? "Envoi…" : "Choisir un fichier"}
@@ -526,45 +280,6 @@ function RequiredRow({
           </DialogContent>
         </Dialog>
       )}
-
-      {!isAdmin && (
-        <Dialog open={missingDialog} onOpenChange={setMissingDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Vous n'avez pas : {req.label}&nbsp;?</DialogTitle>
-              <DialogDescription className="pt-2 text-sm leading-relaxed">
-                Aucun souci. Nous marquons ce document comme <strong>non détenu</strong> puis
-                l'agence vérifiera si vous pouvez en être dispensé ou si nous devons trouver
-                une solution ensemble.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground">Précision (facultatif)</label>
-              <Textarea
-                rows={3}
-                placeholder="Ex : je n'ai jamais eu de KBIS, je suis auto-entrepreneur…"
-                value={missingReason}
-                onChange={(e) => setMissingReason(e.target.value)}
-                maxLength={500}
-              />
-            </div>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="ghost" onClick={() => setMissingDialog(false)}>Annuler</Button>
-              <Button
-                variant="outline"
-                onClick={() => declareMissing.mutate()}
-                disabled={declareMissing.isPending}
-              >
-                <XCircle className="h-4 w-4 mr-1" />
-                {declareMissing.isPending ? "Envoi…" : "Confirmer : je ne l'ai pas"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-
-
     </li>
   );
 }

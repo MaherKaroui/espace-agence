@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChatWindow } from "@/components/chat-window";
 import { usePresence, PresenceDot, PresenceLabel } from "@/components/presence-indicator";
 import { ExternalLink } from "lucide-react";
+import { ConversationDossierPanel, ConversationDossierDrawer } from "@/components/conversation-dossier-panel";
+
 
 export const Route = createFileRoute("/_authenticated/admin/messages/$clientId")({
   head: () => ({ meta: [{ title: "Conversation" }] }),
@@ -40,8 +42,17 @@ function AdminChat() {
           <ExternalLink className="h-3.5 w-3.5 opacity-70" />
         </Link>
         <PresenceLabel row={p} />
+        <div className="ml-auto">
+          <ConversationDossierDrawer clientId={clientId} clientName={name} />
+        </div>
       </div>
-      <ChatWindow clientId={clientId} title={`Discussion avec ${name}`} />
+      <div className="flex gap-4 items-start">
+        <div className="min-w-0 flex-1">
+          <ChatWindow clientId={clientId} title={`Discussion avec ${name}`} />
+        </div>
+        <ConversationDossierPanel clientId={clientId} clientName={name} />
+      </div>
     </div>
   );
 }
+

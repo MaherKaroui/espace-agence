@@ -36,7 +36,7 @@ import { QualiopiRequestsPanel } from "@/components/qualiopi-requests-panel";
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
-import { computeAvancement } from "@/lib/next-action";
+import { computeAvancement, etapesLabel } from "@/lib/dossier-progress";
 
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";
@@ -353,10 +353,10 @@ function DossierDetail() {
           <div className="w-full md:w-64">
             {(() => {
               // Source unique de vérité : même calcul que la liste & le dashboard.
-              const av = computeAvancement(dossier.categorie, documents as any, taches as any, dossier.statut);
+              const av = computeAvancement(taches as any, dossier.statut);
               return isAdmin ? (
                 <>
-                  <div className="text-xs text-muted-foreground mb-1">Avancement</div>
+                  <div className="text-xs text-muted-foreground mb-1">{etapesLabel(taches as any)}</div>
                   <Progress value={av} />
                   <div className="text-sm mt-1">{av}%</div>
                 </>
@@ -777,7 +777,7 @@ function ClientProgressSummary({
 
   return (
     <>
-      <div className="text-xs text-muted-foreground mb-1">Avancement</div>
+      <div className="text-xs text-muted-foreground mb-1">{etapesLabel(taches as any)}</div>
       <Progress value={avancement} />
       <p className="text-sm mt-2 leading-snug">{phrase}</p>
     </>

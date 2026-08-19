@@ -676,7 +676,6 @@ export type Database = {
       }
       documents: {
         Row: {
-          commentaire: string | null
           created_at: string
           detected_at: string | null
           detected_type: string | null
@@ -687,14 +686,12 @@ export type Database = {
           id: string
           mime_type: string | null
           nom: string
-          statut: string
           storage_path: string | null
           taille: number | null
           thumbnail_path: string | null
           uploader_id: string
         }
         Insert: {
-          commentaire?: string | null
           created_at?: string
           detected_at?: string | null
           detected_type?: string | null
@@ -705,14 +702,12 @@ export type Database = {
           id?: string
           mime_type?: string | null
           nom: string
-          statut?: string
           storage_path?: string | null
           taille?: number | null
           thumbnail_path?: string | null
           uploader_id: string
         }
         Update: {
-          commentaire?: string | null
           created_at?: string
           detected_at?: string | null
           detected_type?: string | null
@@ -723,7 +718,6 @@ export type Database = {
           id?: string
           mime_type?: string | null
           nom?: string
-          statut?: string
           storage_path?: string | null
           taille?: number | null
           thumbnail_path?: string | null

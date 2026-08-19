@@ -88,7 +88,7 @@ function MesDonneesPage() {
       const dossierMap = new Map(dossierList.map((d) => [d.id, d]));
       const { data: docs, error } = await supabase
         .from("documents")
-        .select("id, dossier_id, nom, storage_path, mime_type, taille, detected_type, statut, from_agence, created_at")
+        .select("id, dossier_id, nom, storage_path, mime_type, taille, detected_type, from_agence, created_at")
         .in("dossier_id", dossierList.map((d) => d.id))
         .eq("from_agence", false)
         .order("created_at", { ascending: false });
@@ -262,9 +262,6 @@ function MesDonneesPage() {
                             <div className="text-[11px] text-muted-foreground">
                               {new Date(doc.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
                               {typeof doc.taille === "number" && ` · ${(doc.taille / 1024).toFixed(0)} Ko`}
-                              {doc.statut === "accepte" && " · ✓ Validé"}
-                              {doc.statut === "refuse" && " · ✗ Refusé"}
-                              {doc.statut === "a_corriger" && " · À corriger"}
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
