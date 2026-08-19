@@ -14,8 +14,9 @@ export type EtapeLite = {
 };
 
 /** Étapes réellement prises en compte (les étapes annulées sont ignorées). */
-export function etapesActives<T extends { statut: string }>(taches: T[]): T[] {
-  return (taches ?? []).filter((t) => t.statut !== "annule");
+export function etapesActives<T extends { statut: string }>(taches: T[] | null | undefined): T[] {
+  const arr = Array.isArray(taches) ? taches : [];
+  return arr.filter((t) => t.statut !== "annule");
 }
 
 /** Nombre d'étapes terminées, plafonné à 3. */
