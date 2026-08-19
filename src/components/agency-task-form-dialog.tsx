@@ -119,6 +119,9 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
       if (!user) throw new Error("Non authentifié");
       if (!title.trim()) throw new Error("Le titre est requis");
       if (!isAdmin && !isDirection && poleId === NONE) throw new Error("Un pôle est requis");
+      if (assignedTo === NONE) throw new Error("Un responsable doit être assigné à la tâche");
+      if (!dueDate) throw new Error("Une date d'échéance est requise");
+
 
       const payload = {
         title: title.trim(),
