@@ -1,12 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, Clock, XCircle, ArrowRight, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, ArrowRight, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { computeNextAction, type DocLite, type TacheLite } from "@/lib/next-action";
 
 const ICONS = {
-  refuse: XCircle,
-  a_corriger: AlertTriangle,
   manquant: AlertTriangle,
   tache: Clock,
   attente_agence: Clock,
@@ -39,8 +37,7 @@ export function NextActionCard({ categorie, documents, taches, dossierStatut, co
   // On masque le CTA "Ajouter mon …" quand le document est déjà envoyé
   // et simplement en attente de validation par l'agence. On propose alors
   // un bouton secondaire "Remplacer le fichier" plus discret.
-  const pendingValidation = na.kind === "manquant" && na.label.startsWith("En attente de validation");
-  const hasCta = !!na.primaryKey && !!na.primaryLabel && !pendingValidation;
+  const hasCta = !!na.primaryKey && !!na.primaryLabel;
 
   if (compact) {
     return (
@@ -71,16 +68,6 @@ export function NextActionCard({ categorie, documents, taches, dossierStatut, co
           >
             <Upload className="h-4 w-4 mr-2" />
             Ajouter mon {na.primaryLabel}
-          </Button>
-        )}
-        {pendingValidation && na.primaryKey && (
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => triggerUpload(na.primaryKey!)}
-            className="shrink-0 min-h-11 w-full sm:w-auto"
-          >
-            Remplacer le fichier
           </Button>
         )}
       </div>

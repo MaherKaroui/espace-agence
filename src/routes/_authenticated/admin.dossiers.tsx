@@ -25,14 +25,11 @@ type DocRow = {
   dossier_id: string;
   nom: string;
   detected_type: string | null;
-  statut: string | null;
 };
 
 type ReviewStats = {
   total: number;
-  validated: number;
-  toReview: number;
-  toFix: number;
+  received: number;
   missing: number;
   needsAction: boolean;
 };
@@ -40,29 +37,20 @@ type ReviewStats = {
 function computeReviewStats(categorie: string, docs: DocRow[]): ReviewStats {
   const requis = requiredDocsFor(categorie);
   if (requis.length === 0) {
-    return { total: 0, validated: 0, toReview: 0, toFix: 0, missing: 0, needsAction: false };
+    return { total: 0, received: 0, missing: 0, needsAction: false };
   }
-  let validated = 0, toReview = 0, toFix = 0, missing = 0;
+  let received = 0, missing = 0;
   for (const r of requis) {
-    const found = docs.find((d) => docMatches(d, r));
-    if (!found) { missing++; continue; }
-    const s = found.statut ?? "en_attente";
-    if (s === "accepte") validated++;
-    else if (s === "a_corriger" || s === "refuse") toFix++;
-    else toReview++;
+    if (docs.find((d) => docMatches(d, r))) received++;
+    else missing++;
   }
-  return {
-    total: requis.length,
-    validated, toReview, toFix, missing,
-    needsAction: toReview + toFix + missing > 0,
-  };
+  return { total: requis.length, received, missing, needsAction: missing > 0 };
 }
 
-type Inconsistency = "done_incomplete" | "zero_but_validated" | null;
+type Inconsistency = "done_incomplete" | null;
 function detectInconsistency(dossier: any, stats: ReviewStats | undefined): Inconsistency {
   if (!stats) return null;
   if (["termine", "valide"].includes(dossier.statut) && stats.needsAction) return "done_incomplete";
-  if ((dossier.avancement ?? 0) === 0 && stats.validated > 0) return "zero_but_validated";
   return null;
 }
 
@@ -111,8 +99,7 @@ export const Route = createFileRoute("/_authenticated/admin/dossiers")({
   component: AdminDossiers,
 });
 
-type QualityFilter =
-  | "all" | "to_fix" | "missing" | "to_review" | "done_incomplete" | "zero_but_validated";
+type QualityFilter = "all" | "missing" | "done_incomplete";
 type ViewMode = "list" | "kanban";
 
 function AdminDossiers() {
@@ -181,7 +168,7 @@ function AdminDossiers() {
     enabled: dossierIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("documents").select("id, dossier_id, nom, detected_type, statut").in("dossier_id", dossierIds);
+        .from("documents").select("id, dossier_id, nom, detected_type").in("dossier_id", dossierIds);
       if (error) throw error;
       const m: Record<string, DocRow[]> = {};
       for (const d of (data ?? []) as DocRow[]) (m[d.dossier_id] ??= []).push(d);
@@ -247,11 +234,8 @@ function AdminDossiers() {
     if (reviewOnly && !statsById[r.id]?.needsAction) return false;
     const s = statsById[r.id];
     switch (quality) {
-      case "to_fix": if (!s || s.toFix === 0) return false; break;
       case "missing": if (!s || s.missing === 0) return false; break;
-      case "to_review": if (!s || s.toReview === 0) return false; break;
       case "done_incomplete": if (inconsistencyById[r.id] !== "done_incomplete") return false; break;
-      case "zero_but_validated": if (inconsistencyById[r.id] !== "zero_but_validated") return false; break;
     }
     if (!q.trim()) return true;
     const txt = `${r.titre} ${r.profiles?.email ?? ""} ${r.profiles?.nom ?? ""} ${r.profiles?.prenom ?? ""}`.toLowerCase();
@@ -337,11 +321,8 @@ function AdminDossiers() {
         <select value={quality} onChange={(e) => setQuality(e.target.value as QualityFilter)}
           className="h-10 rounded-md border border-input bg-background px-3 text-sm">
           <option value="all">Tous les états</option>
-          <option value="to_fix">Documents à corriger / refusés</option>
           <option value="missing">Documents manquants</option>
-          <option value="to_review">Documents à vérifier</option>
           <option value="done_incomplete">Terminés incomplets</option>
-          <option value="zero_but_validated">0% mais validés</option>
         </select>
         <button
           type="button"
@@ -481,11 +462,6 @@ function DossierRow({ d, stats, inc, poleColor, unread = 0, juridiqueAssignees =
                 <AlertTriangle className="h-3 w-3" /> Terminé incomplet
               </Badge>
             )}
-            {inc === "zero_but_validated" && (
-              <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30 text-xs gap-1">
-                <AlertTriangle className="h-3 w-3" /> 0% mais validés
-              </Badge>
-            )}
             {unread > 0 && (
               <Badge className="bg-primary text-primary-foreground text-xs gap-1">
                 <MessageSquare className="h-3 w-3" /> {unread} audit
@@ -559,34 +535,22 @@ function KanbanView({ items, statsById, inconsistencyById, poleById, externalUnr
 
 function ReviewSummary({ stats }: { stats: ReviewStats | undefined }) {
   if (!stats || stats.total === 0) return null;
-  const { total, validated, toReview, toFix, missing } = stats;
-  if (validated === total) {
+  const { total, received, missing } = stats;
+  if (missing === 0) {
     return (
       <Badge variant="outline" className="bg-success/15 text-success border-success/20 text-xs gap-1">
-        <CheckCircle2 className="h-3 w-3" /> {validated}/{total} validés
+        <CheckCircle2 className="h-3 w-3" /> {received}/{total} pièces reçues
       </Badge>
     );
   }
   return (
     <div className="flex items-center gap-1 flex-wrap">
       <Badge variant="outline" className="bg-muted text-muted-foreground text-xs gap-1">
-        {validated}/{total}
+        {received}/{total} pièces
       </Badge>
-      {toReview > 0 && (
-        <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30 text-xs gap-1">
-          <Circle className="h-3 w-3" /> {toReview} à vérifier
-        </Badge>
-      )}
-      {toFix > 0 && (
-        <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/20 text-xs gap-1">
-          <AlertTriangle className="h-3 w-3" /> {toFix} à corriger
-        </Badge>
-      )}
-      {missing > 0 && (
-        <Badge variant="outline" className="bg-warning/15 text-warning-foreground border-warning/30 text-xs gap-1">
-          {missing} manquant{missing > 1 ? "s" : ""}
-        </Badge>
-      )}
+      <Badge variant="outline" className="bg-warning/15 text-warning-foreground border-warning/30 text-xs gap-1">
+        {missing} manquant{missing > 1 ? "s" : ""}
+      </Badge>
     </div>
   );
 }

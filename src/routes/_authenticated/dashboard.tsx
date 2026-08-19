@@ -9,7 +9,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { categorieLabel } from "@/lib/labels";
 import { NextActionCard } from "@/components/next-action-card";
-import { computeNextAction, computeAvancement } from "@/lib/next-action";
+import { computeNextAction } from "@/lib/next-action";
+import { computeAvancement, etapesLabel } from "@/lib/dossier-progress";
 import { FolderOpen, FileText, Clock, CheckCircle2, AlertCircle, Upload, MessageSquare, CalendarDays } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -230,7 +231,7 @@ function Dashboard() {
               const docs = allDocs.filter((doc: any) => doc.dossier_id === d.id) as any;
               const tks = allTaches.filter((t: any) => t.dossier_id === d.id) as any;
               // Source unique : même calcul dans le dashboard, la liste et le détail.
-              const av = computeAvancement(d.categorie, docs, tks, d.statut);
+              const av = computeAvancement(tks, d.statut);
               return (
               <Link key={d.id} to="/dossiers/$id" params={{ id: d.id }}>
                 <Card className="p-4 hover:border-primary/40 transition-colors">
@@ -246,7 +247,7 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="w-full sm:w-24 shrink-0">
-                      <div className="text-xs text-muted-foreground mb-1 sm:text-right">{av}%</div>
+                      <div className="text-xs text-muted-foreground mb-1 sm:text-right">{etapesLabel(tks)}</div>
                       <Progress value={av} className="h-1.5" />
                     </div>
                   </div>
