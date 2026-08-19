@@ -71,7 +71,7 @@ function AdminDashboard() {
       const unreadSince = new Date(Date.now() - UNREAD_DAYS * 24 * 3600 * 1000).toISOString();
       const openStatuts = ["en_attente", "documents_manquants", "a_completer", "en_cours_etude", "en_cours_traitement"] as const;
 
-      const [dossiersBloques, msgsSansReponse, docsAVerifier, rdvExpires] = await Promise.all([
+      const [dossiersBloques, msgsSansReponse, rdvExpires] = await Promise.all([
         supabase
           .from("dossiers")
           .select("id", { count: "exact", head: true })
@@ -84,11 +84,6 @@ function AdminDashboard() {
           .is("read_at", null)
           .lt("created_at", unreadSince),
         supabase
-          .from("documents")
-          .select("id", { count: "exact", head: true })
-          .eq("statut", "en_attente")
-          .eq("from_agence", false),
-        supabase
           .from("rendez_vous")
           .select("id", { count: "exact", head: true })
           .eq("status", "en_attente")
@@ -100,7 +95,6 @@ function AdminDashboard() {
       return {
         dossiersBloques: dossiersBloques.count ?? 0,
         clientsSansReponse: uniqClients.size,
-        docsAVerifier: docsAVerifier.count ?? 0,
         rdvExpires: rdvExpires.count ?? 0,
       };
     },
@@ -119,10 +113,9 @@ function AdminDashboard() {
           <h2 className="font-display text-xl">À traiter en priorité</h2>
         </div>
         <p className="text-xs text-muted-foreground mb-3">Signaux actionnables — cliquez pour ouvrir la liste filtrée.</p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard label={`Dossiers bloqués (>${BLOCKED_DAYS}j)`} value={actionable?.dossiersBloques ?? 0} icon={Ban} tone="danger" to="/admin/dossiers" />
           <StatCard label={`Clients sans réponse (>${UNREAD_DAYS}j)`} value={actionable?.clientsSansReponse ?? 0} icon={MessageSquareOff} tone="warning" to="/admin/messages" />
-          <StatCard label="Documents à vérifier" value={actionable?.docsAVerifier ?? 0} icon={FileSearch} tone="info" to="/admin/dossiers" />
           <StatCard label="RDV expirés (en attente)" value={actionable?.rdvExpires ?? 0} icon={CalendarX} tone="danger" to="/admin/rendez-vous" />
         </div>
       </div>

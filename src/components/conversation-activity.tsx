@@ -8,7 +8,6 @@ export type ClientActivity = {
   dossiersTermines: number;
   tachesOuvertes: number;
   demandesEnAttente: number;
-  docsAVerifier: number;
 };
 
 const EMPTY: ClientActivity = {
@@ -16,7 +15,6 @@ const EMPTY: ClientActivity = {
   dossiersTermines: 0,
   tachesOuvertes: 0,
   demandesEnAttente: 0,
-  docsAVerifier: 0,
 };
 
 const DOSSIER_TERMINE = ["termine", "valide"];
@@ -77,15 +75,6 @@ export function useClientsActivity(clientIds: string[]) {
           if (cid) get(cid).demandesEnAttente += 1;
         }
 
-        const { data: docs } = await supabase
-          .from("documents")
-          .select("id, dossier_id, statut")
-          .in("dossier_id", dossierIds)
-          .eq("statut", "en_attente");
-        for (const d of (docs ?? []) as any[]) {
-          const cid = dossierToClient.get(d.dossier_id);
-          if (cid) get(cid).docsAVerifier += 1;
-        }
       }
 
       return map;
@@ -101,7 +90,6 @@ export function mergeActivity(list: (ClientActivity | undefined)[]): ClientActiv
       dossiersTermines: acc.dossiersTermines + a.dossiersTermines,
       tachesOuvertes: acc.tachesOuvertes + a.tachesOuvertes,
       demandesEnAttente: acc.demandesEnAttente + a.demandesEnAttente,
-      docsAVerifier: acc.docsAVerifier + a.docsAVerifier,
     };
   }, { ...EMPTY });
 }
@@ -115,9 +103,9 @@ export function ActivityBadges({
   className?: string;
 }) {
   if (!activity) return null;
-  const { dossiersEnCours, dossiersTermines, tachesOuvertes, demandesEnAttente, docsAVerifier } = activity;
+  const { dossiersEnCours, dossiersTermines, tachesOuvertes, demandesEnAttente } = activity;
   const total = dossiersEnCours + dossiersTermines;
-  if (total === 0 && tachesOuvertes === 0 && demandesEnAttente === 0 && docsAVerifier === 0) return null;
+  if (total === 0 && tachesOuvertes === 0 && demandesEnAttente === 0) return null;
 
   return (
     <div className={`flex flex-wrap items-center gap-1.5 ${className}`}>
@@ -139,11 +127,6 @@ export function ActivityBadges({
       {demandesEnAttente > 0 && (
         <Badge variant="outline" className="gap-1 text-[10px] font-medium text-warning-foreground border-warning/40" title="Demandes Qualiopi en attente">
           <HelpCircle className="h-3 w-3" /> {demandesEnAttente} demande{demandesEnAttente > 1 ? "s" : ""}
-        </Badge>
-      )}
-      {docsAVerifier > 0 && (
-        <Badge variant="outline" className="gap-1 text-[10px] font-medium text-primary border-primary/30" title="Documents à vérifier">
-          <FileClock className="h-3 w-3" /> {docsAVerifier} doc{docsAVerifier > 1 ? "s" : ""} à vérifier
         </Badge>
       )}
     </div>

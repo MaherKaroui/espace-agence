@@ -8,7 +8,6 @@ type Doc = {
   nom: string;
   created_at: string;
   from_agence?: boolean | null;
-  statut_revue?: string | null;
 };
 type Tache = {
   id: string;
@@ -61,16 +60,6 @@ export function DossierTimeline({
       title: d.from_agence ? "Document envoyé par l'agence" : "Document déposé",
       detail: d.nom,
     });
-    if (d.statut_revue === "accepte") {
-      events.push({
-        key: `doc-ok-${d.id}`,
-        at: new Date(d.created_at),
-        icon: CheckCircle2,
-        tone: "bg-success/15 text-success",
-        title: "Document validé",
-        detail: d.nom,
-      });
-    }
   }
 
   for (const t of taches) {

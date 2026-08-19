@@ -262,9 +262,6 @@ function MesDonneesPage() {
                             <div className="text-[11px] text-muted-foreground">
                               {new Date(doc.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
                               {typeof doc.taille === "number" && ` · ${(doc.taille / 1024).toFixed(0)} Ko`}
-                              {doc.statut === "accepte" && " · ✓ Validé"}
-                              {doc.statut === "refuse" && " · ✗ Refusé"}
-                              {doc.statut === "a_corriger" && " · À corriger"}
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
