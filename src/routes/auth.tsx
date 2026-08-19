@@ -166,7 +166,8 @@ function AuthPage() {
             <li>• Documents et pièces justificatives centralisés</li>
           </ul>
         </div>
-        <p className="text-xs text-white/40">© {new Date().getFullYear()} — IZISuivis</p>
+        {/* suppressHydrationWarning : l'année dépend de l'horloge (UTC serveur vs locale client) */}
+        <p className="text-xs text-white/40" suppressHydrationWarning>© {new Date().getFullYear()} — IZISuivis</p>
       </div>
 
       <div className="flex items-center justify-center p-6 sm:p-10">
