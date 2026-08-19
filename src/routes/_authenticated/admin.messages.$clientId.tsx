@@ -40,8 +40,17 @@ function AdminChat() {
           <ExternalLink className="h-3.5 w-3.5 opacity-70" />
         </Link>
         <PresenceLabel row={p} />
+        <div className="ml-auto">
+          <ConversationDossierDrawer clientId={clientId} clientName={name} />
+        </div>
       </div>
-      <ChatWindow clientId={clientId} title={`Discussion avec ${name}`} />
+      <div className="flex gap-4 items-start">
+        <div className="min-w-0 flex-1">
+          <ChatWindow clientId={clientId} title={`Discussion avec ${name}`} />
+        </div>
+        <ConversationDossierPanel clientId={clientId} clientName={name} />
+      </div>
     </div>
   );
 }
+
