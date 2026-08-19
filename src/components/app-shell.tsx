@@ -120,6 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const directionPilotage = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
     { to: "/admin/rapports-activite", label: "Rapports d'activité", icon: FileText },
+    { to: "/admin/agent-ia", label: "Agent IA — Supervision", icon: Bot },
     { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
   ];
