@@ -116,32 +116,6 @@ export type Database = {
           },
         ]
       }
-      agency_task_reminders_sent: {
-        Row: {
-          kind: string
-          sent_at: string
-          task_id: string
-        }
-        Insert: {
-          kind: string
-          sent_at?: string
-          task_id: string
-        }
-        Update: {
-          kind?: string
-          sent_at?: string
-          task_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agency_task_reminders_sent_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "agency_tasks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       agency_tasks: {
         Row: {
           archived_at: string | null
@@ -160,7 +134,6 @@ export type Database = {
           internal_comment: string | null
           pole_id: string | null
           priority: Database["public"]["Enums"]["agency_task_priority"]
-          reminders_enabled: boolean
           status: Database["public"]["Enums"]["agency_task_status"]
           task_type: string | null
           title: string
@@ -184,7 +157,6 @@ export type Database = {
           internal_comment?: string | null
           pole_id?: string | null
           priority?: Database["public"]["Enums"]["agency_task_priority"]
-          reminders_enabled?: boolean
           status?: Database["public"]["Enums"]["agency_task_status"]
           task_type?: string | null
           title: string
@@ -208,7 +180,6 @@ export type Database = {
           internal_comment?: string | null
           pole_id?: string | null
           priority?: Database["public"]["Enums"]["agency_task_priority"]
-          reminders_enabled?: boolean
           status?: Database["public"]["Enums"]["agency_task_status"]
           task_type?: string | null
           title?: string
