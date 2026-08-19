@@ -38,7 +38,6 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
   const [dueDate, setDueDate] = useState("");
   const [assignedTo, setAssignedTo] = useState<string>(NONE);
   const [coAssignees, setCoAssignees] = useState<string[]>([]);
-  const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [poleId, setPoleId] = useState<string>(NONE);
   const [clientId, setClientId] = useState<string>(NONE);
   const [dossierId, setDossierId] = useState<string>(NONE);
@@ -52,7 +51,6 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
     setStatus(task?.status ?? "a_faire");
     setDueDate(task?.due_date ? task.due_date.slice(0, 16) : "");
     setAssignedTo(task?.assigned_to ?? NONE);
-    setRemindersEnabled((task as any)?.reminders_enabled ?? true);
     setPoleId(task?.pole_id ?? defaultPoleId ?? NONE);
     setClientId(task?.client_id ?? NONE);
     setDossierId(task?.dossier_id ?? NONE);
@@ -133,7 +131,6 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
         client_id: clientId === NONE ? null : clientId,
         dossier_id: dossierId === NONE ? null : dossierId,
         internal_comment: internalComment.trim() || null,
-        reminders_enabled: remindersEnabled,
       };
 
       let taskId = task?.id ?? null;
@@ -266,19 +263,11 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
               {staff.length === 0 && <div className="text-xs text-muted-foreground">Aucun membre disponible.</div>}
             </div>
             <p className="text-xs text-muted-foreground">
-              Chaque personne assignée reçoit les notifications et les rappels de la tâche.
+              Chaque personne assignée reçoit les notifications de la tâche.
             </p>
           </div>
 
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-primary"
-              checked={remindersEnabled}
-              onChange={(e) => setRemindersEnabled(e.target.checked)}
-            />
-            Rappels automatiques (J-2, J-1, jour J puis en cas de retard)
-          </label>
+          
 
 
 

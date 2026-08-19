@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, Users2, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings, CalendarDays, UserCog, ListChecks, Mail,
+  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, Users2, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings, CalendarDays, UserCog, ListChecks, Mail, FileText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -119,6 +119,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Réservé Direction / Admin
   const directionPilotage = [
     { to: "/admin/direction", label: "Pilotage Direction", icon: TrendingUp },
+    { to: "/admin/rapports-activite", label: "Rapports d'activité", icon: FileText },
     { to: "/admin/rendez-vous", label: "Rendez-vous", icon: CalendarDays },
     { to: "/admin/audit", label: "Journal d'audit", icon: ShieldCheck },
   ];

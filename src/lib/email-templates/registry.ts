@@ -20,7 +20,7 @@ import { template as clientDossierInactif } from './client-dossier-inactif'
 import { template as clientRdvRappel } from './client-rdv-rappel'
 import { template as groupInvitation } from './group-invitation'
 import { template as groupNouveauMessage } from './group-nouveau-message'
-import { template as tacheRappel } from './tache-rappel'
+import { template as rapportActivite } from './rapport-activite'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -53,5 +53,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'client-rdv-rappel': clientRdvRappel,
   'group-invitation': groupInvitation,
   'group-nouveau-message': groupNouveauMessage,
-  'tache-rappel': tacheRappel,
+  'rapport-activite': rapportActivite,
 }
