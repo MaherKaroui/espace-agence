@@ -15,6 +15,7 @@ import "../lib/fonts";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { NativeBootstrap } from "@/components/native-bootstrap";
+import { AppErrorBoundary, ErrorLoggerBootstrap } from "@/components/app-error-boundary";
 
 function NotFoundComponent() {
   return (
@@ -108,10 +109,13 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthSync />
-      <NativeBootstrap />
-      <Outlet />
-      <Toaster position="top-right" richColors />
+      <AppErrorBoundary>
+        <ErrorLoggerBootstrap />
+        <AuthSync />
+        <NativeBootstrap />
+        <Outlet />
+        <Toaster position="top-right" richColors />
+      </AppErrorBoundary>
     </QueryClientProvider>
   );
 }

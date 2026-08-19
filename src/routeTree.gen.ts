@@ -46,6 +46,7 @@ import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminDirectionRouteImport } from './routes/_authenticated/admin.direction'
 import { Route as AuthenticatedAdminCalendrierQualiopiRouteImport } from './routes/_authenticated/admin.calendrier-qualiopi'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
+import { Route as AuthenticatedAdminAgentIaRouteImport } from './routes/_authenticated/admin.agent-ia'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as AuthenticatedMessagesGroupesIndexRouteImport } from './routes/_authenticated/messages.groupes.index'
@@ -57,9 +58,12 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksSupervisionReportRouteImport } from './routes/api/public/hooks/supervision-report'
 import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
 import { Route as ApiPublicHooksPushFanoutRouteImport } from './routes/api/public/hooks/push-fanout'
 import { Route as ApiPublicHooksPurgeEphemeralRouteImport } from './routes/api/public/hooks/purge-ephemeral'
+import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
+import { Route as ApiPublicHooksAiSupervisorRouteImport } from './routes/api/public/hooks/ai-supervisor'
 import { Route as AuthenticatedMessagesGroupesIdRouteImport } from './routes/_authenticated/messages.groupes.$id'
 import { Route as AuthenticatedDossiersIdQualiopiRapportRouteImport } from './routes/_authenticated/dossiers.$id_.qualiopi-rapport'
 import { Route as AuthenticatedAuditsIdQualiopiRapportRouteImport } from './routes/_authenticated/audits.$id_.qualiopi-rapport'
@@ -269,6 +273,12 @@ const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
   path: '/admin/audit',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminAgentIaRoute =
+  AuthenticatedAdminAgentIaRouteImport.update({
+    id: '/admin/agent-ia',
+    path: '/admin/agent-ia',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -332,6 +342,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSupervisionReportRoute =
+  ApiPublicHooksSupervisionReportRouteImport.update({
+    id: '/api/public/hooks/supervision-report',
+    path: '/api/public/hooks/supervision-report',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   id: '/api/public/hooks/reminders',
   path: '/api/public/hooks/reminders',
@@ -347,6 +363,18 @@ const ApiPublicHooksPurgeEphemeralRoute =
   ApiPublicHooksPurgeEphemeralRouteImport.update({
     id: '/api/public/hooks/purge-ephemeral',
     path: '/api/public/hooks/purge-ephemeral',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksHealthCheckRoute =
+  ApiPublicHooksHealthCheckRouteImport.update({
+    id: '/api/public/hooks/health-check',
+    path: '/api/public/hooks/health-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksAiSupervisorRoute =
+  ApiPublicHooksAiSupervisorRouteImport.update({
+    id: '/api/public/hooks/ai-supervisor',
+    path: '/api/public/hooks/ai-supervisor',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedMessagesGroupesIdRoute =
@@ -411,6 +439,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/agent-ia': typeof AuthenticatedAdminAgentIaRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/calendrier-qualiopi': typeof AuthenticatedAdminCalendrierQualiopiRoute
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
@@ -438,9 +467,12 @@ export interface FileRoutesByFullPath {
   '/audits/$id/qualiopi-rapport': typeof AuthenticatedAuditsIdQualiopiRapportRoute
   '/dossiers/$id/qualiopi-rapport': typeof AuthenticatedDossiersIdQualiopiRapportRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
+  '/api/public/hooks/ai-supervisor': typeof ApiPublicHooksAiSupervisorRoute
+  '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/supervision-report': typeof ApiPublicHooksSupervisionReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -470,6 +502,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/agent-ia': typeof AuthenticatedAdminAgentIaRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/calendrier-qualiopi': typeof AuthenticatedAdminCalendrierQualiopiRoute
   '/admin/direction': typeof AuthenticatedAdminDirectionRoute
@@ -497,9 +530,12 @@ export interface FileRoutesByTo {
   '/audits/$id/qualiopi-rapport': typeof AuthenticatedAuditsIdQualiopiRapportRoute
   '/dossiers/$id/qualiopi-rapport': typeof AuthenticatedDossiersIdQualiopiRapportRoute
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
+  '/api/public/hooks/ai-supervisor': typeof ApiPublicHooksAiSupervisorRoute
+  '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/supervision-report': typeof ApiPublicHooksSupervisionReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -531,6 +567,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/agent-ia': typeof AuthenticatedAdminAgentIaRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/calendrier-qualiopi': typeof AuthenticatedAdminCalendrierQualiopiRoute
   '/_authenticated/admin/direction': typeof AuthenticatedAdminDirectionRoute
@@ -558,9 +595,12 @@ export interface FileRoutesById {
   '/_authenticated/audits/$id_/qualiopi-rapport': typeof AuthenticatedAuditsIdQualiopiRapportRoute
   '/_authenticated/dossiers/$id_/qualiopi-rapport': typeof AuthenticatedDossiersIdQualiopiRapportRoute
   '/_authenticated/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
+  '/api/public/hooks/ai-supervisor': typeof ApiPublicHooksAiSupervisorRoute
+  '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/supervision-report': typeof ApiPublicHooksSupervisionReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -592,6 +632,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/agent-ia'
     | '/admin/audit'
     | '/admin/calendrier-qualiopi'
     | '/admin/direction'
@@ -619,9 +660,12 @@ export interface FileRouteTypes {
     | '/audits/$id/qualiopi-rapport'
     | '/dossiers/$id/qualiopi-rapport'
     | '/messages/groupes/$id'
+    | '/api/public/hooks/ai-supervisor'
+    | '/api/public/hooks/health-check'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/supervision-report'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -651,6 +695,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/agent-ia'
     | '/admin/audit'
     | '/admin/calendrier-qualiopi'
     | '/admin/direction'
@@ -678,9 +723,12 @@ export interface FileRouteTypes {
     | '/audits/$id/qualiopi-rapport'
     | '/dossiers/$id/qualiopi-rapport'
     | '/messages/groupes/$id'
+    | '/api/public/hooks/ai-supervisor'
+    | '/api/public/hooks/health-check'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/supervision-report'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -711,6 +759,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/agent-ia'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/calendrier-qualiopi'
     | '/_authenticated/admin/direction'
@@ -738,9 +787,12 @@ export interface FileRouteTypes {
     | '/_authenticated/audits/$id_/qualiopi-rapport'
     | '/_authenticated/dossiers/$id_/qualiopi-rapport'
     | '/_authenticated/messages/groupes/$id'
+    | '/api/public/hooks/ai-supervisor'
+    | '/api/public/hooks/health-check'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/supervision-report'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -769,9 +821,12 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   OauthGoogleDriveReturnRoute: typeof OauthGoogleDriveReturnRoute
+  ApiPublicHooksAiSupervisorRoute: typeof ApiPublicHooksAiSupervisorRoute
+  ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksPurgeEphemeralRoute: typeof ApiPublicHooksPurgeEphemeralRoute
   ApiPublicHooksPushFanoutRoute: typeof ApiPublicHooksPushFanoutRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
+  ApiPublicHooksSupervisionReportRoute: typeof ApiPublicHooksSupervisionReportRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -1040,6 +1095,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/agent-ia': {
+      id: '/_authenticated/admin/agent-ia'
+      path: '/admin/agent-ia'
+      fullPath: '/admin/agent-ia'
+      preLoaderRoute: typeof AuthenticatedAdminAgentIaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -1117,6 +1179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/supervision-report': {
+      id: '/api/public/hooks/supervision-report'
+      path: '/api/public/hooks/supervision-report'
+      fullPath: '/api/public/hooks/supervision-report'
+      preLoaderRoute: typeof ApiPublicHooksSupervisionReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/reminders': {
       id: '/api/public/hooks/reminders'
       path: '/api/public/hooks/reminders'
@@ -1136,6 +1205,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/purge-ephemeral'
       fullPath: '/api/public/hooks/purge-ephemeral'
       preLoaderRoute: typeof ApiPublicHooksPurgeEphemeralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/health-check': {
+      id: '/api/public/hooks/health-check'
+      path: '/api/public/hooks/health-check'
+      fullPath: '/api/public/hooks/health-check'
+      preLoaderRoute: typeof ApiPublicHooksHealthCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/ai-supervisor': {
+      id: '/api/public/hooks/ai-supervisor'
+      path: '/api/public/hooks/ai-supervisor'
+      fullPath: '/api/public/hooks/ai-supervisor'
+      preLoaderRoute: typeof ApiPublicHooksAiSupervisorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/messages/groupes/$id': {
@@ -1210,6 +1293,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPreferencesRoute: typeof AuthenticatedPreferencesRoute
   AuthenticatedRendezVousRoute: typeof AuthenticatedRendezVousRoute
+  AuthenticatedAdminAgentIaRoute: typeof AuthenticatedAdminAgentIaRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminCalendrierQualiopiRoute: typeof AuthenticatedAdminCalendrierQualiopiRoute
   AuthenticatedAdminDirectionRoute: typeof AuthenticatedAdminDirectionRoute
@@ -1246,6 +1330,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPreferencesRoute: AuthenticatedPreferencesRoute,
   AuthenticatedRendezVousRoute: AuthenticatedRendezVousRoute,
+  AuthenticatedAdminAgentIaRoute: AuthenticatedAdminAgentIaRoute,
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminCalendrierQualiopiRoute:
     AuthenticatedAdminCalendrierQualiopiRoute,
@@ -1305,9 +1390,12 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   OauthGoogleDriveReturnRoute: OauthGoogleDriveReturnRoute,
+  ApiPublicHooksAiSupervisorRoute: ApiPublicHooksAiSupervisorRoute,
+  ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksPurgeEphemeralRoute: ApiPublicHooksPurgeEphemeralRoute,
   ApiPublicHooksPushFanoutRoute: ApiPublicHooksPushFanoutRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
+  ApiPublicHooksSupervisionReportRoute: ApiPublicHooksSupervisionReportRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
