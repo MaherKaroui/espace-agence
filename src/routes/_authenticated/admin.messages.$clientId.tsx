@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChatWindow } from "@/components/chat-window";
 import { usePresence, PresenceDot, PresenceLabel } from "@/components/presence-indicator";
 import { ExternalLink } from "lucide-react";
+import { ConversationDossierPanel, ConversationDossierDrawer } from "@/components/conversation-dossier-panel";
+
 
 export const Route = createFileRoute("/_authenticated/admin/messages/$clientId")({
   head: () => ({ meta: [{ title: "Conversation" }] }),
