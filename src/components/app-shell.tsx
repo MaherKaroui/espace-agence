@@ -275,17 +275,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile sidebar */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-40">
+        <div className="lg:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-72 bg-sidebar text-sidebar-foreground p-3 pt-safe pb-safe flex flex-col">
-            <button aria-label="Fermer le menu" className="self-end p-2" onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></button>
-            <nav className="flex-1 space-y-1 overflow-y-auto"><NavList /></nav>
-            <button onClick={signOut} className="mt-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent">
-              <LogOut className="h-4 w-4" /> Déconnexion
-            </button>
+          <aside className="absolute inset-y-0 left-0 flex w-[86vw] max-w-80 flex-col bg-sidebar text-sidebar-foreground pt-safe pb-safe shadow-xl">
+            <div className="flex items-center gap-3 border-b border-sidebar-border p-3">
+              <Logo size={32} className="rounded-lg shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-display text-base">IZISuivis</div>
+                <div className="truncate text-xs text-sidebar-foreground/50">{displayName}</div>
+              </div>
+              <button
+                aria-label="Fermer le menu"
+                className="shrink-0 rounded-md p-2 hover:bg-sidebar-accent"
+                onClick={() => setMobileOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <nav
+              className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3"
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("a")) setMobileOpen(false);
+              }}
+            >
+              <NavList />
+            </nav>
+            <div className="border-t border-sidebar-border p-3">
+              <div className="px-1 pb-2 text-xs text-sidebar-foreground/50 truncate">{roleLabel}</div>
+              <button
+                onClick={signOut}
+                className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border px-3 py-2.5 text-sm font-medium hover:bg-sidebar-accent"
+              >
+                <LogOut className="h-4 w-4 shrink-0" /> Déconnexion
+              </button>
+            </div>
           </aside>
         </div>
       )}
+
 
       <div className="lg:pl-64 min-w-0">
         <header className="sticky top-0 z-30 flex items-center gap-2 border-b bg-background/95 backdrop-blur px-3 sm:px-6 min-h-14 sm:h-16 pt-safe px-safe">
