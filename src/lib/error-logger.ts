@@ -8,7 +8,36 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type Gravite = "critique" | "majeur" | "mineur";
 
-const SLOW_MS = 2000;
+const SLOW_MS = 5000;
+
+/** Traitements longs par nature (IA, rapports) : ne pas signaler comme "lents". */
+const SLOW_EXEMPT = [
+  "supervision.functions",
+  "ai-supervisor",
+  "internal-ai.functions",
+  "activity-reports.functions",
+  "direction-report.functions",
+  "classify-document.functions",
+  "qualiopi.functions",
+  "google-drive.functions",
+  "drive-auto.functions",
+];
+
+/** Les URLs /_serverFn/<base64> encodent le module appelé : on le décode. */
+function isSlowExempt(url: string): boolean {
+  const marker = "/_serverFn/";
+  const idx = url.indexOf(marker);
+  let target = url;
+  if (idx !== -1) {
+    const encoded = url.slice(idx + marker.length).split(/[/?]/)[0] ?? "";
+    try {
+      target = atob(decodeURIComponent(encoded));
+    } catch {
+      target = encoded;
+    }
+  }
+  return SLOW_EXEMPT.some((p) => target.includes(p));
+}
 const MAX_PER_MINUTE = 12;
 let sentThisMinute = 0;
 let windowStart = Date.now();
