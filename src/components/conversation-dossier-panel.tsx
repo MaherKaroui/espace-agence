@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel } from "@/lib/labels";
-import { computeAvancement, etapesLabel } from "@/lib/dossier-progress";
+import { computeAvancement, etapesLabel, toTaches } from "@/lib/dossier-progress";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {

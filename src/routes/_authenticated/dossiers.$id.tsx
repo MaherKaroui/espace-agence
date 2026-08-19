@@ -36,7 +36,7 @@ import { QualiopiRequestsPanel } from "@/components/qualiopi-requests-panel";
 import { RequiredDocuments } from "@/components/required-documents";
 import { NextActionCard } from "@/components/next-action-card";
 import { DossierTimeline } from "@/components/dossier-timeline";
-import { computeAvancement, etapesLabel } from "@/lib/dossier-progress";
+import { computeAvancement, etapesLabel, toTaches } from "@/lib/dossier-progress";
 
 import { useServerFn } from "@tanstack/react-start";
 import { classifyDocument } from "@/lib/classify-document.functions";

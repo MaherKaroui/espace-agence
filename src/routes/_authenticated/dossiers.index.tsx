@@ -17,7 +17,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, JURIDIQUE_TYPES, categorieLabel, requiredDocsFor } from "@/lib/labels";
 import { buildDossierTitre, baseTitreFor } from "@/lib/dossier-title";
 import { computeNextAction } from "@/lib/next-action";
-import { computeAvancement, etapesLabel } from "@/lib/dossier-progress";
+import { computeAvancement, etapesLabel, toTaches } from "@/lib/dossier-progress";
 import { cn } from "@/lib/utils";
 import { Plus, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
