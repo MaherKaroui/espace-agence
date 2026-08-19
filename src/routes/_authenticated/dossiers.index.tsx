@@ -249,7 +249,7 @@ function DossiersPage() {
 
   const dossierWithAction = displayedDossiers.map((d) => {
     const docs = allDocs.filter((doc: any) => doc.dossier_id === d.id) as any;
-    const tks = allTaches.filter((t: any) => t.dossier_id === d.id) as any;
+    const tks = toTaches<any>(allTaches).filter((t: any) => t.dossier_id === d.id) as any;
     const na = computeNextAction(d.categorie, docs, tks, d.statut);
     // Toujours calculer côté client pour garantir la cohérence entre
     // toutes les vues (dashboard, liste, détail, admin). Même formule partout.

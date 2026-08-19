@@ -229,7 +229,7 @@ function Dashboard() {
           <div className="grid gap-3">
             {dossiers.slice(0, 5).map((d) => {
               const docs = allDocs.filter((doc: any) => doc.dossier_id === d.id) as any;
-              const tks = allTaches.filter((t: any) => t.dossier_id === d.id) as any;
+              const tks = toTaches<any>(allTaches).filter((t: any) => t.dossier_id === d.id) as any;
               // Source unique : même calcul dans le dashboard, la liste et le détail.
               const av = computeAvancement(tks, d.statut);
               return (

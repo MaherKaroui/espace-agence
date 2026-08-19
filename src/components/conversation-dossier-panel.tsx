@@ -96,9 +96,11 @@ function DossierPanelContent({
         .eq("client_id", clientId)
         .is("archived_at", null)
         .order("updated_at", { ascending: false });
-      return (data ?? []) as any[];
+      return toTaches<any>(data);
     },
   });
+
+  const taches = toTaches<any>(tachesData);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const dossier = useMemo(
@@ -106,7 +108,7 @@ function DossierPanelContent({
     [dossiers, selectedId],
   );
 
-  const { data: taches = [] } = useQuery({
+  const { data: tachesData } = useQuery({
     queryKey: ["conv-panel-taches", dossier?.id],
     enabled: !!dossier?.id,
     queryFn: async () => {

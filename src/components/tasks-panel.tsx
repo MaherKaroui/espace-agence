@@ -25,7 +25,7 @@ export function TasksPanel({ dossierId }: { dossierId: string }) {
   const isStaff = isAdmin || roles.some((r) => ["direction", "manager", "consultant"].includes(r));
   const qc = useQueryClient();
 
-  const { data: taches = [], isLoading } = useQuery({
+  const { data: tachesData, isLoading } = useQuery({
     queryKey: ["taches", dossierId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -51,6 +51,8 @@ export function TasksPanel({ dossierId }: { dossierId: string }) {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const taches = toTaches<any>(tachesData);
 
   if (isLoading) return <Card className="p-6 text-muted-foreground">Chargement des tâches…</Card>;
   if (taches.length === 0) return null;

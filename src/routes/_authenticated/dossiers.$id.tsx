@@ -79,11 +79,13 @@ function DossierDetail() {
     queryFn: async () => {
       const { data, error } = await supabase.from("documents").select("*").eq("dossier_id", id).order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return toTaches<any>(data);
     },
   });
 
-  const { data: taches = [] } = useQuery({
+  const taches = toTaches<any>(tachesData);
+
+  const { data: tachesData } = useQuery({
     queryKey: ["taches", id],
     queryFn: async () => {
       const { data, error } = await supabase.from("taches").select("id,titre,statut,cote_client,verrouillee,updated_at").eq("dossier_id", id);
@@ -757,8 +759,9 @@ function ClientProgressSummary({
   avancement: number;
   taches: Array<{ statut: string }>;
 }) {
-  const total = taches.length;
-  const done = taches.filter((t) => t.statut === "termine").length;
+  const list = toTaches<{ statut: string }>(taches);
+  const total = list.length;
+  const done = list.filter((t) => t.statut === "termine").length;
 
   let phrase: string;
   if (total === 0) {
