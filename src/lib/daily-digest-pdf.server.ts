@@ -168,8 +168,10 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
   }
 
   // ---------- Une page par personne ----------
+  const pageOwner = new Map<number, string>();
   for (const p of digest.personnes ?? []) {
     doc.addPage();
+    const startPage = doc.getNumberOfPages();
     y = M + 8;
 
     doc.setFont("helvetica", "bold");
@@ -311,18 +313,19 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       const extra = cap(p.attention).extra;
       if (extra > 0) body(`... et ${extra} autres`, 2);
     }
+
+    for (let i = startPage; i <= doc.getNumberOfPages(); i++) pageOwner.set(i, p.nom);
   }
 
   // ---------- En-têtes / pieds de page ----------
   const total = doc.getNumberOfPages();
-  const names = ["", ...(digest.personnes ?? []).map((p) => p.nom)];
   for (let i = 1; i <= total; i++) {
     doc.setPage(i);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(...GREY);
     if (i > 1) {
-      const label = names[i - 1] ?? "";
+      const label = pageOwner.get(i) ?? "";
       if (label) doc.text(doc.splitTextToSize(label, contentW - 40)[0], M, 10);
       doc.setDrawColor(224, 228, 234);
       doc.setLineWidth(0.3);
