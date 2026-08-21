@@ -7,12 +7,11 @@ import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createChatFileSignedUrl, downloadChatFileAttachment } from "@/lib/chat-attachments";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Paperclip, Send, Search, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic, Square, Download } from "lucide-react";
+import { Paperclip, Send, Search, Trash2, Pencil, X, Mic } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -543,7 +542,7 @@ function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean
   }
 
   return (
-    <div className={`group flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}>
+    <div data-message-id={m.id} className={`group flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}>
       {!isMine && (
         <div
           className="h-7 w-7 shrink-0 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center border"
