@@ -605,38 +605,16 @@ function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean
           </div>
         )}
         {m.attachment_path && (
-          <div className="mb-2 space-y-1">
-            {isImg && url ? (
-              <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={m.attachment_name} className="rounded-lg max-h-64" /></a>
-            ) : isVideo && url ? (
-              <video src={url} controls className="rounded-lg max-h-72 w-full" preload="metadata" />
-            ) : isAudio && url ? (
-              <audio src={url} controls className="w-64 max-w-full" preload="metadata" />
-
-            ) : (
-              <a href={url || "#"} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg p-2 ${isMine ? "bg-white/10" : "bg-muted"}`}>
-                {isPdf ? <FileText className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}
-                <span className="text-xs truncate">{m.attachment_name}</span>
-              </a>
-            )}
-            {!isAudio && !isMine && (
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await downloadChatFileAttachment(m.attachment_path, m.attachment_name);
-                  } catch (error: any) {
-                    console.error("Download error", error, "path=", m.attachment_path);
-                    toast.error(error?.message || "Fichier introuvable");
-                  }
-                }}
-                className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded ${isMine ? "bg-white/10 hover:bg-white/20" : "bg-muted hover:bg-muted/70"}`}
-              >
-                <Download className="h-3 w-3" /> Télécharger
-              </button>
-            )}
-          </div>
+          <MessageAttachment
+            bucket="chat-files"
+            path={m.attachment_path}
+            name={m.attachment_name}
+            mime={m.attachment_mime}
+            inverse={isMine}
+            showDownload={!isMine}
+          />
         )}
+
         {editing ? (
           <div className="space-y-2">
             <Textarea
