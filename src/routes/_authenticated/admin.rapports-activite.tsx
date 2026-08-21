@@ -102,10 +102,10 @@ function RapportsActivite() {
       const res: any = await sendNowFn({});
       if (!res?.recipients?.length) {
         toast.error("Aucun destinataire configuré dans les réglages e-mail.");
-      } else if (res.failed > 0) {
-        toast.error(`Envoi partiel : ${res.sent} envoyé(s), ${res.failed} en échec.`);
+      } else if (!res.ok) {
+        toast.error("Envoi en échec, consultez les journaux d'envoi.");
       } else {
-        toast.success(`Rapport envoyé à ${res.recipients.join(", ")}`);
+        toast.success(`Compte rendu envoyé à ${res.recipients.join(", ")}`);
       }
     } catch (e: any) {
       toast.error(e?.message ?? "Envoi impossible");
@@ -193,7 +193,7 @@ function RapportsActivite() {
 
   async function openEmailPreview() {
     try {
-      const res = await previewFn({ data: { templateName: "rapport-activite" } });
+      const res = await previewFn({ data: { templateName: "compte-rendu-quotidien" } });
       setEmailPreview({ html: res.html, subject: res.subject as string });
     } catch (e: any) {
       toast.error(e?.message ?? "Aperçu indisponible");
@@ -215,7 +215,7 @@ function RapportsActivite() {
           </Button>
           <Button size="sm" onClick={sendNow} disabled={sending}>
             {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-            Envoyer maintenant
+            Envoyer le compte rendu maintenant
           </Button>
           <Button
             size="sm"
