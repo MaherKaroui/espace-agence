@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowLeft, Send, Paperclip, Loader2, Download, Star, Bell, BellOff, Archive, ArchiveRestore,
+  ArrowLeft, Send, Paperclip, Loader2, Star, Bell, BellOff, Archive, ArchiveRestore,
   Building2, FolderOpen, ClipboardCheck, Users, Users2, MessageSquare, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -221,12 +221,6 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
     },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
-
-  const openAttachment = async (path: string) => {
-    const { data, error } = await supabase.storage.from("internal-chat-files").createSignedUrl(path, 300);
-    if (error) return toast.error(error.message);
-    window.open(data.signedUrl, "_blank");
-  };
 
   const profileFor = (uid: string) => members.find((m: any) => m.user_id === uid)?.profile;
   const title = conv?.titre || conversationDisplayTitle({ others: members.filter((m: any) => m.user_id !== userId) } as any, userId);
