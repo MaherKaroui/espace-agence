@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { roleLabelFr } from "@/lib/role-labels";
 import { getActivityReports } from "@/lib/activity-reports.functions";
 import { previewEmailTemplate } from "@/lib/preview-email.functions";
-import { sendActivityReportNow } from "@/lib/daily-report.functions";
+import { sendActivityReportNow, listArchivedDigests, getArchivedDigestUrl } from "@/lib/daily-report.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/rapports-activite")({
   head: () => ({
@@ -40,6 +40,64 @@ export const Route = createFileRoute("/_authenticated/admin/rapports-activite")(
   },
   component: RapportsActivite,
 });
+
+function ArchivedDigests() {
+  const listFn = useServerFn(listArchivedDigests);
+  const urlFn = useServerFn(getArchivedDigestUrl);
+  const [opening, setOpening] = useState<string | null>(null);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["archived-digests"],
+    queryFn: () => listFn({}),
+  });
+
+  async function open(path: string) {
+    setOpening(path);
+    try {
+      const res: any = await urlFn({ data: { path } });
+      if (res?.url) window.open(res.url, "_blank", "noopener");
+      else toast.error("Lien indisponible");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Téléchargement impossible");
+    } finally {
+      setOpening(null);
+    }
+  }
+
+  return (
+    <Card className="p-4 space-y-3">
+      <div>
+        <h2 className="font-display text-lg">Comptes rendus archivés</h2>
+        <p className="text-muted-foreground text-sm">PDF des 90 derniers jours.</p>
+      </div>
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
+        </div>
+      ) : !data || data.length === 0 ? (
+        <p className="text-muted-foreground text-sm">Aucun compte rendu archivé pour le moment.</p>
+      ) : (
+        <ul className="divide-y rounded-md border">
+          {data.map((f: any) => (
+            <li key={f.path} className="flex items-center justify-between gap-3 px-3 py-2">
+              <span className="text-sm">
+                {format(new Date(f.date), "EEEE d MMMM yyyy", { locale: fr })}
+              </span>
+              <Button size="sm" variant="outline" disabled={opening === f.path} onClick={() => open(f.path)}>
+                {opening === f.path ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4 mr-2" />
+                )}
+                Télécharger
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
 
 type PeriodKey = "today" | "yesterday" | "week" | "month" | "custom";
 
