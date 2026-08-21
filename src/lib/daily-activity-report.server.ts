@@ -845,20 +845,58 @@ export async function buildDailyDigest(admin: any): Promise<DailyDigest> {
   };
 }
 
+export const DIGEST_BUCKET = "rapports-quotidiens";
+
+/** Chemin de stockage du PDF du jour : {AAAA}/{MM}/compte-rendu-{AAAA-MM-JJ}.pdf */
+export function digestPdfPath(dayKey: string): string {
+  const [y, m] = dayKey.split("-");
+  return `${y}/${m}/compte-rendu-${dayKey}.pdf`;
+}
+
+/**
+ * Génère le PDF depuis le digest déjà calculé, le téléverse et renvoie une URL signée 30 jours.
+ * Ne lève jamais : en cas d'échec, renvoie null pour que l'e-mail parte quand même.
+ */
+async function buildAndStoreDigestPdf(
+  admin: any,
+  digest: DailyDigest,
+  dayKey: string,
+): Promise<string | null> {
+  try {
+    const { buildDailyDigestPdf } = await import("@/lib/daily-digest-pdf.server");
+    const bytes = await buildDailyDigestPdf(digest);
+    const path = digestPdfPath(dayKey);
+    const { error: upErr } = await admin.storage
+      .from(DIGEST_BUCKET)
+      .upload(path, bytes, { contentType: "application/pdf", upsert: true });
+    if (upErr) throw upErr;
+    const { data, error } = await admin.storage
+      .from(DIGEST_BUCKET)
+      .createSignedUrl(path, 60 * 60 * 24 * 30);
+    if (error) throw error;
+    return data?.signedUrl ?? null;
+  } catch (e) {
+    console.error("[pdf] génération/téléversement du compte rendu en échec", e);
+    return null;
+  }
+}
+
 /** Envoi du compte rendu quotidien (idempotent par jour + destinataire). */
 export async function sendDailyDigest(
   admin: any,
   baseUrl?: string,
-): Promise<{ ok: boolean; recipients: string[]; date: string }> {
+): Promise<{ ok: boolean; recipients: string[]; date: string; pdfUrl: string | null }> {
   const digest = await buildDailyDigest(admin);
   const dayKey = parisDateKey();
+  const pdfUrl = await buildAndStoreDigestPdf(admin, digest, dayKey);
   const { recipients } = await resolveReportRecipients(admin);
   const ok = await sendSupervisionEmail(admin, {
     templateName: "compte-rendu-quotidien",
     type: "rapport_activite",
     idempotencyKey: `rapport-activite-${dayKey}`,
     baseUrl,
-    templateData: digest as unknown as Record<string, unknown>,
+    templateData: { ...digest, pdfUrl } as unknown as Record<string, unknown>,
   });
-  return { ok, recipients, date: dayKey };
+  return { ok, recipients, date: dayKey, pdfUrl };
 }
+

@@ -9,6 +9,7 @@ interface Props {
   classement?: { nom: string; done: number }[]
   personnes?: any[]
   appUrl?: string
+  pdfUrl?: string | null
 }
 
 const box = {
@@ -180,7 +181,7 @@ function Personne({ p }: { p: any }) {
   )
 }
 
-export function Email({ dateFr, periode, synthese, classement, personnes, appUrl }: Props) {
+export function Email({ dateFr, periode, synthese, classement, personnes, appUrl, pdfUrl }: Props) {
   return (
     <Html>
       <Head />
@@ -214,7 +215,21 @@ export function Email({ dateFr, periode, synthese, classement, personnes, appUrl
             )}
           </Section>
 
+          {pdfUrl ? (
+            <Section style={{ textAlign: 'center', marginTop: 18, marginBottom: 4 }}>
+              <Button href={pdfUrl} style={s.button}>
+                Télécharger le rapport PDF
+              </Button>
+              <Text style={muted}>Lien valable 30 jours.</Text>
+            </Section>
+          ) : (
+            <Text style={{ ...s.warning, marginTop: 16 }}>
+              Le rapport PDF n'a pas pu être généré. Le détail complet reste disponible ci-dessous.
+            </Text>
+          )}
+
           <Hr style={s.hr} />
+
           <Text style={{ ...s.value, marginBottom: 4 }}>Détail par personne</Text>
 
           {(personnes ?? []).length > 0 ? (
@@ -294,5 +309,6 @@ export const template = {
       },
     ],
     appUrl: 'https://izisuivis.com',
+    pdfUrl: 'https://izisuivis.com/rapport-exemple.pdf',
   },
 }
