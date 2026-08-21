@@ -8,18 +8,19 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createChatFileSignedUrl, downloadChatFileAttachment } from "@/lib/chat-attachments";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Paperclip, Send, Search, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic, Download } from "lucide-react";
+import { Paperclip, Send, Search, Trash2, Pencil, X, Mic } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
 import { cn } from "@/lib/utils";
 import { MentionTextarea } from "@/components/mention-textarea";
 import { RichMessageContent } from "@/components/rich-message-content";
+import { ConversationFilesButton } from "@/components/conversation-files-panel";
+import { MessageAttachment } from "@/components/message-attachment";
 
 export function GroupChatWindow({
   conversationId,
@@ -254,9 +255,12 @@ export function GroupChatWindow({
             <div className="font-display text-base sm:text-lg truncate">{title}</div>
             <div className="text-[11px] sm:text-xs text-muted-foreground truncate">Discussion de groupe</div>
           </div>
-          <div className="relative shrink-0">
-            <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground pointer-events-none" />
-            <Input className="pl-8 h-9 w-36 sm:w-48" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <ConversationFilesButton scope={{ kind: "group", conversationId }} />
+            <div className="relative">
+              <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground pointer-events-none" />
+              <Input className="pl-8 h-9 w-36 sm:w-48" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} />
+            </div>
           </div>
         </div>
 
@@ -414,36 +418,11 @@ function SwipeableList({
 
 function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boolean; isAdmin: boolean; senderName: string }) {
   const qc = useQueryClient();
-  const [url, setUrl] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string>(m.content ?? "");
   const isDeleted = !!m.deleted_at;
   const canEdit = isMine && !isDeleted && !!m.content;
   const canDelete = (isMine || isAdmin) && !isDeleted;
-
-  useEffect(() => {
-    if (!m.attachment_path || isDeleted) return;
-    let active = true;
-    setUrl(null);
-
-    createChatFileSignedUrl(m.attachment_path)
-      .then((signedUrl) => { if (active) setUrl(signedUrl); })
-      .catch((error) => {
-        console.error("Signed URL error", error, "path=", m.attachment_path);
-        if (active) setUrl(null);
-      });
-
-    return () => { active = false; };
-  }, [m.attachment_path, m.attachment_name, isDeleted]);
-
-  const nameLower = (m.attachment_name ?? "").toLowerCase();
-  const isImg = m.attachment_mime?.startsWith("image/") || /\.(jpe?g|png|gif|webp|avif|bmp|svg)$/.test(nameLower);
-  const isPdf = m.attachment_mime === "application/pdf" || nameLower.endsWith(".pdf");
-  const isVideo = m.attachment_mime?.startsWith("video/") || /\.(mp4|webm|mov|mkv)$/.test(nameLower);
-  const isAudio =
-    m.attachment_mime?.startsWith("audio/") ||
-    nameLower.startsWith("vocal-") ||
-    /\.(webm|ogg|oga|mp3|m4a|wav|aac)$/.test(nameLower);
 
   const softDelete = async () => {
     const { error } = await supabase
@@ -479,40 +458,18 @@ function GroupBubble({ m, isMine, isAdmin, senderName }: { m: any; isMine: boole
   }
 
   return (
-    <div className={`group flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}>
+    <div data-message-id={m.id} className={`group flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}>
       <div className={`max-w-[82%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 shadow-sm break-words ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
         {!isMine && <div className="text-xs font-medium text-muted-foreground mb-1">{senderName}</div>}
         {m.attachment_path && (
-          <div className="mb-2 space-y-1">
-            {isImg && url ? (
-              <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={m.attachment_name} className="rounded-lg max-h-64" /></a>
-            ) : isVideo && url ? (
-              <video src={url} controls className="rounded-lg max-h-72 w-full" preload="metadata" />
-            ) : isAudio && url ? (
-              <audio src={url} controls className="w-64 max-w-full" preload="metadata" />
-            ) : (
-              <a href={url || "#"} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg p-2 ${isMine ? "bg-white/10" : "bg-muted"}`}>
-                {isPdf ? <FileText className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}
-                <span className="text-xs truncate">{m.attachment_name}</span>
-              </a>
-            )}
-            {!isAudio && !isMine && (
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await downloadChatFileAttachment(m.attachment_path, m.attachment_name);
-                  } catch (error: any) {
-                    console.error("Download error", error, "path=", m.attachment_path);
-                    toast.error(error?.message || "Fichier introuvable");
-                  }
-                }}
-                className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded ${isMine ? "bg-white/10 hover:bg-white/20" : "bg-muted hover:bg-muted/70"}`}
-              >
-                <Download className="h-3 w-3" /> Télécharger
-              </button>
-            )}
-          </div>
+          <MessageAttachment
+            bucket="chat-files"
+            path={m.attachment_path}
+            name={m.attachment_name}
+            mime={m.attachment_mime}
+            inverse={isMine}
+            showDownload={!isMine}
+          />
         )}
         {editing ? (
           <div className="space-y-2">
