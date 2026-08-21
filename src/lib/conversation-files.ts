@@ -121,3 +121,17 @@ export function scrollToMessage(messageId: string) {
   window.setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2200);
   return true;
 }
+
+/** Téléchargement direct via une URL signée avec Content-Disposition. */
+export async function downloadConversationFile(bucket: string, path: string, name?: string | null) {
+  const filename = (name || path.split("/").pop() || "fichier").replace(/[\\/:*?"<>|]+/g, "_");
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600, { download: filename });
+  if (error || !data?.signedUrl) throw error ?? new Error("Fichier introuvable");
+  const a = document.createElement("a");
+  a.href = data.signedUrl;
+  a.download = filename;
+  a.rel = "noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
