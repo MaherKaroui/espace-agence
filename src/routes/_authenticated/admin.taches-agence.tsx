@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -60,7 +60,9 @@ function AgencyTasksPage() {
   const { user } = useAuth();
   const { isStaff } = useRole();
   const [createOpen, setCreateOpen] = useState(false);
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const { task: taskParam } = Route.useSearch();
+  const [detailId, setDetailId] = useState<string | null>(taskParam ?? null);
+  useEffect(() => { if (taskParam) setDetailId(taskParam); }, [taskParam]);
   const [tab, setTab] = useState("priority");
   const [view, setView] = useState<"list" | "kanban">("list");
   const [search, setSearch] = useState("");
