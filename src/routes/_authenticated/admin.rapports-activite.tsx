@@ -295,6 +295,20 @@ function RapportsActivite() {
             {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
             Envoyer le compte rendu maintenant
           </Button>
+          <div className="flex items-center gap-2">
+            <Input
+              type="email"
+              className="h-9 w-56"
+              placeholder="Adresse de test"
+              aria-label="Adresse de test"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+            />
+            <Button variant="outline" size="sm" onClick={sendTest} disabled={sendingTest}>
+              {sendingTest ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+              Envoyer un test à cette adresse
+            </Button>
+          </div>
           <Button
             size="sm"
             disabled={exporting || filtered.length === 0}
