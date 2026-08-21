@@ -20,6 +20,9 @@ import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
 import { MentionTextarea } from "@/components/mention-textarea";
 import { RichMessageContent } from "@/components/rich-message-content";
 import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
+import { ConversationFilesButton } from "@/components/conversation-files-panel";
+import { MessageAttachment } from "@/components/message-attachment";
+
 import { notifyEmail } from "@/lib/email/notify";
 import { notifyTeamClientMessage } from "@/lib/email/notify-team";
 import { playNotifSound } from "@/lib/notif-sound";
