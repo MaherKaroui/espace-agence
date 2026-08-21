@@ -12,6 +12,10 @@ export const Route = createFileRoute("/api/public/hooks/rapport-activite")({
         try {
           const url = new URL(request.url);
           const force = url.searchParams.get("force") === "1";
+          const toParam = url.searchParams.get("to")?.trim() || undefined;
+          if (toParam && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toParam)) {
+            return Response.json({ ok: false, error: "adresse invalide" }, { status: 400 });
+          }
           const { isParisHour } = await import("@/lib/supervision.server");
           const { sendDailyDigest, isParisWeekend, parisDateKey } = await import(
             "@/lib/daily-activity-report.server"
@@ -25,8 +29,8 @@ export const Route = createFileRoute("/api/public/hooks/rapport-activite")({
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const res = await sendDailyDigest(supabaseAdmin, new URL(request.url).origin);
-          return Response.json({ ...res, date: parisDateKey() });
+          const res = await sendDailyDigest(supabaseAdmin, new URL(request.url).origin, toParam);
+          return Response.json({ ...res, date: parisDateKey(), test: Boolean(toParam) });
         } catch (e) {
           console.error("[rapport-activite] failed", e);
           return Response.json({ ok: false, error: String(e) }, { status: 500 });
