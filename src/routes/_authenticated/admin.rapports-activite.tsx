@@ -99,7 +99,7 @@ function RapportsActivite() {
   async function sendNow() {
     setSending(true);
     try {
-      const res: any = await sendNowFn({});
+      const res: any = await sendNowFn({ data: { origin: window.location.origin } });
       if (!res?.recipients?.length) {
         toast.error("Aucun destinataire configuré dans les réglages e-mail.");
       } else if (!res.ok) {
