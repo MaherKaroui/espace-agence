@@ -309,5 +309,6 @@ export const template = {
       },
     ],
     appUrl: 'https://izisuivis.com',
+    pdfUrl: 'https://izisuivis.com/rapport-exemple.pdf',
   },
 }
