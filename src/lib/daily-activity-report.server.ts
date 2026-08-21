@@ -881,14 +881,56 @@ async function buildAndStoreDigestPdf(
   }
 }
 
-/** Envoi du compte rendu quotidien (idempotent par jour + destinataire). */
+/**
+ * Envoi du compte rendu quotidien (idempotent par jour + destinataire).
+ * `to` : envoi de test vers cette seule adresse — email_settings est ignoré
+ * et n'est jamais modifié.
+ */
 export async function sendDailyDigest(
   admin: any,
   baseUrl?: string,
-): Promise<{ ok: boolean; recipients: string[]; date: string; pdfUrl: string | null }> {
+  to?: string,
+): Promise<{ ok: boolean; recipients: string[]; date: string; pdfUrl: string | null; error?: string }> {
   const digest = await buildDailyDigest(admin);
   const dayKey = parisDateKey();
   const pdfUrl = await buildAndStoreDigestPdf(admin, digest, dayKey);
+
+  if (to) {
+    const base = baseUrl || APP_URL;
+    let ok = false;
+    let errorText: string | null = null;
+    try {
+      const res = await fetch(`${base}/lovable/email/transactional/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        },
+        body: JSON.stringify({
+          templateName: "compte-rendu-quotidien",
+          recipientEmail: to,
+          idempotencyKey: `rapport-activite-test-${dayKey}-${to}-${Date.now()}`,
+          templateData: { ...digest, pdfUrl, appUrl: APP_URL },
+        }),
+      });
+      ok = res.ok;
+      if (!ok) errorText = `${res.status} ${await res.text().catch(() => "")}`.slice(0, 500);
+    } catch (e) {
+      errorText = String(e).slice(0, 500);
+    }
+    try {
+      await admin.from("supervision_emails").insert({
+        type: "rapport_activite_test",
+        recipient: to,
+        status: ok ? "sent" : "failed",
+        error: errorText,
+      });
+    } catch (e) {
+      console.error("[rapport-activite-test] log failed", e);
+    }
+    return { ok, recipients: [to], date: dayKey, pdfUrl, ...(errorText ? { error: errorText } : {}) };
+  }
+
   const { recipients } = await resolveReportRecipients(admin);
   const ok = await sendSupervisionEmail(admin, {
     templateName: "compte-rendu-quotidien",
