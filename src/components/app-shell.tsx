@@ -9,6 +9,7 @@ import { roleLabelFr } from "@/lib/role-labels";
 import { useRole } from "@/hooks/use-role";
 import { useProfile } from "@/hooks/use-profile";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { MyTasksButton } from "@/components/my-tasks-button";
 import { NotificationsRealtime } from "@/components/notifications-realtime";
 import { SessionTracker } from "@/components/session-tracker";
 import { AdminFlaggedAlert } from "@/components/admin-flagged-alert";
@@ -321,6 +322,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="lg:hidden min-w-0 flex-1 truncate font-display text-base">IZISuivis</div>
           <div className="hidden lg:block flex-1" />
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <MyTasksButton />
             <NotificationsBell />
           </div>
         </header>

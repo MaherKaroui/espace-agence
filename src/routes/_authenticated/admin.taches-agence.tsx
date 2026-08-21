@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -24,6 +24,8 @@ type Task = Database["public"]["Tables"]["agency_tasks"]["Row"];
 type Status = Database["public"]["Enums"]["agency_task_status"];
 
 export const Route = createFileRoute("/_authenticated/admin/taches-agence")({
+  validateSearch: (search: Record<string, unknown>): { task?: string } =>
+    typeof search.task === "string" ? { task: search.task } : {},
   head: () => ({ meta: [{ title: "Tâches agence" }] }),
   beforeLoad: async () => {
     const { data: u } = await supabase.auth.getUser();
@@ -58,7 +60,9 @@ function AgencyTasksPage() {
   const { user } = useAuth();
   const { isStaff } = useRole();
   const [createOpen, setCreateOpen] = useState(false);
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const { task: taskParam } = Route.useSearch();
+  const [detailId, setDetailId] = useState<string | null>(taskParam ?? null);
+  useEffect(() => { if (taskParam) setDetailId(taskParam); }, [taskParam]);
   const [tab, setTab] = useState("priority");
   const [view, setView] = useState<"list" | "kanban">("list");
   const [search, setSearch] = useState("");
