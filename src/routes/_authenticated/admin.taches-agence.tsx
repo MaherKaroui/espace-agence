@@ -24,9 +24,8 @@ type Task = Database["public"]["Tables"]["agency_tasks"]["Row"];
 type Status = Database["public"]["Enums"]["agency_task_status"];
 
 export const Route = createFileRoute("/_authenticated/admin/taches-agence")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    task: typeof search.task === "string" ? search.task : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { task?: string } =>
+    typeof search.task === "string" ? { task: search.task } : {},
   head: () => ({ meta: [{ title: "Tâches agence" }] }),
   beforeLoad: async () => {
     const { data: u } = await supabase.auth.getUser();
