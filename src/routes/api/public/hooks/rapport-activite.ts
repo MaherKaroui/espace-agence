@@ -5,7 +5,7 @@ export const Route = createFileRoute("/api/public/hooks/rapport-activite")({
   server: {
     handlers: {
       GET: async () =>
-        Response.json({ ok: true, hint: "POST pour envoyer le rapport d'activité quotidien" }),
+        Response.json({ ok: true, hint: "POST pour envoyer le compte rendu quotidien" }),
       POST: async ({ request }) => {
         const denied = requireCronAuth(request);
         if (denied) return denied;
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/hooks/rapport-activite")({
           const url = new URL(request.url);
           const force = url.searchParams.get("force") === "1";
           const { isParisHour } = await import("@/lib/supervision.server");
-          const { sendDailyActivityReport, isParisWeekend, parisDateKey } = await import(
+          const { sendDailyDigest, isParisWeekend, parisDateKey } = await import(
             "@/lib/daily-activity-report.server"
           );
 
@@ -25,8 +25,8 @@ export const Route = createFileRoute("/api/public/hooks/rapport-activite")({
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const res = await sendDailyActivityReport(supabaseAdmin);
-          return Response.json({ ok: res.failed === 0, date: parisDateKey(), ...res });
+          const res = await sendDailyDigest(supabaseAdmin);
+          return Response.json({ date: parisDateKey(), ...res });
         } catch (e) {
           console.error("[rapport-activite] failed", e);
           return Response.json({ ok: false, error: String(e) }, { status: 500 });

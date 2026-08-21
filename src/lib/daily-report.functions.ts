@@ -13,7 +13,7 @@ export const sendActivityReportNow = createServerFn({ method: "POST" })
     if (!ok) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { sendDailyActivityReport } = await import("@/lib/daily-activity-report.server");
-    const res = await sendDailyActivityReport(supabaseAdmin);
+    const { sendDailyDigest } = await import("@/lib/daily-activity-report.server");
+    const res = await sendDailyDigest(supabaseAdmin);
     return res;
   });
