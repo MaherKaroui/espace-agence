@@ -110,9 +110,12 @@ export function GroupChatWindow({
       .filter((m) => m.sender_id !== user.id && !m.deleted_at && !myReadIds.has(m.id))
       .map((m) => ({ message_id: m.id, user_id: user.id }));
     if (toMark.length === 0) return;
-    supabase.from("group_message_reads").insert(toMark).then(({ error }) => {
-      if (error && !error.message.includes("duplicate")) console.error("mark read", error);
-    });
+    supabase
+      .from("group_message_reads")
+      .upsert(toMark, { onConflict: "message_id,user_id", ignoreDuplicates: true })
+      .then(({ error }) => {
+        if (error) console.error("mark read", error);
+      });
   }, [messages, reads, user]);
 
 

@@ -2,7 +2,27 @@
  * Logique serveur de l'Agent IA de supervision.
  * Server-only : ne jamais importer depuis un composant.
  */
-export const SUPERVISION_EMAIL = "maherkr77@gmail.com";
+/** Destinataires de la supervision technique : lus dans email_settings, jamais en dur. */
+export async function resolveSupervisionRecipients(admin: any): Promise<string[]> {
+  try {
+    const { data } = await admin
+      .from("email_settings")
+      .select("admin_email, report_recipients")
+      .eq("id", 1)
+      .maybeSingle();
+    const list = [data?.admin_email, ...((data?.report_recipients ?? []) as string[])]
+      .filter((e: unknown): e is string => typeof e === "string" && e.includes("@"))
+      .map((e: string) => e.trim().toLowerCase());
+    const unique = [...new Set(list)];
+    if (unique.length === 0) return [];
+    const { data: suppressed } = await admin.from("suppressed_emails").select("email").in("email", unique);
+    const blocked = new Set(((suppressed ?? []) as any[]).map((r) => String(r.email).toLowerCase()));
+    return unique.filter((e) => !blocked.has(e));
+  } catch (e) {
+    console.error("[supervision] recipients failed", e);
+    return [];
+  }
+}
 export const APP_URL = "https://izisuivis.com";
 
 export interface Anomaly {
@@ -111,36 +131,44 @@ export async function sendSupervisionEmail(
   admin: any,
   opts: { templateName: string; type: string; templateData: Record<string, unknown>; idempotencyKey: string },
 ): Promise<boolean> {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  let ok = false;
-  let errorText: string | null = null;
-  try {
-    const res = await fetch(`${APP_URL}/lovable/email/transactional/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        templateName: opts.templateName,
-        recipientEmail: SUPERVISION_EMAIL,
-        idempotencyKey: opts.idempotencyKey,
-        templateData: { ...opts.templateData, appUrl: APP_URL },
-      }),
-    });
-    ok = res.ok;
-    if (!ok) errorText = `${res.status} ${await res.text().catch(() => "")}`.slice(0, 500);
-  } catch (e) {
-    errorText = String(e).slice(0, 500);
+  const recipients = await resolveSupervisionRecipients(admin);
+  if (recipients.length === 0) {
+    console.error("[supervision] aucun destinataire configuré dans email_settings");
+    return false;
   }
-  try {
-    await admin.from("supervision_emails").insert({
-      type: opts.type,
-      recipient: SUPERVISION_EMAIL,
-      status: ok ? "sent" : "failed",
-      error: errorText,
-    });
-  } catch (e) {
-    console.error("[supervision] log email failed", e);
+  let allOk = true;
+  for (const recipient of recipients) {
+    let ok = false;
+    let errorText: string | null = null;
+    try {
+      const res = await fetch(`${APP_URL}/lovable/email/transactional/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` },
+        body: JSON.stringify({
+          templateName: opts.templateName,
+          recipientEmail: recipient,
+          idempotencyKey: `${opts.idempotencyKey}-${recipient}`,
+          templateData: { ...opts.templateData, appUrl: APP_URL },
+        }),
+      });
+      ok = res.ok;
+      if (!ok) errorText = `${res.status} ${await res.text().catch(() => "")}`.slice(0, 500);
+    } catch (e) {
+      errorText = String(e).slice(0, 500);
+    }
+    if (!ok) allOk = false;
+    try {
+      await admin.from("supervision_emails").insert({
+        type: opts.type,
+        recipient,
+        status: ok ? "sent" : "failed",
+        error: errorText,
+      });
+    } catch (e) {
+      console.error("[supervision] log email failed", e);
+    }
   }
-  return ok;
+  return allOk;
 }
 
 /** Alerte immédiate avec anti-spam : 1 alerte / heure pour une même clé. */

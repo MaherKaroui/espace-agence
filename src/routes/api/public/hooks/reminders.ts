@@ -95,11 +95,12 @@ export const Route = createFileRoute('/api/public/hooks/reminders')({
 
           async function alreadySent(kind: Kind, entityIds: string[]): Promise<Set<string>> {
             if (entityIds.length === 0) return new Set()
-            const { data } = await supabaseAdmin
+            const { data, error } = await supabaseAdmin
               .from('notification_reminders_sent')
               .select('entity_id')
               .eq('kind', kind)
               .in('entity_id', entityIds)
+            if (error) console.error('[reminders] alreadySent query failed', kind, error.message)
             return new Set((data ?? []).map((r: any) => r.entity_id))
           }
 
@@ -108,21 +109,23 @@ export const Route = createFileRoute('/api/public/hooks/reminders')({
           const hAgo = (h: number) => new Date(now.getTime() - h * 3600 * 1000).toISOString()
 
           // Pull all pending demands (from_agence, no file, en_attente) up to ~30 days old
-          const { data: pendingDocs } = await supabaseAdmin
+          const { data: pendingDocs, error: pendingDocsError } = await supabaseAdmin
             .from('documents')
             .select('id, nom, dossier_id, created_at, dossiers!inner(id, titre, client_id, statut)')
             .eq('from_agence', true)
             .is('storage_path', null)
             .lt('created_at', hAgo(24))
             .gt('created_at', hAgo(24 * 30))
+          if (pendingDocsError) { console.error('[reminders] pendingDocs query failed', pendingDocsError.message); results.errors++ }
 
           if (pendingDocs && pendingDocs.length > 0) {
             // Get client emails
             const clientIds = Array.from(new Set(pendingDocs.map((d: any) => d.dossiers.client_id)))
-            const { data: profiles } = await supabaseAdmin
+            const { data: profiles, error: profilesError } = await supabaseAdmin
               .from('profiles')
               .select('id, email, prenom')
               .in('id', clientIds)
+            if (profilesError) { console.error('[reminders] profiles query failed', profilesError.message); results.errors++ }
             const profMap = new Map((profiles ?? []).map((p: any) => [p.id, p]))
 
             const buckets: { kind: Kind; label: string; minH: number; maxH: number }[] = [
@@ -161,18 +164,20 @@ export const Route = createFileRoute('/api/public/hooks/reminders')({
           }
 
           // ============= DOSSIERS INACTIFS 7J =============
-          const { data: inactive } = await supabaseAdmin
+          const { data: inactive, error: inactiveError } = await supabaseAdmin
             .from('dossiers')
             .select('id, titre, client_id, updated_at, statut')
-            .not('statut', 'in', '(termine,annule,refuse)')
+            .not('statut', 'in', '(termine,refuse)')
             .lt('updated_at', hAgo(24 * 7))
             .gt('updated_at', hAgo(24 * 60)) // avoid spamming very old dossiers indefinitely
             .limit(500)
+          if (inactiveError) { console.error('[reminders] dossiers inactifs query failed', inactiveError.message); results.errors++ }
           if (inactive && inactive.length > 0) {
             const ids = inactive.map((d: any) => d.id)
             const done = await alreadySent('dossier_inactive_7d', ids)
             const cids = Array.from(new Set(inactive.map((d: any) => d.client_id)))
-            const { data: profs } = await supabaseAdmin.from('profiles').select('id, email, prenom').in('id', cids)
+            const { data: profs, error: profsError } = await supabaseAdmin.from('profiles').select('id, email, prenom').in('id', cids)
+            if (profsError) { console.error('[reminders] profiles query failed', profsError.message); results.errors++ }
             const pmap = new Map((profs ?? []).map((p: any) => [p.id, p]))
             for (const d of inactive as any[]) {
               if (done.has(d.id)) continue
@@ -200,23 +205,26 @@ export const Route = createFileRoute('/api/public/hooks/reminders')({
           ]
 
           for (const w of windows) {
-            const { data: rdvs } = await supabaseAdmin
+            const { data: rdvs, error: rdvsError } = await supabaseAdmin
               .from('rendez_vous')
               .select('id, client_id, starts_at, status')
               .eq('status', 'confirme')
               .gte('starts_at', w.from)
               .lte('starts_at', w.to)
+            if (rdvsError) { console.error('[reminders] rdv query failed', w.kind, rdvsError.message); results.errors++ }
             if (!rdvs || rdvs.length === 0) continue
             const ids = rdvs.map((r: any) => r.id)
             // Reuse rdv_reminders_sent for RDV kinds (existing table)
-            const { data: existing } = await supabaseAdmin
+            const { data: existing, error: existingError } = await supabaseAdmin
               .from('rdv_reminders_sent')
               .select('rdv_id')
               .eq('kind', w.kind)
               .in('rdv_id', ids)
+            if (existingError) { console.error('[reminders] rdv_reminders_sent query failed', existingError.message); results.errors++ }
             const done = new Set((existing ?? []).map((r: any) => r.rdv_id))
             const cids = Array.from(new Set(rdvs.map((r: any) => r.client_id)))
-            const { data: profs } = await supabaseAdmin.from('profiles').select('id, email, prenom').in('id', cids)
+            const { data: profs, error: profsError } = await supabaseAdmin.from('profiles').select('id, email, prenom').in('id', cids)
+            if (profsError) { console.error('[reminders] profiles query failed', profsError.message); results.errors++ }
             const pmap = new Map((profs ?? []).map((p: any) => [p.id, p]))
             for (const r of rdvs as any[]) {
               if (done.has(r.id)) continue

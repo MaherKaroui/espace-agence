@@ -58,7 +58,16 @@ export const getSupervisionOverview = createServerFn({ method: "POST" })
       uptime: r.total ? Math.round((r.up / r.total) * 1000) / 10 : 100,
     }));
 
+    let cronJobs: any[] = [];
+    try {
+      const { data } = await supabaseAdmin.rpc("cron_jobs_health" as any);
+      cronJobs = (data ?? []) as any[];
+    } catch (e) {
+      console.error("[supervision] cron jobs failed", e);
+    }
+
     return {
+      cronJobs,
       score: rep?.health_score ?? null,
       diagnostic: rep?.diagnostic ?? null,
       reportDate: rep?.report_date ?? null,

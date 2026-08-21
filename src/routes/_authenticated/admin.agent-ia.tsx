@@ -237,6 +237,38 @@ function AgentIaPage() {
         )}
       </Card>
 
+      {/* Tâches planifiées */}
+      <Card className="p-5">
+        <h2 className="font-display text-lg">Tâches planifiées</h2>
+        {(data?.cronJobs ?? []).length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">Aucune tâche planifiée détectée.</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {(data?.cronJobs ?? []).map((j: any) => (
+              <div key={j.jobname} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium">{j.jobname}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {j.schedule} · dernière exécution : {fmt(j.last_start)}
+                  </div>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    j.last_status === "succeeded"
+                      ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-400"
+                      : GRAVITE_VARIANT.critique
+                  }
+                >
+                  {j.last_status ?? "jamais exécutée"}
+                  {j.recent_failures > 0 ? ` · ${j.recent_failures} échec(s) 1 h` : ""}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       {/* Graphique 30 jours */}
       <Card className="p-5">
         <h2 className="font-display text-lg">30 derniers jours</h2>
