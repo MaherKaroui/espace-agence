@@ -502,26 +502,11 @@ function SwipeableList({
 
 function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean; isAdmin: boolean; sender?: { name: string; initials: string } }) {
   const qc = useQueryClient();
-  const [url, setUrl] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string>(m.content ?? "");
   const isDeleted = !!m.deleted_at;
   const canEdit = isAdmin && isMine && !isDeleted && !!m.content;
 
-  useEffect(() => {
-    if (!m.attachment_path || isDeleted) return;
-    let active = true;
-    setUrl(null);
-
-    createChatFileSignedUrl(m.attachment_path)
-      .then((signedUrl) => { if (active) setUrl(signedUrl); })
-      .catch((error) => {
-        console.error("Signed URL error", error, "path=", m.attachment_path);
-        if (active) setUrl(null);
-      });
-
-    return () => { active = false; };
-  }, [m.attachment_path, m.attachment_name, isDeleted]);
 
   const nameLower = (m.attachment_name ?? "").toLowerCase();
   const isImg = m.attachment_mime?.startsWith("image/") || /\.(jpe?g|png|gif|webp|avif|bmp|svg)$/.test(nameLower);
