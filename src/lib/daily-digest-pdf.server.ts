@@ -302,7 +302,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
 
     if ((p.contexts ?? []).length > 0) {
       sectionTitle("Clients et dossiers touchés");
-      body(p.contexts.join(" · '"). replace(/ · '/g, " · "), 2);
+      body(p.contexts.join(" · "), 2);
     }
 
     if ((p.attention ?? []).length > 0) {
