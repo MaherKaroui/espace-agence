@@ -153,6 +153,8 @@ function RapportsActivite() {
   const previewFn = useServerFn(previewEmailTemplate);
   const sendNowFn = useServerFn(sendActivityReportNow);
   const [sending, setSending] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [sendingTest, setSendingTest] = useState(false);
 
   async function sendNow() {
     setSending(true);
@@ -169,6 +171,24 @@ function RapportsActivite() {
       toast.error(e?.message ?? "Envoi impossible");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function sendTest() {
+    const to = testEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+      toast.error("Adresse e-mail invalide.");
+      return;
+    }
+    setSendingTest(true);
+    try {
+      const res: any = await sendNowFn({ data: { origin: window.location.origin, to } });
+      if (res?.ok) toast.success(`Compte rendu de test envoyé à ${to}`);
+      else toast.error(res?.error ?? "Envoi de test en échec.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Envoi impossible");
+    } finally {
+      setSendingTest(false);
     }
   }
 
