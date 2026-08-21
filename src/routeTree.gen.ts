@@ -60,6 +60,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksSupervisionReportRouteImport } from './routes/api/public/hooks/supervision-report'
 import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
+import { Route as ApiPublicHooksRapportActiviteRouteImport } from './routes/api/public/hooks/rapport-activite'
 import { Route as ApiPublicHooksPushFanoutRouteImport } from './routes/api/public/hooks/push-fanout'
 import { Route as ApiPublicHooksPurgeEphemeralRouteImport } from './routes/api/public/hooks/purge-ephemeral'
 import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
@@ -353,6 +354,12 @@ const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   path: '/api/public/hooks/reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksRapportActiviteRoute =
+  ApiPublicHooksRapportActiviteRouteImport.update({
+    id: '/api/public/hooks/rapport-activite',
+    path: '/api/public/hooks/rapport-activite',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksPushFanoutRoute =
   ApiPublicHooksPushFanoutRouteImport.update({
     id: '/api/public/hooks/push-fanout',
@@ -471,6 +478,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
+  '/api/public/hooks/rapport-activite': typeof ApiPublicHooksRapportActiviteRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/api/public/hooks/supervision-report': typeof ApiPublicHooksSupervisionReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -534,6 +542,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
+  '/api/public/hooks/rapport-activite': typeof ApiPublicHooksRapportActiviteRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/api/public/hooks/supervision-report': typeof ApiPublicHooksSupervisionReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -599,6 +608,7 @@ export interface FileRoutesById {
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
+  '/api/public/hooks/rapport-activite': typeof ApiPublicHooksRapportActiviteRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
   '/api/public/hooks/supervision-report': typeof ApiPublicHooksSupervisionReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -664,6 +674,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
+    | '/api/public/hooks/rapport-activite'
     | '/api/public/hooks/reminders'
     | '/api/public/hooks/supervision-report'
     | '/lovable/email/auth/preview'
@@ -727,6 +738,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
+    | '/api/public/hooks/rapport-activite'
     | '/api/public/hooks/reminders'
     | '/api/public/hooks/supervision-report'
     | '/lovable/email/auth/preview'
@@ -791,6 +803,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
+    | '/api/public/hooks/rapport-activite'
     | '/api/public/hooks/reminders'
     | '/api/public/hooks/supervision-report'
     | '/lovable/email/auth/preview'
@@ -825,6 +838,7 @@ export interface RootRouteChildren {
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksPurgeEphemeralRoute: typeof ApiPublicHooksPurgeEphemeralRoute
   ApiPublicHooksPushFanoutRoute: typeof ApiPublicHooksPushFanoutRoute
+  ApiPublicHooksRapportActiviteRoute: typeof ApiPublicHooksRapportActiviteRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
   ApiPublicHooksSupervisionReportRoute: typeof ApiPublicHooksSupervisionReportRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1193,6 +1207,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/rapport-activite': {
+      id: '/api/public/hooks/rapport-activite'
+      path: '/api/public/hooks/rapport-activite'
+      fullPath: '/api/public/hooks/rapport-activite'
+      preLoaderRoute: typeof ApiPublicHooksRapportActiviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/push-fanout': {
       id: '/api/public/hooks/push-fanout'
       path: '/api/public/hooks/push-fanout'
@@ -1394,6 +1415,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksPurgeEphemeralRoute: ApiPublicHooksPurgeEphemeralRoute,
   ApiPublicHooksPushFanoutRoute: ApiPublicHooksPushFanoutRoute,
+  ApiPublicHooksRapportActiviteRoute: ApiPublicHooksRapportActiviteRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
   ApiPublicHooksSupervisionReportRoute: ApiPublicHooksSupervisionReportRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

@@ -955,6 +955,7 @@ export type Database = {
           admin_email: string
           disabled_templates: string[]
           id: number
+          report_recipients: string[]
           updated_at: string
           updated_by: string | null
         }
@@ -962,6 +963,7 @@ export type Database = {
           admin_email?: string
           disabled_templates?: string[]
           id?: number
+          report_recipients?: string[]
           updated_at?: string
           updated_by?: string | null
         }
@@ -969,6 +971,7 @@ export type Database = {
           admin_email?: string
           disabled_templates?: string[]
           id?: number
+          report_recipients?: string[]
           updated_at?: string
           updated_by?: string | null
         }
@@ -2500,6 +2503,18 @@ export type Database = {
         Args: { _dossier_id: string }
         Returns: string
       }
+      cron_jobs_health: {
+        Args: never
+        Returns: {
+          active: boolean
+          jobname: string
+          last_message: string
+          last_start: string
+          last_status: string
+          recent_failures: number
+          schedule: string
+        }[]
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -2792,6 +2807,7 @@ export type Database = {
         | "qualiopi_refus"
         | "qualiopi_echeance"
         | "qualiopi_retard"
+        | "rapport_quotidien"
       pole_role: "manager" | "consultant" | "auditeur" | "certificateur"
       qualiopi_event_status:
         | "planifie"
@@ -3008,6 +3024,7 @@ export const Constants = {
         "qualiopi_refus",
         "qualiopi_echeance",
         "qualiopi_retard",
+        "rapport_quotidien",
       ],
       pole_role: ["manager", "consultant", "auditeur", "certificateur"],
       qualiopi_event_status: [

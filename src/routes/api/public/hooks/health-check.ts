@@ -80,7 +80,25 @@ export const Route = createFileRoute("/api/public/hooks/health-check")({
             });
           }
 
-          return Response.json({ ok: true, is_up: isUp, response_time_ms: home.ms, avg_ms: avg, pages: results });
+          // Surveillance des tâches planifiées
+          let cronFailures: any[] = [];
+          try {
+            const { data: jobs, error } = await supabaseAdmin.rpc("cron_jobs_health" as any);
+            if (error) console.error("[health-check] cron_jobs_health failed", error.message);
+            cronFailures = ((jobs ?? []) as any[]).filter((j) => (j.recent_failures ?? 0) >= 2);
+            for (const j of cronFailures) {
+              await sendImmediateAlert(supabaseAdmin, `cron_failed_${j.jobname}`, {
+                titre: `Tâche planifiée en échec : ${j.jobname}`,
+                detail: `${j.recent_failures} échecs sur la dernière heure. Dernier statut : ${j.last_status ?? "inconnu"}. ${j.last_message ?? ""}`,
+                gravite: "critique",
+                page: `${TARGET}/admin/agent-ia`,
+              });
+            }
+          } catch (e) {
+            console.error("[health-check] cron monitoring failed", e);
+          }
+
+          return Response.json({ cron_failures: cronFailures.length, ok: true, is_up: isUp, response_time_ms: home.ms, avg_ms: avg, pages: results });
         } catch (e) {
           console.error("[health-check] failed", e);
           return Response.json({ ok: false, error: String(e) }, { status: 500 });

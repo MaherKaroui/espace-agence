@@ -11,13 +11,14 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, FileDown, Mail, AlertTriangle, CheckCircle2, Clock, CalendarClock, Loader2 } from "lucide-react";
+import { Search, FileDown, Mail, Send, AlertTriangle, CheckCircle2, Clock, CalendarClock, Loader2 } from "lucide-react";
 import { format, startOfDay, endOfDay, subDays, startOfWeek, startOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { roleLabelFr } from "@/lib/role-labels";
 import { getActivityReports } from "@/lib/activity-reports.functions";
 import { previewEmailTemplate } from "@/lib/preview-email.functions";
+import { sendActivityReportNow } from "@/lib/daily-report.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/rapports-activite")({
   head: () => ({
@@ -92,6 +93,26 @@ function RapportsActivite() {
 
   const fetchReports = useServerFn(getActivityReports);
   const previewFn = useServerFn(previewEmailTemplate);
+  const sendNowFn = useServerFn(sendActivityReportNow);
+  const [sending, setSending] = useState(false);
+
+  async function sendNow() {
+    setSending(true);
+    try {
+      const res: any = await sendNowFn({});
+      if (!res?.recipients?.length) {
+        toast.error("Aucun destinataire configuré dans les réglages e-mail.");
+      } else if (res.failed > 0) {
+        toast.error(`Envoi partiel : ${res.sent} envoyé(s), ${res.failed} en échec.`);
+      } else {
+        toast.success(`Rapport envoyé à ${res.recipients.join(", ")}`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Envoi impossible");
+    } finally {
+      setSending(false);
+    }
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["activity-reports", range.from.toISOString(), range.to.toISOString()],
@@ -191,6 +212,10 @@ function RapportsActivite() {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={openEmailPreview}>
             <Mail className="h-4 w-4 mr-2" /> Aperçu de l'email
+          </Button>
+          <Button size="sm" onClick={sendNow} disabled={sending}>
+            {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+            Envoyer maintenant
           </Button>
           <Button
             size="sm"
