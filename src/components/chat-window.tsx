@@ -7,12 +7,11 @@ import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createChatFileSignedUrl, downloadChatFileAttachment } from "@/lib/chat-attachments";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Paperclip, Send, Search, FileText, Image as ImageIcon, Trash2, Pencil, X, Mic, Square, Download } from "lucide-react";
+import { Paperclip, Send, Search, Trash2, Pencil, X, Mic } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -20,6 +19,9 @@ import { useSwipeReveal } from "@/hooks/use-swipe-reveal";
 import { MentionTextarea } from "@/components/mention-textarea";
 import { RichMessageContent } from "@/components/rich-message-content";
 import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
+import { ConversationFilesButton } from "@/components/conversation-files-panel";
+import { MessageAttachment } from "@/components/message-attachment";
+
 import { notifyEmail } from "@/lib/email/notify";
 import { notifyTeamClientMessage } from "@/lib/email/notify-team";
 import { playNotifSound } from "@/lib/notif-sound";
@@ -297,6 +299,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {isStaff && <EphemeralSettingsButton scope={{ kind: "client", clientId }} />}
+            <ConversationFilesButton scope={{ kind: "client", clientId }} />
             <div className="relative">
               <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground pointer-events-none" />
               <Input
@@ -307,6 +310,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
               />
             </div>
           </div>
+
         </div>
         <EphemeralBanner scope={{ kind: "client", clientId }} />
 
@@ -497,35 +501,12 @@ function SwipeableList({
 
 function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean; isAdmin: boolean; sender?: { name: string; initials: string } }) {
   const qc = useQueryClient();
-  const [url, setUrl] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string>(m.content ?? "");
   const isDeleted = !!m.deleted_at;
   const canEdit = isAdmin && isMine && !isDeleted && !!m.content;
 
-  useEffect(() => {
-    if (!m.attachment_path || isDeleted) return;
-    let active = true;
-    setUrl(null);
 
-    createChatFileSignedUrl(m.attachment_path)
-      .then((signedUrl) => { if (active) setUrl(signedUrl); })
-      .catch((error) => {
-        console.error("Signed URL error", error, "path=", m.attachment_path);
-        if (active) setUrl(null);
-      });
-
-    return () => { active = false; };
-  }, [m.attachment_path, m.attachment_name, isDeleted]);
-
-  const nameLower = (m.attachment_name ?? "").toLowerCase();
-  const isImg = m.attachment_mime?.startsWith("image/") || /\.(jpe?g|png|gif|webp|avif|bmp|svg)$/.test(nameLower);
-  const isPdf = m.attachment_mime === "application/pdf" || nameLower.endsWith(".pdf");
-  const isVideo = m.attachment_mime?.startsWith("video/") || /\.(mp4|webm|mov|mkv)$/.test(nameLower);
-  const isAudio =
-    m.attachment_mime?.startsWith("audio/") ||
-    nameLower.startsWith("vocal-") ||
-    /\.(webm|ogg|oga|mp3|m4a|wav|aac)$/.test(nameLower);
 
   const softDelete = async () => {
     const { error } = await supabase
@@ -561,7 +542,7 @@ function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean
   }
 
   return (
-    <div className={`group flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}>
+    <div data-message-id={m.id} className={`group flex ${isMine ? "justify-end" : "justify-start"} items-end gap-2`}>
       {!isMine && (
         <div
           className="h-7 w-7 shrink-0 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center border"
@@ -600,38 +581,16 @@ function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean
           </div>
         )}
         {m.attachment_path && (
-          <div className="mb-2 space-y-1">
-            {isImg && url ? (
-              <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={m.attachment_name} className="rounded-lg max-h-64" /></a>
-            ) : isVideo && url ? (
-              <video src={url} controls className="rounded-lg max-h-72 w-full" preload="metadata" />
-            ) : isAudio && url ? (
-              <audio src={url} controls className="w-64 max-w-full" preload="metadata" />
-
-            ) : (
-              <a href={url || "#"} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg p-2 ${isMine ? "bg-white/10" : "bg-muted"}`}>
-                {isPdf ? <FileText className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}
-                <span className="text-xs truncate">{m.attachment_name}</span>
-              </a>
-            )}
-            {!isAudio && !isMine && (
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    await downloadChatFileAttachment(m.attachment_path, m.attachment_name);
-                  } catch (error: any) {
-                    console.error("Download error", error, "path=", m.attachment_path);
-                    toast.error(error?.message || "Fichier introuvable");
-                  }
-                }}
-                className={`inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded ${isMine ? "bg-white/10 hover:bg-white/20" : "bg-muted hover:bg-muted/70"}`}
-              >
-                <Download className="h-3 w-3" /> Télécharger
-              </button>
-            )}
-          </div>
+          <MessageAttachment
+            bucket="chat-files"
+            path={m.attachment_path}
+            name={m.attachment_name}
+            mime={m.attachment_mime}
+            inverse={isMine}
+            showDownload={!isMine}
+          />
         )}
+
         {editing ? (
           <div className="space-y-2">
             <Textarea

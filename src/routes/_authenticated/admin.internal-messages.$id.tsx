@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowLeft, Send, Paperclip, Loader2, Download, Star, Bell, BellOff, Archive, ArchiveRestore,
+  ArrowLeft, Send, Paperclip, Loader2, Star, Bell, BellOff, Archive, ArchiveRestore,
   Building2, FolderOpen, ClipboardCheck, Users, Users2, MessageSquare, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +34,8 @@ import { MessageReactions } from "@/components/message-reactions";
 import { ThreadPane } from "@/components/thread-pane";
 import { MessageSquareReply, Sparkles as SparklesIcon } from "lucide-react";
 import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
+import { ConversationFilesButton } from "@/components/conversation-files-panel";
+import { MessageAttachment } from "@/components/message-attachment";
 
 export const Route = createFileRoute("/_authenticated/admin/internal-messages/$id")({
   head: () => ({ meta: [{ title: "Conversation interne" }] }),
@@ -220,12 +222,6 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
 
-  const openAttachment = async (path: string) => {
-    const { data, error } = await supabase.storage.from("internal-chat-files").createSignedUrl(path, 300);
-    if (error) return toast.error(error.message);
-    window.open(data.signedUrl, "_blank");
-  };
-
   const profileFor = (uid: string) => members.find((m: any) => m.user_id === uid)?.profile;
   const title = conv?.titre || conversationDisplayTitle({ others: members.filter((m: any) => m.user_id !== userId) } as any, userId);
 
@@ -259,6 +255,7 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <ConversationSummaryButton conversationId={id} />
+          <ConversationFilesButton scope={{ kind: "internal", conversationId: id }} />
           <Button
             variant="ghost"
             size="icon"
@@ -315,7 +312,7 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
             const authorLabel = `${author?.prenom ?? ""} ${author?.nom ?? ""}`.trim() || author?.email || "Membre";
             const replyCount = replyCounts.get(m.id) ?? 0;
             return (
-              <div key={m.id} className={cn("group flex", mine ? "justify-end" : "justify-start")}>
+              <div key={m.id} data-message-id={m.id} className={cn("group flex", mine ? "justify-end" : "justify-start")}>
                 <div className={cn("flex flex-col gap-1 max-w-[80%]", mine ? "items-end" : "items-start")}>
                   <div className="relative">
                     <div
@@ -327,12 +324,15 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
                       {!mine && <div className="text-[10px] font-medium opacity-80 mb-0.5">{authorLabel}</div>}
                       {m.content && <RichMessageContent content={m.content} currentUserId={userId} inverse={mine} />}
                       {m.attachment_path && (
-                        <button
-                          onClick={() => openAttachment(m.attachment_path)}
-                          className="mt-1 flex items-center gap-1 text-xs underline underline-offset-2"
-                        >
-                          <Download className="h-3 w-3" /> {m.attachment_name || "Pièce jointe"}
-                        </button>
+                        <div className="mt-1">
+                          <MessageAttachment
+                            bucket="internal-chat-files"
+                            path={m.attachment_path}
+                            name={m.attachment_name}
+                            mime={m.attachment_mime}
+                            inverse={mine}
+                          />
+                        </div>
                       )}
                       <div className={cn("text-[10px] mt-1", mine ? "opacity-80" : "text-muted-foreground")}>
                         {formatDistanceToNow(new Date(m.created_at), { addSuffix: true, locale: fr })}
