@@ -10,7 +10,7 @@ const ALLOWED_ORIGIN =
 export const sendActivityReportNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ origin: z.string().optional() }).parse(data ?? {}),
+    z.object({ origin: z.string().optional(), to: z.string().email().optional() }).parse(data ?? {}),
   )
   .handler(async ({ data, context }) => {
     const { data: roles } = await context.supabase
@@ -23,7 +23,7 @@ export const sendActivityReportNow = createServerFn({ method: "POST" })
     const origin = data.origin && ALLOWED_ORIGIN.test(data.origin) ? data.origin : undefined;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { sendDailyDigest } = await import("@/lib/daily-activity-report.server");
-    return await sendDailyDigest(supabaseAdmin, origin);
+    return await sendDailyDigest(supabaseAdmin, origin, data.to);
   });
 
 /** Liste les comptes rendus PDF archivés (90 derniers jours) — admin / direction. */
