@@ -3,7 +3,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 /** Origines autorisées pour l'appel interne au routeur d'e-mails. */
-const ALLOWED_ORIGIN = /^https:\/\/([\w-]+\.)*(lovable\.app|izisuivis\.com)$/;
+const ALLOWED_ORIGIN =
+  /^https?:\/\/([\w-]+\.)*(lovable\.app|lovableproject\.com|izisuivis\.com|localhost(:\d+)?)$/;
 
 /** Envoi manuel du compte rendu quotidien (admin / direction). */
 export const sendActivityReportNow = createServerFn({ method: "POST" })
