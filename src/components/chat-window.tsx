@@ -508,14 +508,6 @@ function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean
   const canEdit = isAdmin && isMine && !isDeleted && !!m.content;
 
 
-  const nameLower = (m.attachment_name ?? "").toLowerCase();
-  const isImg = m.attachment_mime?.startsWith("image/") || /\.(jpe?g|png|gif|webp|avif|bmp|svg)$/.test(nameLower);
-  const isPdf = m.attachment_mime === "application/pdf" || nameLower.endsWith(".pdf");
-  const isVideo = m.attachment_mime?.startsWith("video/") || /\.(mp4|webm|mov|mkv)$/.test(nameLower);
-  const isAudio =
-    m.attachment_mime?.startsWith("audio/") ||
-    nameLower.startsWith("vocal-") ||
-    /\.(webm|ogg|oga|mp3|m4a|wav|aac)$/.test(nameLower);
 
   const softDelete = async () => {
     const { error } = await supabase
