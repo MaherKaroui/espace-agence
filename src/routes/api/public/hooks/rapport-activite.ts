@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/public/hooks/rapport-activite")({
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const res = await sendDailyDigest(supabaseAdmin);
-          return Response.json({ date: parisDateKey(), ...res });
+          return Response.json({ ...res, date: parisDateKey() });
         } catch (e) {
           console.error("[rapport-activite] failed", e);
           return Response.json({ ok: false, error: String(e) }, { status: 500 });
