@@ -9,6 +9,7 @@ interface Props {
   classement?: { nom: string; done: number }[]
   personnes?: any[]
   appUrl?: string
+  pdfUrl?: string | null
 }
 
 const box = {
