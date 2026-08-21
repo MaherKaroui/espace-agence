@@ -129,7 +129,14 @@ export async function persistAnomalies(admin: any, anomalies: Anomaly[]) {
 /** Envoi d'un email de supervision + traçabilité dans supervision_emails. */
 export async function sendSupervisionEmail(
   admin: any,
-  opts: { templateName: string; type: string; templateData: Record<string, unknown>; idempotencyKey: string },
+  opts: {
+    templateName: string;
+    type: string;
+    templateData: Record<string, unknown>;
+    idempotencyKey: string;
+    /** Origine du déploiement courant (preview ou prod). Défaut : APP_URL. */
+    baseUrl?: string;
+  },
 ): Promise<boolean> {
   const recipients = await resolveSupervisionRecipients(admin);
   if (recipients.length === 0) {
@@ -141,7 +148,8 @@ export async function sendSupervisionEmail(
     let ok = false;
     let errorText: string | null = null;
     try {
-      const res = await fetch(`${APP_URL}/lovable/email/transactional/send`, {
+      const base = opts.baseUrl || APP_URL;
+      const res = await fetch(`${base}/lovable/email/transactional/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` },
         body: JSON.stringify({

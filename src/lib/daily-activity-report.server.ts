@@ -848,6 +848,7 @@ export async function buildDailyDigest(admin: any): Promise<DailyDigest> {
 /** Envoi du compte rendu quotidien (idempotent par jour + destinataire). */
 export async function sendDailyDigest(
   admin: any,
+  baseUrl?: string,
 ): Promise<{ ok: boolean; recipients: string[]; date: string }> {
   const digest = await buildDailyDigest(admin);
   const dayKey = parisDateKey();
@@ -856,6 +857,7 @@ export async function sendDailyDigest(
     templateName: "compte-rendu-quotidien",
     type: "rapport_activite",
     idempotencyKey: `rapport-activite-${dayKey}`,
+    baseUrl,
     templateData: digest as unknown as Record<string, unknown>,
   });
   return { ok, recipients, date: dayKey };
