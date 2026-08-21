@@ -34,6 +34,8 @@ import { MessageReactions } from "@/components/message-reactions";
 import { ThreadPane } from "@/components/thread-pane";
 import { MessageSquareReply, Sparkles as SparklesIcon } from "lucide-react";
 import { EphemeralSettingsButton, EphemeralBanner } from "@/components/ephemeral-mode";
+import { ConversationFilesButton } from "@/components/conversation-files-panel";
+import { MessageAttachment } from "@/components/message-attachment";
 
 export const Route = createFileRoute("/_authenticated/admin/internal-messages/$id")({
   head: () => ({ meta: [{ title: "Conversation interne" }] }),
@@ -259,6 +261,7 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <ConversationSummaryButton conversationId={id} />
+          <ConversationFilesButton scope={{ kind: "internal", conversationId: id }} />
           <Button
             variant="ghost"
             size="icon"
@@ -315,7 +318,7 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
             const authorLabel = `${author?.prenom ?? ""} ${author?.nom ?? ""}`.trim() || author?.email || "Membre";
             const replyCount = replyCounts.get(m.id) ?? 0;
             return (
-              <div key={m.id} className={cn("group flex", mine ? "justify-end" : "justify-start")}>
+              <div key={m.id} data-message-id={m.id} className={cn("group flex", mine ? "justify-end" : "justify-start")}>
                 <div className={cn("flex flex-col gap-1 max-w-[80%]", mine ? "items-end" : "items-start")}>
                   <div className="relative">
                     <div
@@ -327,12 +330,15 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
                       {!mine && <div className="text-[10px] font-medium opacity-80 mb-0.5">{authorLabel}</div>}
                       {m.content && <RichMessageContent content={m.content} currentUserId={userId} inverse={mine} />}
                       {m.attachment_path && (
-                        <button
-                          onClick={() => openAttachment(m.attachment_path)}
-                          className="mt-1 flex items-center gap-1 text-xs underline underline-offset-2"
-                        >
-                          <Download className="h-3 w-3" /> {m.attachment_name || "Pièce jointe"}
-                        </button>
+                        <div className="mt-1">
+                          <MessageAttachment
+                            bucket="internal-chat-files"
+                            path={m.attachment_path}
+                            name={m.attachment_name}
+                            mime={m.attachment_mime}
+                            inverse={mine}
+                          />
+                        </div>
                       )}
                       <div className={cn("text-[10px] mt-1", mine ? "opacity-80" : "text-muted-foreground")}>
                         {formatDistanceToNow(new Date(m.created_at), { addSuffix: true, locale: fr })}
