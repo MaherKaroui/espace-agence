@@ -202,7 +202,7 @@ function AgencyTasksPage() {
         break;
     }
     return list;
-  }, [tasks, tab, quick, search, priorityFilter, statusFilter, poleFilter, dossierFilter, autoFilter, user?.id]);
+  }, [tasks, tab, quick, search, priorityFilter, statusFilter, poleFilter, dossierFilter, autoFilter, user?.id, onlyMine, myTaskIds]);
 
   const fmtDue = (d: string | null) => d ? new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
 
