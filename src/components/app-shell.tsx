@@ -17,6 +17,7 @@ import { ConsentBanner } from "@/components/consent-banner";
 import { LegalFooter } from "@/components/legal-footer";
 import { Logo } from "@/components/logo";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { AiAssistantWidget } from "@/components/ai-assistant-widget";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -128,6 +129,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const directionOrganisation = [
     { to: "/admin/equipe", label: "Équipe", icon: Users },
     { to: "/admin/poles", label: "Pôles & équipes", icon: Users2 },
+    { to: "/admin/pieces-modeles", label: "Pièces attendues", icon: FileText },
     { to: "/admin/security", label: "Sécurité", icon: ShieldCheck },
     { to: "/admin/notifications", label: "Notifications & emails", icon: Mail },
     { to: "/admin/rgpd", label: "RGPD", icon: UserCog },
@@ -331,6 +333,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="lg:hidden h-[calc(80px+var(--safe-bottom))]" aria-hidden />
       </div>
       <MobileBottomNav countFor={countFor} />
+      <AiAssistantWidget />
     </div>
   );
 }
