@@ -33,6 +33,8 @@ export const assistantChat = createServerFn({ method: "POST" })
       system: assistantSystemPrompt(caller.isStaff),
       messages: data.messages,
       tools: tools as any,
+      // Le modèle a le droit de répondre sans appeler d'outil (salutations, questions générales).
+      toolChoice: "auto",
       stopWhen: stepCountIs(6),
     });
 

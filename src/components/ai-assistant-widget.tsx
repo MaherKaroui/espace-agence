@@ -267,6 +267,31 @@ function ConfirmationCard({
           </div>
         </div>
       )}
+      {proposal.kind === "changer_statut_tache" && (
+        <div className="space-y-1 text-sm">
+          <div className="font-medium">{proposal.task_titre}</div>
+          <div className="text-muted-foreground">Nouveau statut : {proposal.statut}</div>
+        </div>
+      )}
+      {proposal.kind === "assigner_tache" && (
+        <div className="space-y-1 text-sm">
+          <div className="font-medium">{proposal.task_titre}</div>
+          <div className="text-muted-foreground">Assignée à : {proposal.user_nom}</div>
+        </div>
+      )}
+      {proposal.kind === "modifier_echeance_tache" && (
+        <div className="space-y-1 text-sm">
+          <div className="font-medium">{proposal.task_titre}</div>
+          <div className="text-muted-foreground">Nouvelle échéance : {proposal.due_date ?? "aucune"}</div>
+        </div>
+      )}
+      {proposal.kind === "commenter_tache" && (
+        <div className="space-y-1 text-sm">
+          <div className="font-medium">{proposal.task_titre}</div>
+          <div className="whitespace-pre-wrap text-muted-foreground">{proposal.contenu}</div>
+        </div>
+      )}
+
       <div className="mt-3 flex gap-2">
         <Button size="sm" onClick={onConfirm} disabled={busy}>
           {busy && <Loader2 className="mr-1 h-3 w-3 animate-spin" />} Confirmer

@@ -35,6 +35,8 @@ const POLE_CODE_BY_CATEGORIE: Record<string, string> = {
   juridique: "juridique",
 };
 
+export const TASK_STATUS_VALUES = ["a_faire", "en_cours", "bloquee", "terminee", "en_attente"] as const;
+
 export type AssistantProposal =
   | {
       kind: "creer_demande";
@@ -53,7 +55,12 @@ export type AssistantProposal =
       due_date: string | null;
       dossier_id: string | null;
     }
+  | { kind: "changer_statut_tache"; task_id: string; task_titre: string; statut: string }
+  | { kind: "assigner_tache"; task_id: string; task_titre: string; user_id: string; user_nom: string }
+  | { kind: "modifier_echeance_tache"; task_id: string; task_titre: string; due_date: string | null }
+  | { kind: "commenter_tache"; task_id: string; task_titre: string; contenu: string }
   | { kind: "rediger_message"; destinataire: string | null; objet: string | null; brouillon: string };
+
 
 export type AssistantCaller = { supabase: any; userId: string; isStaff: boolean };
 
@@ -330,9 +337,134 @@ export function buildAssistantTools(caller: AssistantCaller, proposals: Assistan
       },
     );
 
+    /** Lecture des tâches — client utilisateur : le cloisonnement par pôle vient des RLS. */
+    tools.mes_taches = mk(
+      "Liste les tâches agence visibles par l'utilisateur (RLS : ses tâches, celles de son pôle). Filtres : mine, statut, en_retard, echeance_avant.",
+      z.object({
+        mine: z.boolean().optional().describe("Uniquement les tâches assignées à l'utilisateur"),
+        statut: z.enum(TASK_STATUS_VALUES).optional(),
+        en_retard: z.boolean().optional(),
+        echeance_avant: z.string().optional().describe("ISO YYYY-MM-DD"),
+        recherche: z.string().optional(),
+        limite: z.number().int().min(1).max(50).default(25),
+      }),
+      async (args: any) => {
+        denyClient(isStaff, "mes_taches");
+        let ids: string[] | null = null;
+        if (args.mine) {
+          const { data: links } = await supabase.from("agency_task_assignees").select("task_id").eq("user_id", userId);
+          ids = ((links ?? []) as any[]).map((l) => l.task_id);
+        }
+        let q = supabase
+          .from("agency_tasks")
+          .select("id, title, status, priority, due_date, assigned_to, pole_id, dossier_id, updated_at")
+          .is("archived_at", null)
+          .order("due_date", { ascending: true, nullsFirst: false })
+          .limit(args.limite ?? 25);
+        if (args.mine) {
+          const orIds = (ids ?? []).length > 0 ? `,id.in.(${(ids ?? []).join(",")})` : "";
+          q = q.or(`assigned_to.eq.${userId}${orIds}`);
+        }
+        if (args.statut) q = q.eq("status", args.statut);
+        if (args.recherche) q = q.ilike("title", `%${args.recherche}%`);
+        if (args.en_retard) q = q.lt("due_date", new Date().toISOString().slice(0, 10)).neq("status", "terminee");
+        if (args.echeance_avant) q = q.lte("due_date", args.echeance_avant);
+        const { data, error } = await q;
+        if (error) throw new Error(error.message);
+        return { taches: data ?? [] };
+      },
+    );
+
+    const loadTask = async (taskId: string) => {
+      const { data, error } = await supabase
+        .from("agency_tasks")
+        .select("id, title, status, due_date")
+        .eq("id", taskId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error("Tâche introuvable ou hors de votre périmètre.");
+      return data as any;
+    };
+
+    tools.changer_statut_tache = mk(
+      "Prépare le changement de statut d'une tâche. N'écrit rien avant confirmation.",
+      z.object({ task_id: z.string().uuid(), statut: z.enum(TASK_STATUS_VALUES) }),
+      async (args: any) => {
+        denyClient(isStaff, "changer_statut_tache");
+        const task = await loadTask(args.task_id);
+        const proposal: AssistantProposal = {
+          kind: "changer_statut_tache",
+          task_id: task.id,
+          task_titre: task.title,
+          statut: args.statut,
+        };
+        proposals.push(proposal);
+        return { confirmation_requise: true, apercu: proposal };
+      },
+    );
+
+    tools.assigner_tache = mk(
+      "Prépare l'assignation d'une tâche à un membre de l'équipe. N'écrit rien avant confirmation.",
+      z.object({ task_id: z.string().uuid(), user_id: z.string().uuid() }),
+      async (args: any) => {
+        denyClient(isStaff, "assigner_tache");
+        const task = await loadTask(args.task_id);
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .eq("id", args.user_id)
+          .maybeSingle();
+        if (!prof) throw new Error("Membre introuvable ou hors de votre périmètre.");
+        const proposal: AssistantProposal = {
+          kind: "assigner_tache",
+          task_id: task.id,
+          task_titre: task.title,
+          user_id: prof.id,
+          user_nom: prof.full_name ?? "Membre",
+        };
+        proposals.push(proposal);
+        return { confirmation_requise: true, apercu: proposal };
+      },
+    );
+
+    tools.proposer_echeance_tache = mk(
+      "Prépare la modification de l'échéance d'une tâche. N'écrit rien avant confirmation.",
+      z.object({ task_id: z.string().uuid(), due_date: z.string().describe("ISO YYYY-MM-DD") }),
+      async (args: any) => {
+        denyClient(isStaff, "proposer_echeance_tache");
+        const task = await loadTask(args.task_id);
+        const proposal: AssistantProposal = {
+          kind: "modifier_echeance_tache",
+          task_id: task.id,
+          task_titre: task.title,
+          due_date: args.due_date,
+        };
+        proposals.push(proposal);
+        return { confirmation_requise: true, apercu: proposal };
+      },
+    );
+
+    tools.commenter_tache = mk(
+      "Prépare l'ajout d'un commentaire interne sur une tâche. N'écrit rien avant confirmation.",
+      z.object({ task_id: z.string().uuid(), contenu: z.string().min(2).max(2000) }),
+      async (args: any) => {
+        denyClient(isStaff, "commenter_tache");
+        const task = await loadTask(args.task_id);
+        const proposal: AssistantProposal = {
+          kind: "commenter_tache",
+          task_id: task.id,
+          task_titre: task.title,
+          contenu: args.contenu,
+        };
+        proposals.push(proposal);
+        return { confirmation_requise: true, apercu: proposal };
+      },
+    );
+
     tools.rediger_message = mk(
-      "Produit un brouillon de message. N'envoie jamais. Agence uniquement.",
+      "Produit un brouillon de message. À n'appeler QUE si l'utilisateur demande explicitement d'écrire à quelqu'un, en indiquant le destinataire ET le sujet. Jamais par déduction, jamais après une simple salutation. N'envoie jamais.",
       z.object({ destinataire: z.string().optional(), objet: z.string().optional(), brouillon: z.string().min(5) }),
+
       async (args: any) => {
         denyClient(isStaff, "rediger_message");
         const proposal: AssistantProposal = {
@@ -356,6 +488,11 @@ export function assistantSystemPrompt(isStaff: boolean) {
   const commun = [
     "Tu es l'assistant IZISuivis, spécialisé dans le suivi des dossiers de conformité (Qualiopi, NDA, EDOF, BPF, juridique).",
     "Réponds en français, phrases courtes et concrètes. Pas de blabla, pas de listes interminables.",
+    "Si la demande n'appelle pas clairement une action, réponds simplement, sans appeler d'outil. Ne devine jamais une intention d'écriture.",
+    "Une salutation, un remerciement ou une question générale se répondent en texte seul : aucun outil, aucune carte de confirmation.",
+    "N'appelle un outil que si l'utilisateur exprime une intention claire et identifiable. En cas de doute, pose une question au lieu d'agir.",
+    "`rediger_message` ne s'appelle que si l'utilisateur demande explicitement d'écrire à quelqu'un, en précisant le destinataire et le sujet.",
+    "Tu ne vois que les données que la base autorise pour cet utilisateur (cloisonnement par pôle). Ne cherche jamais à le contourner et n'en parle pas.",
     "Tu ne connais RIEN par toi-même : toute information vient des outils. Si un outil ne renvoie pas l'information, dis clairement que tu ne sais pas et propose de transmettre la question à l'équipe.",
     "N'invente JAMAIS une liste de pièces à fournir : utilise exclusivement l'outil `pieces_attendues_pour`. N'extrapole jamais sur un sujet réglementaire.",
     "Cite toujours ta source : nom du dossier, nom du document, numéro d'indicateur Qualiopi.",
@@ -467,7 +604,47 @@ export async function executeAssistantAction(caller: AssistantCaller, action: As
     return { ok: true, task_id: task.id };
   }
 
+  if (
+    action.kind === "changer_statut_tache" ||
+    action.kind === "assigner_tache" ||
+    action.kind === "modifier_echeance_tache" ||
+    action.kind === "commenter_tache"
+  ) {
+    if (!isStaff) throw new Error("Accès refusé : gestion des tâches réservée à l'agence.");
+
+    if (action.kind === "commenter_tache") {
+      const { data: c, error } = await supabase
+        .from("agency_task_comments")
+        .insert({ task_id: action.task_id, user_id: userId, content: action.contenu })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      await audit("agency_task", action.task_id, { commentaire_id: c.id });
+      return { ok: true, comment_id: c.id };
+    }
+
+    const patch: Record<string, unknown> = { updated_by: userId };
+    if (action.kind === "changer_statut_tache") {
+      patch.status = action.statut;
+      patch.completed_at = action.statut === "terminee" ? new Date().toISOString() : null;
+    }
+    if (action.kind === "assigner_tache") patch.assigned_to = action.user_id;
+    if (action.kind === "modifier_echeance_tache") patch.due_date = action.due_date;
+
+    const { error } = await supabase.from("agency_tasks").update(patch).eq("id", action.task_id);
+    if (error) throw new Error(error.message);
+
+    if (action.kind === "assigner_tache") {
+      await supabase
+        .from("agency_task_assignees")
+        .upsert({ task_id: action.task_id, user_id: action.user_id, added_by: userId }, { onConflict: "task_id,user_id" });
+    }
+    await audit("agency_task", action.task_id, patch);
+    return { ok: true, task_id: action.task_id };
+  }
+
   throw new Error("Cette action ne nécessite aucune exécution.");
+
 }
 
 export const proposalSchema = z.discriminatedUnion("kind", [
@@ -495,6 +672,31 @@ export const proposalSchema = z.discriminatedUnion("kind", [
     priority: z.enum(["basse", "normale", "haute", "urgente"]).default("normale"),
     due_date: z.string().nullable().optional().default(null),
     dossier_id: z.string().uuid().nullable().optional().default(null),
+  }),
+  z.object({
+    kind: z.literal("changer_statut_tache"),
+    task_id: z.string().uuid(),
+    task_titre: z.string().default(""),
+    statut: z.enum(TASK_STATUS_VALUES),
+  }),
+  z.object({
+    kind: z.literal("assigner_tache"),
+    task_id: z.string().uuid(),
+    task_titre: z.string().default(""),
+    user_id: z.string().uuid(),
+    user_nom: z.string().default(""),
+  }),
+  z.object({
+    kind: z.literal("modifier_echeance_tache"),
+    task_id: z.string().uuid(),
+    task_titre: z.string().default(""),
+    due_date: z.string().nullable().optional().default(null),
+  }),
+  z.object({
+    kind: z.literal("commenter_tache"),
+    task_id: z.string().uuid(),
+    task_titre: z.string().default(""),
+    contenu: z.string().min(2),
   }),
   z.object({
     kind: z.literal("rediger_message"),
