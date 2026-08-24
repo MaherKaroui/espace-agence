@@ -157,6 +157,27 @@ export function AiAssistantWidget() {
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
             <div className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">{welcome}</div>
+            {showGuideHint && (
+              <Card className="border-gold/50 bg-gold/10 p-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-muted-foreground">
+                      Première visite ? Le guide illustré montre en une minute ce qu'il sait faire.
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Button asChild size="sm" onClick={() => setOpen(false)}>
+                        <Link to="/guide-assistant">Voir le guide</Link>
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={dismissGuideHint}>
+                        Ne plus afficher
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {messages.map((m, i) => (
               <div
                 key={i}
