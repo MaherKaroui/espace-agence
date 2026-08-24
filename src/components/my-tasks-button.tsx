@@ -261,7 +261,7 @@ export function MyTasksButton() {
         </div>
 
         <div className="border-t bg-muted/30 p-2">
-          <Link to="/admin/taches-agence" className="block py-1 text-center text-xs text-primary hover:underline">
+          <Link to="/admin/taches-agence" search={{ mine: "1" }} className="block py-1 text-center text-xs text-primary hover:underline">
             Voir toutes mes tâches →
           </Link>
         </div>
