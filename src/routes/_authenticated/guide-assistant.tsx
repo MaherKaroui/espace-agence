@@ -292,41 +292,44 @@ function GuideAssistantPage() {
           </div>
         </Section>
 
-        {/* 5 */}
-        <Section n={5} title="Il ne voit que ce qui vous concerne">
-          <Card className="space-y-2 border-success/50 bg-success/10 p-4 text-sm">
-            <div className="flex items-center gap-2 font-medium">
-              <ShieldCheck className="h-4 w-4 text-success" aria-hidden="true" /> Cloisonnement
-            </div>
-            <p>
-              Une personne du pôle EDOF n'obtient que de l'EDOF — même en insistant, même en
-              reformulant. Un client n'obtient jamais rien sur un autre client.
-            </p>
-            <p>
-              Cette séparation est appliquée par la base de données elle-même, avant que
-              l'assistant ne voie la moindre donnée. Ce n'est pas une consigne qu'on pourrait
-              contourner en changeant la formulation.
-            </p>
-          </Card>
-        </Section>
+        {/* 5 & 6 — réservés au guide équipe */}
+        {equipe && (
+          <>
+            <Section n={5} title="Il ne voit que ce qui vous concerne">
+              <Card className="space-y-2 border-success/50 bg-success/10 p-4 text-sm">
+                <div className="flex items-center gap-2 font-medium">
+                  <ShieldCheck className="h-4 w-4 text-success" aria-hidden="true" /> Cloisonnement
+                </div>
+                <p>
+                  Une personne du pôle EDOF n'obtient que de l'EDOF — même en insistant, même en
+                  reformulant. Un client n'obtient jamais rien sur un autre client.
+                </p>
+                <p>
+                  Cette séparation est appliquée par la base de données elle-même, avant que
+                  l'assistant ne voie la moindre donnée. Ce n'est pas une consigne qu'on pourrait
+                  contourner en changeant la formulation.
+                </p>
+              </Card>
+            </Section>
 
-        {/* 6 */}
-        <Section n={6} title="Ce qu'il ne fera pas">
-          <Card className="space-y-2 border-destructive/50 bg-destructive/10 p-4 text-sm">
-            <div className="flex items-center gap-2 font-medium">
-              <Ban className="h-4 w-4 text-destructive" aria-hidden="true" /> Limites assumées
-            </div>
-            <p>Il n'envoie jamais un message tout seul : il prépare un brouillon, vous l'envoyez.</p>
-            <p>
-              Il n'invente pas. Si l'information n'est pas dans les données, il le dit et transmet.
-              Sur du Qualiopi ou du BPF, une réponse inventée mais crédible ne se repère que le jour
-              de l'audit.
-            </p>
-            <p>
-              Il ne donne pas de conseil réglementaire ferme : il cite le texte et laisse trancher.
-            </p>
-          </Card>
-        </Section>
+            <Section n={6} title="Ce qu'il ne fera pas">
+              <Card className="space-y-2 border-destructive/50 bg-destructive/10 p-4 text-sm">
+                <div className="flex items-center gap-2 font-medium">
+                  <Ban className="h-4 w-4 text-destructive" aria-hidden="true" /> Limites assumées
+                </div>
+                <p>Il n'envoie jamais un message tout seul : il prépare un brouillon, vous l'envoyez.</p>
+                <p>
+                  Il n'invente pas. Si l'information n'est pas dans les données, il le dit et transmet.
+                  Sur du Qualiopi ou du BPF, une réponse inventée mais crédible ne se repère que le
+                  jour de l'audit.
+                </p>
+                <p>
+                  Il ne donne pas de conseil réglementaire ferme : il cite le texte et laisse trancher.
+                </p>
+              </Card>
+            </Section>
+          </>
+        )}
 
         {/* 7 */}
         <Section n={7} title="Pour bien lui parler">
