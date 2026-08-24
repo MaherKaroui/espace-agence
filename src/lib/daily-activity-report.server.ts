@@ -92,20 +92,15 @@ export interface DailyActivityReport {
 export async function buildDailyActivityReport(admin: any): Promise<DailyActivityReport> {
   const now = new Date();
   const dayKey = parisDateKey(now);
-  const weekday = parisWeekday(now);
 
-  // Lundi : on inclut le week-end écoulé.
-  const daysBack = weekday === "Mon" ? 3 : 1;
-  const startKey = parisDateKey(new Date(now.getTime() - (daysBack - 1) * 86400_000));
-  const from = parisInstant(startKey, 0);
+  // Toujours la journée en cours : de 00h00 (Paris) à maintenant.
+  const from = parisInstant(dayKey, 0);
   const to = now;
   const fromIso = from.toISOString();
   const toIso = to.toISOString();
 
-  const periode =
-    daysBack > 1
-      ? `du ${new Date(from).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} au ${now.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })}`
-      : now.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
+  const periode = now.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
+
 
   const count = async (table: string, build: (q: any) => any) => {
     try {
