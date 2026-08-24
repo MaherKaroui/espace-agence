@@ -931,12 +931,15 @@ export async function sendDailyDigest(
     return { ok, recipients: [to], date: dayKey, pdfUrl, ...(errorText ? { error: errorText } : {}) };
   }
 
+  // Le compte rendu quotidien a ses propres destinataires (admin + report_recipients),
+  // distincts de ceux de l'Agent IA de supervision.
   const { recipients } = await resolveReportRecipients(admin);
   const ok = await sendSupervisionEmail(admin, {
     templateName: "compte-rendu-quotidien",
     type: "rapport_activite",
     idempotencyKey: `rapport-activite-${dayKey}`,
     baseUrl,
+    recipients,
     templateData: { ...digest, pdfUrl } as unknown as Record<string, unknown>,
   });
   return { ok, recipients, date: dayKey, pdfUrl };
