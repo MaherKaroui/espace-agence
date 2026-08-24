@@ -64,7 +64,7 @@ const STATUS_META: Record<string, { label: string; cls: string; Icon: any }> = {
 
 function displayRecipient(email: string | null) {
   if (!email) return "—";
-  return email.replace(/@izi-business\.com$/i, "@izisuivis.com").replace(/@izibusiness\.com$/i, "@izisuivis.com");
+  return email.replace(/@izisuivis\.com$/i, "@izi-business.com").replace(/@izibusiness\.com$/i, "@izi-business.com");
 }
 
 function displayError(message: string | null) {
