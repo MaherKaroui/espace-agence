@@ -22,6 +22,7 @@ import { listNotificationRecipientHistory } from "@/lib/team.functions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { APP_URL } from "@/lib/app-url";
 import { WebPushToggle } from "@/components/web-push-toggle";
+import { TeamPushCoverage } from "@/components/team-push-coverage";
 
 export const Route = createFileRoute("/_authenticated/admin/notifications")({
   head: () => ({
@@ -252,6 +253,8 @@ function AdminNotifications() {
             </div>
             <WebPushToggle />
           </Card>
+
+          <TeamPushCoverage />
 
           <Card className="p-6 space-y-4">
             <div>

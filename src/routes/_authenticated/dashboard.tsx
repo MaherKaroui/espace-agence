@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
+import { PushActivationBanner } from "@/components/push-activation-banner";
 import { StatusBadge } from "@/components/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { categorieLabel } from "@/lib/labels";
@@ -120,6 +121,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
+      <PushActivationBanner />
       <div>
         <h1 className="font-display text-2xl sm:text-3xl">Bonjour 👋</h1>
         <p className="text-sm sm:text-base text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>

@@ -1,46 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import {
   Bell, BellOff, BellRing, Check, MessageSquare, FileText, FolderOpen,
-  Calendar, AlertTriangle, ClipboardCheck, Inbox,
+  Calendar, AlertTriangle, ClipboardCheck, Inbox, Settings,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { groupNotifications, type NotifRow } from "@/lib/notification-grouping";
 import { cn } from "@/lib/utils";
-import { getVapidPublicKey, getPushSubscriptionStatus, savePushSubscription, deletePushSubscription } from "@/lib/push.functions";
 import { notifTargetLink } from "@/lib/notif-link";
-import {
-  getBrowserNotifPermission, isBrowserNotifEnabled,
-  requestBrowserNotifPermission, setBrowserNotifEnabled, showBrowserNotif,
-} from "@/lib/web-push";
+import { showBrowserNotif } from "@/lib/web-push";
+import { useWebPush } from "@/hooks/use-web-push";
 
 type TabKey = "unread" | "all";
-const SERVICE_WORKER_URL = "/service-worker.js";
-
-function urlBase64ToUint8Array(b64: string): Uint8Array {
-  const pad = "=".repeat((4 - (b64.length % 4)) % 4);
-  const base64 = (b64 + pad).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  const out = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-  return out;
-}
-
-function bufToB64Url(buf: ArrayBuffer | null): string {
-  if (!buf) return "";
-  const arr = new Uint8Array(buf);
-  let s = "";
-  for (let i = 0; i < arr.length; i++) s += String.fromCharCode(arr[i]);
-  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
 
 const TYPE_ICONS: Record<string, { icon: any; color: string }> = {
   message: { icon: MessageSquare, color: "text-blue-600 dark:text-blue-400" },
@@ -58,17 +35,14 @@ function iconFor(type: string) {
   return TYPE_ICONS[type] ?? { icon: Bell, color: "text-muted-foreground" };
 }
 
+
 export function NotificationsBell() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState<TabKey>("unread");
-  const [permTick, setPermTick] = useState(0); // force refresh après demande
-  const [pushLoading, setPushLoading] = useState(false);
-  const [devicePushSaved, setDevicePushSaved] = useState(false);
-  const getKey = useServerFn(getVapidPublicKey);
-  const getPushStatus = useServerFn(getPushSubscriptionStatus);
-  const saveSub = useServerFn(savePushSubscription);
-  const delSub = useServerFn(deletePushSubscription);
+  // Abonnement push : implémentation unique partagée (src/hooks/use-web-push.ts)
+  const push = useWebPush();
+
 
   const { data: notifications = [] } = useQuery({
     queryKey: ["notifications", user?.id],
@@ -114,33 +88,9 @@ export function NotificationsBell() {
     return () => { supabase.removeChannel(channel); };
   }, [user, qc]);
 
-  const permission = useMemo(() => getBrowserNotifPermission(), [permTick]);
-  const enabled = useMemo(() => isBrowserNotifEnabled() && devicePushSaved, [devicePushSaved, permTick]);
+  const permission: NotificationPermission | "unsupported" = push.supported ? push.permission : "unsupported";
+  const enabled = push.subscribed && push.permission === "granted";
 
-  useEffect(() => {
-    if (!user || permission !== "granted" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setDevicePushSaved(false);
-      return;
-    }
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
-        await reg.update().catch(() => undefined);
-        const readyReg = await navigator.serviceWorker.ready;
-        const sub = await readyReg.pushManager.getSubscription();
-        const status = await getPushStatus({ data: { endpoint: sub?.endpoint ?? null } });
-        if (cancelled) return;
-        setDevicePushSaved(status.currentDeviceSaved);
-        if (!status.currentDeviceSaved) setBrowserNotifEnabled(false);
-      } catch {
-        if (!cancelled) setDevicePushSaved(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [user, permission, getPushStatus, permTick]);
 
   const unreadNotifs = notifications.filter((n) => !n.read_at);
   const activeList = tab === "unread" ? unreadNotifs : notifications;
@@ -166,67 +116,12 @@ export function NotificationsBell() {
     qc.invalidateQueries({ queryKey: ["notifications", user?.id] });
   };
 
-  const togglePush = async () => {
-    if (permission === "unsupported" || pushLoading) return;
-    setPushLoading(true);
-    try {
-      if (permission === "granted" && devicePushSaved) {
-        const reg = await navigator.serviceWorker.getRegistration("/");
-        const sub = await reg?.pushManager.getSubscription();
-        if (sub) {
-          await delSub({ data: { endpoint: sub.endpoint } }).catch(() => undefined);
-          await sub.unsubscribe().catch(() => undefined);
-        }
-        setBrowserNotifEnabled(false);
-        setDevicePushSaved(false);
-        toast.success("Notifications navigateur désactivées");
-        return;
-      }
-
-      const perm = await requestBrowserNotifPermission();
-      if (perm !== "granted") return;
-
-      const { key } = await getKey();
-      if (!key) throw new Error("Clé serveur indisponible");
-
-      const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
-      await reg.update().catch(() => undefined);
-      const readyReg = await navigator.serviceWorker.ready;
-      const existing = await readyReg.pushManager.getSubscription();
-      let sub = existing ?? await readyReg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
-      });
-
-      const saveCurrentSubscription = () => saveSub({
-        data: {
-          endpoint: sub.endpoint,
-          p256dh: bufToB64Url(sub.getKey("p256dh")),
-          auth: bufToB64Url(sub.getKey("auth")),
-          user_agent: navigator.userAgent,
-        },
-      });
-
-      try {
-        await saveCurrentSubscription();
-      } catch {
-        await sub.unsubscribe().catch(() => undefined);
-        sub = await readyReg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
-        });
-        await saveCurrentSubscription();
-      }
-      setBrowserNotifEnabled(true);
-      setDevicePushSaved(true);
-      toast.success("Notifications navigateur activées pour ce compte");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Impossible d'activer les notifications navigateur");
-    } finally {
-      setPermTick((v) => v + 1);
-      setPushLoading(false);
-    }
+  // Délègue au hook partagé : correctif Safari + messages d'aide inclus.
+  const togglePush = () => {
+    if (!push.supported || push.loading) return;
+    void (enabled ? push.disable() : push.enable());
   };
+
 
   return (
     <Popover>
@@ -250,7 +145,7 @@ export function NotificationsBell() {
               <Button
                 size="sm" variant="ghost"
                 onClick={togglePush}
-                disabled={pushLoading || permission === "unsupported" || permission === "denied"}
+                disabled={push.loading || permission === "unsupported" || permission === "denied" || (!enabled && !push.ready)}
                 title={
                   permission === "unsupported" ? "Non supporté par ce navigateur"
                   : permission === "denied" ? "Notifications bloquées — autorisez-les dans le navigateur"
@@ -261,8 +156,11 @@ export function NotificationsBell() {
               >
                 {enabled ? <BellRing className="h-4 w-4 text-primary" /> : <BellOff className="h-4 w-4" />}
                 <span className="text-xs">
-                  {pushLoading ? "..." : permission === "denied" ? "Bloquées" : enabled ? "Push ON" : "Activer Push"}
+                  {push.loading ? "..." : permission === "denied" ? "Bloquées" : enabled ? "Push ON" : "Activer Push"}
                 </span>
+              </Button>
+              <Button size="sm" variant="ghost" asChild className="gap-1" title="Préférences de notifications">
+                <Link to="/preferences"><Settings className="h-4 w-4" /></Link>
               </Button>
               {unread > 0 && (
                 <Button size="sm" variant="ghost" onClick={markAll} className="gap-1">
@@ -271,6 +169,17 @@ export function NotificationsBell() {
               )}
             </div>
           </div>
+          {!enabled && push.platformHint && (
+            <div className="rounded-md border border-border bg-muted/50 px-2 py-1.5 text-[11px] text-muted-foreground">
+              {push.platformHint}
+            </div>
+          )}
+          {permission === "denied" && (
+            <div className="text-[11px] text-destructive">
+              Notifications bloquées dans les réglages du navigateur — autorisez-les puis rechargez la page.
+            </div>
+          )}
+
 
           {/* Onglets */}
           <div className="inline-flex rounded-md border border-input overflow-hidden text-xs">

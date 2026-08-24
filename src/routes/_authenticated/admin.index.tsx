@@ -2,6 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { PushActivationBanner } from "@/components/push-activation-banner";
 import { Users, FolderOpen, FileText, Clock, ListChecks, AlertTriangle, CalendarCheck, CheckCircle2, Ban, MessageSquareOff, CalendarX, Zap } from "lucide-react";
 import { AgencyTasksPriorityBoard } from "@/components/agency-tasks-priority-board";
 
@@ -102,6 +103,7 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-8">
+      <PushActivationBanner />
       <div>
         <h1 className="font-display text-3xl">Tableau de bord agence</h1>
         <p className="text-muted-foreground mt-1">Vue d'ensemble de la plateforme.</p>

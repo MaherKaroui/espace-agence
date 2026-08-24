@@ -69,3 +69,63 @@ export const deletePushSubscription = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/**
+ * Couverture push de l'équipe (qui a activé, qui n'a pas).
+ * Lecture via le client de l'utilisateur (RLS) : réservé admin/direction par les
+ * politiques existantes sur profiles / push_subscriptions / push_delivery_logs.
+ */
+export const getTeamPushCoverage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+
+    const { data: roles, error: rolesErr } = await supabase
+      .from("user_roles")
+      .select("user_id, role");
+    if (rolesErr) throw new Error(rolesErr.message);
+
+    const staffRoles = new Set(["admin", "direction", "manager", "consultant", "auditeur", "certificateur"]);
+    const staffIds = Array.from(
+      new Set((roles ?? []).filter((r: any) => staffRoles.has(r.role)).map((r: any) => r.user_id as string)),
+    );
+    if (staffIds.length === 0) return { members: [] as any[] };
+
+    const [{ data: profiles }, { data: subs }, { data: logs }] = await Promise.all([
+      supabase.from("profiles").select("id, prenom, nom, email").in("id", staffIds),
+      supabase.from("push_subscriptions").select("user_id").in("user_id", staffIds),
+      supabase
+        .from("push_delivery_logs")
+        .select("user_id, sent_at, status")
+        .in("user_id", staffIds)
+        .eq("status", "sent")
+        .order("sent_at", { ascending: false })
+        .limit(2000),
+    ]);
+
+    const deviceCount = new Map<string, number>();
+    for (const s of subs ?? []) deviceCount.set(s.user_id, (deviceCount.get(s.user_id) ?? 0) + 1);
+    const lastSent = new Map<string, string>();
+    for (const l of logs ?? []) if (!lastSent.has(l.user_id)) lastSent.set(l.user_id, l.sent_at);
+
+    const rolesByUser = new Map<string, string[]>();
+    for (const r of roles ?? []) {
+      if (!staffRoles.has((r as any).role)) continue;
+      const arr = rolesByUser.get((r as any).user_id) ?? [];
+      arr.push((r as any).role);
+      rolesByUser.set((r as any).user_id, arr);
+    }
+
+    const members = (profiles ?? [])
+      .map((p: any) => ({
+        id: p.id as string,
+        name: `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || (p.email ?? "—"),
+        email: (p.email ?? "") as string,
+        roles: rolesByUser.get(p.id) ?? [],
+        devices: deviceCount.get(p.id) ?? 0,
+        last_sent_at: lastSent.get(p.id) ?? null,
+      }))
+      .sort((a, b) => a.devices - b.devices || a.name.localeCompare(b.name));
+
+    return { members };
+  });
