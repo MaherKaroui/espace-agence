@@ -143,7 +143,7 @@ function CalendrierQualiopi() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [cursor, setCursor] = useState<Date>(() => new Date());
-  const [viewMode, setViewMode] = useState<"liste" | "mois">("liste");
+  const [viewMode, setViewMode] = useState<"liste" | "mois">("mois");
   const [filterOrg, setFilterOrg] = useState("");
   const [filterCertifier, setFilterCertifier] = useState("");
   const [filterAuditor, setFilterAuditor] = useState("");
@@ -428,48 +428,6 @@ function CalendrierQualiopi() {
         </div>
       </div>
 
-      {/* ===== Demandes en cours (sans date d'audit) ===== */}
-      <Card className="overflow-hidden">
-        <div className="flex items-center justify-between gap-2 p-3 border-b bg-muted/30">
-          <div className="font-medium flex items-center gap-2"><ListChecks className="h-4 w-4" /> Demandes en cours ({demandes.length})</div>
-          <Button size="sm" variant="outline" onClick={() => setEditEvent({ audit_date: null, status: "en_attente" })}>
-            <Plus className="h-4 w-4 mr-1" /> Nouvelle demande
-          </Button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/40">
-              <tr>
-                <th className="text-left p-2">Tuteur</th>
-                <th className="text-left p-2">Organisme de formation</th>
-                <th className="text-left p-2">Formation</th>
-                <th className="text-left p-2">Certificateur</th>
-                <th className="text-left p-2">Observation</th>
-                <th className="p-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {demandes.length === 0 && (
-                <tr><td colSpan={6} className="p-4 text-center text-muted-foreground">Aucune demande sans date d'audit.</td></tr>
-              )}
-              {demandes.map((d) => (
-                <tr key={d.id} className="border-t align-top">
-                  <td className="p-2">{d.tuteur ?? "—"}</td>
-                  <td className="p-2 font-medium">{d.organism_name}</td>
-                  <td className="p-2">{d.formation ?? "—"}</td>
-                  <td className="p-2">{d.certifier_name || d.certifier_organization || "—"}</td>
-                  <td className="p-2 whitespace-pre-wrap max-w-md">{d.observation ?? "—"}</td>
-                  <td className="p-2 text-right whitespace-nowrap">
-                    <Button variant="ghost" size="icon" onClick={() => setEditEvent(d)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => { if (confirm("Supprimer cette demande ?")) deleteEvent.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
       {/* ===== Vue par mois ===== */}
       <Card className="p-3 flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
@@ -599,6 +557,48 @@ function CalendrierQualiopi() {
           </div>
         </Card>
       )}
+
+      {/* ===== Demandes en cours (sans date d'audit) ===== */}
+      <Card className="overflow-hidden">
+        <div className="flex items-center justify-between gap-2 p-3 border-b bg-muted/30">
+          <div className="font-medium flex items-center gap-2"><ListChecks className="h-4 w-4" /> Demandes en cours ({demandes.length})</div>
+          <Button size="sm" variant="outline" onClick={() => setEditEvent({ audit_date: null, status: "en_attente" })}>
+            <Plus className="h-4 w-4 mr-1" /> Nouvelle demande
+          </Button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
+              <tr>
+                <th className="text-left p-2">Tuteur</th>
+                <th className="text-left p-2">Organisme de formation</th>
+                <th className="text-left p-2">Formation</th>
+                <th className="text-left p-2">Certificateur</th>
+                <th className="text-left p-2">Observation</th>
+                <th className="p-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {demandes.length === 0 && (
+                <tr><td colSpan={6} className="p-4 text-center text-muted-foreground">Aucune demande sans date d'audit.</td></tr>
+              )}
+              {demandes.map((d) => (
+                <tr key={d.id} className="border-t align-top">
+                  <td className="p-2">{d.tuteur ?? "—"}</td>
+                  <td className="p-2 font-medium">{d.organism_name}</td>
+                  <td className="p-2">{d.formation ?? "—"}</td>
+                  <td className="p-2">{d.certifier_name || d.certifier_organization || "—"}</td>
+                  <td className="p-2 whitespace-pre-wrap max-w-md">{d.observation ?? "—"}</td>
+                  <td className="p-2 text-right whitespace-nowrap">
+                    <Button variant="ghost" size="icon" onClick={() => setEditEvent(d)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => { if (confirm("Supprimer cette demande ?")) deleteEvent.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       {/* ===== Ancien suivi conservé ===== */}
       {pendings.length > 0 && (
