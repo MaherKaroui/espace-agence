@@ -138,10 +138,15 @@ export function AiAssistantWidget() {
             <Bot className="h-5 w-5 text-primary" />
             <div className="min-w-0 flex-1">
               <div className="font-display text-base leading-tight">Assistant IZISuivis</div>
-              <div className="truncate text-xs text-muted-foreground">
-                {isStaff ? "Profil agence" : "Profil client"} · réponses basées sur vos données
-              </div>
+              <Link
+                to="/guide-assistant"
+                onClick={() => setOpen(false)}
+                className="inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              >
+                <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" /> Que sait-il faire ?
+              </Link>
             </div>
+
             <Button variant="ghost" size="icon" aria-label="Nouvelle conversation" onClick={reset}>
               <RotateCcw className="h-4 w-4" />
             </Button>
