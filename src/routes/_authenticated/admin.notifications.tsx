@@ -251,7 +251,7 @@ function AdminNotifications() {
                   const v = e.target.value.trim();
                   if (v && v !== settings?.admin_email) saveSettings.mutate({ admin_email: v });
                 }}
-                placeholder="admin@exemple.com"
+                placeholder="admin@izi-business.com"
                 disabled={loadingSettings}
               />
             </div>
