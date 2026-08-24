@@ -1035,3 +1035,16 @@ export async function sendDailyDigest(
   return { ok, recipients, date: dayKey, pdfUrl };
 }
 
+
+/**
+ * Regénère le PDF archivé d'une journée passée avec la mise en page courante.
+ * Écrase le fichier existant dans le bucket et renvoie une URL signée.
+ */
+export async function regenerateDigestPdf(
+  admin: any,
+  dayKey: string,
+): Promise<{ ok: boolean; date: string; pdfUrl: string | null }> {
+  const digest = await buildDailyDigest(admin, new Date(`${dayKey}T12:00:00Z`));
+  const pdfUrl = await buildAndStoreDigestPdf(admin, digest, dayKey);
+  return { ok: pdfUrl !== null, date: dayKey, pdfUrl };
+}
