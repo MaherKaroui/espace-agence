@@ -382,6 +382,9 @@ export interface DigestPerson {
     seconds: number;
     premiere: string | null;
     derniere: string | null;
+    /** Plage lisible, datée si la période couvre plusieurs jours. */
+    plage: string | null;
+
     sessions: number;
     lieux: string[];
     appareils: string[];
@@ -417,7 +420,11 @@ export interface DigestTaskRow {
   responsable: string | null;
   quand: string | null;
   commentaires: string | null;
+  /** Tous les échanges internes, du plus ancien au plus récent, texte intégral. */
+  echanges: string[];
 }
+
+
 
 export interface DigestPoleSection {
   pole: string;
@@ -668,6 +675,18 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     return `${jour} à ${heureParis(iso)}`;
   };
 
+  /** Horodatage court « JJ/MM HH:MM » utilisé dans les échanges internes du PDF. */
+  const stampParis = (iso: string | null | undefined): string | null => {
+    if (!iso) return null;
+    const jour = new Date(iso).toLocaleDateString("fr-FR", {
+      timeZone: "Europe/Paris",
+      day: "2-digit",
+      month: "2-digit",
+    });
+    return `${jour} ${heureParis(iso)}`;
+  };
+
+
   // --- Commentaires de tâches (30 derniers jours) : auteur + date obligatoires ---
   const commentsByTask = new Map<string, { at: number; texte: string }[]>();
   try {
@@ -700,7 +719,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         const arr = commentsByTask.get(r.task_id) ?? [];
         arr.push({
           at: new Date(r.created_at).getTime(),
-          texte: `${dateHeureParis(r.created_at)} — ${auteur ?? "auteur non tracé"} : ${texte}`,
+          texte: `${stampParis(r.created_at)}  ${auteur ?? "(auteur non tracé)"} : ${texte}`,
         });
         commentsByTask.set(r.task_id, arr);
       }
@@ -710,30 +729,32 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   }
 
   /**
-   * Commentaires d'une tâche : note interne (avec auteur/date si tracés) + commentaires,
-   * du plus récent au plus ancien, 3 maximum, tronqués à 180 caractères.
+   * Tous les échanges internes d'une tâche : note interne + commentaires,
+   * du plus ancien au plus récent, texte intégral, aucune troncature.
    */
-  const taskComments = (t: any): string | null => {
+  const taskCommentList = (t: any): string[] => {
     const parts: { at: number; texte: string }[] = [...(commentsByTask.get(t.id) ?? [])];
     const internal = String(t.internal_comment ?? "").trim();
     if (internal) {
       const auteur = t.updated_by ? nameById.get(t.updated_by) : null;
-      const quand = t.updated_at ? dateHeureParis(t.updated_at) : null;
+      const quand = t.updated_at ? stampParis(t.updated_at) : null;
       parts.push({
         at: t.updated_at ? new Date(t.updated_at).getTime() : 0,
         texte:
           auteur && quand
-            ? `Note interne — ${quand} — ${auteur} : ${internal}`
+            ? `${quand}  ${auteur} (note interne) : ${internal}`
             : `Note interne (auteur non tracé) : ${internal}`,
       });
     }
-    if (parts.length === 0) return null;
-    return parts
-      .sort((a, b) => b.at - a.at)
-      .slice(0, 3)
-      .map((c) => (c.texte.length > 180 ? `${c.texte.slice(0, 177)}...` : c.texte))
-      .join("\n");
+    return parts.sort((a, b) => a.at - b.at).map((c) => c.texte.replace(/\s*\n\s*/g, " "));
   };
+
+  const taskComments = (t: any): string | null => {
+    const list = taskCommentList(t);
+    return list.length ? list.join("\n") : null;
+  };
+
+
 
 
 
@@ -937,6 +958,13 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         seconds: Math.round(seconds),
         premiere: premiere ? heureParis(new Date(premiere).toISOString()) : null,
         derniere: derniere ? heureParis(new Date(derniere).toISOString()) : null,
+        plage:
+          premiere && derniere
+            ? daysBack > 1
+              ? `${stampParis(new Date(premiere).toISOString())} - ${stampParis(new Date(derniere).toISOString())}`
+              : `${heureParis(new Date(premiere).toISOString())} - ${heureParis(new Date(derniere).toISOString())}`
+            : null,
+
         sessions: sessionCount,
         lieux: [...lieux].slice(0, 3),
         appareils: [...appareils].slice(0, 3),
@@ -1094,6 +1122,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
             responsable: responsableOf(t),
             quand: etat === "Terminée" ? heureParis(t.completed_at) : dateFrOf(t.due_date),
             commentaires: taskComments(t),
+            echanges: taskCommentList(t),
+
           };
         })
         .sort(
