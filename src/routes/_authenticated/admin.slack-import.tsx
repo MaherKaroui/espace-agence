@@ -19,8 +19,9 @@ import {
 } from "@/components/ui/dialog";
 import {
   Archive, AlertTriangle, Download, FileWarning, Link2, Search, Slack, Upload, KeyRound,
-  CheckCircle2, Loader2,
+  CheckCircle2, Loader2, Bot,
 } from "lucide-react";
+import { SlackRobotPanel } from "@/components/slack-robot-panel";
 import { analyseArchive, runImport, type ArchiveSummary } from "@/lib/slack-archive";
 import {
   slackSuggestChannelClients, slackScanArchiveAcces, slackImportArchiveAcces,
@@ -99,6 +100,7 @@ function SlackImportPage() {
         </TabsList>
 
         <TabsContent value="import" className="pt-4"><ImportPanel /></TabsContent>
+        <TabsContent value="robot" className="pt-4"><SlackRobotPanel /></TabsContent>
         <TabsContent value="rapprochement" className="pt-4"><RapprochementPanel /></TabsContent>
         <TabsContent value="fichiers" className="pt-4"><FichiersPanel /></TabsContent>
         <TabsContent value="acces" className="pt-4"><AccesPanel /></TabsContent>
