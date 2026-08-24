@@ -1,4 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { useMyTaskIds } from "@/hooks/use-my-tasks";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,8 +25,12 @@ type Task = Database["public"]["Tables"]["agency_tasks"]["Row"];
 type Status = Database["public"]["Enums"]["agency_task_status"];
 
 export const Route = createFileRoute("/_authenticated/admin/taches-agence")({
-  validateSearch: (search: Record<string, unknown>): { task?: string } =>
-    typeof search.task === "string" ? { task: search.task } : {},
+  validateSearch: (search: Record<string, unknown>): { task?: string; mine?: string } => {
+    const out: { task?: string; mine?: string } = {};
+    if (typeof search.task === "string") out.task = search.task;
+    if (search.mine === "1" || search.mine === 1 || search.mine === true) out.mine = "1";
+    return out;
+  },
   head: () => ({ meta: [{ title: "Tâches agence" }] }),
   beforeLoad: async () => {
     const { data: u } = await supabase.auth.getUser();
@@ -60,7 +65,12 @@ function AgencyTasksPage() {
   const { user } = useAuth();
   const { isStaff } = useRole();
   const [createOpen, setCreateOpen] = useState(false);
-  const { task: taskParam } = Route.useSearch();
+  const { task: taskParam, mine: mineParam } = Route.useSearch();
+  const navigate = useNavigate();
+  const onlyMine = mineParam === "1";
+  const { idSet: myTaskIds } = useMyTaskIds();
+  const setOnlyMine = (v: boolean) =>
+    navigate({ to: "/admin/taches-agence", search: (prev: any) => ({ ...prev, mine: v ? "1" : undefined }) });
   const [detailId, setDetailId] = useState<string | null>(taskParam ?? null);
   useEffect(() => { if (taskParam) setDetailId(taskParam); }, [taskParam]);
   const [tab, setTab] = useState("priority");
@@ -141,6 +151,7 @@ function AgencyTasksPage() {
     const { now, startOfDay, endOfDay, weekAgo } = bounds();
 
     let list = tasks;
+    if (onlyMine) list = list.filter((t) => myTaskIds.has(t.id));
     if (search.trim()) {
       const s = search.trim().toLowerCase();
       list = list.filter((t) => t.title.toLowerCase().includes(s) || (t.description ?? "").toLowerCase().includes(s));
@@ -191,7 +202,7 @@ function AgencyTasksPage() {
         break;
     }
     return list;
-  }, [tasks, tab, quick, search, priorityFilter, statusFilter, poleFilter, dossierFilter, autoFilter, user?.id]);
+  }, [tasks, tab, quick, search, priorityFilter, statusFilter, poleFilter, dossierFilter, autoFilter, user?.id, onlyMine, myTaskIds]);
 
   const fmtDue = (d: string | null) => d ? new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
 
@@ -312,6 +323,33 @@ function AgencyTasksPage() {
               <SelectItem value="manual">Tâches manuelles</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex rounded-md border overflow-hidden" role="group" aria-label="Périmètre des tâches">
+            <Button
+              size="sm"
+              variant={onlyMine ? "ghost" : "secondary"}
+              className="rounded-none"
+              aria-pressed={!onlyMine}
+              onClick={() => setOnlyMine(false)}
+            >
+              Toutes les tâches
+            </Button>
+            <Button
+              size="sm"
+              variant={onlyMine ? "secondary" : "ghost"}
+              className="rounded-none"
+              aria-pressed={onlyMine}
+              onClick={() => setOnlyMine(true)}
+            >
+              <ListChecks className="h-4 w-4 mr-1" /> Mes tâches
+            </Button>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {filtered.length} tâche{filtered.length > 1 ? "s" : ""} affichée{filtered.length > 1 ? "s" : ""}
+            {onlyMine ? " (mes tâches)" : ""}
+          </span>
         </div>
 
         <div className="flex flex-wrap gap-2">

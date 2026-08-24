@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
+import { fetchMyTaskIds } from "@/hooks/use-my-tasks";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -77,29 +78,17 @@ export function MyTasksButton() {
     enabled: !!user && isStaff,
     queryFn: async (): Promise<Enriched[]> => {
       const uid = user!.id;
-      const { data: extra } = await supabase
-        .from("agency_task_assignees")
-        .select("task_id")
-        .eq("user_id", uid);
-      const extraIds = Array.from(new Set((extra ?? []).map((r) => r.task_id)));
+      const ids = await fetchMyTaskIds(uid);
+      if (ids.length === 0) return [];
 
-      const base = () =>
-        supabase
-          .from("agency_tasks")
-          .select("*")
-          .is("archived_at", null)
-          .neq("status", "terminee");
+      const { data } = await supabase
+        .from("agency_tasks")
+        .select("*")
+        .in("id", ids)
+        .is("archived_at", null)
+        .neq("status", "terminee");
 
-      const [own, viaAssignees] = await Promise.all([
-        base().eq("assigned_to", uid),
-        extraIds.length ? base().in("id", extraIds) : Promise.resolve({ data: [] as Task[] }),
-      ]);
-
-      const map = new Map<string, Task>();
-      for (const t of [...((own.data ?? []) as Task[]), ...(((viaAssignees as any).data ?? []) as Task[])]) {
-        map.set(t.id, t);
-      }
-      const list = Array.from(map.values());
+      const list = (data ?? []) as Task[];
       if (list.length === 0) return [];
 
       const dossierIds = Array.from(new Set(list.map((t) => t.dossier_id).filter(Boolean))) as string[];
@@ -272,7 +261,7 @@ export function MyTasksButton() {
         </div>
 
         <div className="border-t bg-muted/30 p-2">
-          <Link to="/admin/taches-agence" className="block py-1 text-center text-xs text-primary hover:underline">
+          <Link to="/admin/taches-agence" search={{ mine: "1" }} className="block py-1 text-center text-xs text-primary hover:underline">
             Voir toutes mes tâches →
           </Link>
         </div>
