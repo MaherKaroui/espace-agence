@@ -2349,6 +2349,12 @@ export type Database = {
       slack_canaux: {
         Row: {
           client_id: string | null
+          collecte_cursor: string | null
+          collecte_erreur: string | null
+          collecte_last_at: string | null
+          collecte_messages: number
+          collecte_selection: boolean
+          collecte_terminee: boolean
           created_at: string
           description: string | null
           dossier_id: string | null
@@ -2365,6 +2371,12 @@ export type Database = {
         }
         Insert: {
           client_id?: string | null
+          collecte_cursor?: string | null
+          collecte_erreur?: string | null
+          collecte_last_at?: string | null
+          collecte_messages?: number
+          collecte_selection?: boolean
+          collecte_terminee?: boolean
           created_at?: string
           description?: string | null
           dossier_id?: string | null
@@ -2381,6 +2393,12 @@ export type Database = {
         }
         Update: {
           client_id?: string | null
+          collecte_cursor?: string | null
+          collecte_erreur?: string | null
+          collecte_last_at?: string | null
+          collecte_messages?: number
+          collecte_selection?: boolean
+          collecte_terminee?: boolean
           created_at?: string
           description?: string | null
           dossier_id?: string | null
@@ -2479,6 +2497,7 @@ export type Database = {
           id: string
           membres_count: number
           messages_count: number
+          mode: string
           statut: string
           updated_at: string
         }
@@ -2495,6 +2514,7 @@ export type Database = {
           id?: string
           membres_count?: number
           messages_count?: number
+          mode?: string
           statut?: string
           updated_at?: string
         }
@@ -2511,6 +2531,7 @@ export type Database = {
           id?: string
           membres_count?: number
           messages_count?: number
+          mode?: string
           statut?: string
           updated_at?: string
         }
