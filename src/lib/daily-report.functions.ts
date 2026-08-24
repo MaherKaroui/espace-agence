@@ -84,3 +84,22 @@ export const getArchivedDigestUrl = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { url: signed?.signedUrl ?? null };
   });
+
+/** Regénère un compte rendu archivé avec la mise en page actuelle — admin / direction. */
+export const regenerateArchivedDigest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    const ok = (roles ?? []).some((r: any) => ["admin", "direction"].includes(r.role));
+    if (!ok) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { regenerateDigestPdf } = await import("@/lib/daily-activity-report.server");
+    return await regenerateDigestPdf(supabaseAdmin, data.date);
+  });
