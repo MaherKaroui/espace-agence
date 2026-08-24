@@ -405,14 +405,24 @@ export async function runTick(supabase: any) {
   return rapport;
 }
 
+async function resteFichiers(supabase: any) {
+  const { count } = await supabase
+    .from("slack_fichiers")
+    .select("id", { count: "exact", head: true })
+    .is("storage_path", null)
+    .is("erreur", null);
+  return (count ?? 0) > 0;
+}
+
 async function indexerFichiers(supabase: any, job: any) {
   let cursor = (job.fichiers_traites?.files_cursor as string | null) ?? null;
   let n = 0;
   for (let page = 0; page < 3; page++) {
     const b = await slack("files.list", {
       limit: "100",
-      ...(cursor ? { cursor } : { page: "1" }),
+      ...(cursor ? { cursor } : {}),
     });
+
     const files = b.files ?? [];
     const rows = files.map((f: any) => ({
       slack_file_id: f.id,
