@@ -228,8 +228,8 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     }
 
     // ---------- 6. Échanges du jour ----------
+    sectionTitle("Échanges internes du jour");
     if (j.echanges.length > 0) {
-      sectionTitle("Échanges internes du jour");
       const affiches = j.echanges.slice(0, maxEchanges);
       for (const t of affiches) {
         const col = poleColors((t as any).poleId);
