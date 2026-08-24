@@ -71,8 +71,8 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       rowPageBreak: "avoid",
       styles: {
         font: "helvetica",
-        fontSize: 7.6,
-        cellPadding: 1.3,
+        fontSize: 7.2,
+        cellPadding: 0.95,
         textColor: [40, 46, 56],
         overflow: "linebreak",
         lineColor: [222, 227, 234],
@@ -81,8 +81,8 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
         fillColor: NAVY,
         textColor: [255, 255, 255],
         fontStyle: "bold",
-        fontSize: 7.6,
-        cellPadding: 1.4,
+        fontSize: 7.2,
+        cellPadding: 1.0,
       },
       alternateRowStyles: { fillColor: LIGHT },
       ...opts,
@@ -288,7 +288,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       const actives = all.filter((t) => !dormantes.includes(t));
 
       // --- Bloc 1 : tableau de survol, une ligne par tâche ---
-      table({
+      if (actives.length > 0) table({
         head: [["État", "Tâche", "Responsable", "Échéance / clôture", "Éch."]],
         body: actives.map((t) => [
           t.etat,
@@ -299,8 +299,8 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
         ]),
         styles: {
           font: "helvetica",
-          fontSize: 7.6,
-          cellPadding: 1.2,
+          fontSize: 7.2,
+          cellPadding: 0.95,
           textColor: [40, 46, 56],
           overflow: "hidden",
           lineColor: [222, 227, 234],

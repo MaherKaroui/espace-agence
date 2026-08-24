@@ -961,7 +961,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         plage:
           premiere && derniere
             ? daysBack > 1
-              ? `${stampParis(new Date(premiere).toISOString())} → ${stampParis(new Date(derniere).toISOString())}`
+              ? `${stampParis(new Date(premiere).toISOString())} - ${stampParis(new Date(derniere).toISOString())}`
               : `${heureParis(new Date(premiere).toISOString())} - ${heureParis(new Date(derniere).toISOString())}`
             : null,
 
