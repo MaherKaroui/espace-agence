@@ -203,21 +203,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <UserCog className="h-4 w-4" />
             <span className="flex-1">Mes données</span>
           </Link>
-          <Link
-            to="/preferences"
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
-          >
-            <Settings className="h-4 w-4" />
-            <span className="flex-1">Mes notifications</span>
-          </Link>
-
         </>
       )}
       {isStaff && (
         <>
           <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Agence</div>
-          {[...staffNav, { to: "/mes-donnees", label: "Mes données", icon: UserCog }, { to: "/preferences", label: "Mes notifications", icon: Bell }].map((n) => {
+          {[...staffNav, { to: "/mes-donnees", label: "Mes données", icon: UserCog }].map((n) => {
             const c = countFor(n.to);
             return (
               <Link
