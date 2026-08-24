@@ -393,7 +393,16 @@ export interface DigestPerson {
     overdue: { titre: string; echeance: string | null }[];
     blocked: { titre: string; contexte: string | null }[];
     completionRate: number;
+    /** Vue unifiée pour le PDF : toutes les tâches de la personne, triées par état. */
+    all: {
+      etat: "Terminée" | "En cours" | "En retard" | "Bloquée" | "À venir";
+      titre: string;
+      contexte: string | null;
+      quand: string | null;
+      commentaires: string | null;
+    }[];
   };
+
   actions: { label: string; count: number; items: string[] }[];
   contexts: string[];
   attention: string[];
@@ -565,6 +574,55 @@ export async function buildDailyDigest(admin: any): Promise<DailyDigest> {
         .select("task_id, user_id")
         .in("task_id", taskList.map((t) => t.id))
     : ({ data: [] } as any);
+
+  // --- Commentaires de tâches ajoutés pendant la période (auteur + heure) ---
+  const commentsByTask = new Map<string, string[]>();
+  try {
+    if (taskList.length) {
+      const { data: taskComments } = await admin
+        .from("agency_task_comments")
+        .select("task_id, user_id, content, created_at")
+        .in("task_id", taskList.map((t) => t.id))
+        .gte("created_at", fromIso)
+        .lte("created_at", toIso)
+        .order("created_at", { ascending: true })
+        .limit(3000);
+      const rows = (taskComments ?? []) as any[];
+      const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
+      const { data: authors } = authorIds.length
+        ? await admin.from("profiles").select("id, prenom, nom, email").in("id", authorIds)
+        : ({ data: [] } as any);
+      const aMap = new Map(
+        ((authors ?? []) as any[]).map((a) => [
+          a.id,
+          `${a.prenom ?? ""} ${a.nom ?? ""}`.trim() || a.email || "—",
+        ]),
+      );
+      for (const r of rows) {
+        const arr = commentsByTask.get(r.task_id) ?? [];
+        const texte = String(r.content ?? "").trim();
+        if (!texte) continue;
+        arr.push(`${heureParis(r.created_at)} ${aMap.get(r.user_id) ?? "—"} : ${texte}`);
+        commentsByTask.set(r.task_id, arr);
+      }
+    }
+  } catch (e) {
+    console.error("[compte-rendu] commentaires de tâches indisponibles", e);
+  }
+
+  /** internal_comment + commentaires du jour, tronqués à ~200 caractères chacun. */
+  const taskComments = (t: any): string | null => {
+    const parts: string[] = [];
+    const internal = String(t.internal_comment ?? "").trim();
+    if (internal) parts.push(internal);
+    parts.push(...(commentsByTask.get(t.id) ?? []));
+    if (parts.length === 0) return null;
+    return parts
+      .slice(0, 4)
+      .map((c) => (c.length > 200 ? `${c.slice(0, 197)}...` : c))
+      .join("\n");
+  };
+
 
   const dossierIds = new Set<string>();
   const clientIds = new Set<string>();
@@ -783,6 +841,31 @@ export async function buildDailyDigest(admin: any): Promise<DailyDigest> {
         })),
         blocked: blocked.slice(0, 10).map((t) => ({ titre: t.title, contexte: taskContext(t) })),
         completionRate: total > 0 ? Math.round((done.length / total) * 100) : 0,
+        all: (() => {
+          const ORDER = { "Terminée": 0, "En cours": 1, "En retard": 2, "Bloquée": 3, "À venir": 4 } as const;
+          const etatOf = (t: any): keyof typeof ORDER => {
+            if (t.status === "terminee") return "Terminée";
+            if (t.status === "bloquee") return "Bloquée";
+            if (t.due_date && t.due_date < toIso) return "En retard";
+            if (t.status === "en_cours" || t.status === "en_attente") return "En cours";
+            return "À venir";
+          };
+          const dateFrOf = (v: string | null) =>
+            v ? new Date(v).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" }) : null;
+          return [...done, ...open]
+            .map((t) => {
+              const etat = etatOf(t);
+              return {
+                etat,
+                titre: t.title as string,
+                contexte: taskContext(t),
+                quand: etat === "Terminée" ? heureParis(t.completed_at) : dateFrOf(t.due_date),
+                commentaires: taskComments(t),
+              };
+            })
+            .sort((a, b) => ORDER[a.etat] - ORDER[b.etat] || a.titre.localeCompare(b.titre))
+            .slice(0, 40);
+        })(),
       },
       actions,
       contexts: [...contexts].slice(0, 12),
@@ -931,12 +1014,15 @@ export async function sendDailyDigest(
     return { ok, recipients: [to], date: dayKey, pdfUrl, ...(errorText ? { error: errorText } : {}) };
   }
 
+  // Le compte rendu quotidien a ses propres destinataires (admin + report_recipients),
+  // distincts de ceux de l'Agent IA de supervision.
   const { recipients } = await resolveReportRecipients(admin);
   const ok = await sendSupervisionEmail(admin, {
     templateName: "compte-rendu-quotidien",
     type: "rapport_activite",
     idempotencyKey: `rapport-activite-${dayKey}`,
     baseUrl,
+    recipients,
     templateData: { ...digest, pdfUrl } as unknown as Record<string, unknown>,
   });
   return { ok, recipients, date: dayKey, pdfUrl };

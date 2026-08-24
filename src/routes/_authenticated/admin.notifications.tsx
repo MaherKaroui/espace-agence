@@ -241,8 +241,14 @@ function AdminNotifications() {
           <Card className="p-6 space-y-4">
             <div>
               <h2 className="font-semibold">Adresse admin principale</h2>
-              <p className="text-xs text-muted-foreground mt-1">Destinataire par défaut des notifications adressées à l'agence.</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Destinataire par défaut des notifications adressées à l'agence. C'est également la
+                <strong> seule adresse</strong> qui reçoit les alertes et rapports de l'Agent IA de
+                supervision. Les destinataires supplémentaires configurés pour les rapports ne
+                reçoivent, eux, que le compte rendu quotidien.
+              </p>
             </div>
+
             <div className="flex gap-2 max-w-md">
               <Input
                 type="email"
