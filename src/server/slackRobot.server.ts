@@ -372,15 +372,21 @@ export async function runTick(supabase: any) {
     const dl = await telechargerLot(supabase);
     rapport['fichiers'] = dl;
 
-    // 2) Un seul appel plafonné par passage : fil de discussion ou page d'historique.
+    // 2) Un seul appel plafonné par passage : d'abord l'historique des canaux,
+    //    puis les fils de discussion mis en file d'attente.
     for (let i = 0; i < RATE_LIMITED_CALLS_PER_TICK; i++) {
-      const threads = (job.fichiers_traites?.threads ?? []) as { c: string; ts: string }[];
-      if (threads.length) {
-        rapport['fil'] = await collecterFil(supabase, job, threads);
+      const histo = await collecterHistorique(supabase, job);
+      if ((histo as any).termine) {
+        const threads = (job.fichiers_traites?.threads ?? []) as {
+          c: string; ts: string; cur?: string | null;
+        }[];
+        if (threads.length) rapport['fil'] = await collecterFil(supabase, job, threads);
+        else rapport['historique'] = histo;
       } else {
-        rapport['historique'] = await collecterHistorique(supabase, job);
+        rapport['historique'] = histo;
       }
     }
+
     await patchMeta(supabase, job, { derniere_erreur: null });
   } catch (e: any) {
     if (e instanceof RateLimited) {
