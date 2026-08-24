@@ -134,12 +134,16 @@ export function AgencyTaskFormDialog({ open, onOpenChange, task, defaultPoleId }
         client_id: clientId === NONE ? null : clientId,
         dossier_id: dossierId === NONE ? null : dossierId,
         internal_comment: internalComment.trim() || null,
+        // Traçabilité : auteur et horodatage de la dernière modification.
+        updated_by: user.id,
+        updated_at: new Date().toISOString(),
       };
 
       let taskId = task?.id ?? null;
       if (isEdit && task) {
         const { error } = await supabase.from("agency_tasks").update(payload).eq("id", task.id);
         if (error) throw error;
+
       } else {
         const { data, error } = await supabase
           .from("agency_tasks")
