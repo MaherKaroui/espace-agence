@@ -674,6 +674,42 @@ export type Database = {
         }
         Relationships: []
       }
+      demande_pieces_modeles: {
+        Row: {
+          actif: boolean
+          categorie: Database["public"]["Enums"]["dossier_categorie"]
+          created_at: string
+          id: string
+          libelle: string
+          motif: string | null
+          obligatoire: boolean
+          ordre: number
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          categorie: Database["public"]["Enums"]["dossier_categorie"]
+          created_at?: string
+          id?: string
+          libelle: string
+          motif?: string | null
+          obligatoire?: boolean
+          ordre?: number
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          categorie?: Database["public"]["Enums"]["dossier_categorie"]
+          created_at?: string
+          id?: string
+          libelle?: string
+          motif?: string | null
+          obligatoire?: boolean
+          ordre?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
