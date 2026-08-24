@@ -265,12 +265,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto"><NavList /></nav>
         <div className="p-3 border-t border-sidebar-border">
-          <div className="px-3 py-2">
-            <div className="text-sm font-medium truncate">{displayName}</div>
-            <div className="text-xs text-sidebar-foreground/50 truncate">{roleLabel}</div>
-          </div>
-          <Link to="/preferences" className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent">
-            <Settings className="h-4 w-4" /> Préférences & notifications
+          {/* Bloc identité cliquable : accès discret aux réglages personnels (notifications) */}
+          <Link
+            to="/preferences"
+            title="Réglages personnels et notifications"
+            className="group flex items-center gap-2 rounded-md px-3 py-2 hover:bg-sidebar-accent"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium truncate">{displayName}</div>
+              <div className="text-xs text-sidebar-foreground/50 truncate">{roleLabel}</div>
+            </div>
+            <Settings className="h-4 w-4 shrink-0 text-sidebar-foreground/40 group-hover:text-sidebar-foreground/80" />
           </Link>
           <button onClick={signOut} className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent">
             <LogOut className="h-4 w-4" /> Déconnexion
