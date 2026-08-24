@@ -64,6 +64,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksSupervisionReportRouteImport } from './routes/api/public/hooks/supervision-report'
+import { Route as ApiPublicHooksSlackRobotRouteImport } from './routes/api/public/hooks/slack-robot'
 import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
 import { Route as ApiPublicHooksRapportActiviteRouteImport } from './routes/api/public/hooks/rapport-activite'
 import { Route as ApiPublicHooksPushFanoutRouteImport } from './routes/api/public/hooks/push-fanout'
@@ -384,6 +385,12 @@ const ApiPublicHooksSupervisionReportRoute =
     path: '/api/public/hooks/supervision-report',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksSlackRobotRoute =
+  ApiPublicHooksSlackRobotRouteImport.update({
+    id: '/api/public/hooks/slack-robot',
+    path: '/api/public/hooks/slack-robot',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
   id: '/api/public/hooks/reminders',
   path: '/api/public/hooks/reminders',
@@ -520,6 +527,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/rapport-activite': typeof ApiPublicHooksRapportActiviteRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/slack-robot': typeof ApiPublicHooksSlackRobotRoute
   '/api/public/hooks/supervision-report': typeof ApiPublicHooksSupervisionReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -589,6 +597,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/rapport-activite': typeof ApiPublicHooksRapportActiviteRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/slack-robot': typeof ApiPublicHooksSlackRobotRoute
   '/api/public/hooks/supervision-report': typeof ApiPublicHooksSupervisionReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -660,6 +669,7 @@ export interface FileRoutesById {
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/rapport-activite': typeof ApiPublicHooksRapportActiviteRoute
   '/api/public/hooks/reminders': typeof ApiPublicHooksRemindersRoute
+  '/api/public/hooks/slack-robot': typeof ApiPublicHooksSlackRobotRoute
   '/api/public/hooks/supervision-report': typeof ApiPublicHooksSupervisionReportRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -731,6 +741,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/rapport-activite'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/slack-robot'
     | '/api/public/hooks/supervision-report'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -800,6 +811,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/rapport-activite'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/slack-robot'
     | '/api/public/hooks/supervision-report'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -870,6 +882,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/rapport-activite'
     | '/api/public/hooks/reminders'
+    | '/api/public/hooks/slack-robot'
     | '/api/public/hooks/supervision-report'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -905,6 +918,7 @@ export interface RootRouteChildren {
   ApiPublicHooksPushFanoutRoute: typeof ApiPublicHooksPushFanoutRoute
   ApiPublicHooksRapportActiviteRoute: typeof ApiPublicHooksRapportActiviteRoute
   ApiPublicHooksRemindersRoute: typeof ApiPublicHooksRemindersRoute
+  ApiPublicHooksSlackRobotRoute: typeof ApiPublicHooksSlackRobotRoute
   ApiPublicHooksSupervisionReportRoute: typeof ApiPublicHooksSupervisionReportRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1300,6 +1314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSupervisionReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/slack-robot': {
+      id: '/api/public/hooks/slack-robot'
+      path: '/api/public/hooks/slack-robot'
+      fullPath: '/api/public/hooks/slack-robot'
+      preLoaderRoute: typeof ApiPublicHooksSlackRobotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/reminders': {
       id: '/api/public/hooks/reminders'
       path: '/api/public/hooks/reminders'
@@ -1527,6 +1548,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksPushFanoutRoute: ApiPublicHooksPushFanoutRoute,
   ApiPublicHooksRapportActiviteRoute: ApiPublicHooksRapportActiviteRoute,
   ApiPublicHooksRemindersRoute: ApiPublicHooksRemindersRoute,
+  ApiPublicHooksSlackRobotRoute: ApiPublicHooksSlackRobotRoute,
   ApiPublicHooksSupervisionReportRoute: ApiPublicHooksSupervisionReportRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
