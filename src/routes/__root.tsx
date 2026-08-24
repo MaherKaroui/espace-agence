@@ -60,6 +60,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "IZISuivis" },
+      { name: "application-name", content: "IZISuivis" },
       { name: "theme-color", content: "#0B1B33" },
       { title: "IZISuivis" },
       { name: "description", content: "Plateforme sécurisée pour gérer vos dossiers Qualiopi, BPF, NDA, CFA, VAE et échanger avec votre agence." },
