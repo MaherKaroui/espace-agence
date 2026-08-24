@@ -283,6 +283,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="text-sm font-medium truncate">{displayName}</div>
             <div className="text-xs text-sidebar-foreground/50 truncate">{roleLabel}</div>
           </div>
+          <Link to="/preferences" className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent">
+            <Settings className="h-4 w-4" /> Préférences & notifications
+          </Link>
           <button onClick={signOut} className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent">
             <LogOut className="h-4 w-4" /> Déconnexion
           </button>
@@ -318,6 +321,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
             <div className="border-t border-sidebar-border p-3">
               <div className="px-1 pb-2 text-xs text-sidebar-foreground/50 truncate">{roleLabel}</div>
+              <Link
+                to="/preferences"
+                onClick={() => setMobileOpen(false)}
+                className="mb-2 flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border px-3 py-2.5 text-sm font-medium hover:bg-sidebar-accent"
+              >
+                <Settings className="h-4 w-4 shrink-0" /> Préférences & notifications
+              </Link>
               <button
                 onClick={signOut}
                 className="flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border px-3 py-2.5 text-sm font-medium hover:bg-sidebar-accent"
