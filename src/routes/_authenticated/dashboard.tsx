@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isAdmin, isStaff } = useRole();
   const navigate = useNavigate();
 
@@ -73,6 +73,8 @@ function Dashboard() {
   const { data: dossiers = [], isLoading: dossiersLoading, isFetched: dossiersFetched } = useQuery({
     queryKey: ["dossiers-mine", user?.id],
     enabled: !!user,
+    staleTime: 30_000,
+    placeholderData: (prev: any) => prev,
     queryFn: async () => {
       const q = supabase.from("dossiers").select("*").order("updated_at", { ascending: false });
       const { data, error } = isAdmin ? await q : await q.eq("client_id", user!.id);
@@ -86,6 +88,8 @@ function Dashboard() {
   const { data: allDocs = [] } = useQuery({
     queryKey: ["dashboard-docs", user?.id, dossierIds.join(",")],
     enabled: dossierIds.length > 0,
+    staleTime: 30_000,
+    placeholderData: (prev: any) => prev,
 
     queryFn: async () => {
       const { data, error } = await supabase
@@ -100,6 +104,8 @@ function Dashboard() {
   const { data: allTaches = [] } = useQuery({
     queryKey: ["dashboard-taches", user?.id, dossierIds.join(",")],
     enabled: dossierIds.length > 0,
+    staleTime: 30_000,
+    placeholderData: (prev: any) => prev,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("taches")
@@ -127,7 +133,7 @@ function Dashboard() {
         <p className="text-sm sm:text-base text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
       </div>
 
-      {!isAdmin && dossiersFetched && !dossiersLoading && dossiers.length === 0 && (
+      {!isAdmin && !authLoading && dossiersFetched && !dossiersLoading && dossiers.length === 0 && (
         <Card className="p-6 border-primary/20 bg-primary/5">
           <h2 className="font-display text-xl mb-1">Bienvenue dans votre espace</h2>
           <p className="text-sm text-muted-foreground mb-4">Voici comment ça marche, en 4 étapes simples :</p>
@@ -219,7 +225,7 @@ function Dashboard() {
           <h2 className="font-display text-lg sm:text-xl">Dossiers récents</h2>
           <Link to="/dossiers" className="text-sm text-primary hover:underline shrink-0">Tout voir →</Link>
         </div>
-        {dossiersLoading || !dossiersFetched ? (
+        {authLoading || dossiersLoading || !dossiersFetched ? (
           <Card className="p-8 text-center text-sm text-muted-foreground">Chargement…</Card>
         ) : dossiers.length === 0 ? (
           <Card className="p-8 text-center">

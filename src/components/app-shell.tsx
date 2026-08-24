@@ -65,6 +65,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { data: unreadRows = [] } = useQuery({
     queryKey: ["nav-unread", user?.id],
     enabled: !!user,
+    staleTime: 30_000,
+    placeholderData: (prev: NavUnreadRow[] | undefined) => prev,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("notifications")

@@ -7,13 +7,13 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import "../lib/fonts";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { supabase } from "@/integrations/supabase/client";
+import { AuthProvider } from "@/hooks/use-auth";
 import { NativeBootstrap } from "@/components/native-bootstrap";
 import { AppErrorBoundary, ErrorLoggerBootstrap } from "@/components/app-error-boundary";
 
@@ -96,31 +96,30 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-function AuthSync() {
-  const router = useRouter();
+function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+  const router = useRouter();
+
+  // Unique point d'écoute de l'authentification pour toute l'application.
+  const handleAuthEvent = useCallback(
+    (event: string) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [router, queryClient]);
-  return null;
-}
+    },
+    [router, queryClient],
+  );
 
-function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <AppErrorBoundary>
-        <ErrorLoggerBootstrap />
-        <AuthSync />
-        <NativeBootstrap />
-        <Outlet />
-        <Toaster position="top-right" richColors />
-      </AppErrorBoundary>
+      <AuthProvider onAuthEvent={handleAuthEvent}>
+        <AppErrorBoundary>
+          <ErrorLoggerBootstrap />
+          <NativeBootstrap />
+          <Outlet />
+          <Toaster position="top-right" richColors />
+        </AppErrorBoundary>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

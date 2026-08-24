@@ -26,6 +26,8 @@ export function useMyTaskIds(enabled = true) {
   const query = useQuery({
     queryKey: myTaskIdsQueryKey(user?.id),
     enabled: !!user && enabled,
+    staleTime: 30_000,
+    placeholderData: (prev: string[] | undefined) => prev,
     queryFn: () => fetchMyTaskIds(user!.id),
   });
   return {

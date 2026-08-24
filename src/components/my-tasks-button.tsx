@@ -66,16 +66,18 @@ function groupOf(due: string | null): GroupKey {
 }
 
 export function MyTasksButton() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isStaff } = useRole();
   const qc = useQueryClient();
   const navigate = useNavigate();
 
   const queryKey = ["my-agency-tasks", user?.id];
 
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [], isFetched } = useQuery({
     queryKey,
     enabled: !!user && isStaff,
+    staleTime: 30_000,
+    placeholderData: (prev: Enriched[] | undefined) => prev,
     queryFn: async (): Promise<Enriched[]> => {
       const uid = user!.id;
       const ids = await fetchMyTaskIds(uid);
@@ -200,16 +202,25 @@ export function MyTasksButton() {
         <div className="flex items-center justify-between gap-2 border-b p-3">
           <div className="font-medium">Mes tâches</div>
           <span className="text-xs text-muted-foreground">
-            {sorted.length} en cours
+            {authLoading || !isFetched ? "…" : `${sorted.length} en cours`}
           </span>
         </div>
 
         <div className="max-h-[26rem] overflow-y-auto overflow-x-hidden">
-          {sorted.length === 0 && (
+          {authLoading || !isFetched ? (
+            <div className="p-4 space-y-3" aria-busy="true" aria-label="Chargement des tâches">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-3 w-2/3 rounded bg-muted animate-pulse" />
+                  <div className="h-3 w-1/3 rounded bg-muted animate-pulse" />
+                </div>
+              ))}
+            </div>
+          ) : sorted.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
               Aucune tâche en cours. Tout est à jour.
             </div>
-          )}
+          ) : null}
           {grouped.map((g) => (
             <div key={g.key}>
               <div className={cn("px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide bg-muted/50", g.className)}>

@@ -16,11 +16,13 @@ export const Route = createFileRoute("/_authenticated/notifications")({
 });
 
 function NotifPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
-  const { data: notifications = [] } = useQuery({
+  const { data: notifications = [], isFetched } = useQuery({
     queryKey: ["notifications-all", user?.id],
     enabled: !!user,
+    staleTime: 30_000,
+    placeholderData: (prev: NotifRow[] | undefined) => prev,
     queryFn: async () => {
       const { data, error } = await supabase.from("notifications").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(200);
       if (error) throw error;
@@ -52,7 +54,16 @@ function NotifPage() {
         <Button variant="outline" onClick={markAll}>Tout marquer lu</Button>
       </div>
 
-      {groups.length === 0 ? (
+      {authLoading || !isFetched ? (
+        <div className="space-y-3" aria-busy="true" aria-label="Chargement des notifications">
+          {[0, 1, 2, 3].map((i) => (
+            <Card key={i} className="p-4">
+              <div className="h-4 w-1/3 rounded bg-muted animate-pulse" />
+              <div className="mt-3 h-3 w-2/3 rounded bg-muted animate-pulse" />
+            </Card>
+          ))}
+        </div>
+      ) : groups.length === 0 ? (
         <Card className="p-12 text-center">
           <Bell className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
           <p className="text-muted-foreground">Aucune notification.</p>
