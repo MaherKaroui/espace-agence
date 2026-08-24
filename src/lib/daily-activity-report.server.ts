@@ -431,8 +431,8 @@ export interface DigestPoleSection {
 }
 
 export interface DigestJournee {
-  poles: { pole: string; personnes: { nom: string; evenements: { heure: string; texte: string }[] }[] }[];
-  echanges: { titre: string; pole: string; lignes: string[] }[];
+  poles: { pole: string; poleId: string | null; personnes: { nom: string; evenements: { heure: string; texte: string }[] }[] }[];
+  echanges: { titre: string; pole: string; poleId: string | null; lignes: string[] }[];
   retards: { total: number; plusAnciennes: string[] };
   presence: { nom: string; duree: string; plage: string | null }[];
   absents: string[];
@@ -748,11 +748,12 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
           texte: `${stampParis(r.created_at)}  ${auteur ?? "(auteur non tracé)"} : ${texte}`,
         });
         commentsByTask.set(r.task_id, arr);
-        if (r.created_at >= fromIso) {
+        const atMs = new Date(r.created_at).getTime();
+        if (atMs >= fromMs && atMs <= toMs) {
           commentsTodayRaw.push({
             taskId: r.task_id,
             userId: r.user_id ?? null,
-            at: new Date(r.created_at).getTime(),
+            at: atMs,
             texte: `${heureParis(r.created_at)}  ${auteur ?? "(auteur non tracé)"} : ${texte.replace(/\s*\n\s*/g, " ")}`,
           });
         }
@@ -767,9 +768,13 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
    * du plus ancien au plus récent, texte intégral, aucune troncature.
    */
   const taskCommentList = (t: any): string[] => {
-    const parts: { at: number; texte: string }[] = [...(commentsByTask.get(t.id) ?? [])];
+    const parts: { at: number; texte: string }[] = (commentsByTask.get(t.id) ?? []).filter(
+      (c) => c.at >= fromMs && c.at <= toMs,
+    );
     const internal = String(t.internal_comment ?? "").trim();
-    if (internal) {
+    const internalAt = t.updated_at ? new Date(t.updated_at).getTime() : null;
+    // Une note interne n'est retenue que si elle a été modifiée PENDANT la journée couverte.
+    if (internal && internalAt !== null && internalAt >= fromMs && internalAt <= toMs) {
       const auteur = t.updated_by ? nameById.get(t.updated_by) : null;
       const quand = t.updated_at ? stampParis(t.updated_at) : null;
       parts.push({
@@ -777,7 +782,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         texte:
           auteur && quand
             ? `${quand}  ${auteur} (note interne) : ${internal}`
-            : `Note interne (auteur non tracé) : ${internal}`,
+            : `${quand ?? ""} (note interne) : ${internal}`.trim(),
       });
     }
     return parts.sort((a, b) => a.at - b.at).map((c) => c.texte.replace(/\s*\n\s*/g, " "));
@@ -1207,6 +1212,10 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   /* ---- Journée : uniquement ce qui a bougé aujourd'hui ---- */
   const poleOfTask = (t: any): string =>
     (t?.pole_id ? poleNames.get(t.pole_id) : null) ?? SANS_POLE;
+  const poleIdOfTask = (t: any): string | null => (t?.pole_id ?? null);
+  const poleIdByName = new Map<string, string | null>();
+  for (const [id, nom] of poleNames) poleIdByName.set(nom as string, id as string);
+  poleIdByName.set(SANS_POLE, null);
   const poleOfUser = (uid: string): string => (polesByUser.get(uid) ?? [])[0] ?? SANS_POLE;
   const evByPolePerson = new Map<string, Map<string, { at: number; heure: string; texte: string }[]>>();
   const pushEvent = (pole: string, nom: string, at: number, heure: string | null, texte: string) => {
@@ -1245,6 +1254,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     echangesJour.push({
       titre,
       pole,
+      poleId: poleIdOfTask(t),
       lignes: [...list].sort((a, b) => a.at - b.at).map((c) => c.texte),
     });
     for (const c of list) {
@@ -1283,6 +1293,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   const journeePoles = [...evByPolePerson.entries()]
     .map(([pole, perPerson]) => ({
       pole,
+      poleId: poleIdByName.get(pole) ?? null,
       personnes: [...perPerson.entries()]
         .map(([nom, evs]) => ({
           nom,
