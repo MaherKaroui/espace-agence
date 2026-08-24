@@ -841,6 +841,31 @@ export async function buildDailyDigest(admin: any): Promise<DailyDigest> {
         })),
         blocked: blocked.slice(0, 10).map((t) => ({ titre: t.title, contexte: taskContext(t) })),
         completionRate: total > 0 ? Math.round((done.length / total) * 100) : 0,
+        all: (() => {
+          const ORDER = { "Terminée": 0, "En cours": 1, "En retard": 2, "Bloquée": 3, "À venir": 4 } as const;
+          const etatOf = (t: any): keyof typeof ORDER => {
+            if (t.status === "terminee") return "Terminée";
+            if (t.status === "bloquee") return "Bloquée";
+            if (t.due_date && t.due_date < toIso) return "En retard";
+            if (t.status === "en_cours" || t.status === "en_attente") return "En cours";
+            return "À venir";
+          };
+          const dateFrOf = (v: string | null) =>
+            v ? new Date(v).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" }) : null;
+          return [...done, ...open]
+            .map((t) => {
+              const etat = etatOf(t);
+              return {
+                etat,
+                titre: t.title as string,
+                contexte: taskContext(t),
+                quand: etat === "Terminée" ? heureParis(t.completed_at) : dateFrOf(t.due_date),
+                commentaires: taskComments(t),
+              };
+            })
+            .sort((a, b) => ORDER[a.etat] - ORDER[b.etat] || a.titre.localeCompare(b.titre))
+            .slice(0, 40);
+        })(),
       },
       actions,
       contexts: [...contexts].slice(0, 12),
