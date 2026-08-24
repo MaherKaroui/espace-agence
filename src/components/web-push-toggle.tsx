@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Bell, BellOff, CheckCircle2, MonitorSmartphone, XCircle } from "lucide-react";
@@ -23,6 +23,18 @@ function bufToB64Url(buf: ArrayBuffer | null): string {
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+function detectPlatform() {
+  if (typeof navigator === "undefined") return { isSafari: false, isIOS: false, isMacSafari: false, isStandalone: false };
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && (navigator as any).maxTouchPoints > 1);
+  const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|FxiOS|Edg|OPR/.test(ua);
+  const isMacSafari = isSafari && !isIOS && /Macintosh/.test(ua);
+  const isStandalone =
+    (typeof window !== "undefined" && window.matchMedia?.("(display-mode: standalone)").matches) ||
+    (navigator as any).standalone === true;
+  return { isSafari, isIOS, isMacSafari, isStandalone };
+}
+
 export function WebPushToggle() {
   const getKey = useServerFn(getVapidPublicKey);
   const getStatus = useServerFn(getPushSubscriptionStatus);
@@ -33,6 +45,13 @@ export function WebPushToggle() {
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [subscribed, setSubscribed] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [ready, setReady] = useState<boolean>(false);
+  const [platform, setPlatform] = useState(() => detectPlatform());
+
+  // Préparés EN AMONT pour que subscribe() reste dans le geste utilisateur (Safari).
+  const regRef = useRef<ServiceWorkerRegistration | null>(null);
+  const keyRef = useRef<string>("");
+  const subRef = useRef<PushSubscription | null>(null);
 
   const stateLabel = !supported
     ? "Non configuré"
@@ -54,41 +73,64 @@ export function WebPushToggle() {
       && "PushManager" in window
       && "Notification" in window;
     setSupported(ok);
+    setPlatform(detectPlatform());
     if (!ok) return;
     setPermission(Notification.permission);
     let cancelled = false;
     (async () => {
       try {
-        const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
+        const [reg, keyRes] = await Promise.all([
+          navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" }),
+          getKey().catch(() => ({ key: "" })),
+        ]);
         await reg.update().catch(() => undefined);
         const readyReg = await navigator.serviceWorker.ready;
+        if (cancelled) return;
+        regRef.current = readyReg;
+        keyRef.current = keyRes?.key ?? "";
+        setReady(!!keyRef.current);
         const sub = await readyReg.pushManager.getSubscription();
+        subRef.current = sub;
         const status = await getStatus({ data: { endpoint: sub?.endpoint ?? null } });
         if (!cancelled) setSubscribed(status.currentDeviceSaved);
       } catch { /* noop */ }
     })();
     return () => { cancelled = true; };
-  }, [getStatus]);
+  }, [getStatus, getKey]);
+
+  const friendlyError = (e: any): string => {
+    const name = e?.name || "";
+    const { isIOS, isMacSafari, isStandalone } = platform;
+    if (name === "NotAllowedError" || /not allowed|user gesture|denied/i.test(e?.message ?? "")) {
+      if (isIOS && !isStandalone) {
+        return "Sur iPhone, ouvrez d'abord IZISuivis depuis l'écran d'accueil : bouton Partager, puis « Sur l'écran d'accueil ». Les notifications ne sont possibles que depuis l'application installée.";
+      }
+      if (isMacSafari) {
+        return "Sur Mac avec Safari, ajoutez d'abord IZISuivis au Dock : menu Fichier, puis « Ajouter au Dock ».";
+      }
+    }
+    return e?.message || "Impossible d'activer les notifications";
+  };
 
   const enable = async () => {
     setLoading(true);
     try {
+      const readyReg = regRef.current ?? (await navigator.serviceWorker.ready);
+      const key = keyRef.current || (await getKey()).key;
+      if (!key) { toast.error("Clé serveur indisponible"); return; }
+      regRef.current = readyReg;
+      keyRef.current = key;
+      const appServerKey = urlBase64ToUint8Array(key).buffer as ArrayBuffer;
+
+      // 1) permission -> 2) subscribe IMMÉDIATEMENT (aucun await intermédiaire)
       const perm = await Notification.requestPermission();
+      let sub = subRef.current ?? await readyReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: appServerKey,
+      });
+
       setPermission(perm);
       if (perm !== "granted") { toast.error("Permission refusée"); return; }
-
-      const { key } = await getKey();
-      if (!key) { toast.error("Clé serveur indisponible"); return; }
-
-      const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
-      const readyReg = await navigator.serviceWorker.ready;
-      await reg.update().catch(() => undefined);
-
-      const existing = await readyReg.pushManager.getSubscription();
-      let sub = existing ?? await readyReg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
-      });
 
       const saveCurrentSubscription = () => saveSub({
         data: {
@@ -101,7 +143,11 @@ export function WebPushToggle() {
 
       try {
         await saveCurrentSubscription();
-      } catch {
+      } catch (saveErr: any) {
+        // Repli UNIQUEMENT en cas de conflit de clé serveur (abonnement obsolète).
+        const msg = String(saveErr?.message ?? "");
+        const isKeyConflict = /applicationServerKey|vapid|clé|key|conflict|duplicate|already exists/i.test(msg);
+        if (!isKeyConflict) throw saveErr;
         await sub.unsubscribe().catch(() => undefined);
         sub = await readyReg.pushManager.subscribe({
           userVisibleOnly: true,
@@ -109,11 +155,12 @@ export function WebPushToggle() {
         });
         await saveCurrentSubscription();
       }
+      subRef.current = sub;
       setSubscribed(true);
       toast.success("Notifications navigateur activées");
     } catch (e: any) {
       console.error(e);
-      toast.error(e?.message || "Impossible d'activer les notifications");
+      toast.error(friendlyError(e));
     } finally {
       setLoading(false);
     }
@@ -122,12 +169,13 @@ export function WebPushToggle() {
   const disable = async () => {
     setLoading(true);
     try {
-      const reg = await navigator.serviceWorker.getRegistration("/");
+      const reg = regRef.current ?? await navigator.serviceWorker.getRegistration("/");
       const sub = await reg?.pushManager.getSubscription();
       if (sub) {
         await delSub({ data: { endpoint: sub.endpoint } }).catch(() => {});
         await sub.unsubscribe();
       }
+      subRef.current = null;
       setSubscribed(false);
       toast.success("Notifications navigateur désactivées");
     } catch (e: any) {
@@ -150,6 +198,12 @@ export function WebPushToggle() {
     );
   }
 
+  const safariHint = platform.isIOS && !platform.isStandalone
+    ? "iPhone / iPad : ouvrez d'abord IZISuivis depuis l'écran d'accueil (bouton Partager → « Sur l'écran d'accueil »). Les notifications ne sont possibles que depuis l'application installée."
+    : platform.isMacSafari && !platform.isStandalone
+      ? "Mac avec Safari : ajoutez d'abord IZISuivis au Dock (menu Fichier → « Ajouter au Dock »), puis activez les notifications depuis l'application."
+      : null;
+
   return (
     <Card className="p-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
       <div className="flex items-start gap-3 min-w-0">
@@ -165,6 +219,11 @@ export function WebPushToggle() {
           <div className="text-sm text-muted-foreground">
             Recevez les alertes IZISuivis même si vous n'êtes pas sur la page. Si le navigateur refuse, la cloche interne reste active.
           </div>
+          {safariHint && (
+            <div className="text-xs text-muted-foreground mt-1 rounded-md border border-border bg-muted/50 px-2 py-1.5">
+              {safariHint}
+            </div>
+          )}
           {permission === "denied" && (
             <div className="text-xs text-destructive mt-1">
               Les notifications sont bloquées dans les paramètres du navigateur — autorisez-les puis rechargez la page.
@@ -178,7 +237,7 @@ export function WebPushToggle() {
             <BellOff className="h-4 w-4" /> Désactiver
           </Button>
         ) : (
-          <Button onClick={enable} disabled={loading || permission === "denied"} className="gap-2">
+          <Button onClick={enable} disabled={loading || permission === "denied" || !ready} className="gap-2">
             <Bell className="h-4 w-4" /> Activer les notifications navigateur
           </Button>
         )}
