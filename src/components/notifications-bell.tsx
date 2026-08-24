@@ -40,13 +40,9 @@ export function NotificationsBell() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState<TabKey>("unread");
-  const [permTick, setPermTick] = useState(0); // force refresh après demande
-  const [pushLoading, setPushLoading] = useState(false);
-  const [devicePushSaved, setDevicePushSaved] = useState(false);
-  const getKey = useServerFn(getVapidPublicKey);
-  const getPushStatus = useServerFn(getPushSubscriptionStatus);
-  const saveSub = useServerFn(savePushSubscription);
-  const delSub = useServerFn(deletePushSubscription);
+  // Abonnement push : implémentation unique partagée (src/hooks/use-web-push.ts)
+  const push = useWebPush();
+
 
   const { data: notifications = [] } = useQuery({
     queryKey: ["notifications", user?.id],
