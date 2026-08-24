@@ -1028,7 +1028,120 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       ),
     ]);
 
-  const tempsCumuleSec = personnes.reduce((n, p) => n + p.presence.seconds, 0);
+  const connectes = personnes.filter((p) => p.presence.seconds > 0).length;
+  const windowSecondsTotal = Math.max(0, (windowEnd - windowStart) / 1000);
+  const tempsCumuleSec = Math.min(
+    personnes.reduce((n, p) => n + p.presence.seconds, 0),
+    connectes * windowSecondsTotal,
+  );
+
+  /* ---- Découpage par pôle (structure principale du PDF) ---- */
+  const SANS_POLE = "Sans pôle";
+  const etatOfTask = (t: any): DigestTaskRow["etat"] => {
+    if (t.status === "terminee") return "Terminée";
+    if (t.status === "bloquee") return "Bloquée";
+    if (t.due_date && t.due_date < toIso) return "En retard";
+    if (t.status === "en_cours" || t.status === "en_attente") return "En cours";
+    return "À venir";
+  };
+  const ETAT_ORDER: Record<DigestTaskRow["etat"], number> = {
+    "Terminée": 0, "En cours": 1, "En retard": 2, "Bloquée": 3, "À venir": 4,
+  };
+  const dateFrOf = (v: string | null) =>
+    v ? new Date(v).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" }) : null;
+
+  const assigneesByTask = new Map<string, string[]>();
+  for (const a of ((extraAssignees ?? []) as any[])) {
+    const arr = assigneesByTask.get(a.task_id) ?? [];
+    if (a.user_id) arr.push(a.user_id);
+    assigneesByTask.set(a.task_id, arr);
+  }
+  const responsableOf = (t: any): string | null => {
+    const ids = [t.assigned_to, ...(assigneesByTask.get(t.id) ?? [])].filter(Boolean) as string[];
+    const names = [...new Set(ids.map((id) => nameById.get(id)).filter(Boolean) as string[])];
+    return names.length ? names.join(", ") : null;
+  };
+
+  // Tâches retenues : terminées sur la période + toutes les tâches ouvertes.
+  const retenues = taskList.filter(
+    (t) =>
+      t.status !== "terminee" ||
+      (t.completed_at && t.completed_at >= fromIso && t.completed_at <= toIso),
+  );
+
+  const bucket = new Map<string, any[]>();
+  for (const t of retenues) {
+    const nom = (t.pole_id ? poleNames.get(t.pole_id) : null) ?? SANS_POLE;
+    const arr = bucket.get(nom) ?? [];
+    arr.push(t);
+    bucket.set(nom, arr);
+  }
+
+  const poleSections: DigestPoleSection[] = [...bucket.entries()]
+    .map(([pole, list]) => {
+      const collaborateurs = new Set<string>();
+      for (const t of list) {
+        if (t.assigned_to) collaborateurs.add(t.assigned_to);
+        for (const u of assigneesByTask.get(t.id) ?? []) collaborateurs.add(u);
+      }
+      const taches: DigestTaskRow[] = list
+        .map((t) => {
+          const etat = etatOfTask(t);
+          return {
+            etat,
+            titre: String(t.title ?? ""),
+            contexte: taskContext(t),
+            responsable: responsableOf(t),
+            quand: etat === "Terminée" ? heureParis(t.completed_at) : dateFrOf(t.due_date),
+            commentaires: taskComments(t),
+          };
+        })
+        .sort(
+          (a, b) =>
+            ETAT_ORDER[a.etat] - ETAT_ORDER[b.etat] || a.titre.localeCompare(b.titre),
+        )
+        .slice(0, 30);
+      return {
+        pole,
+        ouvertes: list.filter((t) => t.status !== "terminee").length,
+        termineesJour: list.filter((t) => t.status === "terminee").length,
+        enRetard: taches.filter((t) => t.etat === "En retard").length,
+        collaborateurs: collaborateurs.size,
+        taches,
+      };
+    })
+    .filter((s) => s.taches.length > 0)
+    .sort((a, b) => {
+      if (a.pole === SANS_POLE) return 1;
+      if (b.pole === SANS_POLE) return -1;
+      return b.enRetard - a.enRetard || a.pole.localeCompare(b.pole);
+    });
+
+  /* ---- À traiter en priorité : tâches en retard ou bloquées ---- */
+  const priorites: DigestPriority[] = retenues
+    .filter((t) => {
+      const e = etatOfTask(t);
+      return e === "En retard" || e === "Bloquée";
+    })
+    .map((t) => {
+      const e = etatOfTask(t) as "En retard" | "Bloquée";
+      return {
+        etat: e,
+        titre: String(t.title ?? ""),
+        pole: (t.pole_id ? poleNames.get(t.pole_id) : null) ?? SANS_POLE,
+        responsable: responsableOf(t),
+        contexte: taskContext(t),
+        joursRetard: t.due_date
+          ? Math.max(
+              0,
+              Math.floor((now.getTime() - new Date(t.due_date).getTime()) / 86400_000),
+            )
+          : null,
+      };
+    })
+    .sort((a, b) => (b.joursRetard ?? -1) - (a.joursRetard ?? -1))
+    .slice(0, 18);
+
 
   return {
     dateFr,
