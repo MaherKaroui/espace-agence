@@ -620,11 +620,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       .limit(5000),
   ]);
 
-  const poleIds = [...new Set(((poleMembers ?? []) as any[]).map((p) => p.pole_id))];
-  const { data: poles } = poleIds.length
-    ? await admin.from("poles").select("id, nom").in("id", poleIds)
-    : ({ data: [] } as any);
-  const poleNames = new Map(((poles ?? []) as any[]).map((p) => [p.id, p.nom]));
+  const { data: poles } = await admin.from("poles").select("id, nom");
+  const poleNames = new Map(((poles ?? []) as any[]).map((p) => [p.id, p.nom as string]));
   const polesByUser = new Map<string, string[]>();
   for (const pm of (poleMembers ?? []) as any[]) {
     const arr = polesByUser.get(pm.user_id) ?? [];
@@ -642,34 +639,69 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         .in("task_id", taskList.map((t) => t.id))
     : ({ data: [] } as any);
 
-  // --- Commentaires de tâches ajoutés pendant la période (auteur + heure) ---
-  const commentsByTask = new Map<string, string[]>();
+  // --- Noms des personnes citées (responsables, auteurs de notes) ---
+  const peopleIds = new Set<string>(memberIds);
+  for (const t of taskList) {
+    if (t.assigned_to) peopleIds.add(t.assigned_to);
+    if (t.updated_by) peopleIds.add(t.updated_by);
+  }
+  for (const a of ((extraAssignees ?? []) as any[])) if (a.user_id) peopleIds.add(a.user_id);
+  const { data: peopleProfiles } = peopleIds.size
+    ? await admin.from("profiles").select("id, prenom, nom, email").in("id", [...peopleIds])
+    : ({ data: [] } as any);
+  const nameById = new Map<string, string>(
+    ((peopleProfiles ?? []) as any[]).map((p) => [
+      p.id,
+      `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.email || "—",
+    ]),
+  );
+
+  /** « JJ/MM à HH:MM » en heure de Paris. */
+  const dateHeureParis = (iso: string | null | undefined): string | null => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    const jour = d.toLocaleDateString("fr-FR", {
+      timeZone: "Europe/Paris",
+      day: "2-digit",
+      month: "2-digit",
+    });
+    return `${jour} à ${heureParis(iso)}`;
+  };
+
+  // --- Commentaires de tâches (30 derniers jours) : auteur + date obligatoires ---
+  const commentsByTask = new Map<string, { at: number; texte: string }[]>();
   try {
     if (taskList.length) {
+      const depuis = new Date(now.getTime() - 30 * 86400_000).toISOString();
       const { data: taskComments } = await admin
         .from("agency_task_comments")
         .select("task_id, user_id, content, created_at")
         .in("task_id", taskList.map((t) => t.id))
-        .gte("created_at", fromIso)
+        .gte("created_at", depuis)
         .lte("created_at", toIso)
-        .order("created_at", { ascending: true })
+        .order("created_at", { ascending: false })
         .limit(3000);
       const rows = (taskComments ?? []) as any[];
-      const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
-      const { data: authors } = authorIds.length
-        ? await admin.from("profiles").select("id, prenom, nom, email").in("id", authorIds)
-        : ({ data: [] } as any);
-      const aMap = new Map(
-        ((authors ?? []) as any[]).map((a) => [
-          a.id,
-          `${a.prenom ?? ""} ${a.nom ?? ""}`.trim() || a.email || "—",
-        ]),
+      const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))].filter(
+        (id) => !nameById.has(id),
       );
+      if (authorIds.length) {
+        const { data: authors } = await admin
+          .from("profiles")
+          .select("id, prenom, nom, email")
+          .in("id", authorIds);
+        for (const a of ((authors ?? []) as any[]))
+          nameById.set(a.id, `${a.prenom ?? ""} ${a.nom ?? ""}`.trim() || a.email || "—");
+      }
       for (const r of rows) {
-        const arr = commentsByTask.get(r.task_id) ?? [];
         const texte = String(r.content ?? "").trim();
         if (!texte) continue;
-        arr.push(`${heureParis(r.created_at)} ${aMap.get(r.user_id) ?? "—"} : ${texte}`);
+        const auteur = r.user_id ? nameById.get(r.user_id) : null;
+        const arr = commentsByTask.get(r.task_id) ?? [];
+        arr.push({
+          at: new Date(r.created_at).getTime(),
+          texte: `${dateHeureParis(r.created_at)} — ${auteur ?? "auteur non tracé"} : ${texte}`,
+        });
         commentsByTask.set(r.task_id, arr);
       }
     }
@@ -677,18 +709,32 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     console.error("[compte-rendu] commentaires de tâches indisponibles", e);
   }
 
-  /** internal_comment + commentaires du jour, tronqués à ~200 caractères chacun. */
+  /**
+   * Commentaires d'une tâche : note interne (avec auteur/date si tracés) + commentaires,
+   * du plus récent au plus ancien, 3 maximum, tronqués à 180 caractères.
+   */
   const taskComments = (t: any): string | null => {
-    const parts: string[] = [];
+    const parts: { at: number; texte: string }[] = [...(commentsByTask.get(t.id) ?? [])];
     const internal = String(t.internal_comment ?? "").trim();
-    if (internal) parts.push(internal);
-    parts.push(...(commentsByTask.get(t.id) ?? []));
+    if (internal) {
+      const auteur = t.updated_by ? nameById.get(t.updated_by) : null;
+      const quand = t.updated_at ? dateHeureParis(t.updated_at) : null;
+      parts.push({
+        at: t.updated_at ? new Date(t.updated_at).getTime() : 0,
+        texte:
+          auteur && quand
+            ? `Note interne — ${quand} — ${auteur} : ${internal}`
+            : `Note interne (auteur non tracé) : ${internal}`,
+      });
+    }
     if (parts.length === 0) return null;
     return parts
-      .slice(0, 4)
-      .map((c) => (c.length > 200 ? `${c.slice(0, 197)}...` : c))
+      .sort((a, b) => b.at - a.at)
+      .slice(0, 3)
+      .map((c) => (c.texte.length > 180 ? `${c.texte.slice(0, 177)}...` : c.texte))
       .join("\n");
   };
+
 
 
   const dossierIds = new Set<string>();
