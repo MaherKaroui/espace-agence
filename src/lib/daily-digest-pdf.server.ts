@@ -15,6 +15,28 @@ const LIGHT: [number, number, number] = [244, 246, 249];
 
 const M = 14; // marge mm
 
+/**
+ * Palette sobre par pôle : teintes désaturées compatibles navy/or.
+ * Chaque entrée = [filet foncé, aplat clair]. La couleur est dérivée de
+ * l'identifiant du pôle (hash déterministe) : elle ne change pas d'un jour à l'autre.
+ */
+const POLE_PALETTE: { trait: [number, number, number]; fond: [number, number, number] }[] = [
+  { trait: [42, 74, 112], fond: [233, 238, 245] },
+  { trait: [58, 96, 84], fond: [233, 242, 238] },
+  { trait: [124, 92, 44], fond: [247, 241, 229] },
+  { trait: [104, 62, 74], fond: [246, 235, 238] },
+  { trait: [70, 74, 112], fond: [237, 238, 247] },
+  { trait: [86, 84, 60], fond: [244, 243, 233] },
+];
+const POLE_NEUTRE = { trait: [110, 118, 130] as [number, number, number], fond: [240, 242, 245] as [number, number, number] };
+
+function poleColors(poleId: string | null | undefined) {
+  if (!poleId) return POLE_NEUTRE;
+  let h = 0;
+  for (let i = 0; i < poleId.length; i++) h = (h * 31 + poleId.charCodeAt(i)) >>> 0;
+  return POLE_PALETTE[h % POLE_PALETTE.length];
+}
+
 function txt(v: unknown, fallback = "—"): string {
   const s = v === null || v === undefined ? "" : String(v);
   return s.trim() === "" ? fallback : s;
@@ -174,20 +196,34 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       y += 2;
     } else {
       for (const pole of j.poles) {
-        ensure(10);
+        const col = poleColors((pole as any).poleId);
+        ensure(12);
+        // Bandeau du pôle : aplat clair + filet coloré, texte foncé (contraste élevé).
+        doc.setFillColor(...col.fond);
+        doc.rect(M, y - 3.2, contentW, 5.6, "F");
+        doc.setFillColor(...col.trait);
+        doc.rect(M, y - 3.2, 1.4, 5.6, "F");
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(7.8);
-        doc.setTextColor(...NAVY);
-        doc.text(txt(pole.pole).toUpperCase(), M, y);
-        y += 3.8;
+        doc.setFontSize(7.6);
+        doc.setTextColor(...col.trait);
+        doc.text(txt(pole.pole).toUpperCase(), M + 3.6, y + 0.4);
+        doc.setTextColor(40, 46, 56);
+        y += 5.4;
         for (const p of pole.personnes) {
           const evts = niveau >= 2 ? p.evenements.slice(0, maxEvents) : p.evenements;
           const reste = p.evenements.length - evts.length;
-          line(`${txt(p.nom)}`, 7, 2, NAVY_SOFT, true);
-          for (const e of evts) line(`${e.heure}  ${e.texte}`, 6.6, 6, [60, 68, 80]);
-          if (reste > 0) line(`... et ${reste} autre(s) action(s)`, 6.4, 6, GREY);
+          line(`${txt(p.nom)}`, 7, 3, NAVY_SOFT, true);
+          for (const e of evts) {
+            const yLigne = y;
+            line(`${e.heure}   ${e.texte}`, 6.6, 8, [60, 68, 80]);
+            // Pastille de pôle devant la ligne.
+            doc.setFillColor(...col.trait);
+            doc.circle(M + 4.6, yLigne - 0.9, 0.7, "F");
+          }
+          if (reste > 0) line(`... et ${reste} autre(s) action(s)`, 6.4, 8, GREY);
+          y += 0.8;
         }
-        y += 1.6;
+        y += 2;
       }
     }
 
@@ -196,9 +232,13 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       sectionTitle("Échanges internes du jour");
       const affiches = j.echanges.slice(0, maxEchanges);
       for (const t of affiches) {
-        line(`${txt(t.titre)}  (${txt(t.pole)})`, 6.8, 0, NAVY_SOFT, true);
-        for (const l of t.lignes) line(l, 6.4, 4, [72, 80, 92]);
-        y += 1;
+        const col = poleColors((t as any).poleId);
+        const yTitre = y;
+        line(`${txt(t.titre)}  (${txt(t.pole)})`, 6.8, 5, NAVY_SOFT, true);
+        doc.setFillColor(...col.trait);
+        doc.circle(M + 1.6, yTitre - 0.9, 0.9, "F");
+        for (const l of t.lignes) line(l, 6.4, 9, [72, 80, 92]);
+        y += 1.6;
       }
       const masquees = j.echanges.length - affiches.length;
       if (masquees > 0)
