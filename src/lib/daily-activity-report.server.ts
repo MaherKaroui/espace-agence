@@ -542,10 +542,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     : real;
   const dayKey = parisDateKey(now);
 
-  const weekday = parisWeekday(now);
-  const daysBack = weekday === "Mon" ? 3 : 1;
-  const startKey = parisDateKey(new Date(now.getTime() - (daysBack - 1) * 86400_000));
-  const from = parisInstant(startKey, 0);
+  // Fenêtre : toujours la journée en cours (Europe/Paris), de 00h00 à l'heure d'envoi.
+  const from = parisInstant(dayKey, 0);
   const fromIso = from.toISOString();
   const toIso = now.toISOString();
   const dateFr = now.toLocaleDateString("fr-FR", {
@@ -555,10 +553,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     month: "long",
     year: "numeric",
   });
-  const periode =
-    daysBack > 1
-      ? `du ${from.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} au ${now.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} (week-end inclus)`
-      : `${now.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })}, de 00h00 à ${heureParis(toIso)}`;
+  const periode = `${dateFr}, de 00h00 à ${heureParis(toIso)}`;
 
   // --- Équipe ---
   const { data: roleRows } = await admin.from("user_roles").select("user_id, role");
