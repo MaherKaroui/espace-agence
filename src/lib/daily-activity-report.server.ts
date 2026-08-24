@@ -1147,7 +1147,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     dateFr,
     periode,
     synthese: {
-      connectes: personnes.filter((p) => p.presence.seconds > 0).length,
+      connectes,
       equipe: personnes.length,
       tempsCumule: fmtDuree(tempsCumuleSec),
       tachesTerminees: personnes.reduce((n, p) => n + p.taches.done.length, 0),
