@@ -360,21 +360,21 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
           ) as string[];
           ensure(4 + titreLignes.length * 3.3 + 3.2);
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(7.2);
+          doc.setFontSize(7.0);
           doc.setTextColor(...NAVY_SOFT);
           for (const l of titreLignes) {
             doc.text(l, M, y);
-            y += 3.3;
+            y += 3.1;
           }
           doc.setFont("helvetica", "normal");
-          doc.setFontSize(6.8);
+          doc.setFontSize(6.6);
           doc.setTextColor(70, 78, 90);
           for (const c of t.echanges ?? []) {
             const lignes = doc.splitTextToSize(c, contentW - 4) as string[];
             for (const l of lignes) {
               ensure(4);
               doc.text(l, M + 4, y);
-              y += 3.1;
+              y += 2.9;
             }
           }
           doc.setTextColor(40, 46, 56);
