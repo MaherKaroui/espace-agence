@@ -325,6 +325,33 @@ function AgencyTasksPage() {
           </Select>
         </div>
 
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex rounded-md border overflow-hidden" role="group" aria-label="Périmètre des tâches">
+            <Button
+              size="sm"
+              variant={onlyMine ? "ghost" : "secondary"}
+              className="rounded-none"
+              aria-pressed={!onlyMine}
+              onClick={() => setOnlyMine(false)}
+            >
+              Toutes les tâches
+            </Button>
+            <Button
+              size="sm"
+              variant={onlyMine ? "secondary" : "ghost"}
+              className="rounded-none"
+              aria-pressed={onlyMine}
+              onClick={() => setOnlyMine(true)}
+            >
+              <ListChecks className="h-4 w-4 mr-1" /> Mes tâches
+            </Button>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {filtered.length} tâche{filtered.length > 1 ? "s" : ""} affichée{filtered.length > 1 ? "s" : ""}
+            {onlyMine ? " (mes tâches)" : ""}
+          </span>
+        </div>
+
         <div className="flex flex-wrap gap-2">
           {QUICK_FILTERS.map((f) => (
             <Button
