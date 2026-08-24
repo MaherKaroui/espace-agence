@@ -1170,6 +1170,124 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     .sort((a, b) => (b.joursRetard ?? -1) - (a.joursRetard ?? -1))
     .slice(0, 18);
 
+  /* ---- Journée : uniquement ce qui a bougé aujourd'hui ---- */
+  const poleOfTask = (t: any): string =>
+    (t?.pole_id ? poleNames.get(t.pole_id) : null) ?? SANS_POLE;
+  const poleOfUser = (uid: string): string => (polesByUser.get(uid) ?? [])[0] ?? SANS_POLE;
+  const evByPolePerson = new Map<string, Map<string, { at: number; heure: string; texte: string }[]>>();
+  const pushEvent = (pole: string, nom: string, at: number, heure: string | null, texte: string) => {
+    const perPole = evByPolePerson.get(pole) ?? new Map();
+    const arr = perPole.get(nom) ?? [];
+    arr.push({ at, heure: heure ?? "—", texte });
+    perPole.set(nom, arr);
+    evByPolePerson.set(pole, perPole);
+  };
+
+  // Tâches terminées aujourd'hui
+  for (const t of taskList) {
+    if (t.status !== "terminee" || !t.completed_at) continue;
+    if (t.completed_at < fromIso || t.completed_at > toIso) continue;
+    const ids = [...new Set([t.assigned_to, ...(assigneesByTask.get(t.id) ?? [])].filter(Boolean))] as string[];
+    const noms = ids.map((id) => nameById.get(id)).filter(Boolean) as string[];
+    const ctx = taskContext(t);
+    const texte = `Tâche terminée : ${t.title}${ctx && !String(t.title ?? "").includes(ctx) ? ` (${ctx})` : ""}`;
+    for (const nom of noms.length ? noms : ["Non assigné"])
+      pushEvent(poleOfTask(t), nom, new Date(t.completed_at).getTime(), heureParis(t.completed_at), texte);
+  }
+
+  // Commentaires postés aujourd'hui
+  const echangesJour: { titre: string; pole: string; lignes: string[] }[] = [];
+  const commentsByTaskToday = new Map<string, typeof commentsTodayRaw>();
+  for (const c of commentsTodayRaw) {
+    const arr = commentsByTaskToday.get(c.taskId) ?? [];
+    arr.push(c);
+    commentsByTaskToday.set(c.taskId, arr);
+  }
+  for (const [taskId, list] of commentsByTaskToday) {
+    const t = taskById.get(taskId);
+    const ctx = t ? taskContext(t) : null;
+    const titre = `${t?.title ?? "Tâche"}${ctx && !String(t?.title ?? "").includes(ctx) ? ` — ${ctx}` : ""}`;
+    const pole = poleOfTask(t);
+    echangesJour.push({
+      titre,
+      pole,
+      lignes: [...list].sort((a, b) => a.at - b.at).map((c) => c.texte),
+    });
+    for (const c of list) {
+      const nom = c.userId ? nameById.get(c.userId) : null;
+      if (!nom) continue;
+      pushEvent(pole, nom, c.at, heureParis(new Date(c.at).toISOString()), `Commentaire sur « ${t?.title ?? "tâche"} »`);
+    }
+  }
+
+  // Actions tracées (dossiers, documents, messages, RDV, tâches)
+  for (const [uid, myLogs] of logsByUser) {
+    const nom = nameById.get(uid);
+    if (!nom) continue;
+    for (const l of myLogs) {
+      const label = actionGroup(l.action);
+      if (!label) continue;
+      const meta: any = l.metadata || {};
+      let libelle: string | null = null;
+      if (l.entity_type === "dossier") libelle = dossierLabel(l.entity_id);
+      else if (l.entity_type === "document") libelle = docMap.get(l.entity_id)?.nom ?? null;
+      if (!libelle) libelle = clientLabel(meta.client_id) ?? dossierLabel(meta.dossier_id);
+      if (!libelle) libelle = meta.titre ?? meta.title ?? meta.nom ?? null;
+      let suffix = "";
+      if (l.action === "dossier.status_changed" && (meta.from || meta.old || meta.to || meta.new))
+        suffix = ` (${meta.from ?? meta.old ?? "?"} vers ${meta.to ?? meta.new ?? "?"})`;
+      pushEvent(
+        poleOfUser(uid),
+        nom,
+        new Date(l.created_at).getTime(),
+        heureParis(l.created_at),
+        `${label}${libelle ? ` : ${libelle}` : ""}${suffix}`,
+      );
+    }
+  }
+
+  const journeePoles = [...evByPolePerson.entries()]
+    .map(([pole, perPerson]) => ({
+      pole,
+      personnes: [...perPerson.entries()]
+        .map(([nom, evs]) => ({
+          nom,
+          evenements: evs
+            .sort((a, b) => a.at - b.at)
+            .map((e) => ({ heure: e.heure, texte: e.texte })),
+        }))
+        .sort((a, b) => b.evenements.length - a.evenements.length || a.nom.localeCompare(b.nom)),
+    }))
+    .filter((p) => p.personnes.length > 0)
+    .sort((a, b) => {
+      if (a.pole === SANS_POLE) return 1;
+      if (b.pole === SANS_POLE) return -1;
+      return a.pole.localeCompare(b.pole);
+    });
+
+  const enRetardTotal = retenues.filter((t) => etatOfTask(t) === "En retard").length;
+  const plusAnciennes = priorites
+    .filter((p) => p.etat === "En retard")
+    .slice(0, 3)
+    .map((p) => `${p.titre}${p.joursRetard != null ? ` (${p.joursRetard} j)` : ""}`);
+
+  const journee: DigestJournee = {
+    poles: journeePoles,
+    echanges: echangesJour.sort((a, b) => a.pole.localeCompare(b.pole)),
+    retards: { total: enRetardTotal, plusAnciennes },
+    presence: personnes
+      .filter((p) => p.presence.seconds > 0)
+      .map((p) => ({ nom: p.nom, duree: p.presence.dureeLabel, plage: p.presence.plage })),
+    absents: personnes.filter((p) => p.presence.seconds === 0).map((p) => p.nom),
+    chiffres: {
+      tachesTerminees: personnes.reduce((n, p) => n + p.taches.done.length, 0),
+      dossiersCrees,
+      documentsDeposes,
+      messages: msgC + msgI + msgG,
+      personnesActives: new Set(journeePoles.flatMap((p) => p.personnes.map((x) => x.nom))).size,
+    },
+    calme: journeePoles.length === 0,
+  };
 
   return {
     dateFr,
@@ -1194,7 +1312,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     personnes,
     poleSections,
     priorites,
-
+    journee,
   };
 }
 
