@@ -31,11 +31,31 @@ export function AiAssistantWidget() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [pending, setPending] = useState<Proposal[]>([]);
+  const [showGuideHint, setShowGuideHint] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const chat = useServerFn(assistantChat);
   const confirmFn = useServerFn(assistantConfirmAction);
 
   const welcome = isStaff ? WELCOME_STAFF : WELCOME_CLIENT;
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      if (localStorage.getItem(GUIDE_HINT_KEY) !== "1") setShowGuideHint(true);
+    } catch {
+      /* stockage indisponible */
+    }
+  }, [open]);
+
+  const dismissGuideHint = () => {
+    setShowGuideHint(false);
+    try {
+      localStorage.setItem(GUIDE_HINT_KEY, "1");
+    } catch {
+      /* stockage indisponible */
+    }
+  };
+
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
