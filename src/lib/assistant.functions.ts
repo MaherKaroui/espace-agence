@@ -16,11 +16,19 @@ export const assistantChat = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const { resolveCaller, buildAssistantTools, assistantSystemPrompt, ASSISTANT_MODEL } =
-      await import("./assistant.server");
+    const {
+      resolveCaller,
+      buildAssistantTools,
+      assistantSystemPrompt,
+      createRefRegistry,
+      sanitizeAssistantText,
+      ASSISTANT_MODEL,
+    } = await import("./assistant.server");
     const caller = await resolveCaller(context.supabase, context.userId);
     const proposals: any[] = [];
-    const tools = buildAssistantTools(caller, proposals);
+    // Les UUID ne sortent jamais vers le modèle : ils restent dans ce registre serveur.
+    const refs = createRefRegistry();
+    const tools = buildAssistantTools(caller, proposals, refs);
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("LOVABLE_API_KEY manquant");
@@ -38,7 +46,8 @@ export const assistantChat = createServerFn({ method: "POST" })
       stopWhen: stepCountIs(6),
     });
 
-    return { text, proposals, isStaff: caller.isStaff };
+    // Filet de sécurité : aucun identifiant technique ne doit atteindre l'interface.
+    return { text: sanitizeAssistantText(text ?? "", refs), proposals, isStaff: caller.isStaff };
   });
 
 /** Exécute une action proposée, APRÈS confirmation explicite de l'utilisateur. */
