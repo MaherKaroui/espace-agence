@@ -72,8 +72,8 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     doc.text(label.toUpperCase(), M, y);
     doc.setDrawColor(...GOLD);
     doc.setLineWidth(0.5);
-    doc.line(M, y + 1.3, M + 16, y + 1.3);
-    y += 5.4;
+    doc.line(M, y + 2.2, M + 16, y + 2.2);
+    y += 6;
     doc.setTextColor(40, 46, 56);
   };
 
@@ -193,7 +193,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     // Présence : une seule ligne compacte
     const pr = p.presence ?? ({} as any);
     const presenceParts = [`Connexion ${txt(pr.dureeLabel, "0 min")}`];
-    if (pr.premiere || pr.derniere) presenceParts.push(`${txt(pr.premiere, "—")} \u2192 ${txt(pr.derniere, "—")}`);
+    if (pr.premiere || pr.derniere) presenceParts.push(`${txt(pr.premiere, "—")} - ${txt(pr.derniere, "—")}`);
     presenceParts.push(`${pr.sessions ?? 0} session${(pr.sessions ?? 0) > 1 ? "s" : ""}`);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.8);
@@ -204,7 +204,10 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     y += 6;
 
     // Tâches : un seul tableau, trié par état
-    const all = p.taches?.all ?? [];
+    const ORDER: Record<string, number> = { "Terminée": 0, "En cours": 1, "En retard": 2, "Bloquée": 3, "À venir": 4 };
+    const all = [...(p.taches?.all ?? [])].sort(
+      (a, b) => (ORDER[a.etat] ?? 9) - (ORDER[b.etat] ?? 9),
+    );
     if (all.length > 0) {
       const { rows, extra } = cap(all);
       table({
