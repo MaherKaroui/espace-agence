@@ -430,6 +430,22 @@ export interface DigestPoleSection {
   taches: DigestTaskRow[];
 }
 
+export interface DigestJournee {
+  poles: { pole: string; personnes: { nom: string; evenements: { heure: string; texte: string }[] }[] }[];
+  echanges: { titre: string; pole: string; lignes: string[] }[];
+  retards: { total: number; plusAnciennes: string[] };
+  presence: { nom: string; duree: string; plage: string | null }[];
+  absents: string[];
+  chiffres: {
+    tachesTerminees: number;
+    dossiersCrees: number;
+    documentsDeposes: number;
+    messages: number;
+    personnesActives: number;
+  };
+  calme: boolean;
+}
+
 export interface DigestPriority {
   etat: "En retard" | "Bloquée";
   titre: string;
