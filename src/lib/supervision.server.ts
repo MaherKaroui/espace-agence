@@ -2,27 +2,31 @@
  * Logique serveur de l'Agent IA de supervision.
  * Server-only : ne jamais importer depuis un composant.
  */
-/** Destinataires de la supervision technique : lus dans email_settings, jamais en dur. */
+/**
+ * Destinataires des e-mails de l'Agent IA de supervision (alertes + rapports techniques).
+ * UNIQUEMENT l'adresse admin principale (email_settings.admin_email).
+ * Les destinataires supplémentaires (report_recipients) ne reçoivent QUE le compte rendu
+ * quotidien, résolu de son côté par resolveReportRecipients().
+ */
 export async function resolveSupervisionRecipients(admin: any): Promise<string[]> {
   try {
     const { data } = await admin
       .from("email_settings")
-      .select("admin_email, report_recipients")
+      .select("admin_email")
       .eq("id", 1)
       .maybeSingle();
-    const list = [data?.admin_email, ...((data?.report_recipients ?? []) as string[])]
-      .filter((e: unknown): e is string => typeof e === "string" && e.includes("@"))
-      .map((e: string) => e.trim().toLowerCase());
-    const unique = [...new Set(list)];
-    if (unique.length === 0) return [];
-    const { data: suppressed } = await admin.from("suppressed_emails").select("email").in("email", unique);
-    const blocked = new Set(((suppressed ?? []) as any[]).map((r) => String(r.email).toLowerCase()));
-    return unique.filter((e) => !blocked.has(e));
+    const raw = data?.admin_email;
+    if (typeof raw !== "string" || !raw.includes("@")) return [];
+    const email = raw.trim().toLowerCase();
+    const { data: suppressed } = await admin.from("suppressed_emails").select("email").eq("email", email);
+    if (((suppressed ?? []) as any[]).length > 0) return [];
+    return [email];
   } catch (e) {
     console.error("[supervision] recipients failed", e);
     return [];
   }
 }
+
 export const APP_URL = "https://izisuivis.com";
 
 export interface Anomaly {
