@@ -870,9 +870,9 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     const blocked = open.filter((t) => t.status === "bloquee");
     const total = done.length + open.length;
 
-    // Actions (audit_logs)
+    // Actions (audit_logs) : on ne détaille que les entrées dont l'objet est identifiable
     const myLogs = logsByUser.get(p.id) ?? [];
-    const grouped = new Map<string, string[]>();
+    const grouped = new Map<string, { total: number; items: string[] }>();
     for (const l of myLogs) {
       const g = actionGroup(l.action);
       if (!g) continue;
@@ -882,19 +882,22 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       if (l.entity_type === "dossier") libelle = dossierLabel(l.entity_id);
       else if (l.entity_type === "document") libelle = docMap.get(l.entity_id)?.nom ?? null;
       if (!libelle) libelle = clientLabel(meta.client_id) ?? dossierLabel(meta.dossier_id);
+      if (!libelle) libelle = meta.titre ?? meta.title ?? meta.nom ?? null;
       let suffix = "";
       if (l.action === "dossier.status_changed" && (meta.from || meta.old || meta.to || meta.new)) {
-        suffix = ` (${meta.from ?? meta.old ?? "?"} → ${meta.to ?? meta.new ?? "?"})`;
+        suffix = ` (${meta.from ?? meta.old ?? "?"} vers ${meta.to ?? meta.new ?? "?"})`;
       }
-      const arr = grouped.get(g) ?? [];
-      arr.push(`${h} — ${libelle ?? meta.titre ?? meta.title ?? "—"}${suffix}`);
-      grouped.set(g, arr);
+      const entry = grouped.get(g) ?? { total: 0, items: [] };
+      entry.total++;
+      if (libelle) entry.items.push(`${h} — ${libelle}${suffix}`);
+      grouped.set(g, entry);
     }
-    const actions = [...grouped.entries()].map(([label, items]) => ({
+    const actions = [...grouped.entries()].map(([label, e]) => ({
       label,
-      count: items.length,
-      items: items.slice(0, 10),
+      count: e.total,
+      items: e.items.slice(0, 10),
     }));
+
 
     // Clients / dossiers touchés
     const contexts = new Set<string>();
