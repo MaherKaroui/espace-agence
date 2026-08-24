@@ -92,9 +92,12 @@ export function AgencyTaskDetailDialog({
     qc.invalidateQueries({ queryKey: ["dossier-linked-task"] });
   };
 
+  /** Traçabilité : qui a modifié la tâche et quand (utilisé par le compte rendu quotidien). */
+  const trace = () => ({ updated_by: user?.id ?? null, updated_at: new Date().toISOString() });
+
   const changeStatus = useMutation({
     mutationFn: async (status: Status) => {
-      const patch: Database["public"]["Tables"]["agency_tasks"]["Update"] = { status };
+      const patch: Database["public"]["Tables"]["agency_tasks"]["Update"] = { status, ...trace() };
       if (status === "terminee") patch.completed_at = new Date().toISOString();
       const { error } = await supabase.from("agency_tasks").update(patch).eq("id", taskId!);
       if (error) throw error;
@@ -107,7 +110,10 @@ export function AgencyTaskDetailDialog({
     mutationFn: async (days: number) => {
       const base = task?.due_date ? new Date(task.due_date) : new Date();
       const next = new Date(Math.max(base.getTime(), Date.now()) + days * 86400000);
-      const { error } = await supabase.from("agency_tasks").update({ due_date: next.toISOString() }).eq("id", taskId!);
+      const { error } = await supabase
+        .from("agency_tasks")
+        .update({ due_date: next.toISOString(), ...trace() })
+        .eq("id", taskId!);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Échéance reportée"); invalidate(); },
@@ -116,12 +122,16 @@ export function AgencyTaskDetailDialog({
 
   const archive = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("agency_tasks").update({ archived_at: new Date().toISOString() }).eq("id", taskId!);
+      const { error } = await supabase
+        .from("agency_tasks")
+        .update({ archived_at: new Date().toISOString(), ...trace() })
+        .eq("id", taskId!);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Tâche archivée"); invalidate(); onOpenChange(false); },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
+
 
   const addComment = useMutation({
     mutationFn: async () => {
