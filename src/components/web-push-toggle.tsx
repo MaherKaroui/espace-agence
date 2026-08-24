@@ -124,13 +124,14 @@ export function WebPushToggle() {
 
       // 1) permission -> 2) subscribe IMMÉDIATEMENT (aucun await intermédiaire)
       const perm = await Notification.requestPermission();
+      // Test SYNCHRONE uniquement : ne casse pas la chaîne d'activation utilisateur (Safari).
+      setPermission(perm);
+      if (perm !== "granted") { toast.error("Permission refusée"); return; }
+
       let sub = subRef.current ?? await readyReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: appServerKey,
       });
-
-      setPermission(perm);
-      if (perm !== "granted") { toast.error("Permission refusée"); return; }
 
       const saveCurrentSubscription = () => saveSub({
         data: {
