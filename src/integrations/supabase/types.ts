@@ -389,6 +389,105 @@ export type Database = {
         }
         Relationships: []
       }
+      client_acces: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          dossier_id: string | null
+          id: string
+          identifiant: string | null
+          libelle: string
+          manual_locked: boolean
+          notes: string | null
+          organisme: string | null
+          plateforme: string | null
+          secret_ciphertext: string | null
+          slack_channel: string | null
+          slack_message_ts: string | null
+          source: string
+          updated_at: string
+          updated_by: string | null
+          url: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string | null
+          id?: string
+          identifiant?: string | null
+          libelle: string
+          manual_locked?: boolean
+          notes?: string | null
+          organisme?: string | null
+          plateforme?: string | null
+          secret_ciphertext?: string | null
+          slack_channel?: string | null
+          slack_message_ts?: string | null
+          source?: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string | null
+          id?: string
+          identifiant?: string | null
+          libelle?: string
+          manual_locked?: boolean
+          notes?: string | null
+          organisme?: string | null
+          plateforme?: string | null
+          secret_ciphertext?: string | null
+          slack_channel?: string | null
+          slack_message_ts?: string | null
+          source?: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_acces_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_acces_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_acces_slack_settings: {
+        Row: {
+          channels: Json
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          channels?: Json
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          channels?: Json
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       client_ephemeral_settings: {
         Row: {
           client_id: string
