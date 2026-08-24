@@ -104,7 +104,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/messages", label: "Messages", icon: MessageSquare },
     { to: "/messages/groupes", label: "Groupes", icon: Users2 },
     { to: "/mes-donnees", label: "Mes données", icon: UserCog },
-    { to: "/preferences", label: "Mes notifications", icon: Bell },
   ];
 
 
@@ -150,7 +149,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const NavList = () => {
-    const clientNav = isStaff ? nav.filter((n) => n.to === "/mes-donnees" || n.to === "/preferences") : nav;
+    const clientNav = isStaff ? nav.filter((n) => n.to === "/mes-donnees") : nav;
 
     return (
     <>
@@ -204,21 +203,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <UserCog className="h-4 w-4" />
             <span className="flex-1">Mes données</span>
           </Link>
-          <Link
-            to="/preferences"
-            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            activeProps={{ className: "bg-sidebar-accent text-sidebar-accent-foreground font-medium" }}
-          >
-            <Settings className="h-4 w-4" />
-            <span className="flex-1">Mes notifications</span>
-          </Link>
-
         </>
       )}
       {isStaff && (
         <>
           <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Agence</div>
-          {[...staffNav, { to: "/mes-donnees", label: "Mes données", icon: UserCog }, { to: "/preferences", label: "Mes notifications", icon: Bell }].map((n) => {
+          {[...staffNav, { to: "/mes-donnees", label: "Mes données", icon: UserCog }].map((n) => {
             const c = countFor(n.to);
             return (
               <Link
@@ -275,12 +265,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <nav className="flex-1 px-3 space-y-1 overflow-y-auto"><NavList /></nav>
         <div className="p-3 border-t border-sidebar-border">
-          <div className="px-3 py-2">
-            <div className="text-sm font-medium truncate">{displayName}</div>
-            <div className="text-xs text-sidebar-foreground/50 truncate">{roleLabel}</div>
-          </div>
-          <Link to="/preferences" className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent">
-            <Settings className="h-4 w-4" /> Préférences & notifications
+          {/* Bloc identité cliquable : accès discret aux réglages personnels (notifications) */}
+          <Link
+            to="/preferences"
+            title="Réglages personnels et notifications"
+            className="group flex items-center gap-2 rounded-md px-3 py-2 hover:bg-sidebar-accent"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium truncate">{displayName}</div>
+              <div className="text-xs text-sidebar-foreground/50 truncate">{roleLabel}</div>
+            </div>
+            <Settings className="h-4 w-4 shrink-0 text-sidebar-foreground/40 group-hover:text-sidebar-foreground/80" />
           </Link>
           <button onClick={signOut} className="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent">
             <LogOut className="h-4 w-4" /> Déconnexion
@@ -316,13 +311,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <NavList />
             </nav>
             <div className="border-t border-sidebar-border p-3">
-              <div className="px-1 pb-2 text-xs text-sidebar-foreground/50 truncate">{roleLabel}</div>
+              {/* Bloc identité cliquable : accès discret aux réglages personnels */}
               <Link
                 to="/preferences"
                 onClick={() => setMobileOpen(false)}
-                className="mb-2 flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border px-3 py-2.5 text-sm font-medium hover:bg-sidebar-accent"
+                className="mb-2 flex w-full items-center gap-2 rounded-md px-1 py-1.5 hover:bg-sidebar-accent"
               >
-                <Settings className="h-4 w-4 shrink-0" /> Préférences & notifications
+                <div className="min-w-0 flex-1 text-left">
+                  <div className="truncate text-sm font-medium">{displayName}</div>
+                  <div className="truncate text-xs text-sidebar-foreground/50">{roleLabel}</div>
+                </div>
+                <Settings className="h-4 w-4 shrink-0 text-sidebar-foreground/50" />
               </Link>
               <button
                 onClick={signOut}
