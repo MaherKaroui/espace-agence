@@ -143,7 +143,7 @@ function CalendrierQualiopi() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [cursor, setCursor] = useState<Date>(() => new Date());
-  const [viewMode, setViewMode] = useState<"liste" | "mois">("liste");
+  const [viewMode, setViewMode] = useState<"liste" | "mois">("mois");
   const [filterOrg, setFilterOrg] = useState("");
   const [filterCertifier, setFilterCertifier] = useState("");
   const [filterAuditor, setFilterAuditor] = useState("");
