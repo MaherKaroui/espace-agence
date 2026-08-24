@@ -477,6 +477,8 @@ export interface DailyDigest {
   poleSections: DigestPoleSection[];
   /** Tâches en retard ou bloquées, à traiter en priorité. */
   priorites: DigestPriority[];
+  /** Activité réelle de la journée, par pôle puis par personne. */
+  journee: DigestJournee;
 }
 
 function fmtDuree(seconds: number): string {
