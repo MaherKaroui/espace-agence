@@ -1,17 +1,35 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Bell, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWebPush } from "@/hooks/use-web-push";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 const DISMISS_KEY = "izisuivis.push.banner.dismissed";
 /** Rappel forcé si l'utilisateur cumule beaucoup d'alertes non lues malgré un rejet. */
 const REMIND_UNREAD_THRESHOLD = 15;
 
-export function PushActivationBanner({ unreadCount = 0 }: { unreadCount?: number }) {
+export function PushActivationBanner() {
+  const { user } = useAuth();
   const { supported, permission, subscribed, loading, ready, platformHint, enable } = useWebPush();
   const [dismissed, setDismissed] = useState(true);
+
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ["push-banner-unread", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .is("read_at", null);
+      return count ?? 0;
+    },
+  });
+
 
   useEffect(() => {
     try {
