@@ -1749,7 +1749,7 @@ export type Database = {
       }
       qualiopi_calendar_events: {
         Row: {
-          audit_date: string
+          audit_date: string | null
           auditor_name: string | null
           auditor_user_id: string | null
           certificate_status: string | null
@@ -1763,14 +1763,16 @@ export type Database = {
           dossier_id: string | null
           formation: string | null
           id: string
+          notes_suivi: string | null
           observation: string | null
           organism_name: string
           status: Database["public"]["Enums"]["qualiopi_event_status"]
+          tuteur: string | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
-          audit_date: string
+          audit_date?: string | null
           auditor_name?: string | null
           auditor_user_id?: string | null
           certificate_status?: string | null
@@ -1784,14 +1786,16 @@ export type Database = {
           dossier_id?: string | null
           formation?: string | null
           id?: string
+          notes_suivi?: string | null
           observation?: string | null
           organism_name: string
           status?: Database["public"]["Enums"]["qualiopi_event_status"]
+          tuteur?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
-          audit_date?: string
+          audit_date?: string | null
           auditor_name?: string | null
           auditor_user_id?: string | null
           certificate_status?: string | null
@@ -1805,9 +1809,11 @@ export type Database = {
           dossier_id?: string | null
           formation?: string | null
           id?: string
+          notes_suivi?: string | null
           observation?: string | null
           organism_name?: string
           status?: Database["public"]["Enums"]["qualiopi_event_status"]
+          tuteur?: string | null
           updated_at?: string
           updated_by?: string | null
         }
