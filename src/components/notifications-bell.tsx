@@ -37,16 +37,18 @@ function iconFor(type: string) {
 
 
 export function NotificationsBell() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState<TabKey>("unread");
   // Abonnement push : implémentation unique partagée (src/hooks/use-web-push.ts)
   const push = useWebPush();
 
 
-  const { data: notifications = [] } = useQuery({
+  const { data: notifications = [], isFetched } = useQuery({
     queryKey: ["notifications", user?.id],
     enabled: !!user,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("notifications").select("*")
@@ -214,11 +216,23 @@ export function NotificationsBell() {
         </div>
 
         <div className="max-h-[26rem] overflow-y-auto">
-          {groups.length === 0 && (
+          {authLoading || !isFetched ? (
+            <div className="p-4 space-y-3" aria-busy="true" aria-label="Chargement des notifications">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-full bg-muted animate-pulse shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-2/3 rounded bg-muted animate-pulse" />
+                    <div className="h-3 w-1/3 rounded bg-muted animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : groups.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
               {tab === "unread" ? "Aucune notification non lue" : "Aucune notification"}
             </div>
-          )}
+          ) : null}
           {groups.slice(0, 30).map((g) => {
             const { icon: Icon, color } = iconFor(g.type);
             return (
