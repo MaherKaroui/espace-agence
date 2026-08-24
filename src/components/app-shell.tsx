@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, Users2, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings, CalendarDays, UserCog, ListChecks, Mail,
+  LayoutDashboard, FolderOpen, MessageSquare, Bell, Users, Users2, LogOut, Menu, X, ShieldCheck, TrendingUp, Settings, CalendarDays, UserCog, ListChecks, Mail, KeyRound,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -116,6 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { to: "/admin/dossiers", label: "Dossiers de mes pôles", icon: FolderOpen },
     { to: "/admin/clients", label: "Clients de mes pôles", icon: Users },
     { to: "/admin/taches-agence", label: "Tâches agence", icon: ListChecks },
+    { to: "/admin/acces-clients", label: "Accès clients", icon: KeyRound },
     { to: "/admin/calendrier-qualiopi", label: "Calendrier Qualiopi", icon: CalendarDays },
     { to: "/admin/messages", label: "Messagerie clients", icon: MessageSquare },
     { to: "/admin/internal-messages", label: "Messagerie interne", icon: Users2 },
