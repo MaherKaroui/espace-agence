@@ -24,8 +24,12 @@ type Task = Database["public"]["Tables"]["agency_tasks"]["Row"];
 type Status = Database["public"]["Enums"]["agency_task_status"];
 
 export const Route = createFileRoute("/_authenticated/admin/taches-agence")({
-  validateSearch: (search: Record<string, unknown>): { task?: string } =>
-    typeof search.task === "string" ? { task: search.task } : {},
+  validateSearch: (search: Record<string, unknown>): { task?: string; mine?: string } => {
+    const out: { task?: string; mine?: string } = {};
+    if (typeof search.task === "string") out.task = search.task;
+    if (search.mine === "1" || search.mine === 1 || search.mine === true) out.mine = "1";
+    return out;
+  },
   head: () => ({ meta: [{ title: "Tâches agence" }] }),
   beforeLoad: async () => {
     const { data: u } = await supabase.auth.getUser();
