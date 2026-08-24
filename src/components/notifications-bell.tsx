@@ -1,46 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import {
   Bell, BellOff, BellRing, Check, MessageSquare, FileText, FolderOpen,
-  Calendar, AlertTriangle, ClipboardCheck, Inbox,
+  Calendar, AlertTriangle, ClipboardCheck, Inbox, Settings,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { groupNotifications, type NotifRow } from "@/lib/notification-grouping";
 import { cn } from "@/lib/utils";
-import { getVapidPublicKey, getPushSubscriptionStatus, savePushSubscription, deletePushSubscription } from "@/lib/push.functions";
 import { notifTargetLink } from "@/lib/notif-link";
-import {
-  getBrowserNotifPermission, isBrowserNotifEnabled,
-  requestBrowserNotifPermission, setBrowserNotifEnabled, showBrowserNotif,
-} from "@/lib/web-push";
+import { showBrowserNotif } from "@/lib/web-push";
+import { useWebPush } from "@/hooks/use-web-push";
 
 type TabKey = "unread" | "all";
-const SERVICE_WORKER_URL = "/service-worker.js";
-
-function urlBase64ToUint8Array(b64: string): Uint8Array {
-  const pad = "=".repeat((4 - (b64.length % 4)) % 4);
-  const base64 = (b64 + pad).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  const out = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-  return out;
-}
-
-function bufToB64Url(buf: ArrayBuffer | null): string {
-  if (!buf) return "";
-  const arr = new Uint8Array(buf);
-  let s = "";
-  for (let i = 0; i < arr.length; i++) s += String.fromCharCode(arr[i]);
-  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
 
 const TYPE_ICONS: Record<string, { icon: any; color: string }> = {
   message: { icon: MessageSquare, color: "text-blue-600 dark:text-blue-400" },
@@ -57,6 +34,7 @@ const TYPE_ICONS: Record<string, { icon: any; color: string }> = {
 function iconFor(type: string) {
   return TYPE_ICONS[type] ?? { icon: Bell, color: "text-muted-foreground" };
 }
+
 
 export function NotificationsBell() {
   const { user } = useAuth();
