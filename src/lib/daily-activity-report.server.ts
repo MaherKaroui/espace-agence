@@ -581,6 +581,9 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       },
       classement: [],
       personnes: [],
+      poleSections: [],
+      priorites: [],
+
     };
   }
 
