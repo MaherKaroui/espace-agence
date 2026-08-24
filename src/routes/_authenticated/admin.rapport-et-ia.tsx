@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +47,7 @@ function RapportEtIaPage() {
   const role = useRole();
 
   // Droits repris à l'identique des cinq pages d'origine.
-  const tabs: { key: TabKey; label: string; icon: any; allowed: boolean; render: () => JSX.Element }[] = [
+  const tabs: { key: TabKey; label: string; icon: any; allowed: boolean; render: () => ReactNode }[] = [
     { key: "pilotage", label: "Pilotage", icon: TrendingUp, allowed: role.isAdmin || role.isDirection, render: () => <DirectionDashboard /> },
     { key: "rapports", label: "Rapports d'activité", icon: FileText, allowed: role.isAdmin || role.isDirection, render: () => <RapportsActivite /> },
     { key: "agent-ia", label: "Agent IA", icon: Bot, allowed: role.isAdmin, render: () => <AgentIaPage /> },
