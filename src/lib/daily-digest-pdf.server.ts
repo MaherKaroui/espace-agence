@@ -52,13 +52,16 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     }
   };
 
-  /** Dernier échange uniquement, tronqué : le PDF doit rester court. */
-  const shortComment = (v: string | null): string => {
-    const all = String(v ?? "").split("\n").filter((l) => l.trim() !== "");
-    if (all.length === 0) return "Aucun échange enregistré";
-    const first = all[0].length > 130 ? `${all[0].slice(0, 127)}...` : all[0];
-    return all.length > 1 ? `${first}  (+${all.length - 1} autre${all.length > 2 ? "s" : ""})` : first;
+  /** Titre de la tâche + client, sans recopier le client déjà présent dans le titre. */
+  const norm = (v: string) =>
+    v.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  const libelleTache = (titre: string, contexte: string | null): string => {
+    const t = txt(titre);
+    const c = contexte ? String(contexte).trim() : "";
+    if (!c) return t;
+    return norm(t).includes(norm(c)) ? t : `${t} — ${c}`;
   };
+
 
   const table = (opts: Record<string, unknown>) => {
     autoTable(doc, {
@@ -277,27 +280,37 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       doc.setTextColor(40, 46, 56);
       y += 8.5;
 
-      const { rows, extra } = cap(sec.taches, 10);
+      const all = sec.taches ?? [];
+      // Les tâches « À venir » sans échéance ni échange sont reléguées en une seule ligne.
+      const dormantes = all.filter(
+        (t) => t.etat === "À venir" && !t.quand && (t.echanges ?? []).length === 0,
+      );
+      const actives = all.filter((t) => !dormantes.includes(t));
+
+      // --- Bloc 1 : tableau de survol, une ligne par tâche ---
       table({
-        head: [["État", "Tâche", "Responsable", "Client / Dossier", "Échéance / clôture", "Échanges internes"]],
-        body: [
-          ...rows.map((t) => [
-            t.etat,
-            txt(t.titre),
-            txt(t.responsable, "Non assignée"),
-            txt(t.contexte),
-            txt(t.quand),
-            shortComment(t.commentaires),
-          ]),
-          ...(extra > 0 ? [[`... et ${extra} autres tâches`, "", "", "", "", ""]] : []),
-        ],
+        head: [["État", "Tâche", "Responsable", "Échéance / clôture", "Éch."]],
+        body: actives.map((t) => [
+          t.etat,
+          libelleTache(t.titre, t.contexte),
+          txt(t.responsable, "Non assignée"),
+          txt(t.quand),
+          (t.echanges ?? []).length > 0 ? String((t.echanges ?? []).length) : "",
+        ]),
+        styles: {
+          font: "helvetica",
+          fontSize: 7.6,
+          cellPadding: 1.2,
+          textColor: [40, 46, 56],
+          overflow: "hidden",
+          lineColor: [222, 227, 234],
+        },
         columnStyles: {
           0: { cellWidth: 16 },
-          1: { cellWidth: 38 },
-          2: { cellWidth: 24 },
-          3: { cellWidth: 28 },
-          4: { cellWidth: 20 },
-          5: { cellWidth: "auto" },
+          1: { cellWidth: "auto" },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 24, halign: "center" },
+          4: { cellWidth: 10, halign: "center" },
         },
         didParseCell: (data: any) => {
           if (data.section !== "body") return;
@@ -311,13 +324,66 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
           } else if (etat === "Terminée") {
             data.cell.styles.fillColor = OK_BG;
           }
-          if (data.column.index === 5) {
-            data.cell.styles.fontSize = 6.9;
-            data.cell.styles.textColor = [78, 86, 98];
-          }
         },
       });
+
+      if (dormantes.length > 0) {
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(7);
+        doc.setTextColor(...GREY);
+        const line = `À venir sans échéance (${dormantes.length}) : ${dormantes.map((t) => txt(t.titre)).join(", ")}`;
+        for (const l of doc.splitTextToSize(line, contentW) as string[]) {
+          ensure(4.5);
+          doc.text(l, M, y);
+          y += 3.4;
+        }
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(40, 46, 56);
+        y += 2;
+      }
+
+      // --- Bloc 2 : échanges internes, texte fluide, intégral ---
+      const avecEchanges = all.filter((t) => (t.echanges ?? []).length > 0);
+      if (avecEchanges.length > 0) {
+        ensure(12);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7.8);
+        doc.setTextColor(...NAVY_SOFT);
+        doc.text("Échanges internes", M, y);
+        y += 4;
+        doc.setTextColor(40, 46, 56);
+
+        for (const t of avecEchanges) {
+          const titreLignes = doc.splitTextToSize(
+            libelleTache(t.titre, t.contexte),
+            contentW,
+          ) as string[];
+          ensure(4 + titreLignes.length * 3.3 + 3.2);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(7.2);
+          doc.setTextColor(...NAVY_SOFT);
+          for (const l of titreLignes) {
+            doc.text(l, M, y);
+            y += 3.3;
+          }
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(6.8);
+          doc.setTextColor(70, 78, 90);
+          for (const c of t.echanges ?? []) {
+            const lignes = doc.splitTextToSize(c, contentW - 4) as string[];
+            for (const l of lignes) {
+              ensure(4);
+              doc.text(l, M + 4, y);
+              y += 3.1;
+            }
+          }
+          doc.setTextColor(40, 46, 56);
+          y += 1.6;
+        }
+        y += 1.5;
+      }
     }
+
   }
 
   // ---------- Présence de l'équipe ----------
@@ -340,7 +406,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
             txt((p.roles ?? []).join(", "), "Non défini"),
             txt((p.poles ?? []).join(", "), "—"),
             txt(p.presence?.dureeLabel, "0 min"),
-            `${txt(p.presence?.premiere)} - ${txt(p.presence?.derniere)}`,
+            txt(p.presence?.plage ?? `${txt(p.presence?.premiere)} - ${txt(p.presence?.derniere)}`),
             String(p.taches?.done?.length ?? 0),
           ]),
           ...(extra > 0 ? [[`... et ${extra} autres`, "", "", "", "", ""]] : []),
