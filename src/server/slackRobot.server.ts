@@ -459,9 +459,14 @@ async function collecterHistorique(supabase: any, job: any) {
     .limit(1)
     .maybeSingle();
   if (!canal) {
-    await patchJob(supabase, job.id, { statut: "termine" });
+    const threads = (job.fichiers_traites?.threads ?? []) as unknown[];
+    const fichiersRestants = await resteFichiers(supabase);
+    if (!threads.length && !fichiersRestants) {
+      await patchJob(supabase, job.id, { statut: "termine" });
+    }
     return { termine: true };
   }
+
   await patchMeta(supabase, job, { canal_courant: canal.nom, phase: "messages" });
 
   let b: any;
