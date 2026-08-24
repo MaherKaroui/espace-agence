@@ -39,6 +39,7 @@ import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminRgpdRouteImport } from './routes/_authenticated/admin.rgpd'
 import { Route as AuthenticatedAdminRendezVousRouteImport } from './routes/_authenticated/admin.rendez-vous'
 import { Route as AuthenticatedAdminRapportsActiviteRouteImport } from './routes/_authenticated/admin.rapports-activite'
+import { Route as AuthenticatedAdminRapportEtIaRouteImport } from './routes/_authenticated/admin.rapport-et-ia'
 import { Route as AuthenticatedAdminPolesRouteImport } from './routes/_authenticated/admin.poles'
 import { Route as AuthenticatedAdminPiecesModelesRouteImport } from './routes/_authenticated/admin.pieces-modeles'
 import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin.notifications'
@@ -233,6 +234,12 @@ const AuthenticatedAdminRapportsActiviteRoute =
   AuthenticatedAdminRapportsActiviteRouteImport.update({
     id: '/admin/rapports-activite',
     path: '/admin/rapports-activite',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminRapportEtIaRoute =
+  AuthenticatedAdminRapportEtIaRouteImport.update({
+    id: '/admin/rapport-et-ia',
+    path: '/admin/rapport-et-ia',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminPolesRoute = AuthenticatedAdminPolesRouteImport.update({
@@ -462,6 +469,7 @@ export interface FileRoutesByFullPath {
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/admin/pieces-modeles': typeof AuthenticatedAdminPiecesModelesRoute
   '/admin/poles': typeof AuthenticatedAdminPolesRoute
+  '/admin/rapport-et-ia': typeof AuthenticatedAdminRapportEtIaRoute
   '/admin/rapports-activite': typeof AuthenticatedAdminRapportsActiviteRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
@@ -527,6 +535,7 @@ export interface FileRoutesByTo {
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/admin/pieces-modeles': typeof AuthenticatedAdminPiecesModelesRoute
   '/admin/poles': typeof AuthenticatedAdminPolesRoute
+  '/admin/rapport-et-ia': typeof AuthenticatedAdminRapportEtIaRoute
   '/admin/rapports-activite': typeof AuthenticatedAdminRapportsActiviteRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
@@ -594,6 +603,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
   '/_authenticated/admin/pieces-modeles': typeof AuthenticatedAdminPiecesModelesRoute
   '/_authenticated/admin/poles': typeof AuthenticatedAdminPolesRoute
+  '/_authenticated/admin/rapport-et-ia': typeof AuthenticatedAdminRapportEtIaRoute
   '/_authenticated/admin/rapports-activite': typeof AuthenticatedAdminRapportsActiviteRoute
   '/_authenticated/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/_authenticated/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
@@ -661,6 +671,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/pieces-modeles'
     | '/admin/poles'
+    | '/admin/rapport-et-ia'
     | '/admin/rapports-activite'
     | '/admin/rendez-vous'
     | '/admin/rgpd'
@@ -726,6 +737,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/pieces-modeles'
     | '/admin/poles'
+    | '/admin/rapport-et-ia'
     | '/admin/rapports-activite'
     | '/admin/rendez-vous'
     | '/admin/rgpd'
@@ -792,6 +804,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/notifications'
     | '/_authenticated/admin/pieces-modeles'
     | '/_authenticated/admin/poles'
+    | '/_authenticated/admin/rapport-et-ia'
     | '/_authenticated/admin/rapports-activite'
     | '/_authenticated/admin/rendez-vous'
     | '/_authenticated/admin/rgpd'
@@ -1073,6 +1086,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRapportsActiviteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/rapport-et-ia': {
+      id: '/_authenticated/admin/rapport-et-ia'
+      path: '/admin/rapport-et-ia'
+      fullPath: '/admin/rapport-et-ia'
+      preLoaderRoute: typeof AuthenticatedAdminRapportEtIaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/poles': {
       id: '/_authenticated/admin/poles'
       path: '/admin/poles'
@@ -1343,6 +1363,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminNotificationsRoute: typeof AuthenticatedAdminNotificationsRoute
   AuthenticatedAdminPiecesModelesRoute: typeof AuthenticatedAdminPiecesModelesRoute
   AuthenticatedAdminPolesRoute: typeof AuthenticatedAdminPolesRoute
+  AuthenticatedAdminRapportEtIaRoute: typeof AuthenticatedAdminRapportEtIaRoute
   AuthenticatedAdminRapportsActiviteRoute: typeof AuthenticatedAdminRapportsActiviteRoute
   AuthenticatedAdminRendezVousRoute: typeof AuthenticatedAdminRendezVousRoute
   AuthenticatedAdminRgpdRoute: typeof AuthenticatedAdminRgpdRoute
@@ -1382,6 +1403,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminNotificationsRoute: AuthenticatedAdminNotificationsRoute,
   AuthenticatedAdminPiecesModelesRoute: AuthenticatedAdminPiecesModelesRoute,
   AuthenticatedAdminPolesRoute: AuthenticatedAdminPolesRoute,
+  AuthenticatedAdminRapportEtIaRoute: AuthenticatedAdminRapportEtIaRoute,
   AuthenticatedAdminRapportsActiviteRoute:
     AuthenticatedAdminRapportsActiviteRoute,
   AuthenticatedAdminRendezVousRoute: AuthenticatedAdminRendezVousRoute,
