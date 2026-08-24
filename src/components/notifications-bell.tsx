@@ -145,7 +145,7 @@ export function NotificationsBell() {
               <Button
                 size="sm" variant="ghost"
                 onClick={togglePush}
-                disabled={pushLoading || permission === "unsupported" || permission === "denied"}
+                disabled={push.loading || permission === "unsupported" || permission === "denied" || (!enabled && !push.ready)}
                 title={
                   permission === "unsupported" ? "Non supporté par ce navigateur"
                   : permission === "denied" ? "Notifications bloquées — autorisez-les dans le navigateur"
@@ -156,8 +156,11 @@ export function NotificationsBell() {
               >
                 {enabled ? <BellRing className="h-4 w-4 text-primary" /> : <BellOff className="h-4 w-4" />}
                 <span className="text-xs">
-                  {pushLoading ? "..." : permission === "denied" ? "Bloquées" : enabled ? "Push ON" : "Activer Push"}
+                  {push.loading ? "..." : permission === "denied" ? "Bloquées" : enabled ? "Push ON" : "Activer Push"}
                 </span>
+              </Button>
+              <Button size="sm" variant="ghost" asChild className="gap-1" title="Préférences de notifications">
+                <Link to="/preferences"><Settings className="h-4 w-4" /></Link>
               </Button>
               {unread > 0 && (
                 <Button size="sm" variant="ghost" onClick={markAll} className="gap-1">
@@ -166,6 +169,17 @@ export function NotificationsBell() {
               )}
             </div>
           </div>
+          {!enabled && push.platformHint && (
+            <div className="rounded-md border border-border bg-muted/50 px-2 py-1.5 text-[11px] text-muted-foreground">
+              {push.platformHint}
+            </div>
+          )}
+          {permission === "denied" && (
+            <div className="text-[11px] text-destructive">
+              Notifications bloquées dans les réglages du navigateur — autorisez-les puis rechargez la page.
+            </div>
+          )}
+
 
           {/* Onglets */}
           <div className="inline-flex rounded-md border border-input overflow-hidden text-xs">
