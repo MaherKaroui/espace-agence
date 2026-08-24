@@ -200,27 +200,33 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     doc.setTextColor(40, 46, 56);
     y += 2;
   } else {
-    const { rows, extra } = cap(prios, 10);
+    const { rows, extra } = cap(prios, 12);
     table({
-      head: [["État", "Tâche", "Pôle", "Responsable", "Client / Dossier", "Retard"]],
+      head: [["État", "Tâche", "Pôle", "Responsable", "Retard"]],
       body: [
         ...rows.map((p) => [
           p.etat,
-          txt(p.titre),
+          libelleTache(p.titre, p.contexte),
           txt(p.pole),
           txt(p.responsable, "Non assignée"),
-          txt(p.contexte),
           p.joursRetard === null ? "—" : `${p.joursRetard} j`,
         ]),
-        ...(extra > 0 ? [[`... et ${extra} autres`, "", "", "", "", ""]] : []),
+        ...(extra > 0 ? [[`... et ${extra} autres`, "", "", "", ""]] : []),
       ],
+      styles: {
+        font: "helvetica",
+        fontSize: 7.2,
+        cellPadding: 0.95,
+        textColor: [40, 46, 56],
+        overflow: "hidden",
+        lineColor: [222, 227, 234],
+      },
       columnStyles: {
-        0: { cellWidth: 17, fontStyle: "bold" },
-        1: { cellWidth: 45 },
+        0: { cellWidth: 16, fontStyle: "bold" },
+        1: { cellWidth: "auto" },
         2: { cellWidth: 26 },
         3: { cellWidth: 28 },
-        4: { cellWidth: "auto" },
-        5: { cellWidth: 14, halign: "center" },
+        4: { cellWidth: 13, halign: "center" },
       },
       didParseCell: (data: any) => {
         if (data.section !== "body") return;
@@ -229,6 +235,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
         else if (etat === "Bloquée") data.cell.styles.fillColor = DANGER_BG;
       },
     });
+
   }
 
   // ---------- Activité par pôle ----------
