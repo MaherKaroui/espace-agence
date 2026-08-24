@@ -129,10 +129,10 @@ function GuideAssistantPage() {
 
   const phrases = equipe
     ? [
-        ["« Fais une demande de Qualiopi pour GHM Formation »", "prépare le dossier et la liste des pièces, à confirmer"],
-        ["« Qu'est-ce qui manque sur le dossier BELLIS ? »", "liste les pièces demandées et non déposées"],
+        ["« Fais une demande de Qualiopi pour ALPHA FORMATION »", "prépare le dossier et la liste des pièces, à confirmer"],
+        ["« Qu'est-ce qui manque sur le dossier CENTRE OMEGA ? »", "liste les pièces demandées et non déposées"],
         ["« Mes tâches en retard »", "vos tâches dont l'échéance est dépassée"],
-        ["« Crée une tâche de relance AFNOR pour jeudi »", "prépare la tâche avec son échéance, à confirmer"],
+        ["« Crée une tâche de relance BÊTA CONSEIL pour jeudi »", "prépare la tâche avec son échéance, à confirmer"],
         ["« Qu'est-ce qui risque de déraper cette semaine ? »", "dossiers stagnants et tâches en retard de votre périmètre"],
       ]
     : [
@@ -186,7 +186,7 @@ function GuideAssistantPage() {
             <Card className="space-y-3 p-4">
               <Bubble from="user">Je veux faire une demande de NDA</Bubble>
               <Bubble from="assistant">Bien sûr. Pour quel organisme de formation ?</Bubble>
-              <Bubble from="user">Pour SUP ACADEMY FRANCE</Bubble>
+              <Bubble from="user">Pour ALPHA FORMATION</Bubble>
               <Bubble from="assistant">
                 Voici ce que je vais créer. Confirmez et je m'en occupe.
               </Bubble>
@@ -198,7 +198,7 @@ function GuideAssistantPage() {
                   <span className="text-muted-foreground">Catégorie : </span>Demande de NDA
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Organisme : </span>SUP ACADEMY FRANCE
+                  <span className="text-muted-foreground">Organisme : </span>ALPHA FORMATION
                 </div>
                 <div className="text-muted-foreground">Statut initial : En attente</div>
                 <ul className="mt-2 space-y-1">
