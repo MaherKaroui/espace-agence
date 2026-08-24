@@ -663,7 +663,7 @@ function CalendrierQualiopi() {
               <div className="sm:col-span-2"><Label>Organisme de formation *</Label><Input value={editEvent.organism_name ?? ""} onChange={(e) => setEditEvent({ ...editEvent, organism_name: e.target.value })} /></div>
               <div><Label>Formation</Label><Input value={editEvent.formation ?? ""} onChange={(e) => setEditEvent({ ...editEvent, formation: e.target.value })} placeholder="AF, CFA, VAE…" /></div>
               <div><Label>Nom de l'auditeur</Label><Input value={editEvent.auditor_name ?? ""} onChange={(e) => setEditEvent({ ...editEvent, auditor_name: e.target.value })} /></div>
-              <div><Label>Certificateur</Label><Input value={editEvent.certifier_name ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certifier_name: e.target.value })} placeholder="CAPCERT, Qualipro…" /></div>
+              <div><Label>Certificateur</Label><Input value={editEvent.certifier_name ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certifier_name: e.target.value })} placeholder="Nom du certificateur" /></div>
               <div><Label>Certificat</Label><Input value={editEvent.certificate_status ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certificate_status: e.target.value })} /></div>
               <div className="sm:col-span-2">
                 <Label>Couleur</Label>
