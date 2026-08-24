@@ -116,67 +116,12 @@ export function NotificationsBell() {
     qc.invalidateQueries({ queryKey: ["notifications", user?.id] });
   };
 
-  const togglePush = async () => {
-    if (permission === "unsupported" || pushLoading) return;
-    setPushLoading(true);
-    try {
-      if (permission === "granted" && devicePushSaved) {
-        const reg = await navigator.serviceWorker.getRegistration("/");
-        const sub = await reg?.pushManager.getSubscription();
-        if (sub) {
-          await delSub({ data: { endpoint: sub.endpoint } }).catch(() => undefined);
-          await sub.unsubscribe().catch(() => undefined);
-        }
-        setBrowserNotifEnabled(false);
-        setDevicePushSaved(false);
-        toast.success("Notifications navigateur désactivées");
-        return;
-      }
-
-      const perm = await requestBrowserNotifPermission();
-      if (perm !== "granted") return;
-
-      const { key } = await getKey();
-      if (!key) throw new Error("Clé serveur indisponible");
-
-      const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
-      await reg.update().catch(() => undefined);
-      const readyReg = await navigator.serviceWorker.ready;
-      const existing = await readyReg.pushManager.getSubscription();
-      let sub = existing ?? await readyReg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
-      });
-
-      const saveCurrentSubscription = () => saveSub({
-        data: {
-          endpoint: sub.endpoint,
-          p256dh: bufToB64Url(sub.getKey("p256dh")),
-          auth: bufToB64Url(sub.getKey("auth")),
-          user_agent: navigator.userAgent,
-        },
-      });
-
-      try {
-        await saveCurrentSubscription();
-      } catch {
-        await sub.unsubscribe().catch(() => undefined);
-        sub = await readyReg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
-        });
-        await saveCurrentSubscription();
-      }
-      setBrowserNotifEnabled(true);
-      setDevicePushSaved(true);
-      toast.success("Notifications navigateur activées pour ce compte");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Impossible d'activer les notifications navigateur");
-    } finally {
-      setPermTick((v) => v + 1);
-      setPushLoading(false);
-    }
+  // Délègue au hook partagé : correctif Safari + messages d'aide inclus.
+  const togglePush = () => {
+    if (!push.supported || push.loading) return;
+    void (enabled ? push.disable() : push.enable());
   };
+
 
   return (
     <Popover>
