@@ -2,7 +2,10 @@ import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { parseQualiopiWorkbook, normalizeKey } from "@/lib/qualiopi-xlsx";
+import {
+  parseQualiopiWorkbook, normalizeKey, jourFr, downloadQualiopiWorkbook,
+  type ParsedRow, type SheetReport,
+} from "@/lib/qualiopi-xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useRole } from "@/hooks/use-role";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,16 +16,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Upload, Trash2, Pencil, ListChecks, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Upload, Download, Trash2, Pencil, ListChecks } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/calendrier-qualiopi")({
   head: () => ({
     meta: [
       { title: "Calendrier Qualiopi — IZISuivis" },
-      { name: "description", content: "Agenda et suivi Qualiopi centralisés." },
+      { name: "description", content: "Agenda des audits Qualiopi et suivi des demandes en cours." },
     ],
   }),
   component: CalendrierQualiopi,
@@ -82,17 +84,11 @@ const CERT_COLOR_RULES: Array<{ key: string; color: ColorTag; label: string }> =
   { key: "afnor", color: "gris", label: "AFNOR" },
 ];
 function normalizeCert(s?: string | null): string {
-  return (s ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, "");
+  return (s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "");
 }
 function autoColor(_auditor?: string | null, certifier?: string | null, certOrg?: string | null): ColorTag | null {
   const c = normalizeCert((certifier ?? "") + " " + (certOrg ?? ""));
-  for (const rule of CERT_COLOR_RULES) {
-    if (c.includes(rule.key)) return rule.color;
-  }
+  for (const rule of CERT_COLOR_RULES) if (c.includes(rule.key)) return rule.color;
   return null;
 }
 function effectiveColor(e: Partial<CalEvent>): ColorTag | null {
@@ -101,16 +97,17 @@ function effectiveColor(e: Partial<CalEvent>): ColorTag | null {
   return autoColor(e.auditor_name, e.certifier_name, e.certifier_organization);
 }
 
-
 type CalEvent = {
   id: string;
-  audit_date: string;
+  tuteur: string | null;
+  audit_date: string | null;
   organism_name: string;
   formation: string | null;
   auditor_name: string | null;
   certifier_name: string | null;
   certifier_organization: string | null;
   certificate_status: string | null;
+  notes_suivi: string | null;
   status: EventStatus;
   observation: string | null;
   dossier_id: string | null;
@@ -128,12 +125,18 @@ type Pending = {
   dossier_id: string | null;
 };
 
-const JOURS = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-function fmtJour(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
-  return JOURS[d.getDay()] ?? "";
-}
+const EVENT_COLUMNS =
+  "id, tuteur, audit_date, organism_name, formation, auditor_name, certifier_name, certifier_organization, certificate_status, notes_suivi, status, observation, dossier_id, color_tag, color_manual";
+
 function ym(d: Date) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; }
+
+type ImportPlan = {
+  sheets: SheetReport[];
+  problems: string[];
+  creates: ParsedRow[];
+  updates: Array<{ id: string; row: ParsedRow; patch: Record<string, unknown> }>;
+  unchanged: number;
+};
 
 function CalendrierQualiopi() {
   const { isStaff } = useRole();
@@ -147,30 +150,46 @@ function CalendrierQualiopi() {
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [editEvent, setEditEvent] = useState<Partial<CalEvent> | null>(null);
   const [editPending, setEditPending] = useState<Partial<Pending> | null>(null);
-  const [importPreview, setImportPreview] = useState<{ newEvents: any[]; updEvents: any[]; newPendings: any[]; updPendings: any[] } | null>(null);
+  const [importPlan, setImportPlan] = useState<ImportPlan | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const monthStart = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth(), 1), [cursor]);
   const monthEnd = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0), [cursor]);
   const monthLabel = cursor.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 
+  const fmtLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
   const eventsQ = useQuery({
     queryKey: ["qcal-events", ym(cursor)],
     enabled: !!user,
     queryFn: async () => {
-      const from = monthStart.toISOString().slice(0, 10);
-      const to = monthEnd.toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from("qualiopi_calendar_events" as any)
-        .select("id, audit_date, organism_name, formation, auditor_name, certifier_name, certifier_organization, certificate_status, status, observation, dossier_id, color_tag, color_manual")
-        .gte("audit_date", from)
-        .lte("audit_date", to)
+        .select(EVENT_COLUMNS)
+        .gte("audit_date", fmtLocal(monthStart))
+        .lte("audit_date", fmtLocal(monthEnd))
         .order("audit_date", { ascending: true });
       if (error) throw error;
       return (data ?? []) as unknown as CalEvent[];
     },
   });
 
+  // Demandes en cours = évènements sans date d'audit (feuille « Demande En cours »)
+  const demandesQ = useQuery({
+    queryKey: ["qcal-demandes"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("qualiopi_calendar_events" as any)
+        .select(EVENT_COLUMNS)
+        .is("audit_date", null)
+        .order("organism_name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as CalEvent[];
+    },
+  });
+
+  // Ancien suivi (table qualiopi_pending_requests) — conservé, affiché en complément
   const pendingQ = useQuery({
     queryKey: ["qcal-pending"],
     enabled: !!user,
@@ -185,28 +204,29 @@ function CalendrierQualiopi() {
   });
 
   const events = eventsQ.data ?? [];
+  const demandes = demandesQ.data ?? [];
   const pendings = pendingQ.data ?? [];
 
-  const filtered = useMemo(() => {
-    return events.filter((e) => {
-      if (filterOrg && !e.organism_name.toLowerCase().includes(filterOrg.toLowerCase())) return false;
-      if (filterCertifier && !(e.certifier_name ?? "").toLowerCase().includes(filterCertifier.toLowerCase()) && !(e.certifier_organization ?? "").toLowerCase().includes(filterCertifier.toLowerCase())) return false;
-      if (filterAuditor && !(e.auditor_name ?? "").toLowerCase().includes(filterAuditor.toLowerCase())) return false;
-      if (filterStatus && e.status !== filterStatus) return false;
-      return true;
-    });
-  }, [events, filterOrg, filterCertifier, filterAuditor, filterStatus]);
+  const filtered = useMemo(() => events.filter((e) => {
+    if (filterOrg && !e.organism_name.toLowerCase().includes(filterOrg.toLowerCase())) return false;
+    if (filterCertifier && !(e.certifier_name ?? "").toLowerCase().includes(filterCertifier.toLowerCase()) && !(e.certifier_organization ?? "").toLowerCase().includes(filterCertifier.toLowerCase())) return false;
+    if (filterAuditor && !(e.auditor_name ?? "").toLowerCase().includes(filterAuditor.toLowerCase())) return false;
+    if (filterStatus && e.status !== filterStatus) return false;
+    return true;
+  }), [events, filterOrg, filterCertifier, filterAuditor, filterStatus]);
 
   const saveEvent = useMutation({
     mutationFn: async (payload: Partial<CalEvent>) => {
       const body: any = {
-        audit_date: payload.audit_date,
+        tuteur: payload.tuteur || null,
+        audit_date: payload.audit_date || null,
         organism_name: payload.organism_name,
         formation: payload.formation || null,
         auditor_name: payload.auditor_name || null,
         certifier_name: payload.certifier_name || null,
         certifier_organization: payload.certifier_organization || null,
         certificate_status: payload.certificate_status || null,
+        notes_suivi: payload.notes_suivi || null,
         status: payload.status || "planifie",
         observation: payload.observation || null,
         dossier_id: payload.dossier_id || null,
@@ -227,6 +247,7 @@ function CalendrierQualiopi() {
       toast.success("Enregistré");
       setEditEvent(null);
       qc.invalidateQueries({ queryKey: ["qcal-events"] });
+      qc.invalidateQueries({ queryKey: ["qcal-demandes"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
@@ -239,6 +260,7 @@ function CalendrierQualiopi() {
     onSuccess: () => {
       toast.success("Supprimé");
       qc.invalidateQueries({ queryKey: ["qcal-events"] });
+      qc.invalidateQueries({ queryKey: ["qcal-demandes"] });
     },
   });
 
@@ -254,14 +276,8 @@ function CalendrierQualiopi() {
         dossier_id: payload.dossier_id || null,
         updated_by: user?.id ?? null,
       };
-      if (payload.id) {
-        const { error } = await supabase.from("qualiopi_pending_requests" as any).update(body).eq("id", payload.id);
-        if (error) throw error;
-      } else {
-        body.created_by = user?.id ?? null;
-        const { error } = await supabase.from("qualiopi_pending_requests" as any).insert(body);
-        if (error) throw error;
-      }
+      const { error } = await supabase.from("qualiopi_pending_requests" as any).update(body).eq("id", payload.id!);
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Enregistré");
@@ -279,61 +295,55 @@ function CalendrierQualiopi() {
     onSuccess: () => { toast.success("Supprimé"); qc.invalidateQueries({ queryKey: ["qcal-pending"] }); },
   });
 
+  const exportXlsx = async () => {
+    const { data, error } = await supabase.from("qualiopi_calendar_events" as any).select(EVENT_COLUMNS);
+    if (error) { toast.error(error.message); return; }
+    const rows = (data ?? []) as unknown as CalEvent[];
+    downloadQualiopiWorkbook(rows, cursor.getFullYear());
+    toast.success(`${rows.length} ligne(s) exportée(s)`);
+  };
+
   const importXlsx = async (file: File) => {
     try {
       const buf = await file.arrayBuffer();
-      const { events: parsedEvents, pendings: parsedPendings } = parseQualiopiWorkbook(buf);
-      if (parsedEvents.length === 0 && parsedPendings.length === 0) {
-        toast.error("Aucune ligne exploitable dans ce fichier");
-        return;
+      const parsed = parseQualiopiWorkbook(buf);
+      if (parsed.rows.length === 0 && parsed.problems.length > 0) {
+        toast.error(parsed.problems[0]);
       }
 
-      // Existing data (all months) to merge updates instead of duplicating
-      const [{ data: exEvents, error: e1 }, { data: exPendings, error: e2 }] = await Promise.all([
-        supabase.from("qualiopi_calendar_events" as any).select("id, audit_date, organism_name, formation, auditor_name, certifier_name, certificate_status"),
-        supabase.from("qualiopi_pending_requests" as any).select("id, organism_name, certifier, observation, followup_status"),
-      ]);
-      if (e1) throw e1;
-      if (e2) throw e2;
+      const { data: existing, error } = await supabase
+        .from("qualiopi_calendar_events" as any)
+        .select(EVENT_COLUMNS);
+      if (error) throw error;
 
-      const evIndex = new Map<string, any>();
-      ((exEvents ?? []) as any[]).forEach((e) => evIndex.set(`${e.audit_date}|${normalizeKey(e.organism_name)}`, e));
-      const pdIndex = new Map<string, any>();
-      ((exPendings ?? []) as any[]).forEach((p) => pdIndex.set(normalizeKey(p.organism_name), p));
+      // Clés de dédoublonnage : organisme + date, ou organisme + formation pour les demandes
+      const byDate = new Map<string, any>();
+      const byFormation = new Map<string, any>();
+      ((existing ?? []) as any[]).forEach((e) => {
+        if (e.audit_date) byDate.set(`${e.audit_date}|${normalizeKey(e.organism_name)}`, e);
+        else byFormation.set(`${normalizeKey(e.organism_name)}|${normalizeKey(e.formation)}`, e);
+      });
 
-      const newEvents: any[] = [];
-      const updEvents: any[] = [];
-      for (const ev of parsedEvents) {
-        const existing = evIndex.get(`${ev.audit_date}|${normalizeKey(ev.organism_name)}`);
-        if (!existing) {
-          newEvents.push(ev);
-          continue;
-        }
-        const patch: Record<string, any> = {};
-        (["formation", "auditor_name", "certifier_name", "certificate_status"] as const).forEach((k) => {
-          const v = (ev as any)[k];
-          if (v && v !== existing[k]) patch[k] = v;
+      const creates: ParsedRow[] = [];
+      const updates: ImportPlan["updates"] = [];
+      let unchanged = 0;
+      const FIELDS = ["tuteur", "formation", "auditor_name", "certifier_name", "certificate_status", "notes_suivi", "observation"] as const;
+
+      for (const row of parsed.rows) {
+        const found = row.audit_date
+          ? byDate.get(`${row.audit_date}|${normalizeKey(row.organism_name)}`)
+          : byFormation.get(`${normalizeKey(row.organism_name)}|${normalizeKey(row.formation)}`);
+        if (!found) { creates.push(row); continue; }
+        const patch: Record<string, unknown> = {};
+        FIELDS.forEach((k) => {
+          const v = (row as any)[k];
+          if (v && v !== found[k]) patch[k] = v;
         });
-        if (Object.keys(patch).length > 0) updEvents.push({ id: existing.id, ...ev, ...patch, _patch: patch });
+        if (Object.keys(patch).length > 0) updates.push({ id: found.id, row, patch });
+        else unchanged++;
       }
 
-      const newPendings: any[] = [];
-      const updPendings: any[] = [];
-      for (const p of parsedPendings) {
-        const existing = pdIndex.get(normalizeKey(p.organism_name));
-        if (!existing) {
-          newPendings.push(p);
-          continue;
-        }
-        const patch: Record<string, any> = {};
-        (["certifier", "observation", "followup_status"] as const).forEach((k) => {
-          const v = (p as any)[k];
-          if (v && v !== existing[k]) patch[k] = v;
-        });
-        if (Object.keys(patch).length > 0) updPendings.push({ id: existing.id, ...p, ...patch, _patch: patch });
-      }
-
-      setImportPreview({ newEvents, updEvents, newPendings, updPendings });
+      setImportPlan({ sheets: parsed.sheets, problems: parsed.problems, creates, updates, unchanged });
     } catch (e: any) {
       toast.error(e.message ?? "Import impossible");
     }
@@ -341,44 +351,53 @@ function CalendrierQualiopi() {
 
   const confirmImport = useMutation({
     mutationFn: async () => {
-      if (!importPreview) return;
-      const { newEvents, updEvents, newPendings, updPendings } = importPreview;
-      if (newEvents.length > 0) {
-        const rows = newEvents.map((e) => ({ ...e, status: "planifie", created_by: user?.id ?? null }));
+      if (!importPlan) return;
+      const { creates, updates } = importPlan;
+      if (creates.length > 0) {
+        const rows = creates.map((r) => ({
+          tuteur: r.tuteur,
+          audit_date: r.audit_date,
+          organism_name: r.organism_name,
+          formation: r.formation,
+          auditor_name: r.auditor_name,
+          certifier_name: r.certifier_name,
+          certificate_status: r.certificate_status,
+          notes_suivi: r.notes_suivi,
+          observation: r.observation,
+          status: "planifie",
+          created_by: user?.id ?? null,
+        }));
         const { error } = await supabase.from("qualiopi_calendar_events" as any).insert(rows as any);
         if (error) throw error;
       }
-      for (const e of updEvents) {
+      for (const u of updates) {
         const { error } = await supabase
           .from("qualiopi_calendar_events" as any)
-          .update({ ...e._patch, updated_by: user?.id ?? null } as any)
-          .eq("id", e.id);
+          .update({ ...u.patch, updated_by: user?.id ?? null } as any)
+          .eq("id", u.id);
         if (error) throw error;
       }
-      if (newPendings.length > 0) {
-        const rows = newPendings.map((p) => ({ ...p, created_by: user?.id ?? null }));
-        const { error } = await supabase.from("qualiopi_pending_requests" as any).insert(rows as any);
-        if (error) throw error;
-      }
-      for (const p of updPendings) {
-        const { error } = await supabase
-          .from("qualiopi_pending_requests" as any)
-          .update({ ...p._patch, updated_by: user?.id ?? null } as any)
-          .eq("id", p.id);
-        if (error) throw error;
-      }
+      await supabase.rpc("log_event" as any, {
+        _action: "qualiopi_calendar_import",
+        _entity_type: "qualiopi_calendar_events",
+        _entity_id: null,
+        _severity: "info",
+        _metadata: {
+          created: creates.length,
+          updated: updates.length,
+          unchanged: importPlan.unchanged,
+          sheets: importPlan.sheets.map((s) => ({ sheet: s.sheet, kind: s.kind, kept: s.kept })),
+        },
+      } as any);
     },
     onSuccess: () => {
-      const n = importPreview ? importPreview.newEvents.length + importPreview.newPendings.length : 0;
-      const u = importPreview ? importPreview.updEvents.length + importPreview.updPendings.length : 0;
-      toast.success(`Import terminé — ${n} ajout(s), ${u} mise(s) à jour`);
-      setImportPreview(null);
+      toast.success(`Import terminé — ${importPlan?.creates.length ?? 0} création(s), ${importPlan?.updates.length ?? 0} mise(s) à jour`);
+      setImportPlan(null);
       qc.invalidateQueries({ queryKey: ["qcal-events"] });
-      qc.invalidateQueries({ queryKey: ["qcal-pending"] });
+      qc.invalidateQueries({ queryKey: ["qcal-demandes"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erreur import"),
   });
-
 
   if (!isStaff) {
     return <Card className="p-6 text-sm">Accès réservé à l'équipe.</Card>;
@@ -386,6 +405,7 @@ function CalendrierQualiopi() {
 
   const byDay = new Map<string, CalEvent[]>();
   filtered.forEach((e) => {
+    if (!e.audit_date) return;
     const arr = byDay.get(e.audit_date) ?? [];
     arr.push(e);
     byDay.set(e.audit_date, arr);
@@ -396,162 +416,195 @@ function CalendrierQualiopi() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl flex items-center gap-2"><CalendarDays className="h-6 w-6 text-primary" /> Calendrier Qualiopi</h1>
-          <p className="text-sm text-muted-foreground">Agenda des audits et suivi des demandes en cours.</p>
+          <p className="text-sm text-muted-foreground">Structure du fichier de référence : demandes en cours, puis un onglet par mois.</p>
         </div>
         <div className="flex items-center gap-2">
           <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) importXlsx(f); e.target.value = ""; }} />
+          <Button variant="outline" onClick={exportXlsx}><Download className="h-4 w-4 mr-2" /> Exporter Excel</Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()}>
-            <Upload className="h-4 w-4 mr-2" /> Importer Excel
+            <Upload className="h-4 w-4 mr-2" /> Importer un fichier Excel
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="calendrier">
-        <TabsList>
-          <TabsTrigger value="calendrier"><CalendarDays className="h-4 w-4 mr-2" /> Calendrier</TabsTrigger>
-          <TabsTrigger value="demandes"><ListChecks className="h-4 w-4 mr-2" /> Demandes en cours ({pendings.length})</TabsTrigger>
-        </TabsList>
+      {/* ===== Demandes en cours (sans date d'audit) ===== */}
+      <Card className="overflow-hidden">
+        <div className="flex items-center justify-between gap-2 p-3 border-b bg-muted/30">
+          <div className="font-medium flex items-center gap-2"><ListChecks className="h-4 w-4" /> Demandes en cours ({demandes.length})</div>
+          <Button size="sm" variant="outline" onClick={() => setEditEvent({ audit_date: null, status: "en_attente" })}>
+            <Plus className="h-4 w-4 mr-1" /> Nouvelle demande
+          </Button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
+              <tr>
+                <th className="text-left p-2">Tuteur</th>
+                <th className="text-left p-2">Organisme de formation</th>
+                <th className="text-left p-2">Formation</th>
+                <th className="text-left p-2">Certificateur</th>
+                <th className="text-left p-2">Observation</th>
+                <th className="p-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {demandes.length === 0 && (
+                <tr><td colSpan={6} className="p-4 text-center text-muted-foreground">Aucune demande sans date d'audit.</td></tr>
+              )}
+              {demandes.map((d) => (
+                <tr key={d.id} className="border-t align-top">
+                  <td className="p-2">{d.tuteur ?? "—"}</td>
+                  <td className="p-2 font-medium">{d.organism_name}</td>
+                  <td className="p-2">{d.formation ?? "—"}</td>
+                  <td className="p-2">{d.certifier_name || d.certifier_organization || "—"}</td>
+                  <td className="p-2 whitespace-pre-wrap max-w-md">{d.observation ?? "—"}</td>
+                  <td className="p-2 text-right whitespace-nowrap">
+                    <Button variant="ghost" size="icon" onClick={() => setEditEvent(d)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => { if (confirm("Supprimer cette demande ?")) deleteEvent.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
-        <TabsContent value="calendrier" className="space-y-3">
-          <Card className="p-3 flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
-            <div className="capitalize font-medium min-w-[180px] text-center">{monthLabel}</div>
-            <Button variant="outline" size="sm" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}><ChevronRight className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="sm" onClick={() => setCursor(new Date())}>Aujourd'hui</Button>
-            <div className="flex-1" />
-            <Select value={viewMode} onValueChange={(v) => setViewMode(v as any)}>
-              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="liste">Vue liste</SelectItem>
-                <SelectItem value="mois">Vue mois</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button size="sm" onClick={() => setEditEvent({ audit_date: new Date().toISOString().slice(0, 10), status: "planifie" })}>
-              <Plus className="h-4 w-4 mr-1" /> Nouvel audit
-            </Button>
-          </Card>
+      {/* ===== Vue par mois ===== */}
+      <Card className="p-3 flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
+        <div className="capitalize font-medium min-w-[180px] text-center">{monthLabel}</div>
+        <Button variant="outline" size="sm" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}><ChevronRight className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="sm" onClick={() => setCursor(new Date())}>Aujourd'hui</Button>
+        <div className="flex-1" />
+        <Select value={viewMode} onValueChange={(v) => setViewMode(v as any)}>
+          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="liste">Vue liste</SelectItem>
+            <SelectItem value="mois">Vue mois</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button size="sm" onClick={() => setEditEvent({ audit_date: fmtLocal(new Date()), status: "planifie" })}>
+          <Plus className="h-4 w-4 mr-1" /> Nouvel audit
+        </Button>
+      </Card>
 
-          <Card className="p-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <Input placeholder="Organisme" value={filterOrg} onChange={(e) => setFilterOrg(e.target.value)} />
-            <Input placeholder="Auditeur" value={filterAuditor} onChange={(e) => setFilterAuditor(e.target.value)} />
-            <Input placeholder="Certificateur" value={filterCertifier} onChange={(e) => setFilterCertifier(e.target.value)} />
-            <Select value={filterStatus || "all"} onValueChange={(v) => setFilterStatus(v === "all" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Statut" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous statuts</SelectItem>
-                {(Object.keys(STATUS_LABELS) as EventStatus[]).map((s) => (
-                  <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Card>
-
-          <Card className="p-3 flex flex-wrap items-center gap-3 text-xs">
-            <span className="font-medium text-muted-foreground">Couleurs par certificateur :</span>
-            {CERT_COLOR_RULES.map((r) => (
-              <span key={r.key} className="inline-flex items-center gap-1.5">
-                <span className={`h-3 w-3 rounded-full ${COLOR_DOT[r.color]}`} />
-                {r.label}
-              </span>
+      <Card className="p-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <Input placeholder="Organisme" value={filterOrg} onChange={(e) => setFilterOrg(e.target.value)} />
+        <Input placeholder="Auditeur" value={filterAuditor} onChange={(e) => setFilterAuditor(e.target.value)} />
+        <Input placeholder="Certificateur" value={filterCertifier} onChange={(e) => setFilterCertifier(e.target.value)} />
+        <Select value={filterStatus || "all"} onValueChange={(v) => setFilterStatus(v === "all" ? "" : v)}>
+          <SelectTrigger><SelectValue placeholder="Statut" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous statuts</SelectItem>
+            {(Object.keys(STATUS_LABELS) as EventStatus[]).map((s) => (
+              <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
             ))}
-            <span className="text-muted-foreground ml-2">• Autre certificateur : sans couleur</span>
-          </Card>
+          </SelectContent>
+        </Select>
+      </Card>
 
+      <Card className="p-3 flex flex-wrap items-center gap-3 text-xs">
+        <span className="font-medium text-muted-foreground">Couleurs par certificateur :</span>
+        {CERT_COLOR_RULES.map((r) => (
+          <span key={r.key} className="inline-flex items-center gap-1.5">
+            <span className={`h-3 w-3 rounded-full ${COLOR_DOT[r.color]}`} />
+            {r.label}
+          </span>
+        ))}
+        <span className="text-muted-foreground ml-2">• Autre certificateur : sans couleur</span>
+      </Card>
 
-          {eventsQ.isLoading ? (
-            <p className="text-sm text-muted-foreground">Chargement…</p>
-          ) : viewMode === "liste" ? (
-            <Card className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/40">
-                  <tr>
-                    <th className="text-left p-2">Date</th>
-                    <th className="text-left p-2">Jour</th>
-                    <th className="text-left p-2">Organisme</th>
-                    <th className="text-left p-2">Formation</th>
-                    <th className="text-left p-2">Auditeur</th>
-                    <th className="text-left p-2">Certificateur</th>
-                    <th className="text-left p-2">Certificat</th>
-                    <th className="text-left p-2">Statut</th>
-                    <th className="p-2"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.length === 0 && (
-                    <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">Aucun évènement ce mois-ci.</td></tr>
-                  )}
-                  {filtered.map((e) => {
-                    const col = effectiveColor(e);
-                    return (
-                    <tr key={e.id} className="border-t">
-                      <td className="p-2 whitespace-nowrap align-middle">
-                        <div className="flex items-center gap-2">
-                          <span className={`inline-block h-3 w-3 rounded-full ${col ? COLOR_DOT[col] : "bg-transparent border border-border"}`} title={col ? COLOR_LABELS[col] : "Sans couleur"} />
-                          <span>{e.audit_date}</span>
-                        </div>
-                      </td>
-                      <td className="p-2 whitespace-nowrap text-muted-foreground">{fmtJour(e.audit_date)}</td>
-                      <td className="p-2 font-medium">{e.organism_name}</td>
-                      <td className="p-2">{e.formation ?? "—"}</td>
-                      <td className="p-2">{e.auditor_name ?? "—"}</td>
-                      <td className="p-2">{e.certifier_name || e.certifier_organization || "—"}</td>
-                      <td className="p-2">{e.certificate_status ?? "—"}</td>
-                      <td className="p-2">
-                        <div className="flex flex-col gap-1">
-                          <Badge className={STATUS_COLORS[e.status]}>{STATUS_LABELS[e.status]}</Badge>
-                          {col && <Badge variant="outline" className={COLOR_CLASSES[col]}>{COLOR_LABELS[col]}</Badge>}
-                        </div>
-                      </td>
-                      <td className="p-2 text-right whitespace-nowrap">
-                        <Button variant="ghost" size="icon" onClick={() => setEditEvent(e)}><Pencil className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => { if (confirm("Supprimer cet évènement ?")) deleteEvent.mutate(e.id); }}><Trash2 className="h-4 w-4" /></Button>
-                      </td>
-                    </tr>
-                  );})}
-                </tbody>
-              </table>
-            </Card>
-          ) : (
-            <Card className="p-3">
-              <div className="grid grid-cols-7 gap-1 text-xs">
-                {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => (
-                  <div key={d} className="p-2 text-center font-medium text-muted-foreground">{d}</div>
-                ))}
-                {(() => {
-                  const cells: React.ReactNode[] = [];
-                  const first = monthStart;
-                  const firstWeekday = (first.getDay() + 6) % 7; // Monday=0
-                  for (let i = 0; i < firstWeekday; i++) cells.push(<div key={`pad-${i}`} />);
-                  for (let d = 1; d <= monthEnd.getDate(); d++) {
-                    const dateStr = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-                    const dayEvents = byDay.get(dateStr) ?? [];
-                    cells.push(
-                      <div key={dateStr} className="border rounded-md min-h-[90px] p-1 flex flex-col gap-1">
-                        <div className="text-xs font-medium">{d}</div>
-                        {dayEvents.map((ev) => {
-                          const col = effectiveColor(ev);
-                          const cls = col ? COLOR_CLASSES[col] : STATUS_COLORS[ev.status];
-                          return (
-                          <button key={ev.id} onClick={() => setEditEvent(ev)} className={`text-left text-[10px] truncate rounded px-1 py-0.5 border ${cls}`}>
-                            {ev.organism_name}{ev.formation ? ` — ${ev.formation}` : ""}
-                          </button>
-                        );})}
+      {eventsQ.isLoading ? (
+        <p className="text-sm text-muted-foreground">Chargement…</p>
+      ) : viewMode === "liste" ? (
+        <Card className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40">
+              <tr>
+                <th className="text-left p-2">Tuteur</th>
+                <th className="text-left p-2">Date</th>
+                <th className="text-left p-2">Jour</th>
+                <th className="text-left p-2">Organisme</th>
+                <th className="text-left p-2">Formation</th>
+                <th className="text-left p-2">Auditeur</th>
+                <th className="text-left p-2">Certificateur</th>
+                <th className="text-left p-2">Certificat</th>
+                <th className="text-left p-2">Notes de suivi</th>
+                <th className="p-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr><td colSpan={10} className="p-4 text-center text-muted-foreground">Aucun évènement ce mois-ci.</td></tr>
+              )}
+              {filtered.map((e) => {
+                const col = effectiveColor(e);
+                return (
+                  <tr key={e.id} className="border-t align-top">
+                    <td className="p-2 whitespace-nowrap">{e.tuteur ?? "—"}</td>
+                    <td className="p-2 whitespace-nowrap align-middle">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-block h-3 w-3 rounded-full ${col ? COLOR_DOT[col] : "bg-transparent border border-border"}`} title={col ? COLOR_LABELS[col] : "Sans couleur"} />
+                        <span>{e.audit_date ?? "—"}</span>
                       </div>
-                    );
-                  }
-                  return cells;
-                })()}
-              </div>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="demandes" className="space-y-3">
-          <div className="flex justify-end">
-            <Button size="sm" onClick={() => setEditPending({ followup_status: "autre" })}><Plus className="h-4 w-4 mr-1" /> Nouvelle demande</Button>
+                    </td>
+                    <td className="p-2 whitespace-nowrap text-muted-foreground">{jourFr(e.audit_date) || "—"}</td>
+                    <td className="p-2 font-medium">{e.organism_name}</td>
+                    <td className="p-2">{e.formation ?? "—"}</td>
+                    <td className="p-2">{e.auditor_name ?? "—"}</td>
+                    <td className="p-2">{e.certifier_name || e.certifier_organization || "—"}</td>
+                    <td className="p-2">{e.certificate_status ?? "—"}</td>
+                    <td className="p-2 whitespace-pre-wrap max-w-xs">{e.notes_suivi ?? "—"}</td>
+                    <td className="p-2 text-right whitespace-nowrap">
+                      <Button variant="ghost" size="icon" onClick={() => setEditEvent(e)}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => { if (confirm("Supprimer cet évènement ?")) deleteEvent.mutate(e.id); }}><Trash2 className="h-4 w-4" /></Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </Card>
+      ) : (
+        <Card className="p-3">
+          <div className="grid grid-cols-7 gap-1 text-xs">
+            {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => (
+              <div key={d} className="p-2 text-center font-medium text-muted-foreground">{d}</div>
+            ))}
+            {(() => {
+              const cells: React.ReactNode[] = [];
+              const firstWeekday = (monthStart.getDay() + 6) % 7;
+              for (let i = 0; i < firstWeekday; i++) cells.push(<div key={`pad-${i}`} />);
+              for (let d = 1; d <= monthEnd.getDate(); d++) {
+                const dateStr = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                const dayEvents = byDay.get(dateStr) ?? [];
+                cells.push(
+                  <div key={dateStr} className="border rounded-md min-h-[90px] p-1 flex flex-col gap-1">
+                    <div className="text-xs font-medium">{d}</div>
+                    {dayEvents.map((ev) => {
+                      const col = effectiveColor(ev);
+                      const cls = col ? COLOR_CLASSES[col] : STATUS_COLORS[ev.status];
+                      return (
+                        <button key={ev.id} onClick={() => setEditEvent(ev)} className={`text-left text-[10px] truncate rounded px-1 py-0.5 border ${cls}`}>
+                          {ev.organism_name}{ev.formation ? ` — ${ev.formation}` : ""}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              }
+              return cells;
+            })()}
           </div>
-          <Card className="overflow-x-auto">
+        </Card>
+      )}
+
+      {/* ===== Ancien suivi conservé ===== */}
+      {pendings.length > 0 && (
+        <Card className="overflow-hidden">
+          <div className="p-3 border-b bg-muted/30 font-medium">Suivi historique des demandes ({pendings.length})</div>
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40">
                 <tr>
@@ -564,9 +617,6 @@ function CalendrierQualiopi() {
                 </tr>
               </thead>
               <tbody>
-                {pendings.length === 0 && (
-                  <tr><td colSpan={6} className="p-4 text-center text-muted-foreground">Aucune demande en cours.</td></tr>
-                )}
                 {pendings.map((p) => (
                   <tr key={p.id} className="border-t align-top">
                     <td className="p-2 font-medium">{p.organism_name}</td>
@@ -582,17 +632,22 @@ function CalendrierQualiopi() {
                 ))}
               </tbody>
             </table>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          </div>
+        </Card>
+      )}
 
       {/* Event dialog */}
       <Dialog open={!!editEvent} onOpenChange={(o) => !o && setEditEvent(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>{editEvent?.id ? "Modifier l'audit" : "Nouvel audit"}</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editEvent?.id ? "Modifier la ligne" : editEvent?.audit_date ? "Nouvel audit" : "Nouvelle demande"}</DialogTitle></DialogHeader>
           {editEvent && (
             <div className="grid gap-3 sm:grid-cols-2">
-              <div><Label>Date</Label><Input type="date" value={editEvent.audit_date ?? ""} onChange={(e) => setEditEvent({ ...editEvent, audit_date: e.target.value })} /></div>
+              <div><Label>Tuteur</Label><Input value={editEvent.tuteur ?? ""} onChange={(e) => setEditEvent({ ...editEvent, tuteur: e.target.value })} placeholder="Chanez (demande)…" /></div>
+              <div>
+                <Label>Date d'audit</Label>
+                <Input type="date" value={editEvent.audit_date ?? ""} onChange={(e) => setEditEvent({ ...editEvent, audit_date: e.target.value || null })} />
+                <p className="text-xs text-muted-foreground mt-1">Vide = demande en cours, non planifiée.</p>
+              </div>
               <div>
                 <Label>Statut</Label>
                 <Select value={editEvent.status ?? "planifie"} onValueChange={(v) => setEditEvent({ ...editEvent, status: v as EventStatus })}>
@@ -604,12 +659,12 @@ function CalendrierQualiopi() {
                   </SelectContent>
                 </Select>
               </div>
+              <div><Label>Jour</Label><Input value={jourFr(editEvent.audit_date) || "—"} readOnly disabled /></div>
               <div className="sm:col-span-2"><Label>Organisme de formation *</Label><Input value={editEvent.organism_name ?? ""} onChange={(e) => setEditEvent({ ...editEvent, organism_name: e.target.value })} /></div>
-              <div><Label>Formation</Label><Input value={editEvent.formation ?? ""} onChange={(e) => setEditEvent({ ...editEvent, formation: e.target.value })} placeholder="AF, CFA, VAE, AF-CFA…" /></div>
+              <div><Label>Formation</Label><Input value={editEvent.formation ?? ""} onChange={(e) => setEditEvent({ ...editEvent, formation: e.target.value })} placeholder="AF, CFA, VAE…" /></div>
               <div><Label>Nom de l'auditeur</Label><Input value={editEvent.auditor_name ?? ""} onChange={(e) => setEditEvent({ ...editEvent, auditor_name: e.target.value })} /></div>
-              <div><Label>Certificateur</Label><Input value={editEvent.certifier_name ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certifier_name: e.target.value })} placeholder="BCI, CAPCERT, Qualipro…" /></div>
-              <div><Label>Organisme certificateur</Label><Input value={editEvent.certifier_organization ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certifier_organization: e.target.value })} /></div>
-              <div className="sm:col-span-2"><Label>Certificat</Label><Input value={editEvent.certificate_status ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certificate_status: e.target.value })} /></div>
+              <div><Label>Certificateur</Label><Input value={editEvent.certifier_name ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certifier_name: e.target.value })} placeholder="CAPCERT, Qualipro…" /></div>
+              <div><Label>Certificat</Label><Input value={editEvent.certificate_status ?? ""} onChange={(e) => setEditEvent({ ...editEvent, certificate_status: e.target.value })} /></div>
               <div className="sm:col-span-2">
                 <Label>Couleur</Label>
                 <Select
@@ -619,9 +674,7 @@ function CalendrierQualiopi() {
                     else setEditEvent({ ...editEvent, color_tag: v as ColorTag, color_manual: true });
                   }}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="auto">
                       <span className="inline-flex items-center gap-2">
@@ -641,14 +694,15 @@ function CalendrierQualiopi() {
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">Un choix manuel reste prioritaire sur la règle automatique.</p>
               </div>
-              <div className="sm:col-span-2"><Label>Observation</Label><Textarea value={editEvent.observation ?? ""} onChange={(e) => setEditEvent({ ...editEvent, observation: e.target.value })} rows={3} /></div>
+              <div className="sm:col-span-2"><Label>Notes de suivi</Label><Textarea value={editEvent.notes_suivi ?? ""} onChange={(e) => setEditEvent({ ...editEvent, notes_suivi: e.target.value })} rows={2} /></div>
+              <div className="sm:col-span-2"><Label>Observation</Label><Textarea value={editEvent.observation ?? ""} onChange={(e) => setEditEvent({ ...editEvent, observation: e.target.value })} rows={2} /></div>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditEvent(null)}>Annuler</Button>
             <Button
               onClick={() => {
-                if (!editEvent?.audit_date || !editEvent?.organism_name) { toast.error("Date et organisme requis"); return; }
+                if (!editEvent?.organism_name) { toast.error("Organisme requis"); return; }
                 saveEvent.mutate(editEvent);
               }}
               disabled={saveEvent.isPending}
@@ -657,10 +711,10 @@ function CalendrierQualiopi() {
         </DialogContent>
       </Dialog>
 
-      {/* Pending dialog */}
+      {/* Pending dialog (suivi historique) */}
       <Dialog open={!!editPending} onOpenChange={(o) => !o && setEditPending(null)}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>{editPending?.id ? "Modifier la demande" : "Nouvelle demande en cours"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Modifier la demande</DialogTitle></DialogHeader>
           {editPending && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2"><Label>Organisme *</Label><Input value={editPending.organism_name ?? ""} onChange={(e) => setEditPending({ ...editPending, organism_name: e.target.value })} /></div>
@@ -676,7 +730,7 @@ function CalendrierQualiopi() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Priorité</Label><Input value={editPending.priority ?? ""} onChange={(e) => setEditPending({ ...editPending, priority: e.target.value })} placeholder="Haute, Moyenne, Basse" /></div>
+              <div><Label>Priorité</Label><Input value={editPending.priority ?? ""} onChange={(e) => setEditPending({ ...editPending, priority: e.target.value })} /></div>
               <div><Label>Échéance</Label><Input type="date" value={editPending.due_date ?? ""} onChange={(e) => setEditPending({ ...editPending, due_date: e.target.value })} /></div>
               <div className="sm:col-span-2"><Label>Observation</Label><Textarea rows={4} value={editPending.observation ?? ""} onChange={(e) => setEditPending({ ...editPending, observation: e.target.value })} /></div>
             </div>
@@ -694,54 +748,92 @@ function CalendrierQualiopi() {
         </DialogContent>
       </Dialog>
 
-      {/* Import preview */}
-      <Dialog open={!!importPreview} onOpenChange={(o) => !o && setImportPreview(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader><DialogTitle>Aperçu de l'import</DialogTitle></DialogHeader>
-          {importPreview && (
+      {/* Aperçu d'import */}
+      <Dialog open={!!importPlan} onOpenChange={(o) => !o && setImportPlan(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Aperçu de l'import — aucune écriture pour l'instant</DialogTitle></DialogHeader>
+          {importPlan && (
             <div className="space-y-3 text-sm">
               <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">{importPreview.newEvents.length} nouveaux audits</Badge>
-                <Badge variant="outline">{importPreview.updEvents.length} audits mis à jour</Badge>
-                <Badge variant="outline">{importPreview.newPendings.length} nouvelles demandes</Badge>
-                <Badge variant="outline">{importPreview.updPendings.length} demandes mises à jour</Badge>
+                <Badge variant="outline">{importPlan.creates.length} création(s)</Badge>
+                <Badge variant="outline">{importPlan.updates.length} mise(s) à jour</Badge>
+                <Badge variant="outline">{importPlan.unchanged} inchangée(s)</Badge>
+                <Badge variant="outline">0 suppression</Badge>
               </div>
-              {[...importPreview.newEvents, ...importPreview.updEvents].length > 0 && (
+              {importPlan.problems.length > 0 && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/5 p-2 space-y-1">
+                  {importPlan.problems.map((p, i) => <div key={i} className="text-destructive text-xs">{p}</div>)}
+                </div>
+              )}
+              <div className="border rounded-md overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/40">
+                    <tr>
+                      <th className="p-2 text-left">Feuille</th>
+                      <th className="p-2 text-left">Type</th>
+                      <th className="p-2 text-left">Lignes lues</th>
+                      <th className="p-2 text-left">Retenues</th>
+                      <th className="p-2 text-left">Ignorées (motif)</th>
+                      <th className="p-2 text-left">Colonnes non reconnues</th>
+                      <th className="p-2 text-left">Colonnes absentes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importPlan.sheets.map((s) => (
+                      <tr key={s.sheet} className="border-t align-top">
+                        <td className="p-2 font-medium">{s.sheet}</td>
+                        <td className="p-2">{s.kind}</td>
+                        <td className="p-2">{s.rowsRead}</td>
+                        <td className="p-2">{s.kept}</td>
+                        <td className="p-2">{s.skipped.length === 0 ? "—" : s.skipped.map((k) => `${k.count} × ${k.reason}`).join(" · ")}</td>
+                        <td className="p-2">{s.unknownColumns.length === 0 ? "—" : s.unknownColumns.join(", ")}</td>
+                        <td className="p-2">{s.missingColumns.length === 0 ? "—" : s.missingColumns.join(", ")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {(importPlan.creates.length > 0 || importPlan.updates.length > 0) && (
                 <div className="max-h-60 overflow-auto border rounded-md">
                   <table className="w-full text-xs">
-                    <thead className="bg-muted/40 sticky top-0"><tr><th className="p-2 text-left">Action</th><th className="p-2 text-left">Date</th><th className="p-2 text-left">Organisme</th><th className="p-2 text-left">Formation</th><th className="p-2 text-left">Auditeur</th><th className="p-2 text-left">Certificateur</th></tr></thead>
+                    <thead className="bg-muted/40 sticky top-0">
+                      <tr>
+                        <th className="p-2 text-left">Action</th>
+                        <th className="p-2 text-left">Tuteur</th>
+                        <th className="p-2 text-left">Date</th>
+                        <th className="p-2 text-left">Organisme</th>
+                        <th className="p-2 text-left">Formation</th>
+                        <th className="p-2 text-left">Auditeur</th>
+                        <th className="p-2 text-left">Certificateur</th>
+                      </tr>
+                    </thead>
                     <tbody>
                       {[
-                        ...importPreview.newEvents.map((e: any) => ({ ...e, _kind: "Ajout" })),
-                        ...importPreview.updEvents.map((e: any) => ({ ...e, _kind: "Mise à jour" })),
-                      ].slice(0, 150).map((e: any, i: number) => (
-                        <tr key={i} className="border-t"><td className="p-2">{e._kind}</td><td className="p-2">{e.audit_date}</td><td className="p-2">{e.organism_name}</td><td className="p-2">{e.formation}</td><td className="p-2">{e.auditor_name}</td><td className="p-2">{e.certifier_name}</td></tr>
+                        ...importPlan.creates.map((r) => ({ kind: "Création", r })),
+                        ...importPlan.updates.map((u) => ({ kind: "Mise à jour", r: u.row })),
+                      ].map((x, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="p-2">{x.kind}</td>
+                          <td className="p-2">{x.r.tuteur ?? "—"}</td>
+                          <td className="p-2">{x.r.audit_date ?? "—"}</td>
+                          <td className="p-2">{x.r.organism_name}</td>
+                          <td className="p-2">{x.r.formation ?? "—"}</td>
+                          <td className="p-2">{x.r.auditor_name ?? "—"}</td>
+                          <td className="p-2">{x.r.certifier_name ?? "—"}</td>
+                        </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               )}
-              {[...importPreview.newPendings, ...importPreview.updPendings].length > 0 && (
-                <div className="max-h-40 overflow-auto border rounded-md">
-                  <table className="w-full text-xs">
-                    <thead className="bg-muted/40 sticky top-0"><tr><th className="p-2 text-left">Action</th><th className="p-2 text-left">Organisme</th><th className="p-2 text-left">Certificateur</th><th className="p-2 text-left">Observation</th></tr></thead>
-                    <tbody>
-                      {[
-                        ...importPreview.newPendings.map((p: any) => ({ ...p, _kind: "Ajout" })),
-                        ...importPreview.updPendings.map((p: any) => ({ ...p, _kind: "Mise à jour" })),
-                      ].slice(0, 150).map((p: any, i: number) => (
-                        <tr key={i} className="border-t"><td className="p-2">{p._kind}</td><td className="p-2">{p.organism_name}</td><td className="p-2">{p.certifier}</td><td className="p-2">{p.observation}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <p className="text-xs text-muted-foreground">Aucun évènement existant absent du fichier ne sera supprimé.</p>
             </div>
-
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setImportPreview(null)}><X className="h-4 w-4 mr-1" /> Annuler</Button>
-            <Button onClick={() => confirmImport.mutate()} disabled={confirmImport.isPending}>Importer</Button>
+            <Button variant="outline" onClick={() => setImportPlan(null)}>Annuler</Button>
+            <Button onClick={() => confirmImport.mutate()} disabled={confirmImport.isPending || !importPlan || (importPlan.creates.length === 0 && importPlan.updates.length === 0)}>
+              Confirmer l'import
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
