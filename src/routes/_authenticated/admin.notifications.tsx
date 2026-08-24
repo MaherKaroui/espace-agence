@@ -172,8 +172,8 @@ function AdminNotifications() {
   }, [dedupedLogs, statusFilter, search]);
 
   const saveSettings = useMutation({
-    mutationFn: async (patch: Partial<{ admin_email: string; disabled_templates: string[] }>) => {
-      const { error } = await supabase.from("email_settings").update(patch).eq("id", 1);
+    mutationFn: async (patch: Partial<{ admin_email: string; disabled_templates: string[]; supervision_recipients: string[] }>) => {
+      const { error } = await supabase.from("email_settings").update(patch as any).eq("id", 1);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -182,6 +182,19 @@ function AdminNotifications() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const supervisionRecipients: string[] = ((settings as any)?.supervision_recipients ?? []) as string[];
+  const addSupervisionRecipient = () => {
+    const v = newSupervisionEmail.trim().toLowerCase();
+    if (!v || !v.includes("@")) return toast.error("Adresse e-mail invalide");
+    if (supervisionRecipients.includes(v)) return toast.error("Adresse déjà présente");
+    saveSettings.mutate({ supervision_recipients: [...supervisionRecipients, v] });
+    setNewSupervisionEmail("");
+  };
+  const removeSupervisionRecipient = (email: string) => {
+    saveSettings.mutate({ supervision_recipients: supervisionRecipients.filter((e) => e !== email) });
+  };
+
 
   const toggleTemplate = (name: string, enabled: boolean) => {
     const current = settings?.disabled_templates ?? [];
