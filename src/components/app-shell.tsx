@@ -311,13 +311,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <NavList />
             </nav>
             <div className="border-t border-sidebar-border p-3">
-              <div className="px-1 pb-2 text-xs text-sidebar-foreground/50 truncate">{roleLabel}</div>
+              {/* Bloc identité cliquable : accès discret aux réglages personnels */}
               <Link
                 to="/preferences"
                 onClick={() => setMobileOpen(false)}
-                className="mb-2 flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border px-3 py-2.5 text-sm font-medium hover:bg-sidebar-accent"
+                className="mb-2 flex w-full items-center gap-2 rounded-md px-1 py-1.5 hover:bg-sidebar-accent"
               >
-                <Settings className="h-4 w-4 shrink-0" /> Préférences & notifications
+                <div className="min-w-0 flex-1 text-left">
+                  <div className="truncate text-sm font-medium">{displayName}</div>
+                  <div className="truncate text-xs text-sidebar-foreground/50">{roleLabel}</div>
+                </div>
+                <Settings className="h-4 w-4 shrink-0 text-sidebar-foreground/50" />
               </Link>
               <button
                 onClick={signOut}
