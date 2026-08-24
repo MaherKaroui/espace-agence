@@ -564,6 +564,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   const from = parisInstant(dayKey, 0);
   const fromIso = from.toISOString();
   const toIso = now.toISOString();
+  const fromMs = from.getTime();
+  const toMs = now.getTime();
   const dateFr = now.toLocaleDateString("fr-FR", {
     timeZone: "Europe/Paris",
     weekday: "long",
