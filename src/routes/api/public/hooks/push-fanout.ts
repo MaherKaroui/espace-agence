@@ -136,7 +136,7 @@ export const Route = createFileRoute("/api/public/hooks/push-fanout")({
         try {
           const VAPID_PUB = process.env.VAPID_PUBLIC_KEY;
           const VAPID_PRIV = process.env.VAPID_PRIVATE_KEY;
-          const VAPID_SUB = process.env.VAPID_SUBJECT || "mailto:admin@izisuivis.com";
+          const VAPID_SUB = process.env.VAPID_SUBJECT || "mailto:admin@izi-business.com";
           if (!VAPID_PUB || !VAPID_PRIV) {
             return new Response(JSON.stringify({ ok: false, reason: "vapid_missing" }), {
               status: 200, headers: { "Content-Type": "application/json" },

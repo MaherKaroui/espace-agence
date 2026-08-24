@@ -29,7 +29,7 @@ function CGU() {
         <p>
           <strong>FD CERTIF EXPERT</strong>, SASU au capital de 100 €, SIREN 988 018 479 — SIRET 988 018 479 00010,
           RCS Nanterre, TVA FR65988018479, 15 rue Auguste Gervais, 92130 Issy-les-Moulineaux.<br />
-          Contact : <a href="mailto:admin@izisuivis.com">admin@izisuivis.com</a>.
+          Contact : <a href="mailto:admin@izi-business.com">admin@izi-business.com</a>.
         </p>
 
         <h2 className="font-display text-xl mt-8">2. Objet</h2>

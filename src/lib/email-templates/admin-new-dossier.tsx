@@ -42,7 +42,7 @@ export const template = {
   component: Email,
   subject: (d: Record<string, any>) => `Nouveau dossier${d.dossierTitre ? ` : ${d.dossierTitre}` : ''}`,
   displayName: 'Admin — Nouveau dossier',
-  to: 'admin@izisuivis.com',
+  to: 'admin@izi-business.com',
   previewData: { clientName: 'Marie Dupont', clientEmail: 'marie@example.com', dossierTitre: 'Certification Qualiopi', categorie: 'qualiopi' },
 } satisfies TemplateEntry
 

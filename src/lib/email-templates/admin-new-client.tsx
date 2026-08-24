@@ -38,7 +38,7 @@ export const template = {
   component: Email,
   subject: 'Nouveau client inscrit',
   displayName: 'Admin — Nouveau client',
-  to: 'admin@izisuivis.com',
+  to: 'admin@izi-business.com',
   previewData: { clientName: 'Marie Dupont', clientEmail: 'marie@example.com' },
 } satisfies TemplateEntry
 
