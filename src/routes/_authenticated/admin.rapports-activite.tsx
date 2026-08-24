@@ -11,14 +11,14 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, FileDown, Mail, Send, AlertTriangle, CheckCircle2, Clock, CalendarClock, Loader2 } from "lucide-react";
+import { Search, FileDown, Mail, Send, AlertTriangle, CheckCircle2, Clock, CalendarClock, Loader2, RefreshCw } from "lucide-react";
 import { format, startOfDay, endOfDay, subDays, startOfWeek, startOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { roleLabelFr } from "@/lib/role-labels";
 import { getActivityReports } from "@/lib/activity-reports.functions";
 import { previewEmailTemplate } from "@/lib/preview-email.functions";
-import { sendActivityReportNow, listArchivedDigests, getArchivedDigestUrl } from "@/lib/daily-report.functions";
+import { sendActivityReportNow, listArchivedDigests, getArchivedDigestUrl, regenerateArchivedDigest } from "@/lib/daily-report.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/rapports-activite")({
   head: () => ({
