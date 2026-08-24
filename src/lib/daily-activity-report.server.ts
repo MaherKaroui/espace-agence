@@ -409,6 +409,34 @@ export interface DigestPerson {
   hasActivity: boolean;
 }
 
+/** Une ligne de tâche telle qu'affichée dans le PDF. */
+export interface DigestTaskRow {
+  etat: "Terminée" | "En cours" | "En retard" | "Bloquée" | "À venir";
+  titre: string;
+  contexte: string | null;
+  responsable: string | null;
+  quand: string | null;
+  commentaires: string | null;
+}
+
+export interface DigestPoleSection {
+  pole: string;
+  ouvertes: number;
+  termineesJour: number;
+  enRetard: number;
+  collaborateurs: number;
+  taches: DigestTaskRow[];
+}
+
+export interface DigestPriority {
+  etat: "En retard" | "Bloquée";
+  titre: string;
+  pole: string;
+  responsable: string | null;
+  contexte: string | null;
+  joursRetard: number | null;
+}
+
 export interface DailyDigest {
   dateFr: string;
   periode: string;
@@ -427,6 +455,10 @@ export interface DailyDigest {
   };
   classement: { nom: string; done: number }[];
   personnes: DigestPerson[];
+  /** Découpage par pôle — structure principale du PDF. */
+  poleSections: DigestPoleSection[];
+  /** Tâches en retard ou bloquées, à traiter en priorité. */
+  priorites: DigestPriority[];
 }
 
 function fmtDuree(seconds: number): string {
@@ -435,6 +467,30 @@ function fmtDuree(seconds: number): string {
   const m = Math.round((s % 3600) / 60);
   return h > 0 ? `${h} h ${String(m).padStart(2, "0")}` : `${m} min`;
 }
+
+/** Union d'intervalles [début, fin] en ms, puis somme des durées fusionnées. */
+function mergedDurationMs(intervals: { start: number; end: number }[]): number {
+  const sorted = intervals.filter((i) => i.end > i.start).sort((a, b) => a.start - b.start);
+  let total = 0;
+  let curStart: number | null = null;
+  let curEnd = 0;
+  for (const i of sorted) {
+    if (curStart === null) {
+      curStart = i.start;
+      curEnd = i.end;
+      continue;
+    }
+    if (i.start <= curEnd) curEnd = Math.max(curEnd, i.end);
+    else {
+      total += curEnd - curStart;
+      curStart = i.start;
+      curEnd = i.end;
+    }
+  }
+  if (curStart !== null) total += curEnd - curStart;
+  return total;
+}
+
 
 function heureParis(iso: string | null | undefined): string | null {
   if (!iso) return null;
