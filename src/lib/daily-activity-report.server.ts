@@ -823,30 +823,40 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   const personnes: DigestPerson[] = [];
 
   for (const p of (profiles ?? []) as any[]) {
-    // Présence
+    // Présence : union d'intervalles, sessions ouvertes plafonnées, total borné à la fenêtre
     const sess = sessionsByUser.get(p.id) ?? [];
-    let seconds = 0;
-    let premiere: number | null = null;
-    let derniere: number | null = null;
+    const OPEN_SESSION_CAP_MS = 4 * 3600_000; // session jamais fermée : 4 h maximum
+    const intervals: { start: number; end: number }[] = [];
     const lieux = new Set<string>();
     const appareils = new Set<string>();
     let sessionCount = 0;
     for (const s of sess) {
       const start = new Date(s.started_at).getTime();
-      const endRaw = s.ended_at ?? s.last_seen_at ?? s.started_at;
-      let end = new Date(endRaw).getTime();
-      if (s.duration_seconds && !s.ended_at) end = Math.max(end, start + s.duration_seconds * 1000);
+      const lastSeen = new Date(s.last_seen_at ?? s.started_at).getTime();
+      let end: number;
+      if (s.ended_at) {
+        end = new Date(s.ended_at).getTime();
+      } else if (s.duration_seconds) {
+        end = start + Math.min(s.duration_seconds * 1000, OPEN_SESSION_CAP_MS);
+      } else {
+        // Session ouverte : on ne compte que jusqu'au dernier signe de vie, plafonné.
+        end = Math.min(lastSeen, start + OPEN_SESSION_CAP_MS);
+      }
+      if (end - start > OPEN_SESSION_CAP_MS && !s.ended_at) end = start + OPEN_SESSION_CAP_MS;
       const clippedStart = Math.max(start, windowStart);
       const clippedEnd = Math.min(end, windowEnd);
       if (clippedEnd <= clippedStart) continue;
       sessionCount++;
-      seconds += (clippedEnd - clippedStart) / 1000;
-      premiere = premiere === null ? clippedStart : Math.min(premiere, clippedStart);
-      derniere = derniere === null ? clippedEnd : Math.max(derniere, clippedEnd);
+      intervals.push({ start: clippedStart, end: clippedEnd });
       if (s.city) lieux.add(s.city);
       const dev = deviceLabel(s.user_agent);
       if (dev) appareils.add(dev);
     }
+    const windowSeconds = Math.max(0, (windowEnd - windowStart) / 1000);
+    const seconds = Math.min(mergedDurationMs(intervals) / 1000, windowSeconds);
+    const premiere = intervals.length ? Math.min(...intervals.map((i) => i.start)) : null;
+    const derniere = intervals.length ? Math.max(...intervals.map((i) => i.end)) : null;
+
 
     // Tâches
     const list = tasksByUser.get(p.id) ?? [];
