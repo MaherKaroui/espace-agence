@@ -92,20 +92,15 @@ export interface DailyActivityReport {
 export async function buildDailyActivityReport(admin: any): Promise<DailyActivityReport> {
   const now = new Date();
   const dayKey = parisDateKey(now);
-  const weekday = parisWeekday(now);
 
-  // Lundi : on inclut le week-end écoulé.
-  const daysBack = weekday === "Mon" ? 3 : 1;
-  const startKey = parisDateKey(new Date(now.getTime() - (daysBack - 1) * 86400_000));
-  const from = parisInstant(startKey, 0);
+  // Toujours la journée en cours : de 00h00 (Paris) à maintenant.
+  const from = parisInstant(dayKey, 0);
   const to = now;
   const fromIso = from.toISOString();
   const toIso = to.toISOString();
 
-  const periode =
-    daysBack > 1
-      ? `du ${new Date(from).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} au ${now.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })}`
-      : now.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
+  const periode = now.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
+
 
   const count = async (table: string, build: (q: any) => any) => {
     try {
@@ -435,6 +430,22 @@ export interface DigestPoleSection {
   taches: DigestTaskRow[];
 }
 
+export interface DigestJournee {
+  poles: { pole: string; personnes: { nom: string; evenements: { heure: string; texte: string }[] }[] }[];
+  echanges: { titre: string; pole: string; lignes: string[] }[];
+  retards: { total: number; plusAnciennes: string[] };
+  presence: { nom: string; duree: string; plage: string | null }[];
+  absents: string[];
+  chiffres: {
+    tachesTerminees: number;
+    dossiersCrees: number;
+    documentsDeposes: number;
+    messages: number;
+    personnesActives: number;
+  };
+  calme: boolean;
+}
+
 export interface DigestPriority {
   etat: "En retard" | "Bloquée";
   titre: string;
@@ -466,6 +477,8 @@ export interface DailyDigest {
   poleSections: DigestPoleSection[];
   /** Tâches en retard ou bloquées, à traiter en priorité. */
   priorites: DigestPriority[];
+  /** Activité réelle de la journée, par pôle puis par personne. */
+  journee: DigestJournee;
 }
 
 function fmtDuree(seconds: number): string {
@@ -547,10 +560,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     : real;
   const dayKey = parisDateKey(now);
 
-  const weekday = parisWeekday(now);
-  const daysBack = weekday === "Mon" ? 3 : 1;
-  const startKey = parisDateKey(new Date(now.getTime() - (daysBack - 1) * 86400_000));
-  const from = parisInstant(startKey, 0);
+  // Fenêtre : toujours la journée en cours (Europe/Paris), de 00h00 à l'heure d'envoi.
+  const from = parisInstant(dayKey, 0);
   const fromIso = from.toISOString();
   const toIso = now.toISOString();
   const dateFr = now.toLocaleDateString("fr-FR", {
@@ -560,10 +571,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     month: "long",
     year: "numeric",
   });
-  const periode =
-    daysBack > 1
-      ? `du ${from.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} au ${now.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })} (week-end inclus)`
-      : `${now.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })}, de 00h00 à ${heureParis(toIso)}`;
+  const periode = `${dateFr}, de 00h00 à ${heureParis(toIso)}`;
 
   // --- Équipe ---
   const { data: roleRows } = await admin.from("user_roles").select("user_id, role");
@@ -590,6 +598,22 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       personnes: [],
       poleSections: [],
       priorites: [],
+      journee: {
+        poles: [],
+        echanges: [],
+        retards: { total: 0, plusAnciennes: [] },
+        presence: [],
+        absents: [],
+        chiffres: {
+          tachesTerminees: 0,
+          dossiersCrees: 0,
+          documentsDeposes: 0,
+          messages: 0,
+          personnesActives: 0,
+        },
+        calme: true,
+      },
+
 
     };
   }
@@ -689,6 +713,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
 
   // --- Commentaires de tâches (30 derniers jours) : auteur + date obligatoires ---
   const commentsByTask = new Map<string, { at: number; texte: string }[]>();
+  /** Commentaires postés PENDANT la journée : bruts, pour la section « échanges du jour ». */
+  const commentsTodayRaw: { taskId: string; userId: string | null; at: number; texte: string }[] = [];
   try {
     if (taskList.length) {
       const depuis = new Date(now.getTime() - 30 * 86400_000).toISOString();
@@ -722,6 +748,14 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
           texte: `${stampParis(r.created_at)}  ${auteur ?? "(auteur non tracé)"} : ${texte}`,
         });
         commentsByTask.set(r.task_id, arr);
+        if (r.created_at >= fromIso) {
+          commentsTodayRaw.push({
+            taskId: r.task_id,
+            userId: r.user_id ?? null,
+            at: new Date(r.created_at).getTime(),
+            texte: `${heureParis(r.created_at)}  ${auteur ?? "(auteur non tracé)"} : ${texte.replace(/\s*\n\s*/g, " ")}`,
+          });
+        }
       }
     }
   } catch (e) {
@@ -960,9 +994,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         derniere: derniere ? heureParis(new Date(derniere).toISOString()) : null,
         plage:
           premiere && derniere
-            ? daysBack > 1
-              ? `${stampParis(new Date(premiere).toISOString())} - ${stampParis(new Date(derniere).toISOString())}`
-              : `${heureParis(new Date(premiere).toISOString())} - ${heureParis(new Date(derniere).toISOString())}`
+            ? `${heureParis(new Date(premiere).toISOString())} - ${heureParis(new Date(derniere).toISOString())}`
             : null,
 
         sessions: sessionCount,
@@ -1172,6 +1204,124 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     .sort((a, b) => (b.joursRetard ?? -1) - (a.joursRetard ?? -1))
     .slice(0, 18);
 
+  /* ---- Journée : uniquement ce qui a bougé aujourd'hui ---- */
+  const poleOfTask = (t: any): string =>
+    (t?.pole_id ? poleNames.get(t.pole_id) : null) ?? SANS_POLE;
+  const poleOfUser = (uid: string): string => (polesByUser.get(uid) ?? [])[0] ?? SANS_POLE;
+  const evByPolePerson = new Map<string, Map<string, { at: number; heure: string; texte: string }[]>>();
+  const pushEvent = (pole: string, nom: string, at: number, heure: string | null, texte: string) => {
+    const perPole = evByPolePerson.get(pole) ?? new Map();
+    const arr = perPole.get(nom) ?? [];
+    arr.push({ at, heure: heure ?? "—", texte });
+    perPole.set(nom, arr);
+    evByPolePerson.set(pole, perPole);
+  };
+
+  // Tâches terminées aujourd'hui
+  for (const t of taskList) {
+    if (t.status !== "terminee" || !t.completed_at) continue;
+    if (t.completed_at < fromIso || t.completed_at > toIso) continue;
+    const ids = [...new Set([t.assigned_to, ...(assigneesByTask.get(t.id) ?? [])].filter(Boolean))] as string[];
+    const noms = ids.map((id) => nameById.get(id)).filter(Boolean) as string[];
+    const ctx = taskContext(t);
+    const texte = `Tâche terminée : ${t.title}${ctx && !String(t.title ?? "").includes(ctx) ? ` (${ctx})` : ""}`;
+    for (const nom of noms.length ? noms : ["Non assigné"])
+      pushEvent(poleOfTask(t), nom, new Date(t.completed_at).getTime(), heureParis(t.completed_at), texte);
+  }
+
+  // Commentaires postés aujourd'hui
+  const echangesJour: { titre: string; pole: string; lignes: string[] }[] = [];
+  const commentsByTaskToday = new Map<string, typeof commentsTodayRaw>();
+  for (const c of commentsTodayRaw) {
+    const arr = commentsByTaskToday.get(c.taskId) ?? [];
+    arr.push(c);
+    commentsByTaskToday.set(c.taskId, arr);
+  }
+  for (const [taskId, list] of commentsByTaskToday) {
+    const t = taskById.get(taskId);
+    const ctx = t ? taskContext(t) : null;
+    const titre = `${t?.title ?? "Tâche"}${ctx && !String(t?.title ?? "").includes(ctx) ? ` — ${ctx}` : ""}`;
+    const pole = poleOfTask(t);
+    echangesJour.push({
+      titre,
+      pole,
+      lignes: [...list].sort((a, b) => a.at - b.at).map((c) => c.texte),
+    });
+    for (const c of list) {
+      const nom = c.userId ? nameById.get(c.userId) : null;
+      if (!nom) continue;
+      pushEvent(pole, nom, c.at, heureParis(new Date(c.at).toISOString()), `Commentaire sur « ${t?.title ?? "tâche"} »`);
+    }
+  }
+
+  // Actions tracées (dossiers, documents, messages, RDV, tâches)
+  for (const [uid, myLogs] of logsByUser) {
+    const nom = nameById.get(uid);
+    if (!nom) continue;
+    for (const l of myLogs) {
+      const label = actionGroup(l.action);
+      if (!label) continue;
+      const meta: any = l.metadata || {};
+      let libelle: string | null = null;
+      if (l.entity_type === "dossier") libelle = dossierLabel(l.entity_id);
+      else if (l.entity_type === "document") libelle = docMap.get(l.entity_id)?.nom ?? null;
+      if (!libelle) libelle = clientLabel(meta.client_id) ?? dossierLabel(meta.dossier_id);
+      if (!libelle) libelle = meta.titre ?? meta.title ?? meta.nom ?? null;
+      let suffix = "";
+      if (l.action === "dossier.status_changed" && (meta.from || meta.old || meta.to || meta.new))
+        suffix = ` (${meta.from ?? meta.old ?? "?"} vers ${meta.to ?? meta.new ?? "?"})`;
+      pushEvent(
+        poleOfUser(uid),
+        nom,
+        new Date(l.created_at).getTime(),
+        heureParis(l.created_at),
+        `${label}${libelle ? ` : ${libelle}` : ""}${suffix}`,
+      );
+    }
+  }
+
+  const journeePoles = [...evByPolePerson.entries()]
+    .map(([pole, perPerson]) => ({
+      pole,
+      personnes: [...perPerson.entries()]
+        .map(([nom, evs]) => ({
+          nom,
+          evenements: evs
+            .sort((a, b) => a.at - b.at)
+            .map((e) => ({ heure: e.heure, texte: e.texte })),
+        }))
+        .sort((a, b) => b.evenements.length - a.evenements.length || a.nom.localeCompare(b.nom)),
+    }))
+    .filter((p) => p.personnes.length > 0)
+    .sort((a, b) => {
+      if (a.pole === SANS_POLE) return 1;
+      if (b.pole === SANS_POLE) return -1;
+      return a.pole.localeCompare(b.pole);
+    });
+
+  const enRetardTotal = retenues.filter((t) => etatOfTask(t) === "En retard").length;
+  const plusAnciennes = priorites
+    .filter((p) => p.etat === "En retard")
+    .slice(0, 3)
+    .map((p) => `${p.titre}${p.joursRetard != null ? ` (${p.joursRetard} j)` : ""}`);
+
+  const journee: DigestJournee = {
+    poles: journeePoles,
+    echanges: echangesJour.sort((a, b) => a.pole.localeCompare(b.pole)),
+    retards: { total: enRetardTotal, plusAnciennes },
+    presence: personnes
+      .filter((p) => p.presence.seconds > 0)
+      .map((p) => ({ nom: p.nom, duree: p.presence.dureeLabel, plage: p.presence.plage })),
+    absents: personnes.filter((p) => p.presence.seconds === 0).map((p) => p.nom),
+    chiffres: {
+      tachesTerminees: personnes.reduce((n, p) => n + p.taches.done.length, 0),
+      dossiersCrees,
+      documentsDeposes,
+      messages: msgC + msgI + msgG,
+      personnesActives: new Set(journeePoles.flatMap((p) => p.personnes.map((x) => x.nom))).size,
+    },
+    calme: journeePoles.length === 0,
+  };
 
   return {
     dateFr,
@@ -1196,7 +1346,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     personnes,
     poleSections,
     priorites,
-
+    journee,
   };
 }
 
