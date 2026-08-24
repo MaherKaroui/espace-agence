@@ -154,7 +154,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const NavList = () => {
-    const clientNav = isStaff ? nav.filter((n) => n.to === "/mes-donnees") : nav;
+    const clientNav = isStaff ? nav.filter((n) => n.to === "/mes-donnees" || n.to === "/preferences") : nav;
+
     return (
     <>
       {!isStaff && !isExternal && (
