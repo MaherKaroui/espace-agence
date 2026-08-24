@@ -78,6 +78,8 @@ function displayError(message: string | null) {
 function AdminNotifications() {
   const qc = useQueryClient();
   const [testEmail, setTestEmail] = useState("");
+  const [newSupervisionEmail, setNewSupervisionEmail] = useState("");
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [previewOpen, setPreviewOpen] = useState(false);
