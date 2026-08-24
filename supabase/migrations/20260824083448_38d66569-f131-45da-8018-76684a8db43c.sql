@@ -1,0 +1,2 @@
+ALTER TABLE public.email_settings ADD COLUMN IF NOT EXISTS supervision_recipients text[] NOT NULL DEFAULT '{}'::text[];
+UPDATE public.email_settings SET supervision_recipients = ARRAY['maherkr77@gmail.com'], admin_email = 'admin@izi-business.com', report_recipients = '{}'::text[] WHERE id = 1;

@@ -956,6 +956,7 @@ export type Database = {
           disabled_templates: string[]
           id: number
           report_recipients: string[]
+          supervision_recipients: string[]
           updated_at: string
           updated_by: string | null
         }
@@ -964,6 +965,7 @@ export type Database = {
           disabled_templates?: string[]
           id?: number
           report_recipients?: string[]
+          supervision_recipients?: string[]
           updated_at?: string
           updated_by?: string | null
         }
@@ -972,6 +974,7 @@ export type Database = {
           disabled_templates?: string[]
           id?: number
           report_recipients?: string[]
+          supervision_recipients?: string[]
           updated_at?: string
           updated_by?: string | null
         }
