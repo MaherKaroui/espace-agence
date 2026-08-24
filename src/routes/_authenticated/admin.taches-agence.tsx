@@ -64,7 +64,12 @@ function AgencyTasksPage() {
   const { user } = useAuth();
   const { isStaff } = useRole();
   const [createOpen, setCreateOpen] = useState(false);
-  const { task: taskParam } = Route.useSearch();
+  const { task: taskParam, mine: mineParam } = Route.useSearch();
+  const navigate = useNavigate();
+  const onlyMine = mineParam === "1";
+  const { idSet: myTaskIds } = useMyTaskIds();
+  const setOnlyMine = (v: boolean) =>
+    navigate({ to: "/admin/taches-agence", search: (prev: any) => ({ ...prev, mine: v ? "1" : undefined }) });
   const [detailId, setDetailId] = useState<string | null>(taskParam ?? null);
   useEffect(() => { if (taskParam) setDetailId(taskParam); }, [taskParam]);
   const [tab, setTab] = useState("priority");
