@@ -575,6 +575,55 @@ export async function buildDailyDigest(admin: any): Promise<DailyDigest> {
         .in("task_id", taskList.map((t) => t.id))
     : ({ data: [] } as any);
 
+  // --- Commentaires de tâches ajoutés pendant la période (auteur + heure) ---
+  const commentsByTask = new Map<string, string[]>();
+  try {
+    if (taskList.length) {
+      const { data: taskComments } = await admin
+        .from("agency_task_comments")
+        .select("task_id, user_id, content, created_at")
+        .in("task_id", taskList.map((t) => t.id))
+        .gte("created_at", fromIso)
+        .lte("created_at", toIso)
+        .order("created_at", { ascending: true })
+        .limit(3000);
+      const rows = (taskComments ?? []) as any[];
+      const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
+      const { data: authors } = authorIds.length
+        ? await admin.from("profiles").select("id, prenom, nom, email").in("id", authorIds)
+        : ({ data: [] } as any);
+      const aMap = new Map(
+        ((authors ?? []) as any[]).map((a) => [
+          a.id,
+          `${a.prenom ?? ""} ${a.nom ?? ""}`.trim() || a.email || "—",
+        ]),
+      );
+      for (const r of rows) {
+        const arr = commentsByTask.get(r.task_id) ?? [];
+        const texte = String(r.content ?? "").trim();
+        if (!texte) continue;
+        arr.push(`${heureParis(r.created_at)} ${aMap.get(r.user_id) ?? "—"} : ${texte}`);
+        commentsByTask.set(r.task_id, arr);
+      }
+    }
+  } catch (e) {
+    console.error("[compte-rendu] commentaires de tâches indisponibles", e);
+  }
+
+  /** internal_comment + commentaires du jour, tronqués à ~200 caractères chacun. */
+  const taskComments = (t: any): string | null => {
+    const parts: string[] = [];
+    const internal = String(t.internal_comment ?? "").trim();
+    if (internal) parts.push(internal);
+    parts.push(...(commentsByTask.get(t.id) ?? []));
+    if (parts.length === 0) return null;
+    return parts
+      .slice(0, 4)
+      .map((c) => (c.length > 200 ? `${c.slice(0, 197)}...` : c))
+      .join("\n");
+  };
+
+
   const dossierIds = new Set<string>();
   const clientIds = new Set<string>();
   for (const t of taskList) {
