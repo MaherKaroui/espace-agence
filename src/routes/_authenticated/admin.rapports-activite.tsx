@@ -11,14 +11,14 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, FileDown, Mail, Send, AlertTriangle, CheckCircle2, Clock, CalendarClock, Loader2 } from "lucide-react";
+import { Search, FileDown, Mail, Send, AlertTriangle, CheckCircle2, Clock, CalendarClock, Loader2, RefreshCw } from "lucide-react";
 import { format, startOfDay, endOfDay, subDays, startOfWeek, startOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { roleLabelFr } from "@/lib/role-labels";
 import { getActivityReports } from "@/lib/activity-reports.functions";
 import { previewEmailTemplate } from "@/lib/preview-email.functions";
-import { sendActivityReportNow, listArchivedDigests, getArchivedDigestUrl } from "@/lib/daily-report.functions";
+import { sendActivityReportNow, listArchivedDigests, getArchivedDigestUrl, regenerateArchivedDigest } from "@/lib/daily-report.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/rapports-activite")({
   head: () => ({
@@ -44,7 +44,9 @@ export const Route = createFileRoute("/_authenticated/admin/rapports-activite")(
 function ArchivedDigests() {
   const listFn = useServerFn(listArchivedDigests);
   const urlFn = useServerFn(getArchivedDigestUrl);
+  const regenFn = useServerFn(regenerateArchivedDigest);
   const [opening, setOpening] = useState<string | null>(null);
+  const [regen, setRegen] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["archived-digests"],
@@ -64,11 +66,27 @@ function ArchivedDigests() {
     }
   }
 
+  async function regenerate(date: string) {
+    setRegen(date);
+    try {
+      const res: any = await regenFn({ data: { date } });
+      if (res?.ok) toast.success("PDF regénéré avec la mise en page actuelle");
+      else toast.error("Régénération impossible");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Régénération impossible");
+    } finally {
+      setRegen(null);
+    }
+  }
+
   return (
     <Card className="p-4 space-y-3">
       <div>
         <h2 className="font-display text-lg">Comptes rendus archivés</h2>
-        <p className="text-muted-foreground text-sm">PDF des 90 derniers jours.</p>
+        <p className="text-muted-foreground text-sm">
+          PDF des 90 derniers jours. Les fichiers générés avant la refonte gardent l'ancienne
+          mise en page : utilisez « Regénérer » pour les reconstruire au format condensé.
+        </p>
       </div>
       {isLoading ? (
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
@@ -79,18 +97,33 @@ function ArchivedDigests() {
       ) : (
         <ul className="divide-y rounded-md border">
           {data.map((f: any) => (
-            <li key={f.path} className="flex items-center justify-between gap-3 px-3 py-2">
+            <li key={f.path} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
               <span className="text-sm">
                 {format(new Date(f.date), "EEEE d MMMM yyyy", { locale: fr })}
               </span>
-              <Button size="sm" variant="outline" disabled={opening === f.path} onClick={() => open(f.path)}>
-                {opening === f.path ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <FileDown className="h-4 w-4 mr-2" />
-                )}
-                Télécharger
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={regen === f.date}
+                  onClick={() => regenerate(f.date)}
+                >
+                  {regen === f.date ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Regénérer
+                </Button>
+                <Button size="sm" variant="outline" disabled={opening === f.path} onClick={() => open(f.path)}>
+                  {opening === f.path ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <FileDown className="h-4 w-4 mr-2" />
+                  )}
+                  Télécharger
+                </Button>
+              </div>
             </li>
           ))}
         </ul>
@@ -98,6 +131,7 @@ function ArchivedDigests() {
     </Card>
   );
 }
+
 
 type PeriodKey = "today" | "yesterday" | "week" | "month" | "custom";
 
