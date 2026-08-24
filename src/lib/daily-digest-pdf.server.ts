@@ -52,6 +52,14 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     }
   };
 
+  /** Dernier échange uniquement, tronqué : le PDF doit rester court. */
+  const shortComment = (v: string | null): string => {
+    const all = String(v ?? "").split("\n").filter((l) => l.trim() !== "");
+    if (all.length === 0) return "Aucun échange enregistré";
+    const first = all[0].length > 130 ? `${all[0].slice(0, 127)}...` : all[0];
+    return all.length > 1 ? `${first}  (+${all.length - 1} autre${all.length > 2 ? "s" : ""})` : first;
+  };
+
   const table = (opts: Record<string, unknown>) => {
     autoTable(doc, {
       startY: y,
@@ -80,7 +88,8 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
   };
 
   const sectionTitle = (label: string, subtitle?: string) => {
-    ensure(subtitle ? 15 : 11);
+    // On réserve la place du titre ET du début de son tableau pour éviter les titres orphelins.
+    ensure(subtitle ? 44 : 38);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...NAVY_SOFT);
@@ -188,7 +197,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     doc.setTextColor(40, 46, 56);
     y += 2;
   } else {
-    const { rows, extra } = cap(prios, 14);
+    const { rows, extra } = cap(prios, 10);
     table({
       head: [["État", "Tâche", "Pôle", "Responsable", "Client / Dossier", "Retard"]],
       body: [
@@ -268,7 +277,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       doc.setTextColor(40, 46, 56);
       y += 8.5;
 
-      const { rows, extra } = cap(sec.taches, 22);
+      const { rows, extra } = cap(sec.taches, 10);
       table({
         head: [["État", "Tâche", "Responsable", "Client / Dossier", "Échéance / clôture", "Échanges internes"]],
         body: [
@@ -278,7 +287,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
             txt(t.responsable, "Non assignée"),
             txt(t.contexte),
             txt(t.quand),
-            txt(t.commentaires, "Aucun échange enregistré"),
+            shortComment(t.commentaires),
           ]),
           ...(extra > 0 ? [[`... et ${extra} autres tâches`, "", "", "", "", ""]] : []),
         ],
@@ -322,7 +331,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     const presents = personnes.filter((p) => (p.presence?.seconds ?? 0) > 0);
     const absents = personnes.filter((p) => (p.presence?.seconds ?? 0) === 0);
     if (presents.length > 0) {
-      const { rows, extra } = cap(presents, 20);
+      const { rows, extra } = cap(presents, 16);
       table({
         head: [["Nom", "Rôle", "Pôle", "Connexion", "Plage", "Terminées"]],
         body: [
