@@ -36,6 +36,7 @@ import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/em
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
 import { Route as AuthenticatedAuditsIdRouteImport } from './routes/_authenticated/audits.$id'
 import { Route as AuthenticatedAdminTachesAgenceRouteImport } from './routes/_authenticated/admin.taches-agence'
+import { Route as AuthenticatedAdminSlackImportRouteImport } from './routes/_authenticated/admin.slack-import'
 import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
 import { Route as AuthenticatedAdminRgpdRouteImport } from './routes/_authenticated/admin.rgpd'
 import { Route as AuthenticatedAdminRendezVousRouteImport } from './routes/_authenticated/admin.rendez-vous'
@@ -219,6 +220,12 @@ const AuthenticatedAdminTachesAgenceRoute =
   AuthenticatedAdminTachesAgenceRouteImport.update({
     id: '/admin/taches-agence',
     path: '/admin/taches-agence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminSlackImportRoute =
+  AuthenticatedAdminSlackImportRouteImport.update({
+    id: '/admin/slack-import',
+    path: '/admin/slack-import',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminSecurityRoute =
@@ -490,6 +497,7 @@ export interface FileRoutesByFullPath {
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
+  '/admin/slack-import': typeof AuthenticatedAdminSlackImportRoute
   '/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
@@ -558,6 +566,7 @@ export interface FileRoutesByTo {
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
   '/admin/security': typeof AuthenticatedAdminSecurityRoute
+  '/admin/slack-import': typeof AuthenticatedAdminSlackImportRoute
   '/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
@@ -628,6 +637,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
   '/_authenticated/admin/rgpd': typeof AuthenticatedAdminRgpdRoute
   '/_authenticated/admin/security': typeof AuthenticatedAdminSecurityRoute
+  '/_authenticated/admin/slack-import': typeof AuthenticatedAdminSlackImportRoute
   '/_authenticated/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/_authenticated/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
@@ -698,6 +708,7 @@ export interface FileRouteTypes {
     | '/admin/rendez-vous'
     | '/admin/rgpd'
     | '/admin/security'
+    | '/admin/slack-import'
     | '/admin/taches-agence'
     | '/audits/$id'
     | '/dossiers/$id'
@@ -766,6 +777,7 @@ export interface FileRouteTypes {
     | '/admin/rendez-vous'
     | '/admin/rgpd'
     | '/admin/security'
+    | '/admin/slack-import'
     | '/admin/taches-agence'
     | '/audits/$id'
     | '/dossiers/$id'
@@ -835,6 +847,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/rendez-vous'
     | '/_authenticated/admin/rgpd'
     | '/_authenticated/admin/security'
+    | '/_authenticated/admin/slack-import'
     | '/_authenticated/admin/taches-agence'
     | '/_authenticated/audits/$id'
     | '/_authenticated/dossiers/$id'
@@ -1089,6 +1102,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/taches-agence'
       fullPath: '/admin/taches-agence'
       preLoaderRoute: typeof AuthenticatedAdminTachesAgenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/slack-import': {
+      id: '/_authenticated/admin/slack-import'
+      path: '/admin/slack-import'
+      fullPath: '/admin/slack-import'
+      preLoaderRoute: typeof AuthenticatedAdminSlackImportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/security': {
@@ -1410,6 +1430,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRendezVousRoute: typeof AuthenticatedAdminRendezVousRoute
   AuthenticatedAdminRgpdRoute: typeof AuthenticatedAdminRgpdRoute
   AuthenticatedAdminSecurityRoute: typeof AuthenticatedAdminSecurityRoute
+  AuthenticatedAdminSlackImportRoute: typeof AuthenticatedAdminSlackImportRoute
   AuthenticatedAdminTachesAgenceRoute: typeof AuthenticatedAdminTachesAgenceRoute
   AuthenticatedAuditsIdRoute: typeof AuthenticatedAuditsIdRoute
   AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRoute
@@ -1453,6 +1474,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRendezVousRoute: AuthenticatedAdminRendezVousRoute,
   AuthenticatedAdminRgpdRoute: AuthenticatedAdminRgpdRoute,
   AuthenticatedAdminSecurityRoute: AuthenticatedAdminSecurityRoute,
+  AuthenticatedAdminSlackImportRoute: AuthenticatedAdminSlackImportRoute,
   AuthenticatedAdminTachesAgenceRoute: AuthenticatedAdminTachesAgenceRoute,
   AuthenticatedAuditsIdRoute: AuthenticatedAuditsIdRoute,
   AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRoute,

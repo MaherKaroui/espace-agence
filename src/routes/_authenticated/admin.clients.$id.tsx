@@ -26,6 +26,7 @@ function docTypeLabel(key: string | null | undefined): string | null {
 
 
 import { RelanceButton } from "@/components/relance-button";
+import { SlackClientHistory } from "@/components/slack-client-history";
 
 
 import {
@@ -594,6 +595,8 @@ function ClientDetail() {
           </div>
         )}
       </div>
+
+      <SlackClientHistory clientId={id} />
 
       <Card className="p-6">
         <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
