@@ -604,7 +604,47 @@ export async function executeAssistantAction(caller: AssistantCaller, action: As
     return { ok: true, task_id: task.id };
   }
 
+  if (
+    action.kind === "changer_statut_tache" ||
+    action.kind === "assigner_tache" ||
+    action.kind === "modifier_echeance_tache" ||
+    action.kind === "commenter_tache"
+  ) {
+    if (!isStaff) throw new Error("Accès refusé : gestion des tâches réservée à l'agence.");
+
+    if (action.kind === "commenter_tache") {
+      const { data: c, error } = await supabase
+        .from("agency_task_comments")
+        .insert({ task_id: action.task_id, user_id: userId, content: action.contenu })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      await audit("agency_task", action.task_id, { commentaire_id: c.id });
+      return { ok: true, comment_id: c.id };
+    }
+
+    const patch: Record<string, unknown> = { updated_by: userId };
+    if (action.kind === "changer_statut_tache") {
+      patch.status = action.statut;
+      patch.completed_at = action.statut === "terminee" ? new Date().toISOString() : null;
+    }
+    if (action.kind === "assigner_tache") patch.assigned_to = action.user_id;
+    if (action.kind === "modifier_echeance_tache") patch.due_date = action.due_date;
+
+    const { error } = await supabase.from("agency_tasks").update(patch).eq("id", action.task_id);
+    if (error) throw new Error(error.message);
+
+    if (action.kind === "assigner_tache") {
+      await supabase
+        .from("agency_task_assignees")
+        .upsert({ task_id: action.task_id, user_id: action.user_id, added_by: userId }, { onConflict: "task_id,user_id" });
+    }
+    await audit("agency_task", action.task_id, patch);
+    return { ok: true, task_id: action.task_id };
+  }
+
   throw new Error("Cette action ne nécessite aucune exécution.");
+
 }
 
 export const proposalSchema = z.discriminatedUnion("kind", [
