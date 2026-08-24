@@ -393,7 +393,16 @@ export interface DigestPerson {
     overdue: { titre: string; echeance: string | null }[];
     blocked: { titre: string; contexte: string | null }[];
     completionRate: number;
+    /** Vue unifiée pour le PDF : toutes les tâches de la personne, triées par état. */
+    all: {
+      etat: "Terminée" | "En cours" | "En retard" | "Bloquée" | "À venir";
+      titre: string;
+      contexte: string | null;
+      quand: string | null;
+      commentaires: string | null;
+    }[];
   };
+
   actions: { label: string; count: number; items: string[] }[];
   contexts: string[];
   attention: string[];
