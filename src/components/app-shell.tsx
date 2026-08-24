@@ -213,7 +213,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {isStaff && (
         <>
           <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Agence</div>
-          {[...staffNav, { to: "/mes-donnees", label: "Mes données", icon: UserCog }].map((n) => {
+          {[...staffNav, { to: "/mes-donnees", label: "Mes données", icon: UserCog }, { to: "/preferences", label: "Mes notifications", icon: Bell }].map((n) => {
             const c = countFor(n.to);
             return (
               <Link
