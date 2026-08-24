@@ -473,10 +473,17 @@ function actionGroup(action: string): string | null {
   return ACTION_LABELS.find((x) => x.match(action))?.label ?? null;
 }
 
-/** Agrégation complète du compte rendu quotidien, personne par personne. */
-export async function buildDailyDigest(admin: any): Promise<DailyDigest> {
-  const now = new Date();
+/**
+ * Agrégation complète du compte rendu quotidien, personne par personne.
+ * `at` : recalcul d'une journée passée (borne de fin = 23h59 heure de Paris de ce jour).
+ */
+export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDigest> {
+  const real = new Date();
+  const now = at
+    ? new Date(Math.min(parisInstant(parisDateKey(at), 0).getTime() + 86400_000 - 1000, real.getTime()))
+    : real;
   const dayKey = parisDateKey(now);
+
   const weekday = parisWeekday(now);
   const daysBack = weekday === "Mon" ? 3 : 1;
   const startKey = parisDateKey(new Date(now.getTime() - (daysBack - 1) * 86400_000));
