@@ -35,6 +35,8 @@ const POLE_CODE_BY_CATEGORIE: Record<string, string> = {
   juridique: "juridique",
 };
 
+export const TASK_STATUS_VALUES = ["a_faire", "en_cours", "bloquee", "terminee", "en_attente"] as const;
+
 export type AssistantProposal =
   | {
       kind: "creer_demande";
@@ -53,7 +55,12 @@ export type AssistantProposal =
       due_date: string | null;
       dossier_id: string | null;
     }
+  | { kind: "changer_statut_tache"; task_id: string; task_titre: string; statut: string }
+  | { kind: "assigner_tache"; task_id: string; task_titre: string; user_id: string; user_nom: string }
+  | { kind: "modifier_echeance_tache"; task_id: string; task_titre: string; due_date: string | null }
+  | { kind: "commenter_tache"; task_id: string; task_titre: string; contenu: string }
   | { kind: "rediger_message"; destinataire: string | null; objet: string | null; brouillon: string };
+
 
 export type AssistantCaller = { supabase: any; userId: string; isStaff: boolean };
 
