@@ -88,33 +88,9 @@ export function NotificationsBell() {
     return () => { supabase.removeChannel(channel); };
   }, [user, qc]);
 
-  const permission = useMemo(() => getBrowserNotifPermission(), [permTick]);
-  const enabled = useMemo(() => isBrowserNotifEnabled() && devicePushSaved, [devicePushSaved, permTick]);
+  const permission: NotificationPermission | "unsupported" = push.supported ? push.permission : "unsupported";
+  const enabled = push.subscribed && push.permission === "granted";
 
-  useEffect(() => {
-    if (!user || permission !== "granted" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setDevicePushSaved(false);
-      return;
-    }
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const reg = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: "/" });
-        await reg.update().catch(() => undefined);
-        const readyReg = await navigator.serviceWorker.ready;
-        const sub = await readyReg.pushManager.getSubscription();
-        const status = await getPushStatus({ data: { endpoint: sub?.endpoint ?? null } });
-        if (cancelled) return;
-        setDevicePushSaved(status.currentDeviceSaved);
-        if (!status.currentDeviceSaved) setBrowserNotifEnabled(false);
-      } catch {
-        if (!cancelled) setDevicePushSaved(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [user, permission, getPushStatus, permTick]);
 
   const unreadNotifs = notifications.filter((n) => !n.read_at);
   const activeList = tab === "unread" ? unreadNotifs : notifications;
