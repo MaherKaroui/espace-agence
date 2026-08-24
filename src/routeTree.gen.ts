@@ -23,6 +23,7 @@ import { Route as AuthenticatedRendezVousRouteImport } from './routes/_authentic
 import { Route as AuthenticatedPreferencesRouteImport } from './routes/_authenticated/preferences'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMesDonneesRouteImport } from './routes/_authenticated/mes-donnees'
+import { Route as AuthenticatedGuideAssistantRouteImport } from './routes/_authenticated/guide-assistant'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
@@ -147,6 +148,12 @@ const AuthenticatedMesDonneesRoute = AuthenticatedMesDonneesRouteImport.update({
   path: '/mes-donnees',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedGuideAssistantRoute =
+  AuthenticatedGuideAssistantRouteImport.update({
+    id: '/guide-assistant',
+    path: '/guide-assistant',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -453,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/guide-assistant': typeof AuthenticatedGuideAssistantRoute
   '/mes-donnees': typeof AuthenticatedMesDonneesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
@@ -519,6 +527,7 @@ export interface FileRoutesByTo {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/guide-assistant': typeof AuthenticatedGuideAssistantRoute
   '/mes-donnees': typeof AuthenticatedMesDonneesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/preferences': typeof AuthenticatedPreferencesRoute
@@ -587,6 +596,7 @@ export interface FileRoutesById {
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/guide-assistant': typeof AuthenticatedGuideAssistantRoute
   '/_authenticated/mes-donnees': typeof AuthenticatedMesDonneesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/preferences': typeof AuthenticatedPreferencesRoute
@@ -655,6 +665,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/dashboard'
+    | '/guide-assistant'
     | '/mes-donnees'
     | '/notifications'
     | '/preferences'
@@ -721,6 +732,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/dashboard'
+    | '/guide-assistant'
     | '/mes-donnees'
     | '/notifications'
     | '/preferences'
@@ -788,6 +800,7 @@ export interface FileRouteTypes {
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/dashboard'
+    | '/_authenticated/guide-assistant'
     | '/_authenticated/mes-donnees'
     | '/_authenticated/notifications'
     | '/_authenticated/preferences'
@@ -972,6 +985,13 @@ declare module '@tanstack/react-router' {
       path: '/mes-donnees'
       fullPath: '/mes-donnees'
       preLoaderRoute: typeof AuthenticatedMesDonneesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/guide-assistant': {
+      id: '/_authenticated/guide-assistant'
+      path: '/guide-assistant'
+      fullPath: '/guide-assistant'
+      preLoaderRoute: typeof AuthenticatedGuideAssistantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -1350,6 +1370,7 @@ const AuthenticatedAdminDossiersRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedGuideAssistantRoute: typeof AuthenticatedGuideAssistantRoute
   AuthenticatedMesDonneesRoute: typeof AuthenticatedMesDonneesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPreferencesRoute: typeof AuthenticatedPreferencesRoute
@@ -1389,6 +1410,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedGuideAssistantRoute: AuthenticatedGuideAssistantRoute,
   AuthenticatedMesDonneesRoute: AuthenticatedMesDonneesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPreferencesRoute: AuthenticatedPreferencesRoute,

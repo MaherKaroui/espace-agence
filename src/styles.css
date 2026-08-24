@@ -238,3 +238,24 @@ html.keyboard-open .mobile-bottom-nav { display: none; }
     height: calc(100dvh - 3.5rem - 1rem);
   }
 }
+
+/* ---------- Guide de l'assistant : papier quadrillé + annotations ---------- */
+:root {
+  --guide-ink: oklch(0.45 0.13 258);
+  --guide-grid: oklch(0.26 0.06 258 / 8%);
+}
+.dark {
+  --guide-ink: oklch(0.82 0.11 85);
+  --guide-grid: oklch(1 0 0 / 7%);
+}
+
+@utility font-hand {
+  font-family: "Caveat", var(--font-display), cursive;
+}
+
+.guide-paper {
+  background-image:
+    linear-gradient(to right, var(--guide-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--guide-grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+}

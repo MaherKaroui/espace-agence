@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Bot, X, Send, RotateCcw, Loader2, CheckCircle2, FileText } from "lucide-react";
+import { Bot, X, Send, RotateCcw, Loader2, CheckCircle2, FileText, HelpCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,9 @@ import { cn } from "@/lib/utils";
 import { categorieLabel } from "@/lib/labels";
 import { assistantChat, assistantConfirmAction } from "@/lib/assistant.functions";
 import { useRole } from "@/hooks/use-role";
+
+const GUIDE_HINT_KEY = "izi.assistant.guide-hint.dismissed";
+
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Proposal = any;
@@ -27,11 +31,31 @@ export function AiAssistantWidget() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [pending, setPending] = useState<Proposal[]>([]);
+  const [showGuideHint, setShowGuideHint] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const chat = useServerFn(assistantChat);
   const confirmFn = useServerFn(assistantConfirmAction);
 
   const welcome = isStaff ? WELCOME_STAFF : WELCOME_CLIENT;
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      if (localStorage.getItem(GUIDE_HINT_KEY) !== "1") setShowGuideHint(true);
+    } catch {
+      /* stockage indisponible */
+    }
+  }, [open]);
+
+  const dismissGuideHint = () => {
+    setShowGuideHint(false);
+    try {
+      localStorage.setItem(GUIDE_HINT_KEY, "1");
+    } catch {
+      /* stockage indisponible */
+    }
+  };
+
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -114,10 +138,15 @@ export function AiAssistantWidget() {
             <Bot className="h-5 w-5 text-primary" />
             <div className="min-w-0 flex-1">
               <div className="font-display text-base leading-tight">Assistant IZISuivis</div>
-              <div className="truncate text-xs text-muted-foreground">
-                {isStaff ? "Profil agence" : "Profil client"} · réponses basées sur vos données
-              </div>
+              <Link
+                to="/guide-assistant"
+                onClick={() => setOpen(false)}
+                className="inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              >
+                <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" /> Que sait-il faire ?
+              </Link>
             </div>
+
             <Button variant="ghost" size="icon" aria-label="Nouvelle conversation" onClick={reset}>
               <RotateCcw className="h-4 w-4" />
             </Button>
@@ -128,6 +157,27 @@ export function AiAssistantWidget() {
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
             <div className="rounded-lg bg-muted/60 p-3 text-sm text-muted-foreground">{welcome}</div>
+            {showGuideHint && (
+              <Card className="border-gold/50 bg-gold/10 p-3 text-sm">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-muted-foreground">
+                      Première visite ? Le guide illustré montre en une minute ce qu'il sait faire.
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Button asChild size="sm" onClick={() => setOpen(false)}>
+                        <Link to="/guide-assistant">Voir le guide</Link>
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={dismissGuideHint}>
+                        Ne plus afficher
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {messages.map((m, i) => (
               <div
                 key={i}
