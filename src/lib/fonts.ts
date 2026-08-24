@@ -5,3 +5,5 @@ import "@fontsource/inter/700.css";
 import "@fontsource/playfair-display/500.css";
 import "@fontsource/playfair-display/600.css";
 import "@fontsource/playfair-display/700.css";
+import "@fontsource/caveat/500.css";
+import "@fontsource/caveat/700.css";
