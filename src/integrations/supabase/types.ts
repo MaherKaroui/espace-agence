@@ -2346,6 +2346,271 @@ export type Database = {
         }
         Relationships: []
       }
+      slack_canaux: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          description: string | null
+          dossier_id: string | null
+          id: string
+          membres_count: number
+          messages_count: number
+          nom: string
+          rapprochement_valide: boolean
+          slack_channel_id: string
+          slack_created_at: string | null
+          sujet: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          dossier_id?: string | null
+          id?: string
+          membres_count?: number
+          messages_count?: number
+          nom: string
+          rapprochement_valide?: boolean
+          slack_channel_id: string
+          slack_created_at?: string | null
+          sujet?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          dossier_id?: string | null
+          id?: string
+          membres_count?: number
+          messages_count?: number
+          nom?: string
+          rapprochement_valide?: boolean
+          slack_channel_id?: string
+          slack_created_at?: string | null
+          sujet?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slack_canaux_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "slack_canaux_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      slack_fichiers: {
+        Row: {
+          canal_id: string | null
+          created_at: string
+          downloaded_at: string | null
+          erreur: string | null
+          id: string
+          message_ts: string | null
+          mimetype: string | null
+          nom: string | null
+          slack_file_id: string
+          storage_path: string | null
+          taille: number
+          url_private: string | null
+        }
+        Insert: {
+          canal_id?: string | null
+          created_at?: string
+          downloaded_at?: string | null
+          erreur?: string | null
+          id?: string
+          message_ts?: string | null
+          mimetype?: string | null
+          nom?: string | null
+          slack_file_id: string
+          storage_path?: string | null
+          taille?: number
+          url_private?: string | null
+        }
+        Update: {
+          canal_id?: string | null
+          created_at?: string
+          downloaded_at?: string | null
+          erreur?: string | null
+          id?: string
+          message_ts?: string | null
+          mimetype?: string | null
+          nom?: string | null
+          slack_file_id?: string
+          storage_path?: string | null
+          taille?: number
+          url_private?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slack_fichiers_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "slack_canaux"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      slack_imports: {
+        Row: {
+          archive_nom: string
+          canaux_count: number
+          created_at: string
+          created_by: string | null
+          date_max: string | null
+          date_min: string | null
+          fichiers_count: number
+          fichiers_taille: number
+          fichiers_traites: Json
+          id: string
+          membres_count: number
+          messages_count: number
+          statut: string
+          updated_at: string
+        }
+        Insert: {
+          archive_nom: string
+          canaux_count?: number
+          created_at?: string
+          created_by?: string | null
+          date_max?: string | null
+          date_min?: string | null
+          fichiers_count?: number
+          fichiers_taille?: number
+          fichiers_traites?: Json
+          id?: string
+          membres_count?: number
+          messages_count?: number
+          statut?: string
+          updated_at?: string
+        }
+        Update: {
+          archive_nom?: string
+          canaux_count?: number
+          created_at?: string
+          created_by?: string | null
+          date_max?: string | null
+          date_min?: string | null
+          fichiers_count?: number
+          fichiers_taille?: number
+          fichiers_traites?: Json
+          id?: string
+          membres_count?: number
+          messages_count?: number
+          statut?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      slack_membres: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          is_bot: boolean
+          nom: string | null
+          slack_user_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          is_bot?: boolean
+          nom?: string | null
+          slack_user_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          is_bot?: boolean
+          nom?: string | null
+          slack_user_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      slack_messages: {
+        Row: {
+          auteur: string | null
+          canal_id: string
+          created_at: string
+          files: Json
+          id: string
+          posted_at: string | null
+          reactions: Json
+          recherche: unknown
+          slack_channel_id: string
+          slack_user_id: string | null
+          texte: string | null
+          thread_ts: string | null
+          ts: string
+        }
+        Insert: {
+          auteur?: string | null
+          canal_id: string
+          created_at?: string
+          files?: Json
+          id?: string
+          posted_at?: string | null
+          reactions?: Json
+          recherche?: unknown
+          slack_channel_id: string
+          slack_user_id?: string | null
+          texte?: string | null
+          thread_ts?: string | null
+          ts: string
+        }
+        Update: {
+          auteur?: string | null
+          canal_id?: string
+          created_at?: string
+          files?: Json
+          id?: string
+          posted_at?: string | null
+          reactions?: Json
+          recherche?: unknown
+          slack_channel_id?: string
+          slack_user_id?: string | null
+          texte?: string | null
+          thread_ts?: string | null
+          ts?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slack_messages_canal_id_fkey"
+            columns: ["canal_id"]
+            isOneToOne: false
+            referencedRelation: "slack_canaux"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supervision_alerts: {
         Row: {
           alert_key: string
