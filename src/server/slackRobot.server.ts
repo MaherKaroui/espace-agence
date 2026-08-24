@@ -122,7 +122,7 @@ export type RobotMeta = {
   derniere_erreur?: string | null;
   files_cursor?: string | null;
   files_indexed?: boolean;
-  threads?: { c: string; ts: string }[];
+  threads?: { c: string; ts: string; cur?: string | null }[];
   estimation_total?: number;
   canal_courant?: string | null;
 };
