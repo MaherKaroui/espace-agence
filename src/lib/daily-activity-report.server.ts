@@ -1164,6 +1164,9 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       .filter((x) => x.done > 0)
       .slice(0, 10),
     personnes,
+    poleSections,
+    priorites,
+
   };
 }
 
