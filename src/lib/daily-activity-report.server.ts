@@ -1241,7 +1241,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   }
 
   // Commentaires postés aujourd'hui
-  const echangesJour: { titre: string; pole: string; lignes: string[] }[] = [];
+  const echangesJour: { titre: string; pole: string; poleId: string | null; lignes: string[] }[] = [];
   const commentsByTaskToday = new Map<string, typeof commentsTodayRaw>();
   for (const c of commentsTodayRaw) {
     const arr = commentsByTaskToday.get(c.taskId) ?? [];
