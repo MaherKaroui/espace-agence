@@ -151,6 +151,7 @@ function AgencyTasksPage() {
     const { now, startOfDay, endOfDay, weekAgo } = bounds();
 
     let list = tasks;
+    if (onlyMine) list = list.filter((t) => myTaskIds.has(t.id));
     if (search.trim()) {
       const s = search.trim().toLowerCase();
       list = list.filter((t) => t.title.toLowerCase().includes(s) || (t.description ?? "").toLowerCase().includes(s));
