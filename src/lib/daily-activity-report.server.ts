@@ -605,10 +605,11 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     admin
       .from("agency_tasks")
       .select(
-        "id, title, priority, status, due_date, completed_at, created_at, client_id, dossier_id, internal_comment, assigned_to",
+        "id, title, priority, status, due_date, completed_at, created_at, client_id, dossier_id, pole_id, internal_comment, assigned_to, updated_by, updated_at",
       )
       .is("archived_at", null)
       .limit(3000),
+
     admin
       .from("audit_logs")
       .select("id, user_id, action, entity_type, entity_id, metadata, created_at")
