@@ -77,29 +77,17 @@ export function MyTasksButton() {
     enabled: !!user && isStaff,
     queryFn: async (): Promise<Enriched[]> => {
       const uid = user!.id;
-      const { data: extra } = await supabase
-        .from("agency_task_assignees")
-        .select("task_id")
-        .eq("user_id", uid);
-      const extraIds = Array.from(new Set((extra ?? []).map((r) => r.task_id)));
+      const ids = await fetchMyTaskIds(uid);
+      if (ids.length === 0) return [];
 
-      const base = () =>
-        supabase
-          .from("agency_tasks")
-          .select("*")
-          .is("archived_at", null)
-          .neq("status", "terminee");
+      const { data } = await supabase
+        .from("agency_tasks")
+        .select("*")
+        .in("id", ids)
+        .is("archived_at", null)
+        .neq("status", "terminee");
 
-      const [own, viaAssignees] = await Promise.all([
-        base().eq("assigned_to", uid),
-        extraIds.length ? base().in("id", extraIds) : Promise.resolve({ data: [] as Task[] }),
-      ]);
-
-      const map = new Map<string, Task>();
-      for (const t of [...((own.data ?? []) as Task[]), ...(((viaAssignees as any).data ?? []) as Task[])]) {
-        map.set(t.id, t);
-      }
-      const list = Array.from(map.values());
+      const list = (data ?? []) as Task[];
       if (list.length === 0) return [];
 
       const dossierIds = Array.from(new Set(list.map((t) => t.dossier_id).filter(Boolean))) as string[];
