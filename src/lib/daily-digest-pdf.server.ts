@@ -181,7 +181,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
         ? `, dont les plus anciennes : ${j.retards.plusAnciennes.join(" · ")}`
         : "";
       line(`Vigilance : ${j.retards.total} tâche(s) en retard${suite}.`, 6.8, 0, [150, 60, 40]);
-      y += 1.5;
+      y += 3.2;
     }
 
     // ---------- 5. Ce qui a été fait, par pôle puis par personne ----------
