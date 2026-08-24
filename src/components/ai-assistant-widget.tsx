@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Bot, X, Send, RotateCcw, Loader2, CheckCircle2, FileText } from "lucide-react";
+import { Bot, X, Send, RotateCcw, Loader2, CheckCircle2, FileText, HelpCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,9 @@ import { cn } from "@/lib/utils";
 import { categorieLabel } from "@/lib/labels";
 import { assistantChat, assistantConfirmAction } from "@/lib/assistant.functions";
 import { useRole } from "@/hooks/use-role";
+
+const GUIDE_HINT_KEY = "izi.assistant.guide-hint.dismissed";
+
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Proposal = any;
