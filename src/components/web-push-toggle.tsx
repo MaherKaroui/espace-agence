@@ -51,6 +51,7 @@ export function WebPushToggle() {
   // Préparés EN AMONT pour que subscribe() reste dans le geste utilisateur (Safari).
   const regRef = useRef<ServiceWorkerRegistration | null>(null);
   const keyRef = useRef<string>("");
+  const subRef = useRef<PushSubscription | null>(null);
 
   const stateLabel = !supported
     ? "Non configuré"
@@ -89,6 +90,7 @@ export function WebPushToggle() {
         keyRef.current = keyRes?.key ?? "";
         setReady(!!keyRef.current);
         const sub = await readyReg.pushManager.getSubscription();
+        subRef.current = sub;
         const status = await getStatus({ data: { endpoint: sub?.endpoint ?? null } });
         if (!cancelled) setSubscribed(status.currentDeviceSaved);
       } catch { /* noop */ }
@@ -122,8 +124,7 @@ export function WebPushToggle() {
 
       // 1) permission -> 2) subscribe IMMÉDIATEMENT (aucun await intermédiaire)
       const perm = await Notification.requestPermission();
-      const existing = await readyReg.pushManager.getSubscription();
-      let sub = existing ?? await readyReg.pushManager.subscribe({
+      let sub = subRef.current ?? await readyReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: appServerKey,
       });
@@ -154,6 +155,7 @@ export function WebPushToggle() {
         });
         await saveCurrentSubscription();
       }
+      subRef.current = sub;
       setSubscribed(true);
       toast.success("Notifications navigateur activées");
     } catch (e: any) {
@@ -173,6 +175,7 @@ export function WebPushToggle() {
         await delSub({ data: { endpoint: sub.endpoint } }).catch(() => {});
         await sub.unsubscribe();
       }
+      subRef.current = null;
       setSubscribed(false);
       toast.success("Notifications navigateur désactivées");
     } catch (e: any) {
