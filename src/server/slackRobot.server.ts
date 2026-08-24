@@ -502,7 +502,11 @@ async function collecterHistorique(supabase: any, job: any) {
   return { canal: canal.nom, messages: n, reste: !!cursor };
 }
 
-async function collecterFil(supabase: any, job: any, threads: { c: string; ts: string }[]) {
+async function collecterFil(
+  supabase: any,
+  job: any,
+  threads: { c: string; ts: string; cur?: string | null }[],
+) {
   const t = threads[0]!;
   const reste = threads.slice(1);
   let b: any;
@@ -511,6 +515,7 @@ async function collecterFil(supabase: any, job: any, threads: { c: string; ts: s
       channel: t.c,
       ts: t.ts,
       limit: String(PAGE_SIZE),
+      ...(t.cur ? { cursor: t.cur } : {}),
     });
   } catch (e: any) {
     if (e instanceof RateLimited) throw e;
@@ -519,7 +524,10 @@ async function collecterFil(supabase: any, job: any, threads: { c: string; ts: s
   }
   const canalId = await canalIdFor(supabase, t.c);
   const n = await enregistreMessages(supabase, canalId, t.c, b.messages ?? []);
-  const suite = b.response_metadata?.next_cursor ? threads : reste; // page suivante gérée au tour d'après
-  await patchMeta(supabase, job, { threads: b.response_metadata?.next_cursor ? reste : suite, phase: "fils" });
-  return { fil: t.ts, messages: n, restants: reste.length };
+  // Curseur du fil conservé en tête de file : reprise exacte au passage suivant.
+  const next = b.response_metadata?.next_cursor || null;
+  const nouvelles = next ? [{ ...t, cur: next }, ...reste] : reste;
+  await patchMeta(supabase, job, { threads: nouvelles, phase: "fils" });
+  return { fil: t.ts, messages: n, restants: nouvelles.length };
 }
+
