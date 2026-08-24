@@ -86,5 +86,7 @@ export const robotAvancer = createServerFn({ method: "POST" })
     const a = await import("@/server/clientAcces.server");
     await a.assertStaff(context.supabase, context.userId);
     const r = await import("@/server/slackRobot.server");
-    return r.runTick(context.supabase);
+    const res = await r.runTick(context.supabase);
+    return JSON.parse(JSON.stringify(res)) as Record<string, string | number | boolean | null>;
   });
+
