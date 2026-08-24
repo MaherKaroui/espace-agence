@@ -674,6 +674,31 @@ export const proposalSchema = z.discriminatedUnion("kind", [
     dossier_id: z.string().uuid().nullable().optional().default(null),
   }),
   z.object({
+    kind: z.literal("changer_statut_tache"),
+    task_id: z.string().uuid(),
+    task_titre: z.string().default(""),
+    statut: z.enum(TASK_STATUS_VALUES),
+  }),
+  z.object({
+    kind: z.literal("assigner_tache"),
+    task_id: z.string().uuid(),
+    task_titre: z.string().default(""),
+    user_id: z.string().uuid(),
+    user_nom: z.string().default(""),
+  }),
+  z.object({
+    kind: z.literal("modifier_echeance_tache"),
+    task_id: z.string().uuid(),
+    task_titre: z.string().default(""),
+    due_date: z.string().nullable().optional().default(null),
+  }),
+  z.object({
+    kind: z.literal("commenter_tache"),
+    task_id: z.string().uuid(),
+    task_titre: z.string().default(""),
+    contenu: z.string().min(2),
+  }),
+  z.object({
     kind: z.literal("rediger_message"),
     destinataire: z.string().nullable().optional().default(null),
     objet: z.string().nullable().optional().default(null),
