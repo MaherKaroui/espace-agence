@@ -90,6 +90,8 @@ function SlackImportPage() {
       <Tabs defaultValue="import">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="import"><Upload className="h-4 w-4 mr-1" /> Import</TabsTrigger>
+          <TabsTrigger value="robot"><Bot className="h-4 w-4 mr-1" /> Robot API</TabsTrigger>
+
           <TabsTrigger value="rapprochement"><Link2 className="h-4 w-4 mr-1" /> Rapprochement clients</TabsTrigger>
           <TabsTrigger value="fichiers"><FileWarning className="h-4 w-4 mr-1" /> Fichiers</TabsTrigger>
           <TabsTrigger value="acces"><KeyRound className="h-4 w-4 mr-1" /> Accès détectés</TabsTrigger>
