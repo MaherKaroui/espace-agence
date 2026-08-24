@@ -56,6 +56,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       startY: y,
       margin: { left: M, right: M, top: M + 6, bottom: 18 },
       theme: "grid",
+      rowPageBreak: "avoid",
       styles: { font: "helvetica", fontSize: 7.4, cellPadding: 1.1, textColor: [40, 46, 56], overflow: "linebreak" },
       headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.4, cellPadding: 1.2 },
       alternateRowStyles: { fillColor: LIGHT },
