@@ -4,28 +4,40 @@
  */
 /**
  * Destinataires des e-mails de l'Agent IA de supervision (alertes + rapports techniques).
- * UNIQUEMENT l'adresse admin principale (email_settings.admin_email).
- * Les destinataires supplémentaires (report_recipients) ne reçoivent QUE le compte rendu
- * quotidien, résolu de son côté par resolveReportRecipients().
+ * Réglage dédié : email_settings.supervision_recipients.
+ * Si la liste est vide, on retombe sur admin_email pour ne jamais perdre une alerte critique.
+ * Le compte rendu quotidien a ses propres destinataires (resolveReportRecipients).
  */
 export async function resolveSupervisionRecipients(admin: any): Promise<string[]> {
   try {
     const { data } = await admin
       .from("email_settings")
-      .select("admin_email")
+      .select("admin_email, supervision_recipients")
       .eq("id", 1)
       .maybeSingle();
-    const raw = data?.admin_email;
-    if (typeof raw !== "string" || !raw.includes("@")) return [];
-    const email = raw.trim().toLowerCase();
-    const { data: suppressed } = await admin.from("suppressed_emails").select("email").eq("email", email);
-    if (((suppressed ?? []) as any[]).length > 0) return [];
-    return [email];
+
+    const list = ((data?.supervision_recipients ?? []) as unknown[])
+      .filter((e): e is string => typeof e === "string" && e.includes("@"));
+    const fallback = typeof data?.admin_email === "string" && data.admin_email.includes("@")
+      ? [data.admin_email]
+      : [];
+    const source = list.length > 0 ? list : fallback;
+
+    const unique = Array.from(new Set(source.map((e) => e.trim().toLowerCase()))).filter(Boolean);
+    if (unique.length === 0) return [];
+
+    const { data: suppressed } = await admin
+      .from("suppressed_emails")
+      .select("email")
+      .in("email", unique);
+    const blocked = new Set(((suppressed ?? []) as any[]).map((r) => String(r.email).toLowerCase()));
+    return unique.filter((e) => !blocked.has(e));
   } catch (e) {
     console.error("[supervision] recipients failed", e);
     return [];
   }
 }
+
 
 export const APP_URL = "https://izisuivis.com";
 

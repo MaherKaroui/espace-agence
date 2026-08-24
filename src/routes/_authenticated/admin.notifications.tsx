@@ -78,6 +78,8 @@ function displayError(message: string | null) {
 function AdminNotifications() {
   const qc = useQueryClient();
   const [testEmail, setTestEmail] = useState("");
+  const [newSupervisionEmail, setNewSupervisionEmail] = useState("");
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -172,8 +174,8 @@ function AdminNotifications() {
   }, [dedupedLogs, statusFilter, search]);
 
   const saveSettings = useMutation({
-    mutationFn: async (patch: Partial<{ admin_email: string; disabled_templates: string[] }>) => {
-      const { error } = await supabase.from("email_settings").update(patch).eq("id", 1);
+    mutationFn: async (patch: Partial<{ admin_email: string; disabled_templates: string[]; supervision_recipients: string[] }>) => {
+      const { error } = await supabase.from("email_settings").update(patch as any).eq("id", 1);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -182,6 +184,19 @@ function AdminNotifications() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const supervisionRecipients: string[] = ((settings as any)?.supervision_recipients ?? []) as string[];
+  const addSupervisionRecipient = () => {
+    const v = newSupervisionEmail.trim().toLowerCase();
+    if (!v || !v.includes("@")) return toast.error("Adresse e-mail invalide");
+    if (supervisionRecipients.includes(v)) return toast.error("Adresse déjà présente");
+    saveSettings.mutate({ supervision_recipients: [...supervisionRecipients, v] });
+    setNewSupervisionEmail("");
+  };
+  const removeSupervisionRecipient = (email: string) => {
+    saveSettings.mutate({ supervision_recipients: supervisionRecipients.filter((e) => e !== email) });
+  };
+
 
   const toggleTemplate = (name: string, enabled: boolean) => {
     const current = settings?.disabled_templates ?? [];
@@ -242,10 +257,7 @@ function AdminNotifications() {
             <div>
               <h2 className="font-semibold">Adresse admin principale</h2>
               <p className="text-xs text-muted-foreground mt-1">
-                Destinataire par défaut des notifications adressées à l'agence. C'est également la
-                <strong> seule adresse</strong> qui reçoit les alertes et rapports de l'Agent IA de
-                supervision. Les destinataires supplémentaires configurés pour les rapports ne
-                reçoivent, eux, que le compte rendu quotidien.
+                Destinataire par défaut des notifications adressées à l'agence et du compte rendu quotidien.
               </p>
             </div>
 
@@ -262,6 +274,51 @@ function AdminNotifications() {
               />
             </div>
           </Card>
+
+          <Card className="p-6 space-y-4">
+            <div>
+              <h2 className="font-semibold">Destinataires de l'Agent IA de supervision</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                Reçoivent les alertes techniques et les rapports de supervision. Indépendant des
+                destinataires du compte rendu quotidien.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              {supervisionRecipients.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Aucune adresse : les alertes partent vers l'adresse admin principale.
+                </p>
+              ) : (
+                supervisionRecipients.map((email) => (
+                  <div key={email} className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+                    <span className="text-sm truncate">{email}</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeSupervisionRecipient(email)}
+                      disabled={saveSettings.isPending}
+                    >
+                      Retirer
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex gap-2 max-w-md">
+              <Input
+                type="email"
+                value={newSupervisionEmail}
+                onChange={(e) => setNewSupervisionEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSupervisionRecipient(); } }}
+                placeholder="alerte@exemple.com"
+                disabled={loadingSettings}
+              />
+              <Button onClick={addSupervisionRecipient} disabled={saveSettings.isPending}>Ajouter</Button>
+            </div>
+          </Card>
+
 
           <Card className="p-6 space-y-4">
             <div>
