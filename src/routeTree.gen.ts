@@ -40,6 +40,7 @@ import { Route as AuthenticatedAdminRgpdRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminRendezVousRouteImport } from './routes/_authenticated/admin.rendez-vous'
 import { Route as AuthenticatedAdminRapportsActiviteRouteImport } from './routes/_authenticated/admin.rapports-activite'
 import { Route as AuthenticatedAdminPolesRouteImport } from './routes/_authenticated/admin.poles'
+import { Route as AuthenticatedAdminPiecesModelesRouteImport } from './routes/_authenticated/admin.pieces-modeles'
 import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin.notifications'
 import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin.equipe'
 import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
@@ -239,6 +240,12 @@ const AuthenticatedAdminPolesRoute = AuthenticatedAdminPolesRouteImport.update({
   path: '/admin/poles',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminPiecesModelesRoute =
+  AuthenticatedAdminPiecesModelesRouteImport.update({
+    id: '/admin/pieces-modeles',
+    path: '/admin/pieces-modeles',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminNotificationsRoute =
   AuthenticatedAdminNotificationsRouteImport.update({
     id: '/admin/notifications',
@@ -453,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRouteWithChildren
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
+  '/admin/pieces-modeles': typeof AuthenticatedAdminPiecesModelesRoute
   '/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/admin/rapports-activite': typeof AuthenticatedAdminRapportsActiviteRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
@@ -517,6 +525,7 @@ export interface FileRoutesByTo {
   '/admin/dossiers': typeof AuthenticatedAdminDossiersRouteWithChildren
   '/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
+  '/admin/pieces-modeles': typeof AuthenticatedAdminPiecesModelesRoute
   '/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/admin/rapports-activite': typeof AuthenticatedAdminRapportsActiviteRoute
   '/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
@@ -583,6 +592,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/dossiers': typeof AuthenticatedAdminDossiersRouteWithChildren
   '/_authenticated/admin/equipe': typeof AuthenticatedAdminEquipeRoute
   '/_authenticated/admin/notifications': typeof AuthenticatedAdminNotificationsRoute
+  '/_authenticated/admin/pieces-modeles': typeof AuthenticatedAdminPiecesModelesRoute
   '/_authenticated/admin/poles': typeof AuthenticatedAdminPolesRoute
   '/_authenticated/admin/rapports-activite': typeof AuthenticatedAdminRapportsActiviteRoute
   '/_authenticated/admin/rendez-vous': typeof AuthenticatedAdminRendezVousRoute
@@ -649,6 +659,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers'
     | '/admin/equipe'
     | '/admin/notifications'
+    | '/admin/pieces-modeles'
     | '/admin/poles'
     | '/admin/rapports-activite'
     | '/admin/rendez-vous'
@@ -713,6 +724,7 @@ export interface FileRouteTypes {
     | '/admin/dossiers'
     | '/admin/equipe'
     | '/admin/notifications'
+    | '/admin/pieces-modeles'
     | '/admin/poles'
     | '/admin/rapports-activite'
     | '/admin/rendez-vous'
@@ -778,6 +790,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/dossiers'
     | '/_authenticated/admin/equipe'
     | '/_authenticated/admin/notifications'
+    | '/_authenticated/admin/pieces-modeles'
     | '/_authenticated/admin/poles'
     | '/_authenticated/admin/rapports-activite'
     | '/_authenticated/admin/rendez-vous'
@@ -1067,6 +1080,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPolesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/pieces-modeles': {
+      id: '/_authenticated/admin/pieces-modeles'
+      path: '/admin/pieces-modeles'
+      fullPath: '/admin/pieces-modeles'
+      preLoaderRoute: typeof AuthenticatedAdminPiecesModelesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/notifications': {
       id: '/_authenticated/admin/notifications'
       path: '/admin/notifications'
@@ -1321,6 +1341,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDossiersRoute: typeof AuthenticatedAdminDossiersRouteWithChildren
   AuthenticatedAdminEquipeRoute: typeof AuthenticatedAdminEquipeRoute
   AuthenticatedAdminNotificationsRoute: typeof AuthenticatedAdminNotificationsRoute
+  AuthenticatedAdminPiecesModelesRoute: typeof AuthenticatedAdminPiecesModelesRoute
   AuthenticatedAdminPolesRoute: typeof AuthenticatedAdminPolesRoute
   AuthenticatedAdminRapportsActiviteRoute: typeof AuthenticatedAdminRapportsActiviteRoute
   AuthenticatedAdminRendezVousRoute: typeof AuthenticatedAdminRendezVousRoute
@@ -1359,6 +1380,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminDossiersRoute: AuthenticatedAdminDossiersRouteWithChildren,
   AuthenticatedAdminEquipeRoute: AuthenticatedAdminEquipeRoute,
   AuthenticatedAdminNotificationsRoute: AuthenticatedAdminNotificationsRoute,
+  AuthenticatedAdminPiecesModelesRoute: AuthenticatedAdminPiecesModelesRoute,
   AuthenticatedAdminPolesRoute: AuthenticatedAdminPolesRoute,
   AuthenticatedAdminRapportsActiviteRoute:
     AuthenticatedAdminRapportsActiviteRoute,
