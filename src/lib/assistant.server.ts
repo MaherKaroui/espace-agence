@@ -337,9 +337,134 @@ export function buildAssistantTools(caller: AssistantCaller, proposals: Assistan
       },
     );
 
+    /** Lecture des tâches — client utilisateur : le cloisonnement par pôle vient des RLS. */
+    tools.mes_taches = mk(
+      "Liste les tâches agence visibles par l'utilisateur (RLS : ses tâches, celles de son pôle). Filtres : mine, statut, en_retard, echeance_avant.",
+      z.object({
+        mine: z.boolean().optional().describe("Uniquement les tâches assignées à l'utilisateur"),
+        statut: z.enum(TASK_STATUS_VALUES).optional(),
+        en_retard: z.boolean().optional(),
+        echeance_avant: z.string().optional().describe("ISO YYYY-MM-DD"),
+        recherche: z.string().optional(),
+        limite: z.number().int().min(1).max(50).default(25),
+      }),
+      async (args: any) => {
+        denyClient(isStaff, "mes_taches");
+        let ids: string[] | null = null;
+        if (args.mine) {
+          const { data: links } = await supabase.from("agency_task_assignees").select("task_id").eq("user_id", userId);
+          ids = ((links ?? []) as any[]).map((l) => l.task_id);
+        }
+        let q = supabase
+          .from("agency_tasks")
+          .select("id, title, status, priority, due_date, assigned_to, pole_id, dossier_id, updated_at")
+          .is("archived_at", null)
+          .order("due_date", { ascending: true, nullsFirst: false })
+          .limit(args.limite ?? 25);
+        if (args.mine) {
+          const orIds = (ids ?? []).length > 0 ? `,id.in.(${(ids ?? []).join(",")})` : "";
+          q = q.or(`assigned_to.eq.${userId}${orIds}`);
+        }
+        if (args.statut) q = q.eq("status", args.statut);
+        if (args.recherche) q = q.ilike("title", `%${args.recherche}%`);
+        if (args.en_retard) q = q.lt("due_date", new Date().toISOString().slice(0, 10)).neq("status", "terminee");
+        if (args.echeance_avant) q = q.lte("due_date", args.echeance_avant);
+        const { data, error } = await q;
+        if (error) throw new Error(error.message);
+        return { taches: data ?? [] };
+      },
+    );
+
+    const loadTask = async (taskId: string) => {
+      const { data, error } = await supabase
+        .from("agency_tasks")
+        .select("id, title, status, due_date")
+        .eq("id", taskId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error("Tâche introuvable ou hors de votre périmètre.");
+      return data as any;
+    };
+
+    tools.changer_statut_tache = mk(
+      "Prépare le changement de statut d'une tâche. N'écrit rien avant confirmation.",
+      z.object({ task_id: z.string().uuid(), statut: z.enum(TASK_STATUS_VALUES) }),
+      async (args: any) => {
+        denyClient(isStaff, "changer_statut_tache");
+        const task = await loadTask(args.task_id);
+        const proposal: AssistantProposal = {
+          kind: "changer_statut_tache",
+          task_id: task.id,
+          task_titre: task.title,
+          statut: args.statut,
+        };
+        proposals.push(proposal);
+        return { confirmation_requise: true, apercu: proposal };
+      },
+    );
+
+    tools.assigner_tache = mk(
+      "Prépare l'assignation d'une tâche à un membre de l'équipe. N'écrit rien avant confirmation.",
+      z.object({ task_id: z.string().uuid(), user_id: z.string().uuid() }),
+      async (args: any) => {
+        denyClient(isStaff, "assigner_tache");
+        const task = await loadTask(args.task_id);
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .eq("id", args.user_id)
+          .maybeSingle();
+        if (!prof) throw new Error("Membre introuvable ou hors de votre périmètre.");
+        const proposal: AssistantProposal = {
+          kind: "assigner_tache",
+          task_id: task.id,
+          task_titre: task.title,
+          user_id: prof.id,
+          user_nom: prof.full_name ?? "Membre",
+        };
+        proposals.push(proposal);
+        return { confirmation_requise: true, apercu: proposal };
+      },
+    );
+
+    tools.proposer_echeance_tache = mk(
+      "Prépare la modification de l'échéance d'une tâche. N'écrit rien avant confirmation.",
+      z.object({ task_id: z.string().uuid(), due_date: z.string().describe("ISO YYYY-MM-DD") }),
+      async (args: any) => {
+        denyClient(isStaff, "proposer_echeance_tache");
+        const task = await loadTask(args.task_id);
+        const proposal: AssistantProposal = {
+          kind: "modifier_echeance_tache",
+          task_id: task.id,
+          task_titre: task.title,
+          due_date: args.due_date,
+        };
+        proposals.push(proposal);
+        return { confirmation_requise: true, apercu: proposal };
+      },
+    );
+
+    tools.commenter_tache = mk(
+      "Prépare l'ajout d'un commentaire interne sur une tâche. N'écrit rien avant confirmation.",
+      z.object({ task_id: z.string().uuid(), contenu: z.string().min(2).max(2000) }),
+      async (args: any) => {
+        denyClient(isStaff, "commenter_tache");
+        const task = await loadTask(args.task_id);
+        const proposal: AssistantProposal = {
+          kind: "commenter_tache",
+          task_id: task.id,
+          task_titre: task.title,
+          contenu: args.contenu,
+        };
+        proposals.push(proposal);
+        return { confirmation_requise: true, apercu: proposal };
+      },
+    );
+
     tools.rediger_message = mk(
-      "Produit un brouillon de message. N'envoie jamais. Agence uniquement.",
+      "Produit un brouillon de message. À n'appeler QUE si l'utilisateur demande explicitement d'écrire à quelqu'un, en indiquant le destinataire ET le sujet. Jamais par déduction, jamais après une simple salutation. N'envoie jamais.",
       z.object({ destinataire: z.string().optional(), objet: z.string().optional(), brouillon: z.string().min(5) }),
+
       async (args: any) => {
         denyClient(isStaff, "rediger_message");
         const proposal: AssistantProposal = {
