@@ -266,7 +266,8 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     });
 
     for (const sec of sections) {
-      ensure(30);
+      ensure(24);
+
       y += 1.5;
       // Bandeau de pôle
       doc.setFillColor(...NAVY);
