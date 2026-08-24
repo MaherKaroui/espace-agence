@@ -679,6 +679,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
 
   // --- Commentaires de tâches (30 derniers jours) : auteur + date obligatoires ---
   const commentsByTask = new Map<string, { at: number; texte: string }[]>();
+  /** Commentaires postés PENDANT la journée : bruts, pour la section « échanges du jour ». */
+  const commentsTodayRaw: { taskId: string; userId: string | null; at: number; texte: string }[] = [];
   try {
     if (taskList.length) {
       const depuis = new Date(now.getTime() - 30 * 86400_000).toISOString();
@@ -712,6 +714,14 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
           texte: `${stampParis(r.created_at)}  ${auteur ?? "(auteur non tracé)"} : ${texte}`,
         });
         commentsByTask.set(r.task_id, arr);
+        if (r.created_at >= fromIso) {
+          commentsTodayRaw.push({
+            taskId: r.task_id,
+            userId: r.user_id ?? null,
+            at: new Date(r.created_at).getTime(),
+            texte: `${heureParis(r.created_at)}  ${auteur ?? "(auteur non tracé)"} : ${texte.replace(/\s*\n\s*/g, " ")}`,
+          });
+        }
       }
     }
   } catch (e) {
