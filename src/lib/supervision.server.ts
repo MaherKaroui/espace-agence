@@ -140,13 +140,18 @@ export async function sendSupervisionEmail(
     idempotencyKey: string;
     /** Origine du déploiement courant (preview ou prod). Défaut : APP_URL. */
     baseUrl?: string;
+    /** Destinataires explicites (ex. compte rendu quotidien). Défaut : adresse admin principale. */
+    recipients?: string[];
   },
 ): Promise<boolean> {
-  const recipients = await resolveSupervisionRecipients(admin);
+  const recipients = opts.recipients?.length
+    ? opts.recipients
+    : await resolveSupervisionRecipients(admin);
   if (recipients.length === 0) {
     console.error("[supervision] aucun destinataire configuré dans email_settings");
     return false;
   }
+
   let allOk = true;
   for (const recipient of recipients) {
     let ok = false;
