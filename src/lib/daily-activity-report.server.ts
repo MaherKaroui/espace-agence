@@ -598,6 +598,22 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       personnes: [],
       poleSections: [],
       priorites: [],
+      journee: {
+        poles: [],
+        echanges: [],
+        retards: { total: 0, plusAnciennes: [] },
+        presence: [],
+        absents: [],
+        chiffres: {
+          tachesTerminees: 0,
+          dossiersCrees: 0,
+          documentsDeposes: 0,
+          messages: 0,
+          personnesActives: 0,
+        },
+        calme: true,
+      },
+
 
     };
   }
