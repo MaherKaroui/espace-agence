@@ -616,6 +616,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       journee: {
         poles: [],
         echanges: [],
+        messagerie: [],
         retards: { total: 0, plusAnciennes: [] },
         presence: [],
         absents: [],
