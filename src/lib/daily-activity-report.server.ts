@@ -1469,7 +1469,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         participants: membres.length ? `Participants : ${membres.join(", ")}` : null,
         total: list.length,
         lignes: list.slice(0, 12).map(
-          (m) => `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} → groupe « ${nomCanal} »${piece(m)}${supp(m)}`,
+          (m) => `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} → groupe « ${nomCanal} »${texteDe(m)}${piece(m)}${supp(m)}`,
         ),
       });
       for (const m of list) {
