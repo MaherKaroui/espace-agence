@@ -260,16 +260,25 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       const maxCanaux = niveau >= 2 ? 5 : niveau >= 1 ? 8 : 12;
       const maxLignes = niveau >= 2 ? 3 : niveau >= 1 ? 5 : 8;
       for (const c of canaux.slice(0, maxCanaux)) {
-        ensure(10);
+        ensure(12);
         line(`${txt(c.canal)}  —  ${c.total} message(s)`, 6.8, 5, NAVY_SOFT, true);
         if (c.participants) line(txt(c.participants), 6.3, 9, GREY);
-        for (const l of c.lignes.slice(0, maxLignes)) line(txt(l), 6.4, 9, [72, 80, 92]);
-        const reste = Math.min(c.lignes.length, c.total) - Math.min(c.lignes.length, maxLignes);
+        for (const l of c.lignes.slice(0, maxLignes)) {
+          // « 14:32 — Marie → Client : « texte » » -> entête sur une ligne, message en dessous.
+          const brut = txt(l);
+          const sep = brut.indexOf(" : «");
+          const entete = sep > 0 ? brut.slice(0, sep) : brut;
+          const corps = sep > 0 ? brut.slice(sep + 3).trim().replace(/^«\s*/, "").replace(/\s*»$/, "") : "";
+          line(entete, 6.4, 9, [72, 80, 92], true);
+          if (corps) line(`« ${corps} »`, 6.4, 13, [96, 104, 116]);
+        }
+        const reste = c.total - Math.min(c.lignes.length, maxLignes);
         if (reste > 0) line(`... et ${reste} autre(s) message(s) dans ce fil`, 6.2, 9, GREY);
-        y += 1.4;
+        y += 1.6;
       }
       const autres = canaux.length - Math.min(canaux.length, maxCanaux);
       if (autres > 0) line(`${autres} autre(s) fil(s) de discussion non détaillé(s), faute de place.`, 6.4, 0, GREY);
+
       y += 1.5;
     }
 
