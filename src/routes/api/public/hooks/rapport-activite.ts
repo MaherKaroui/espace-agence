@@ -29,7 +29,9 @@ export const Route = createFileRoute("/api/public/hooks/rapport-activite")({
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const res = await sendDailyDigest(supabaseAdmin, new URL(request.url).origin, toParam);
+          // Pas d'origine de requête ici : l'URL interne du déploiement est protégée
+          // par la barrière d'authentification du site et renvoyait 403 à l'envoi.
+          const res = await sendDailyDigest(supabaseAdmin, undefined, toParam);
           return Response.json({ ...res, date: parisDateKey(), test: Boolean(toParam) });
         } catch (e) {
           console.error("[rapport-activite] failed", e);
