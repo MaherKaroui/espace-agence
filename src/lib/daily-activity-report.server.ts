@@ -430,9 +430,22 @@ export interface DigestPoleSection {
   taches: DigestTaskRow[];
 }
 
+export interface DigestMessagerieCanal {
+  /** Nom lisible du fil : « Client — ALPHA FORMATION », « Interne — Pôle Qualiopi »… */
+  canal: string;
+  type: "Client" | "Interne" | "Groupe";
+  /** Personnes présentes dans le fil, en clair. */
+  participants: string | null;
+  /** « 14:32 — Marie Dupont → ALPHA FORMATION (pièce jointe : contrat.pdf) » */
+  lignes: string[];
+  total: number;
+}
+
 export interface DigestJournee {
   poles: { pole: string; poleId: string | null; personnes: { nom: string; evenements: { heure: string; texte: string }[] }[] }[];
   echanges: { titre: string; pole: string; poleId: string | null; lignes: string[] }[];
+  /** Messagerie du jour, fil par fil, avec l'expéditeur et le destinataire. */
+  messagerie: DigestMessagerieCanal[];
   retards: { total: number; plusAnciennes: string[] };
   presence: { nom: string; duree: string; plage: string | null }[];
   absents: string[];
@@ -603,6 +616,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       journee: {
         poles: [],
         echanges: [],
+        messagerie: [],
         retards: { total: 0, plusAnciennes: [] },
         presence: [],
         absents: [],
@@ -1271,6 +1285,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     const nom = nameById.get(uid);
     if (!nom) continue;
     for (const l of myLogs) {
+      // Les messages sont détaillés plus bas (expéditeur → destinataire réels).
+      if (/message\.sent$/.test(String(l.action))) continue;
       const label = actionGroup(l.action);
       if (!label) continue;
       const meta: any = l.metadata || {};
@@ -1290,6 +1306,180 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         `${label}${libelle ? ` : ${libelle}` : ""}${suffix}`,
       );
     }
+  }
+
+  /* ---- Messagerie du jour : qui a écrit, à qui, à quelle heure ---- */
+  const messagerie: DigestMessagerieCanal[] = [];
+  try {
+    const [{ data: msgCli }, { data: msgInt }, { data: msgGrp }] = await Promise.all([
+      admin
+        .from("messages")
+        .select("id, client_id, sender_id, from_agence, created_at, attachment_name, is_system, deleted_at")
+        .gte("created_at", fromIso).lte("created_at", toIso)
+        .order("created_at", { ascending: true }).limit(2000),
+      admin
+        .from("internal_messages")
+        .select("id, conversation_id, sender_id, created_at, attachment_name, is_system, deleted_at")
+        .gte("created_at", fromIso).lte("created_at", toIso)
+        .order("created_at", { ascending: true }).limit(2000),
+      admin
+        .from("group_messages")
+        .select("id, conversation_id, sender_id, created_at, attachment_name, is_system, deleted_at")
+        .gte("created_at", fromIso).lte("created_at", toIso)
+        .order("created_at", { ascending: true }).limit(2000),
+    ]);
+    const cliRows = ((msgCli ?? []) as any[]).filter((m) => !m.is_system);
+    const intRows = ((msgInt ?? []) as any[]).filter((m) => !m.is_system);
+    const grpRows = ((msgGrp ?? []) as any[]).filter((m) => !m.is_system);
+
+    const intConvIds = [...new Set(intRows.map((m) => m.conversation_id).filter(Boolean))];
+    const grpConvIds = [...new Set(grpRows.map((m) => m.conversation_id).filter(Boolean))];
+    const [{ data: intConvs }, { data: grpConvs }, { data: intMembers }, { data: grpMembers }] =
+      await Promise.all([
+        intConvIds.length
+          ? admin.from("internal_conversations").select("id, titre, type, is_group, client_id, pole_id").in("id", intConvIds)
+          : Promise.resolve({ data: [] } as any),
+        grpConvIds.length
+          ? admin.from("conversations").select("id, titre").in("id", grpConvIds)
+          : Promise.resolve({ data: [] } as any),
+        intConvIds.length
+          ? admin.from("internal_conversation_members").select("conversation_id, user_id").in("conversation_id", intConvIds)
+          : Promise.resolve({ data: [] } as any),
+        grpConvIds.length
+          ? admin.from("conversation_members").select("conversation_id, user_id").in("conversation_id", grpConvIds)
+          : Promise.resolve({ data: [] } as any),
+      ]);
+
+    // Noms manquants (clients, membres de fils) — complète nameById.
+    const besoin = new Set<string>();
+    const addBesoin = (id: any) => { if (id && !nameById.has(id)) besoin.add(id); };
+    for (const m of cliRows) { addBesoin(m.sender_id); addBesoin(m.client_id); }
+    for (const m of [...intRows, ...grpRows]) addBesoin(m.sender_id);
+    for (const r of ((intMembers ?? []) as any[])) addBesoin(r.user_id);
+    for (const r of ((grpMembers ?? []) as any[])) addBesoin(r.user_id);
+    for (const c of ((intConvs ?? []) as any[])) addBesoin(c.client_id);
+    if (besoin.size) {
+      const { data: extra } = await admin
+        .from("profiles").select("id, prenom, nom, email, entreprise").in("id", [...besoin]);
+      for (const p of ((extra ?? []) as any[]))
+        nameById.set(p.id, `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.entreprise || p.email || "—");
+    }
+    const nomDe = (id: any): string => (id ? nameById.get(id) ?? "Utilisateur inconnu" : "—");
+    const membresDe = (rows: any[], convId: string, exclude?: string) =>
+      [...new Set(rows.filter((r) => r.conversation_id === convId && r.user_id !== exclude).map((r) => nomDe(r.user_id)))];
+    const piece = (m: any) => (m.attachment_name ? ` — pièce jointe : ${m.attachment_name}` : "");
+    const supp = (m: any) => (m.deleted_at ? " [message supprimé depuis]" : "");
+
+    // 1) Messagerie client (fil par client)
+    const parClient = new Map<string, any[]>();
+    for (const m of cliRows) {
+      const arr = parClient.get(m.client_id) ?? [];
+      arr.push(m);
+      parClient.set(m.client_id, arr);
+    }
+    for (const [cid, list] of parClient) {
+      const client = clientLabel(cid) ?? nomDe(cid);
+      const intervenants = [...new Set(list.filter((m) => m.from_agence).map((m) => nomDe(m.sender_id)))];
+      messagerie.push({
+        canal: `Client — ${client}`,
+        type: "Client",
+        participants: intervenants.length ? `Côté agence : ${intervenants.join(", ")}` : "Aucune réponse de l'agence",
+        total: list.length,
+        lignes: list.slice(0, 12).map((m) =>
+          m.from_agence
+            ? `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} (agence) → ${client}${piece(m)}${supp(m)}`
+            : `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} (client) → équipe agence${piece(m)}${supp(m)}`,
+        ),
+      });
+      for (const m of list) {
+        if (!m.from_agence || !m.sender_id || !nameById.has(m.sender_id)) continue;
+        pushEvent(
+          poleOfUser(m.sender_id),
+          nomDe(m.sender_id),
+          new Date(m.created_at).getTime(),
+          heureParis(m.created_at),
+          `Message envoyé à ${client}${piece(m)}`,
+        );
+      }
+    }
+
+    // 2) Messagerie interne (fils d'équipe / directs)
+    const intConvMap = new Map(((intConvs ?? []) as any[]).map((c) => [c.id, c]));
+    const parInt = new Map<string, any[]>();
+    for (const m of intRows) {
+      const arr = parInt.get(m.conversation_id) ?? [];
+      arr.push(m);
+      parInt.set(m.conversation_id, arr);
+    }
+    for (const [convId, list] of parInt) {
+      const c: any = intConvMap.get(convId);
+      const direct = c && c.is_group === false;
+      const membres = membresDe((intMembers ?? []) as any[], convId);
+      const nomCanal = c?.titre
+        || (direct ? membres.join(" ↔ ") : null)
+        || (c?.client_id ? clientLabel(c.client_id) ?? nomDe(c.client_id) : null)
+        || (c?.pole_id ? poleNames.get(c.pole_id) ?? "Fil d'équipe" : "Fil d'équipe");
+      messagerie.push({
+        canal: `Interne — ${nomCanal}`,
+        type: "Interne",
+        participants: membres.length ? `Participants : ${membres.join(", ")}` : null,
+        total: list.length,
+        lignes: list.slice(0, 12).map((m) => {
+          const dest = direct
+            ? membresDe((intMembers ?? []) as any[], convId, m.sender_id).join(", ") || nomCanal
+            : nomCanal;
+          return `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} → ${dest}${piece(m)}${supp(m)}`;
+        }),
+      });
+      for (const m of list) {
+        if (!m.sender_id || !nameById.has(m.sender_id)) continue;
+        const dest = direct
+          ? membresDe((intMembers ?? []) as any[], convId, m.sender_id).join(", ") || nomCanal
+          : nomCanal;
+        pushEvent(
+          poleOfUser(m.sender_id),
+          nomDe(m.sender_id),
+          new Date(m.created_at).getTime(),
+          heureParis(m.created_at),
+          `Message interne à ${dest}${piece(m)}`,
+        );
+      }
+    }
+
+    // 3) Messagerie de groupe (clients + agence)
+    const grpConvMap = new Map(((grpConvs ?? []) as any[]).map((c) => [c.id, c]));
+    const parGrp = new Map<string, any[]>();
+    for (const m of grpRows) {
+      const arr = parGrp.get(m.conversation_id) ?? [];
+      arr.push(m);
+      parGrp.set(m.conversation_id, arr);
+    }
+    for (const [convId, list] of parGrp) {
+      const nomCanal = (grpConvMap.get(convId) as any)?.titre ?? "Groupe";
+      const membres = membresDe((grpMembers ?? []) as any[], convId);
+      messagerie.push({
+        canal: `Groupe — ${nomCanal}`,
+        type: "Groupe",
+        participants: membres.length ? `Participants : ${membres.join(", ")}` : null,
+        total: list.length,
+        lignes: list.slice(0, 12).map(
+          (m) => `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} → groupe « ${nomCanal} »${piece(m)}${supp(m)}`,
+        ),
+      });
+      for (const m of list) {
+        if (!m.sender_id || !nameById.has(m.sender_id)) continue;
+        pushEvent(
+          poleOfUser(m.sender_id),
+          nomDe(m.sender_id),
+          new Date(m.created_at).getTime(),
+          heureParis(m.created_at),
+          `Message dans le groupe « ${nomCanal} »${piece(m)}`,
+        );
+      }
+    }
+    messagerie.sort((a, b) => b.total - a.total);
+  } catch (e) {
+    console.error("[rapport-activite] messagerie detaillee indisponible", e);
   }
 
   const journeePoles = [...evByPolePerson.entries()]
@@ -1321,6 +1511,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   const journee: DigestJournee = {
     poles: journeePoles,
     echanges: echangesJour.sort((a, b) => a.pole.localeCompare(b.pole)),
+    messagerie,
     retards: { total: enRetardTotal, plusAnciennes },
     presence: personnes
       .filter((p) => p.presence.seconds > 0)
