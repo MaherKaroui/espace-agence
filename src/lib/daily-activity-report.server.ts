@@ -1511,6 +1511,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   const journee: DigestJournee = {
     poles: journeePoles,
     echanges: echangesJour.sort((a, b) => a.pole.localeCompare(b.pole)),
+    messagerie,
     retards: { total: enRetardTotal, plusAnciennes },
     presence: personnes
       .filter((p) => p.presence.seconds > 0)
