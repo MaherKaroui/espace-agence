@@ -49,6 +49,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
   const j = digest.journee ?? {
     poles: [],
     echanges: [],
+    messagerie: [],
     retards: { total: 0, plusAnciennes: [] },
     presence: [],
     absents: [],
