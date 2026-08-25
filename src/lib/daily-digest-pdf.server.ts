@@ -250,6 +250,30 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       y += 1.5;
     }
 
+    // ---------- 6 bis. Messagerie : qui a écrit à qui ----------
+    sectionTitle("Messagerie du jour — qui écrit à qui");
+    const canaux = j.messagerie ?? [];
+    if (canaux.length === 0) {
+      line("Aucun message échangé aujourd'hui.", 6.8, 0, GREY);
+      y += 1.5;
+    } else {
+      const maxCanaux = niveau >= 2 ? 5 : niveau >= 1 ? 8 : 12;
+      const maxLignes = niveau >= 2 ? 3 : niveau >= 1 ? 5 : 8;
+      for (const c of canaux.slice(0, maxCanaux)) {
+        ensure(10);
+        line(`${txt(c.canal)}  —  ${c.total} message(s)`, 6.8, 5, NAVY_SOFT, true);
+        if (c.participants) line(txt(c.participants), 6.3, 9, GREY);
+        for (const l of c.lignes.slice(0, maxLignes)) line(txt(l), 6.4, 9, [72, 80, 92]);
+        const reste = Math.min(c.lignes.length, c.total) - Math.min(c.lignes.length, maxLignes);
+        if (reste > 0) line(`... et ${reste} autre(s) message(s) dans ce fil`, 6.2, 9, GREY);
+        y += 1.4;
+      }
+      const autres = canaux.length - Math.min(canaux.length, maxCanaux);
+      if (autres > 0) line(`${autres} autre(s) fil(s) de discussion non détaillé(s), faute de place.`, 6.4, 0, GREY);
+      y += 1.5;
+    }
+
+
     // ---------- 7. Présence ----------
     sectionTitle("Temps de connexion");
     if (j.presence.length === 0) {
