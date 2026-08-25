@@ -1314,17 +1314,17 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     const [{ data: msgCli }, { data: msgInt }, { data: msgGrp }] = await Promise.all([
       admin
         .from("messages")
-        .select("id, client_id, sender_id, from_agence, created_at, attachment_name, is_system, deleted_at")
+        .select("id, client_id, sender_id, from_agence, created_at, content, attachment_name, is_system, deleted_at")
         .gte("created_at", fromIso).lte("created_at", toIso)
         .order("created_at", { ascending: true }).limit(2000),
       admin
         .from("internal_messages")
-        .select("id, conversation_id, sender_id, created_at, attachment_name, is_system, deleted_at")
+        .select("id, conversation_id, sender_id, created_at, content, attachment_name, is_system, deleted_at")
         .gte("created_at", fromIso).lte("created_at", toIso)
         .order("created_at", { ascending: true }).limit(2000),
       admin
         .from("group_messages")
-        .select("id, conversation_id, sender_id, created_at, attachment_name, is_system, deleted_at")
+        .select("id, conversation_id, sender_id, created_at, content, attachment_name, is_system, deleted_at")
         .gte("created_at", fromIso).lte("created_at", toIso)
         .order("created_at", { ascending: true }).limit(2000),
     ]);
@@ -1368,6 +1368,12 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     const membresDe = (rows: any[], convId: string, exclude?: string) =>
       [...new Set(rows.filter((r) => r.conversation_id === convId && r.user_id !== exclude).map((r) => nomDe(r.user_id)))];
     const piece = (m: any) => (m.attachment_name ? ` — pièce jointe : ${m.attachment_name}` : "");
+    /** Contenu du message, sur une ligne, tronqué pour rester lisible dans le PDF. */
+    const texteDe = (m: any, max = 180): string => {
+      const brut = String(m.content ?? "").replace(/\s+/g, " ").trim();
+      if (!brut) return m.attachment_name ? "" : " : (message vide)";
+      return ` : « ${brut.length > max ? `${brut.slice(0, max - 1)}…` : brut} »`;
+    };
     const supp = (m: any) => (m.deleted_at ? " [message supprimé depuis]" : "");
 
     // 1) Messagerie client (fil par client)
@@ -1387,8 +1393,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         total: list.length,
         lignes: list.slice(0, 12).map((m) =>
           m.from_agence
-            ? `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} (agence) → ${client}${piece(m)}${supp(m)}`
-            : `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} (client) → équipe agence${piece(m)}${supp(m)}`,
+            ? `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} (agence) → ${client}${texteDe(m)}${piece(m)}${supp(m)}`
+            : `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} (client) → équipe agence${texteDe(m)}${piece(m)}${supp(m)}`,
         ),
       });
       for (const m of list) {
@@ -1398,7 +1404,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
           nomDe(m.sender_id),
           new Date(m.created_at).getTime(),
           heureParis(m.created_at),
-          `Message envoyé à ${client}${piece(m)}`,
+          `Message envoyé à ${client}${texteDe(m, 90)}${piece(m)}`,
         );
       }
     }
@@ -1428,7 +1434,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
           const dest = direct
             ? membresDe((intMembers ?? []) as any[], convId, m.sender_id).join(", ") || nomCanal
             : nomCanal;
-          return `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} → ${dest}${piece(m)}${supp(m)}`;
+          return `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} → ${dest}${texteDe(m)}${piece(m)}${supp(m)}`;
         }),
       });
       for (const m of list) {
@@ -1441,7 +1447,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
           nomDe(m.sender_id),
           new Date(m.created_at).getTime(),
           heureParis(m.created_at),
-          `Message interne à ${dest}${piece(m)}`,
+          `Message interne à ${dest}${texteDe(m, 90)}${piece(m)}`,
         );
       }
     }
@@ -1473,7 +1479,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
           nomDe(m.sender_id),
           new Date(m.created_at).getTime(),
           heureParis(m.created_at),
-          `Message dans le groupe « ${nomCanal} »${piece(m)}`,
+          `Message dans le groupe « ${nomCanal} »${texteDe(m, 90)}${piece(m)}`,
         );
       }
     }
