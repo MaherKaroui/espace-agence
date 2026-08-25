@@ -430,9 +430,22 @@ export interface DigestPoleSection {
   taches: DigestTaskRow[];
 }
 
+export interface DigestMessagerieCanal {
+  /** Nom lisible du fil : « Client — ALPHA FORMATION », « Interne — Pôle Qualiopi »… */
+  canal: string;
+  type: "Client" | "Interne" | "Groupe";
+  /** Personnes présentes dans le fil, en clair. */
+  participants: string | null;
+  /** « 14:32 — Marie Dupont → ALPHA FORMATION (pièce jointe : contrat.pdf) » */
+  lignes: string[];
+  total: number;
+}
+
 export interface DigestJournee {
   poles: { pole: string; poleId: string | null; personnes: { nom: string; evenements: { heure: string; texte: string }[] }[] }[];
   echanges: { titre: string; pole: string; poleId: string | null; lignes: string[] }[];
+  /** Messagerie du jour, fil par fil, avec l'expéditeur et le destinataire. */
+  messagerie: DigestMessagerieCanal[];
   retards: { total: number; plusAnciennes: string[] };
   presence: { nom: string; duree: string; plage: string | null }[];
   absents: string[];
