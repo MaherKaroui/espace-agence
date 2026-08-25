@@ -1285,6 +1285,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     const nom = nameById.get(uid);
     if (!nom) continue;
     for (const l of myLogs) {
+      // Les messages sont détaillés plus bas (expéditeur → destinataire réels).
+      if (/message\.sent$/.test(String(l.action))) continue;
       const label = actionGroup(l.action);
       if (!label) continue;
       const meta: any = l.metadata || {};
