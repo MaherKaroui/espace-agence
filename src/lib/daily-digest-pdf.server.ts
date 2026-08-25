@@ -316,25 +316,25 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     return { doc, pages: total };
   };
 
-  // ---------- Garde-fou 2 pages ----------
+  // ---------- Garde-fou 3 pages (la messagerie détaillée occupe une page) ----------
   const reductions: string[] = [];
   let result = render(0, 99, j.echanges.length);
-  if (result.pages > 2) {
+  if (result.pages > 3) {
     result = render(1, 99, j.echanges.length);
     reductions.push("présence résumée");
   }
   let maxEch = j.echanges.length;
-  while (result.pages > 2 && maxEch > 0) {
+  while (result.pages > 3 && maxEch > 0) {
     maxEch -= 1;
     result = render(1, 99, maxEch);
   }
   if (maxEch < j.echanges.length) reductions.push(`échanges limités à ${maxEch} tâches`);
   let maxEv = 12;
-  while (result.pages > 2 && maxEv > 1) {
+  while (result.pages > 3 && maxEv > 1) {
     maxEv -= 2;
     result = render(2, maxEv, maxEch);
   }
-  if (result.pages <= 2 && maxEv < 12) reductions.push(`actions limitées à ${maxEv} par personne`);
+  if (result.pages <= 3 && maxEv < 12) reductions.push(`actions limitées à ${maxEv} par personne`);
 
   const out = new Uint8Array(result.doc.output("arraybuffer") as ArrayBuffer);
   console.log(
