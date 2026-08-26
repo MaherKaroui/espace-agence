@@ -24,6 +24,7 @@ export const CATEGORIE_VALUES = [
   "cfa",
   "vae",
   "edof",
+  "rncp_rs",
   "contrats",
   "documents_administratifs",
   "juridique",
@@ -35,6 +36,7 @@ const POLE_CODE_BY_CATEGORIE: Record<string, string> = {
   bpf: "bpf",
   nda: "nda",
   edof: "edof",
+  rncp_rs: "qualiopi",
   juridique: "juridique",
 };
 

@@ -3204,6 +3204,7 @@ export type Database = {
         | "documents_administratifs"
         | "autres"
         | "juridique"
+        | "rncp_rs"
       dossier_statut:
         | "en_attente"
         | "documents_manquants"
@@ -3419,6 +3420,7 @@ export const Constants = {
         "documents_administratifs",
         "autres",
         "juridique",
+        "rncp_rs",
       ],
       dossier_statut: [
         "en_attente",
