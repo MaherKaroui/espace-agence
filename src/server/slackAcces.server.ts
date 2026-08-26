@@ -65,12 +65,19 @@ const ID_KEYS = /^(identifiant|login|utilisateur|user(name)?|email|mail|compte|i
 const PW_KEYS = /^(mot de passe|mdp|password|pass|pwd|code|secret|token|jeton)\s*[:=]\s*(.+)$/i;
 const PLATFORM_KEYS = /^(plateforme|platform|site|url|lien|espace)\s*[:=]\s*(.+)$/i;
 
-function normalize(s: string) {
-  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function normalize(s: unknown) {
+  return typeof s === "string"
+    ? s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    : "";
+}
+
+function matchedValue(match: RegExpMatchArray) {
+  return match.at(-1)?.trim() ?? "";
 }
 
 /** Analyse un message Slack et en extrait un accès potentiel, ou null. */
-export function parseMessage(text: string) {
+export function parseMessage(text: unknown) {
+  if (typeof text !== "string" || !text.trim()) return null;
   const lines = text.split(/\r?\n/).map((l) => l.replace(/^[\s*_>`-]+/, "").trim()).filter(Boolean);
   let identifiant: string | null = null;
   let secret: string | null = null;
@@ -80,12 +87,21 @@ export function parseMessage(text: string) {
   for (const line of lines) {
     const clean = line.replace(/<([^|>]+)\|[^>]*>/g, "$1").replace(/[<>]/g, "");
     const pw = clean.match(PW_KEYS);
-    if (pw && !secret) { secret = pw[3]!.trim(); continue; }
+    if (pw && !secret) {
+      const value = matchedValue(pw);
+      if (value) secret = value;
+      continue;
+    }
     const id = clean.match(ID_KEYS);
-    if (id && !identifiant) { identifiant = id[3]!.trim(); continue; }
+    if (id && !identifiant) {
+      const value = matchedValue(id);
+      if (value) identifiant = value;
+      continue;
+    }
     const pf = clean.match(PLATFORM_KEYS);
     if (pf && !plateforme) {
-      const v = pf[3]!.trim();
+      const v = matchedValue(pf);
+      if (!v) continue;
       if (/^https?:\/\//i.test(v)) url = v; else plateforme = v;
       continue;
     }
