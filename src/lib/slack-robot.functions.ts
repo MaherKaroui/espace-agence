@@ -2,13 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const channelSchema = z.object({
-  slack_channel_id: z.string().min(1),
-  nom: z.string().min(1),
-  type: z.string().min(1),
-  membres_count: z.number().int().nonnegative().default(0),
-});
-
 export const robotTestConnexion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -38,10 +31,19 @@ export const robotSyncMembres = createServerFn({ method: "POST" })
 
 export const robotDemarrer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z
       .object({
-        channels: z.array(channelSchema).min(1),
+        channels: z
+          .array(
+            z.object({
+              slack_channel_id: z.string().min(1),
+              nom: z.string().min(1),
+              type: z.string().min(1),
+              membres_count: z.number().int().nonnegative().default(0),
+            }),
+          )
+          .min(1),
         estimation_total: z.number().int().nonnegative().default(0),
       })
       .parse(d),
@@ -60,7 +62,7 @@ export const robotDemarrer = createServerFn({ method: "POST" })
 
 export const robotStatut = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
+  .validator((d: unknown) =>
     z.object({ statut: z.enum(["en_cours", "pause", "termine"]) }).parse(d),
   )
   .handler(async ({ data, context }) => {
