@@ -38,9 +38,18 @@ export const robotDemarrer = createServerFn({ method: "POST" })
           .array(
             z.object({
               slack_channel_id: z.string().min(1),
-              nom: z.string().min(1),
-              type: z.string().min(1),
-              membres_count: z.number().int().nonnegative().default(0),
+              nom: z.string().trim().min(1, "Le nom du canal est manquant"),
+              type: z.preprocess(
+                (value) => (typeof value === "string" && value.trim() ? value : "public"),
+                z.string(),
+              ),
+              is_archived: z.boolean().nullish().transform((value) => value ?? false),
+              membres_count: z
+                .number()
+                .int()
+                .nonnegative()
+                .nullish()
+                .transform((value) => value ?? 0),
             }),
           )
           .min(1),
@@ -49,15 +58,25 @@ export const robotDemarrer = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const a = await import("@/server/clientAcces.server");
-    await a.assertStaff(context.supabase, context.userId);
-    const r = await import("@/server/slackRobot.server");
-    return r.robotStart(
-      context.supabase,
-      context.userId,
-      data.channels as any,
-      data.estimation_total,
-    );
+    try {
+      const a = await import("@/server/clientAcces.server");
+      await a.assertStaff(context.supabase, context.userId);
+      const r = await import("@/server/slackRobot.server");
+      const result = await r.robotStart(
+        context.supabase,
+        context.userId,
+        data.channels,
+        data.estimation_total,
+      );
+      return { ok: true as const, ...result };
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error("[robotDemarrer] Échec du démarrage :", detail);
+      return {
+        ok: false as const,
+        error: `Impossible de démarrer la collecte Slack : ${detail}`,
+      };
+    }
   });
 
 export const robotStatut = createServerFn({ method: "POST" })
