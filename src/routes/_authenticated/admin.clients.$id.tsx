@@ -466,15 +466,21 @@ function ClientDetail() {
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Téléphone</label>
-            <Input
-              placeholder="+33 …"
-              value={currentTel}
-              onChange={(e) => setTelephone(e.target.value)}
-              onBlur={(e) => {
-                const v = e.target.value.trim() || null;
-                if (v !== ((profile as any)?.telephone ?? null)) updateProfile.mutate({ telephone: v });
-              }}
-            />
+            {canSeePhone ? (
+              <Input
+                placeholder="+33 …"
+                value={currentTel}
+                onChange={(e) => setTelephone(e.target.value)}
+                onBlur={(e) => {
+                  const v = e.target.value.trim() || null;
+                  if (v !== ((profile as any)?.telephone ?? null)) updateProfile.mutate({ telephone: v });
+                }}
+              />
+            ) : (
+              <div className="flex h-10 items-center gap-2 rounded-md border border-dashed px-3 text-sm text-muted-foreground">
+                <Lock className="h-3.5 w-3.5" /> Réservé à Nadine
+              </div>
+            )}
           </div>
           <div className="md:col-span-2">
             <label className="text-xs text-muted-foreground">Entreprise</label>
