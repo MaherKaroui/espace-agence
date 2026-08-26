@@ -323,6 +323,8 @@ function ClientDetail() {
   const nbActifs = dossiers.filter((d: any) => !["termine", "annule"].includes(d.statut)).length;
   const nbTermines = dossiers.filter((d: any) => d.statut === "termine").length;
 
+  // Seule Nadine (admin@izi-business.com) peut voir/éditer les numéros de téléphone clients.
+  const canSeePhone = (user?.email ?? "").toLowerCase() === "admin@izi-business.com";
   const currentTel = telephone ?? (profile as any)?.telephone ?? "";
   const currentEnt = entreprise ?? (profile as any)?.entreprise ?? "";
   const currentPrenom = prenom ?? profile?.prenom ?? "";
@@ -342,7 +344,16 @@ function ClientDetail() {
             <div className="mt-2 space-y-1 text-sm text-muted-foreground">
               <div className="flex items-center gap-2"><Mail className="h-4 w-4" /> {profile?.email}</div>
               {(profile as any)?.telephone && (
-                <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> {(profile as any).telephone}</div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />{" "}
+                  {canSeePhone ? (
+                    (profile as any).telephone
+                  ) : (
+                    <span className="inline-flex items-center gap-1 italic">
+                      <Lock className="h-3 w-3" /> Numéro masqué
+                    </span>
+                  )}
+                </div>
               )}
               {(profile as any)?.entreprise && (
                 <div className="flex items-center gap-2"><Building2 className="h-4 w-4" /> {(profile as any).entreprise}</div>
@@ -455,15 +466,21 @@ function ClientDetail() {
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Téléphone</label>
-            <Input
-              placeholder="+33 …"
-              value={currentTel}
-              onChange={(e) => setTelephone(e.target.value)}
-              onBlur={(e) => {
-                const v = e.target.value.trim() || null;
-                if (v !== ((profile as any)?.telephone ?? null)) updateProfile.mutate({ telephone: v });
-              }}
-            />
+            {canSeePhone ? (
+              <Input
+                placeholder="+33 …"
+                value={currentTel}
+                onChange={(e) => setTelephone(e.target.value)}
+                onBlur={(e) => {
+                  const v = e.target.value.trim() || null;
+                  if (v !== ((profile as any)?.telephone ?? null)) updateProfile.mutate({ telephone: v });
+                }}
+              />
+            ) : (
+              <div className="flex h-10 items-center gap-2 rounded-md border border-dashed px-3 text-sm text-muted-foreground">
+                <Lock className="h-3.5 w-3.5" /> Réservé à Nadine
+              </div>
+            )}
           </div>
           <div className="md:col-span-2">
             <label className="text-xs text-muted-foreground">Entreprise</label>
