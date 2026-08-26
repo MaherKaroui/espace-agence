@@ -344,7 +344,16 @@ function ClientDetail() {
             <div className="mt-2 space-y-1 text-sm text-muted-foreground">
               <div className="flex items-center gap-2"><Mail className="h-4 w-4" /> {profile?.email}</div>
               {(profile as any)?.telephone && (
-                <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> {(profile as any).telephone}</div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />{" "}
+                  {canSeePhone ? (
+                    (profile as any).telephone
+                  ) : (
+                    <span className="inline-flex items-center gap-1 italic">
+                      <Lock className="h-3 w-3" /> Numéro masqué
+                    </span>
+                  )}
+                </div>
               )}
               {(profile as any)?.entreprise && (
                 <div className="flex items-center gap-2"><Building2 className="h-4 w-4" /> {(profile as any).entreprise}</div>
