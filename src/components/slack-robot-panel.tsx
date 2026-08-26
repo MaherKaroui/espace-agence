@@ -18,6 +18,24 @@ import {
 /** Débit réel imposé aux applications Slack récentes : 15 objets / minute. */
 const OBJETS_PAR_MINUTE = 15;
 const ESTIMATION_PAR_CANAL = 500;
+const ROBOT_ETAT_RELOAD_KEY = "izisuivis:robot-etat-reloaded";
+
+function isStaleServerFunctionError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /invalid server function id|server function info not found|returned 500/i.test(message);
+}
+
+function recoverStaleRobotState(error: unknown): never {
+  if (
+    typeof window !== "undefined" &&
+    isStaleServerFunctionError(error) &&
+    sessionStorage.getItem(ROBOT_ETAT_RELOAD_KEY) !== "1"
+  ) {
+    sessionStorage.setItem(ROBOT_ETAT_RELOAD_KEY, "1");
+    window.location.reload();
+  }
+  throw error;
+}
 
 function octets(n: number) {
   if (!n) return "0 o";
@@ -60,8 +78,17 @@ export function SlackRobotPanel() {
 
   const etat = useQuery({
     queryKey: ["robot-etat"],
-    queryFn: () => etatFn(),
+    queryFn: async () => {
+      try {
+        const result = await etatFn();
+        if (typeof window !== "undefined") sessionStorage.removeItem(ROBOT_ETAT_RELOAD_KEY);
+        return result;
+      } catch (error) {
+        return recoverStaleRobotState(error);
+      }
+    },
     refetchInterval: 15_000,
+    retry: false,
   });
 
   const demarrer = useMutation({
@@ -116,6 +143,21 @@ export function SlackRobotPanel() {
 
   return (
     <div className="space-y-6">
+      {etat.isError ? (
+        <Card className="border-destructive/40 bg-destructive/10 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-medium text-destructive">L’état du robot n’a pas pu être chargé.</p>
+              <p className="text-sm text-muted-foreground">
+                L’application a été mise à jour. Rechargez cette page pour reprendre le suivi.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              <RefreshCw className="h-4 w-4" /> Recharger
+            </Button>
+          </div>
+        </Card>
+      ) : null}
       <Card className="border-amber-500/40 bg-amber-500/5 p-4 space-y-2">
         <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-400">
           <AlertTriangle className="h-4 w-4" /> Ce que le robot peut, et ne peut pas, récupérer
