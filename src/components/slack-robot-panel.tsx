@@ -164,7 +164,47 @@ export function SlackRobotPanel() {
 
       {canaux.data?.length ? (
         <Card className="p-4 space-y-3">
-          <div className="font-medium">Canaux à collecter</div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="font-medium">Canaux à collecter</div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setSelection(
+                    Object.fromEntries(
+                      (canaux.data ?? []).map((c: any) => [c.slack_channel_id, true]),
+                    ),
+                  )
+                }
+              >
+                Tout sélectionner
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelection({})}>
+                Tout désélectionner
+              </Button>
+            </div>
+          </div>
+          <label className="flex items-center gap-3 rounded border p-2 text-sm">
+            <Checkbox
+              checked={
+                (canaux.data ?? []).length > 0 &&
+                (canaux.data ?? []).every((c: any) => selection[c.slack_channel_id])
+              }
+              onCheckedChange={(v) =>
+                setSelection(
+                  v
+                    ? Object.fromEntries(
+                        (canaux.data ?? []).map((c: any) => [c.slack_channel_id, true]),
+                      )
+                    : {},
+                )
+              }
+            />
+            <span className="font-medium">
+              Sélectionner tous les canaux ({(canaux.data ?? []).length})
+            </span>
+          </label>
           <div className="max-h-72 overflow-auto rounded border divide-y">
             {canaux.data.map((c: any) => (
               <label key={c.slack_channel_id} className="flex items-center gap-3 p-2 text-sm">
