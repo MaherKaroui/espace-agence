@@ -10,6 +10,7 @@ const TITRE_BASE: Record<string, string> = {
   bpf: "BPF ANNUEL",
   cfa: "DEMANDE CFA",
   vae: "DEMANDE VAE",
+  rncp_rs: "CERTIFICATION RNCP / RS",
   juridique: "JURIDIQUE",
   contrats: "CONTRATS",
   documents_administratifs: "DOCUMENTS ADMINISTRATIFS",

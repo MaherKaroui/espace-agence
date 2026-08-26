@@ -5,6 +5,7 @@ export const CATEGORIES = [
   { value: "cfa", label: "Création ou gestion CFA" },
   { value: "vae", label: "VAE" },
   { value: "edof", label: "Dossier EDOF / CPF" },
+  { value: "rncp_rs", label: "Certification RNCP / RS" },
   { value: "juridique", label: "Juridique" },
   { value: "contrats", label: "Contrats" },
   { value: "documents_administratifs", label: "Documents administratifs" },
@@ -129,6 +130,13 @@ export const REQUIRED_DOCUMENTS: Record<string, RequiredDoc[]> = {
     { key: "kbis", label: "KBIS", match: ["kbis"] },
     { key: "qualiopi", label: "Certificat Qualiopi", match: ["qualiopi"] },
     { key: "catalogue", label: "Catalogue de formations", match: ["catalogue"] },
+  ].map(withHint),
+  rncp_rs: [
+    { key: "kbis", label: "KBIS", match: ["kbis"] },
+    { key: "nda", label: "Numéro de déclaration d'activité (NDA)", match: ["nda", "declaration", "déclaration"] },
+    { key: "qualiopi", label: "Certificat Qualiopi", match: ["qualiopi"] },
+    { key: "programme", label: "Programme de la certification visée", match: ["programme"] },
+    { key: "cv", label: "CV des formateurs / concepteurs", match: ["cv", "curriculum"] },
   ].map(withHint),
   contrats: [
     { key: "kbis", label: "KBIS", match: ["kbis"] },
