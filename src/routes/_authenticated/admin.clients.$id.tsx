@@ -323,6 +323,8 @@ function ClientDetail() {
   const nbActifs = dossiers.filter((d: any) => !["termine", "annule"].includes(d.statut)).length;
   const nbTermines = dossiers.filter((d: any) => d.statut === "termine").length;
 
+  // Seule Nadine (admin@izi-business.com) peut voir/éditer les numéros de téléphone clients.
+  const canSeePhone = (user?.email ?? "").toLowerCase() === "admin@izi-business.com";
   const currentTel = telephone ?? (profile as any)?.telephone ?? "";
   const currentEnt = entreprise ?? (profile as any)?.entreprise ?? "";
   const currentPrenom = prenom ?? profile?.prenom ?? "";
