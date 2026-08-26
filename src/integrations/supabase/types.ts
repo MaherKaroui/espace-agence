@@ -2359,6 +2359,7 @@ export type Database = {
           description: string | null
           dossier_id: string | null
           id: string
+          is_archived: boolean
           membres_count: number
           messages_count: number
           nom: string
@@ -2381,6 +2382,7 @@ export type Database = {
           description?: string | null
           dossier_id?: string | null
           id?: string
+          is_archived?: boolean
           membres_count?: number
           messages_count?: number
           nom: string
@@ -2403,6 +2405,7 @@ export type Database = {
           description?: string | null
           dossier_id?: string | null
           id?: string
+          is_archived?: boolean
           membres_count?: number
           messages_count?: number
           nom?: string

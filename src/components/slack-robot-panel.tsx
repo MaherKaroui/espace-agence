@@ -65,8 +65,11 @@ export function SlackRobotPanel() {
   });
 
   const demarrer = useMutation({
-    mutationFn: (payload: { channels: any[]; estimation_total: number }) =>
-      demarrerFn({ data: payload }),
+    mutationFn: async (payload: { channels: any[]; estimation_total: number }) => {
+      const result = await demarrerFn({ data: payload });
+      if (!result.ok) throw new Error(result.error);
+      return result;
+    },
     onSuccess: () => {
       toast.success("Collecte démarrée. Elle avance en tâche de fond, chaque minute.");
       qc.invalidateQueries({ queryKey: ["robot-etat"] });
@@ -120,6 +123,7 @@ export function SlackRobotPanel() {
         <ul className="text-sm space-y-1 list-disc pl-5 text-muted-foreground">
           <li>
             Portées à activer sur l'application Slack : <code>channels:read</code>,{" "}
+            <code>channels:join</code>,{" "}
             <code>channels:history</code>, <code>groups:read</code>, <code>groups:history</code>,{" "}
             <code>users:read</code>, <code>users:read.email</code>, <code>files:read</code>.
           </li>
@@ -136,7 +140,11 @@ export function SlackRobotPanel() {
             <strong>15 messages par minute</strong>, soit ~900 par heure. La collecte est donc lente,
             continue, et reprend d'elle-même après interruption.
           </li>
-          <li>Le jeton se saisit dans les secrets du projet (<code>SLACK_BOT_TOKEN</code>), jamais ici.</li>
+          <li>
+            Le secret <code>SLACK_BOT_TOKEN</code> accepte un jeton bot <code>xoxb-</code> avec le
+            scope <code>channels:join</code>, ou un jeton utilisateur <code>xoxp-</code> — recommandé,
+            car il lit directement tous les canaux auxquels la personne appartient.
+          </li>
         </ul>
       </Card>
 
@@ -155,10 +163,17 @@ export function SlackRobotPanel() {
           </Button>
         </div>
         {connexion.data ? (
-          <p className="text-sm text-muted-foreground">
-            Espace de travail : <strong>{(connexion.data as any).team}</strong> — robot connecté :{" "}
-            <strong>{(connexion.data as any).bot}</strong>
-          </p>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              Espace de travail : <strong>{(connexion.data as any).team}</strong> — connexion :{" "}
+              <strong>{(connexion.data as any).bot}</strong> ({(connexion.data as any).token_type})
+            </p>
+            {(connexion.data as any).warning ? (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 font-medium text-destructive">
+                {(connexion.data as any).warning}
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </Card>
 
@@ -244,6 +259,7 @@ export function SlackRobotPanel() {
                   slack_channel_id: c.slack_channel_id,
                   nom: c.nom,
                   type: c.type,
+                  is_archived: c.is_archived ?? false,
                   membres_count: c.membres_count ?? 0,
                 })),
                 estimation_total: estimation,
@@ -285,12 +301,14 @@ export function SlackRobotPanel() {
                   {new Date(job.cooldown_until).toLocaleTimeString("fr-FR")}
                 </div>
               ) : null}
-              {job.derniere_erreur ? (
-                <div className="sm:col-span-2 text-amber-600">
-                  Dernière erreur : {job.derniere_erreur}
-                </div>
-              ) : null}
             </div>
+
+            {job.derniere_erreur ? (
+              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <div><strong>Dernière erreur :</strong> {job.derniere_erreur}</div>
+              </div>
+            ) : null}
 
             <div className="flex flex-wrap gap-2">
               {job.statut === "en_cours" ? (
@@ -317,12 +335,20 @@ export function SlackRobotPanel() {
           <div className="font-medium mb-1">Canaux</div>
           <div className="space-y-1 max-h-56 overflow-auto">
             {(etat.data?.canaux ?? []).map((c: any) => (
-              <div key={c.id} className="flex items-center gap-2">
-                <span>#{c.nom}</span>
-                <span className="text-muted-foreground">{c.collecte_messages} messages</span>
-                {c.collecte_terminee ? <Badge variant="outline">terminé</Badge> : null}
+              <div key={c.id} className="grid gap-1 rounded-md border p-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center">
+                <span className="truncate font-medium">#{c.nom}</span>
+                <span className="text-muted-foreground">{c.collecte_messages ?? 0} messages</span>
                 {c.collecte_erreur ? (
-                  <span className="text-amber-600 truncate">{c.collecte_erreur}</span>
+                  <Badge variant="destructive">en erreur</Badge>
+                ) : c.collecte_terminee ? (
+                  <Badge variant="outline">terminé</Badge>
+                ) : job?.canal_courant === c.nom && job?.statut === "en_cours" ? (
+                  <Badge>en cours</Badge>
+                ) : (
+                  <Badge variant="secondary">en attente</Badge>
+                )}
+                {c.collecte_erreur ? (
+                  <span className="text-destructive sm:col-span-3">{c.collecte_erreur}</span>
                 ) : null}
               </div>
             ))}

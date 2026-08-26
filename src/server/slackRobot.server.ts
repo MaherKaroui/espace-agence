@@ -25,9 +25,29 @@ class RateLimited extends Error {
   }
 }
 
-async function slack(method: string, params: Record<string, string> = {}): Promise<any> {
-  const url = `${SLACK_API}/${method}?${new URLSearchParams(params).toString()}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${botToken()}` } });
+class SlackApiError extends Error {
+  constructor(
+    public code: string,
+    public method: string,
+  ) {
+    super(`Slack ${method} : ${code}`);
+  }
+}
+
+async function slack(
+  method: string,
+  params: Record<string, string> = {},
+  httpMethod: "GET" | "POST" = "GET",
+): Promise<any> {
+  const encoded = new URLSearchParams(params).toString();
+  const res = await fetch(httpMethod === "GET" ? `${SLACK_API}/${method}?${encoded}` : `${SLACK_API}/${method}`, {
+    method: httpMethod,
+    headers: {
+      Authorization: `Bearer ${botToken()}`,
+      ...(httpMethod === "POST" ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+    },
+    ...(httpMethod === "POST" ? { body: encoded } : {}),
+  });
   if (res.status === 429) {
     // On respecte STRICTEMENT l'en-tête Retry-After : aucun réessai immédiat.
     const ra = Number(res.headers.get("retry-after") ?? "60");
@@ -37,9 +57,15 @@ async function slack(method: string, params: Record<string, string> = {}): Promi
   const body: any = await res.json();
   if (!body.ok) {
     if (body.error === "ratelimited") throw new RateLimited(60);
-    throw new Error(`Slack ${method} : ${body.error ?? "erreur inconnue"}`);
+    throw new SlackApiError(body.error ?? "erreur inconnue", method);
   }
-  return body;
+  return {
+    ...body,
+    _oauthScopes: (res.headers.get("x-oauth-scopes") ?? "")
+      .split(",")
+      .map((scope) => scope.trim())
+      .filter(Boolean),
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -48,7 +74,19 @@ async function slack(method: string, params: Record<string, string> = {}): Promi
 
 export async function robotAuthTest() {
   const b = await slack("auth.test");
-  return { team: b.team as string, bot: b.user as string, url: b.url as string };
+  const tokenType = botToken().startsWith("xoxp-") ? "utilisateur" : "bot";
+  const scopes = b._oauthScopes as string[];
+  const channelsJoinMissing = tokenType === "bot" && !scopes.includes("channels:join");
+  return {
+    team: b.team as string,
+    bot: b.user as string,
+    url: b.url as string,
+    token_type: tokenType,
+    channels_join_missing: channelsJoinMissing,
+    warning: channelsJoinMissing
+      ? "Ajoutez le scope `channels:join` à l’application Slack, puis réinstallez-la."
+      : null,
+  };
 }
 
 export type RobotChannel = {
@@ -56,6 +94,7 @@ export type RobotChannel = {
   nom: string;
   type: string;
   is_member: boolean;
+  is_archived: boolean;
   membres_count: number;
 };
 
@@ -75,6 +114,7 @@ export async function robotListChannels(): Promise<RobotChannel[]> {
         nom: c.name ?? c.id,
         type: c.is_private ? "prive" : "public",
         is_member: !!c.is_member,
+        is_archived: !!c.is_archived,
         membres_count: c.num_members ?? 0,
       });
     }
@@ -160,31 +200,41 @@ async function patchMeta(supabase: any, job: any, meta: RobotMeta) {
 export async function robotStart(
   supabase: any,
   userId: string,
-  channels: { slack_channel_id: string; nom: string; type: string; membres_count: number }[],
+  channels: {
+    slack_channel_id: string;
+    nom: string;
+    type: string;
+    membres_count: number;
+    is_archived?: boolean;
+  }[],
   estimationTotal: number,
 ) {
   // Les canaux sélectionnés sont créés/mis à jour, les autres désélectionnés.
-  await supabase.from("slack_canaux").update({ collecte_selection: false }).neq("slack_channel_id", "");
-  for (const c of channels) {
-    const { data: existing } = await supabase
-      .from("slack_canaux")
-      .select("id")
-      .eq("slack_channel_id", c.slack_channel_id)
-      .maybeSingle();
-    if (existing) {
-      await supabase
-        .from("slack_canaux")
-        .update({ collecte_selection: true, nom: c.nom, type: c.type, collecte_erreur: null })
-        .eq("id", existing.id);
-    } else {
-      await supabase.from("slack_canaux").insert({
+  const { error: deselectError } = await supabase
+    .from("slack_canaux")
+    .update({ collecte_selection: false })
+    .neq("slack_channel_id", "");
+  if (deselectError) throw new Error(`Impossible de réinitialiser les canaux : ${deselectError.message}`);
+  const rows = channels.map((c) => ({
         slack_channel_id: c.slack_channel_id,
         nom: c.nom,
-        type: c.type,
+        type: c.type || "public",
         membres_count: c.membres_count ?? 0,
+        is_archived: c.is_archived ?? false,
         collecte_selection: true,
-      });
-    }
+        collecte_cursor: null,
+        collecte_terminee: false,
+        collecte_messages: 0,
+        collecte_erreur: null,
+        collecte_last_at: null,
+  }));
+  // Une requête par lot plutôt que deux requêtes par canal : 986 canaux ne
+  // doivent pas dépasser le délai d'exécution de la fonction serveur.
+  for (let offset = 0; offset < rows.length; offset += 500) {
+    const { error } = await supabase
+      .from("slack_canaux")
+      .upsert(rows.slice(offset, offset + 500), { onConflict: "slack_channel_id" });
+    if (error) throw new Error(`Impossible de préparer les canaux : ${error.message}`);
   }
 
   const existingJob = await currentJob(supabase);
@@ -236,7 +286,7 @@ export async function robotStatus(supabase: any) {
   const job = await currentJob(supabase);
   const { data: canaux } = await supabase
     .from("slack_canaux")
-    .select("id, nom, type, slack_channel_id, collecte_messages, collecte_terminee, collecte_erreur, collecte_last_at")
+    .select("id, nom, type, is_archived, slack_channel_id, collecte_messages, collecte_terminee, collecte_erreur, collecte_last_at")
     .eq("collecte_selection", true)
     .order("nom");
   const { count: fichiersTotal } = await supabase
@@ -316,8 +366,8 @@ async function enregistreMessages(
       slack_user_id: m.user ?? m.bot_id ?? null,
       auteur: m.username ?? m.user_profile?.real_name ?? null,
       texte: m.text ?? null,
-      reactions: m.reactions ?? null,
-      files: m.files ? m.files.map((f: any) => ({ id: f.id, name: f.name })) : null,
+      reactions: m.reactions ?? [],
+      files: m.files ? m.files.map((f: any) => ({ id: f.id, name: f.name })) : [],
       posted_at: new Date(Number(String(m.ts).split(".")[0]) * 1000).toISOString(),
     }));
   if (!rows.length) return 0;
@@ -387,7 +437,9 @@ export async function runTick(supabase: any) {
       }
     }
 
-    await patchMeta(supabase, job, { derniere_erreur: null });
+    const avertissementFichiers = (rapport['index_fichiers'] as { avertissement?: string } | undefined)
+      ?.avertissement;
+    if (!avertissementFichiers) await patchMeta(supabase, job, { derniere_erreur: null });
   } catch (e: any) {
     if (e instanceof RateLimited) {
       await patchMeta(supabase, job, {
@@ -418,10 +470,23 @@ async function indexerFichiers(supabase: any, job: any) {
   let cursor = (job.fichiers_traites?.files_cursor as string | null) ?? null;
   let n = 0;
   for (let page = 0; page < 3; page++) {
-    const b = await slack("files.list", {
-      limit: "100",
-      ...(cursor ? { cursor } : {}),
-    });
+    let b: any;
+    try {
+      b = await slack("files.list", {
+        limit: "100",
+        ...(cursor ? { cursor } : {}),
+      });
+    } catch (error) {
+      if (error instanceof SlackApiError && error.code === "missing_scope") {
+        await patchMeta(supabase, job, {
+          files_indexed: true,
+          files_cursor: null,
+          derniere_erreur: "Le scope files:read manque : les messages continuent, mais les fichiers ne seront pas récupérés.",
+        });
+        return { recenses: 0, termine: true, avertissement: "scope files:read manquant" };
+      }
+      throw error;
+    }
 
     const files = b.files ?? [];
     const rows = files.map((f: any) => ({
@@ -462,7 +527,7 @@ async function telechargerLot(supabase: any) {
 async function collecterHistorique(supabase: any, job: any) {
   const { data: canal } = await supabase
     .from("slack_canaux")
-    .select("id, nom, slack_channel_id, collecte_cursor, collecte_messages")
+    .select("id, nom, type, is_archived, slack_channel_id, collecte_cursor, collecte_messages")
     .eq("collecte_selection", true)
     .eq("collecte_terminee", false)
     .order("nom")
@@ -488,12 +553,43 @@ async function collecterHistorique(supabase: any, job: any) {
     });
   } catch (e: any) {
     if (e instanceof RateLimited) throw e;
+    if (e instanceof SlackApiError && e.code === "not_in_channel" && canal.type !== "prive" && !canal.is_archived) {
+      try {
+        await slack("conversations.join", { channel: canal.slack_channel_id }, "POST");
+        b = await slack("conversations.history", {
+          channel: canal.slack_channel_id,
+          limit: String(PAGE_SIZE),
+          ...(canal.collecte_cursor ? { cursor: canal.collecte_cursor } : {}),
+        });
+      } catch (joinError) {
+        if (joinError instanceof RateLimited) throw joinError;
+        const code = joinError instanceof SlackApiError ? joinError.code : "join_failed";
+        const message = code === "missing_scope"
+          ? "Scope channels:join manquant — ajoutez-le puis réinstallez l’application Slack"
+          : code === "is_archived"
+            ? "Canal archivé — impossible de rejoindre et de collecter"
+            : `Impossible de rejoindre ce canal public (${code})`;
+        await supabase
+          .from("slack_canaux")
+          .update({ collecte_terminee: true, collecte_erreur: message })
+          .eq("id", canal.id);
+        return { canal: canal.nom, echec: message };
+      }
+    } else if (e instanceof SlackApiError && e.code === "not_in_channel") {
+      const message = "Bot non membre de ce canal privé — invitez le bot pour collecter";
+      await supabase
+        .from("slack_canaux")
+        .update({ collecte_terminee: true, collecte_erreur: message })
+        .eq("id", canal.id);
+      return { canal: canal.nom, echec: message };
+    } else {
     // Un canal en échec (bot non invité, canal supprimé) n'arrête pas les autres.
-    await supabase
-      .from("slack_canaux")
-      .update({ collecte_terminee: true, collecte_erreur: String(e?.message ?? e).slice(0, 300) })
-      .eq("id", canal.id);
-    return { canal: canal.nom, echec: String(e?.message ?? e) };
+      await supabase
+        .from("slack_canaux")
+        .update({ collecte_terminee: true, collecte_erreur: String(e?.message ?? e).slice(0, 300) })
+        .eq("id", canal.id);
+      return { canal: canal.nom, echec: String(e?.message ?? e) };
+    }
   }
 
   const messages = b.messages ?? [];
@@ -502,7 +598,7 @@ async function collecterHistorique(supabase: any, job: any) {
   // Fils de discussion à récupérer plus tard, un appel à la fois.
   const threads = ((job.fichiers_traites?.threads ?? []) as { c: string; ts: string }[]).slice();
   for (const m of messages) {
-    if (m.thread_ts && String(m.thread_ts) === String(m.ts) && (m.reply_count ?? 0) > 0) {
+    if (m.ts && (m.reply_count ?? 0) > 0 && (!m.thread_ts || String(m.thread_ts) === String(m.ts))) {
       if (threads.length < 5000) threads.push({ c: canal.slack_channel_id, ts: String(m.ts) });
     }
   }
@@ -528,7 +624,8 @@ async function collecterFil(
   job: any,
   threads: { c: string; ts: string; cur?: string | null }[],
 ) {
-  const t = threads[0]!;
+  const t = threads[0];
+  if (!t) return { termine: true, messages: 0, restants: 0 };
   const reste = threads.slice(1);
   let b: any;
   try {
@@ -540,6 +637,36 @@ async function collecterFil(
     });
   } catch (e: any) {
     if (e instanceof RateLimited) throw e;
+    if (e instanceof SlackApiError && e.code === "not_in_channel") {
+      const { data: canal } = await supabase
+        .from("slack_canaux")
+        .select("type, is_archived")
+        .eq("slack_channel_id", t.c)
+        .maybeSingle();
+      if (canal?.type !== "prive" && !canal?.is_archived) {
+        try {
+          await slack("conversations.join", { channel: t.c }, "POST");
+          b = await slack("conversations.replies", {
+            channel: t.c,
+            ts: t.ts,
+            limit: String(PAGE_SIZE),
+            ...(t.cur ? { cursor: t.cur } : {}),
+          });
+        } catch (joinError) {
+          if (joinError instanceof RateLimited) throw joinError;
+          const code = joinError instanceof SlackApiError ? joinError.code : "join_failed";
+          const message = code === "missing_scope"
+            ? "Scope channels:join manquant — ajoutez-le puis réinstallez l’application Slack"
+            : `Impossible de rejoindre le canal public de ce fil (${code})`;
+          await patchMeta(supabase, job, { threads: reste, derniere_erreur: message });
+          return { fil: t.ts, echec: message };
+        }
+      } else {
+        const message = "Bot non membre de ce canal privé — invitez le bot pour collecter";
+        await patchMeta(supabase, job, { threads: reste, derniere_erreur: message });
+        return { fil: t.ts, echec: message };
+      }
+    }
     await patchMeta(supabase, job, { threads: reste, derniere_erreur: String(e?.message ?? e) });
     return { fil: t.ts, echec: String(e?.message ?? e) };
   }
