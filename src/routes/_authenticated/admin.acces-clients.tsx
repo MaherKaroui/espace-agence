@@ -226,13 +226,13 @@ function AccesClients() {
                   </Button>
                   <Button
                     variant="ghost" size="icon" title="Modifier"
-                    onClick={() => setForm({
+                    onClick={() => { setShowSecret(false); setForm({
                       id: r.id,
                       organisme: r.organisme ?? r.client_nom ?? "",
                       libelle: r.libelle,
                       identifiant: r.identifiant ?? "",
                       secret: "",
-                    })}
+                    }); }}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
