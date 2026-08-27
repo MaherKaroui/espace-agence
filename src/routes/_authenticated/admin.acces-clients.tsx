@@ -278,13 +278,26 @@ function AccesClients() {
               </div>
               <div>
                 <Label htmlFor="a-mdp">Mot de passe</Label>
-                <Input
-                  id="a-mdp"
-                  type="password"
-                  value={form.secret}
-                  onChange={(e) => setForm({ ...form, secret: e.target.value })}
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="a-mdp"
+                    type={showSecret ? "text" : "password"}
+                    value={form.secret}
+                    onChange={(e) => setForm({ ...form, secret: e.target.value })}
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full w-10"
+                    title={showSecret ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    onClick={() => setShowSecret((v) => !v)}
+                  >
+                    {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
