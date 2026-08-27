@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,18 +8,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  KeyRound, Search, Plus, Pencil, Trash2, Copy, Eye, EyeOff, ShieldCheck, Slack, RefreshCw, Link2,
+  KeyRound, Search, Plus, Pencil, Trash2, Copy, Eye, EyeOff, ShieldCheck,
 } from "lucide-react";
 import {
   listClientAcces, saveClientAcces, deleteClientAcces, revealClientAcces,
