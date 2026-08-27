@@ -109,7 +109,9 @@ function AccesClients() {
       return;
     }
     try {
-      const { value } = await reveal({ data: { id, field: "secret", mode: "affichage" } });
+      const res: any = await reveal({ data: { id, field: "secret", mode: "affichage" } });
+      if (res?.error) return toast.error(res.error);
+      const value = res?.value;
       if (!value) return toast.info("Aucun mot de passe enregistré pour cet accès");
       setRevealed((r) => ({ ...r, [id]: value }));
       timers.current[id] = setTimeout(() => {
@@ -122,7 +124,9 @@ function AccesClients() {
 
   const doCopy = async (id: string, field: "identifiant" | "secret") => {
     try {
-      const { value } = await reveal({ data: { id, field, mode: "copie" } });
+      const res: any = await reveal({ data: { id, field, mode: "copie" } });
+      if (res?.error) return toast.error(res.error);
+      const value = res?.value;
       if (!value) return toast.info("Rien à copier");
       await navigator.clipboard.writeText(value);
       toast.success(field === "secret" ? "Mot de passe copié" : "E-mail copié");
