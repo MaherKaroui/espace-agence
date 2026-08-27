@@ -55,7 +55,13 @@ export const revealClientAcces = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const m = await import("@/server/clientAcces.server");
-    await m.assertStaff(context.supabase, context.userId);
-    return m.revealAcces(context.supabase, data.id, data.field, data.mode);
+    // Toute erreur est convertie en message lisible : une erreur brute
+    // (objet Supabase, erreur crypto) casse la sérialisation RPC → 500.
+    try {
+      const m = await import("@/server/clientAcces.server");
+      await m.assertStaff(context.supabase, context.userId);
+      return await m.revealAcces(context.supabase, data.id, data.field, data.mode);
+    } catch (e: any) {
+      return { value: "", error: String(e?.message ?? e ?? "Erreur inconnue") };
+    }
   });
