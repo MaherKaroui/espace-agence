@@ -161,7 +161,7 @@ function AccesClients() {
             Coffre-fort réservé à l'équipe. Mots de passe chiffrés, consultations journalisées.
           </p>
         </div>
-        <Button onClick={() => setForm({ ...EMPTY })}>
+        <Button onClick={() => { setShowSecret(false); setForm({ ...EMPTY }); }}>
           <Plus className="h-4 w-4 mr-1" /> Nouvel accès
         </Button>
       </div>
