@@ -59,6 +59,7 @@ function AccesClients() {
 
   const [q, setQ] = useState("");
   const [form, setForm] = useState<typeof EMPTY | null>(null);
+  const [showSecret, setShowSecret] = useState(false);
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
@@ -160,7 +161,7 @@ function AccesClients() {
             Coffre-fort réservé à l'équipe. Mots de passe chiffrés, consultations journalisées.
           </p>
         </div>
-        <Button onClick={() => setForm({ ...EMPTY })}>
+        <Button onClick={() => { setShowSecret(false); setForm({ ...EMPTY }); }}>
           <Plus className="h-4 w-4 mr-1" /> Nouvel accès
         </Button>
       </div>
@@ -184,7 +185,17 @@ function AccesClients() {
         <Card key={organisme} className="overflow-hidden">
           <div className="flex items-center justify-between border-b bg-muted/30 p-3">
             <div className="font-medium">{organisme}</div>
-            <Badge variant="secondary">{items.length} accès</Badge>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                title={`Ajouter un accès pour ${organisme}`}
+                onClick={() => { setShowSecret(false); setForm({ ...EMPTY, organisme }); }}
+              >
+                <Plus className="h-4 w-4 mr-1" /> Ajouter un accès
+              </Button>
+              <Badge variant="secondary">{items.length} accès</Badge>
+            </div>
           </div>
           <div className="divide-y">
             {items.map((r) => (
@@ -215,13 +226,13 @@ function AccesClients() {
                   </Button>
                   <Button
                     variant="ghost" size="icon" title="Modifier"
-                    onClick={() => setForm({
+                    onClick={() => { setShowSecret(false); setForm({
                       id: r.id,
                       organisme: r.organisme ?? r.client_nom ?? "",
                       libelle: r.libelle,
                       identifiant: r.identifiant ?? "",
                       secret: "",
-                    })}
+                    }); }}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -278,13 +289,26 @@ function AccesClients() {
               </div>
               <div>
                 <Label htmlFor="a-mdp">Mot de passe</Label>
-                <Input
-                  id="a-mdp"
-                  type="password"
-                  value={form.secret}
-                  onChange={(e) => setForm({ ...form, secret: e.target.value })}
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="a-mdp"
+                    type={showSecret ? "text" : "password"}
+                    value={form.secret}
+                    onChange={(e) => setForm({ ...form, secret: e.target.value })}
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full w-10"
+                    title={showSecret ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    onClick={() => setShowSecret((v) => !v)}
+                  >
+                    {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
