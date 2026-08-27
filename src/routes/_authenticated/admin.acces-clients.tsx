@@ -59,6 +59,7 @@ function AccesClients() {
 
   const [q, setQ] = useState("");
   const [form, setForm] = useState<typeof EMPTY | null>(null);
+  const [showSecret, setShowSecret] = useState(false);
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
