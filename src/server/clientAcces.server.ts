@@ -134,7 +134,12 @@ export async function revealAcces(
   }, "warning");
 
   if (field === "identifiant") return { value: data.identifiant ?? "" };
-  return { value: data.secret_ciphertext ? decryptConnectionKey(data.secret_ciphertext) : "" };
+  if (!data.secret_ciphertext) return { value: "" };
+  try {
+    return { value: decryptConnectionKey(data.secret_ciphertext) };
+  } catch {
+    throw new Error("Mot de passe illisible : il a été enregistré avec une autre clé de chiffrement. Ressaisissez-le.");
+  }
 }
 
 async function logAcces(
