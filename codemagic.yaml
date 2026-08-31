@@ -1,0 +1,74 @@
+# Build iOS d'IZISUIVIS sur un Mac cloud (aucun Mac local requis).
+# Codemagic : https://codemagic.io — connecter le depot GitHub MaherKaroui/espace-agence,
+# puis ajouter l'integration "App Store Connect" (cle API) dans Teams > Integrations.
+
+workflows:
+  ios-izisuivis:
+    name: IZISUIVIS iOS - TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    environment:
+      node: 22
+      xcode: latest
+      ios_signing:
+        # Codemagic genere et gere lui-meme certificat + provisioning profile
+        # a partir de la cle API App Store Connect. Rien a installer sur Windows.
+        distribution_type: app_store
+        bundle_identifier: com.izisuivis.app
+      vars:
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+
+    triggering:
+      # Build manuel depuis l'interface Codemagic. Passer a `events: [push]`
+      # une fois la chaine validee, si un build par commit est souhaite.
+      events: []
+
+    scripts:
+      - name: Installation des dependances
+        script: npm ci
+
+      - name: Build web
+        script: npm run build
+
+      - name: Synchronisation Capacitor
+        # Regenere ios/App/CapApp-SPM/Package.swift avec des chemins POSIX.
+        # Indispensable : une synchro faite sous Windows y ecrit des antislashs
+        # que macOS ne sait pas resoudre.
+        script: npx cap sync ios
+
+      - name: Numero de build incremental
+        # PROJECT_BUILD_NUMBER est le compteur Codemagic : il s'incremente a chaque
+        # build, ce qui garantit un CFBundleVersion unique pour App Store Connect.
+        script: |
+          cd ios/App
+          agvtool new-version -all "$PROJECT_BUILD_NUMBER"
+
+      - name: Installation des profils de signature
+        script: xcode-project use-profiles
+
+      - name: Compilation de l'IPA
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - izibusiness.consult@gmail.com
+        notify:
+          success: true
+          failure: true
+
+      app_store_connect:
+        auth: integration
+        # Envoi sur TestFlight uniquement. La soumission a la revue App Store
+        # se fera depuis App Store Connect, apres validation en interne.
+        submit_to_testflight: true
+        submit_to_app_store: false

@@ -30,3 +30,23 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Signature Android — NE JAMAIS COMMITER
+*.jks
+*.keystore
+espace-agence-release
+keystore.properties
+android/key.properties
+
+# Sorties de build natif
+android/.gradle/
+android/app/build/
+android/build/
+android/app/release/
+android/app/debug/
+android/local.properties
+ios/App/build/
+ios/App/Pods/
+
+# sauvegarde locale des assets Capacitor par defaut
+ios/_assets_capacitor_backup/
