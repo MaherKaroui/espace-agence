@@ -50,3 +50,8 @@ ios/App/Pods/
 
 # sauvegarde locale des assets Capacitor par defaut
 ios/_assets_capacitor_backup/
+
+# variables d environnement locales
+.env
+.env.*
+!.env.example
