@@ -1441,6 +1441,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
             : `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} (client) → équipe agence${texteDe(m)}${piece(m)}${supp(m)}`,
         ),
       });
+      for (const m of list) collectPiece(m, "chat-files", `Client — ${client}`);
       for (const m of list) {
         if (!m.from_agence || !m.sender_id || !nameById.has(m.sender_id)) continue;
         pushEvent(
@@ -1481,6 +1482,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
           return `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} → ${dest}${texteDe(m)}${piece(m)}${supp(m)}`;
         }),
       });
+      for (const m of list) collectPiece(m, "internal-chat-files", `Interne — ${nomCanal}`);
       for (const m of list) {
         if (!m.sender_id || !nameById.has(m.sender_id)) continue;
         const dest = direct
@@ -1516,6 +1518,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
           (m) => `${heureParis(m.created_at)} — ${nomDe(m.sender_id)} → groupe « ${nomCanal} »${texteDe(m)}${piece(m)}${supp(m)}`,
         ),
       });
+      for (const m of list) collectPiece(m, "chat-files", `Groupe — ${nomCanal}`);
       for (const m of list) {
         if (!m.sender_id || !nameById.has(m.sender_id)) continue;
         pushEvent(
@@ -1530,6 +1533,58 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     messagerie.sort((a, b) => b.total - a.total);
   } catch (e) {
     console.error("[rapport-activite] messagerie detaillee indisponible", e);
+  }
+
+  /* ---- Pièces jointes du jour : aperçu direct des images dans le PDF ----
+   * Les images (JPEG/PNG) sont téléchargées puis encodées en data URL pour être
+   * dessinées telles quelles dans le PDF. Les autres formats restent listés par
+   * leur nom : ni téléchargement, ni encodage, donc aucun poids ajouté. */
+  const MAX_IMAGES_PDF = 12;      // au-delà, la vignette est remplacée par une ligne
+  const MAX_PIECES_PDF = 40;      // plafond global de la liste
+  const MAX_OCTETS_IMAGE = 2_000_000;
+  /** Format jsPDF de l'image, d'après le type MIME puis l'extension. */
+  const formatImage = (mime: string | null, nom: string): "JPEG" | "PNG" | null => {
+    const m = (mime ?? "").toLowerCase();
+    if (m === "image/jpeg" || m === "image/jpg") return "JPEG";
+    if (m === "image/png") return "PNG";
+    const ext = nom.toLowerCase().split(".").pop() ?? "";
+    if (ext === "jpg" || ext === "jpeg") return "JPEG";
+    if (ext === "png") return "PNG";
+    return null;
+  };
+  try {
+    piecesBrutes.sort((a, b) => a.at - b.at);
+    let imagesRetenues = 0;
+    for (const pj of piecesBrutes.slice(0, MAX_PIECES_PDF)) {
+      const base = { heure: pj.heure, canal: pj.canal, auteur: pj.auteur, nom: pj.nom };
+      const format = formatImage(pj.mime, pj.nom);
+      if (!format || !pj.path || imagesRetenues >= MAX_IMAGES_PDF) {
+        piecesJointes.push({ ...base, dataUrl: null, format: null });
+        continue;
+      }
+      try {
+        const { data, error } = await admin.storage.from(pj.bucket).download(pj.path);
+        if (error || !data) throw error ?? new Error("fichier introuvable");
+        const octets = Buffer.from(await data.arrayBuffer());
+        if (octets.byteLength > MAX_OCTETS_IMAGE) {
+          piecesJointes.push({ ...base, dataUrl: null, format: null });
+          continue;
+        }
+        const mime = format === "PNG" ? "image/png" : "image/jpeg";
+        piecesJointes.push({
+          ...base,
+          dataUrl: `data:${mime};base64,${octets.toString("base64")}`,
+          format,
+        });
+        imagesRetenues++;
+      } catch (err) {
+        // Fichier illisible ou supprimé : on garde la trace, sans aperçu.
+        console.error(`[rapport-activite] piece jointe illisible (${pj.bucket}/${pj.path})`, err);
+        piecesJointes.push({ ...base, dataUrl: null, format: null });
+      }
+    }
+  } catch (e) {
+    console.error("[rapport-activite] pieces jointes indisponibles", e);
   }
 
   const journeePoles = [...evByPolePerson.entries()]
@@ -1562,6 +1617,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     poles: journeePoles,
     echanges: echangesJour.sort((a, b) => a.pole.localeCompare(b.pole)),
     messagerie,
+    piecesJointes,
     retards: { total: enRetardTotal, plusAnciennes },
     presence: personnes
       .filter((p) => p.presence.seconds > 0)

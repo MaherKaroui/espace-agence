@@ -50,6 +50,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     poles: [],
     echanges: [],
     messagerie: [],
+    piecesJointes: [],
     retards: { total: 0, plusAnciennes: [] },
     presence: [],
     absents: [],
@@ -282,6 +283,89 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       y += 1.5;
     }
 
+    // ---------- 6 ter. Pièces jointes du jour ----------
+    sectionTitle("Pièces jointes du jour");
+    const pieces = j.piecesJointes ?? [];
+    if (pieces.length === 0) {
+      line("Aucune pièce jointe échangée aujourd'hui.", 6.8, 0, GREY);
+      y += 1.5;
+    } else {
+      // Le nombre de vignettes suit le niveau de réduction : elles coûtent cher en hauteur.
+      const maxVignettes = niveau >= 2 ? 4 : niveau >= 1 ? 8 : 12;
+      const vignettes = pieces.filter((p) => p.dataUrl && p.format).slice(0, maxVignettes);
+      const sansApercu = pieces.filter((p) => !(p.dataUrl && p.format));
+
+      const COLS = 4;
+      const GAP = 3;
+      const cellW = (contentW - GAP * (COLS - 1)) / COLS;
+      const boxH = 26;
+      const capH = 7.4;
+
+      for (let i = 0; i < vignettes.length; i += COLS) {
+        const rangee = vignettes.slice(i, i + COLS);
+        ensure(boxH + capH + 2);
+        const yTop = y;
+        rangee.forEach((p, k) => {
+          const x = M + k * (cellW + GAP);
+          doc.setDrawColor(226, 230, 236);
+          doc.setLineWidth(0.3);
+          doc.setFillColor(...LIGHT);
+          doc.roundedRect(x, yTop, cellW, boxH, 1.2, 1.2, "FD");
+          try {
+            // On respecte le rapport hauteur/largeur pour ne pas déformer l'image.
+            const props = doc.getImageProperties(p.dataUrl as string);
+            const ratio = props.width / props.height;
+            let w = cellW - 2;
+            let h = w / ratio;
+            if (h > boxH - 2) {
+              h = boxH - 2;
+              w = h * ratio;
+            }
+            doc.addImage(
+              p.dataUrl as string,
+              p.format as string,
+              x + (cellW - w) / 2,
+              yTop + (boxH - h) / 2,
+              w,
+              h,
+              undefined,
+              "FAST",
+            );
+          } catch {
+            // Image refusée par jsPDF : le cadre reste vide, la légende suffit.
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(5.6);
+            doc.setTextColor(...GREY);
+            doc.text("aperçu indisponible", x + cellW / 2, yTop + boxH / 2, { align: "center" });
+          }
+          const coupe = (t: string) => (doc.splitTextToSize(txt(t), cellW) as string[])[0] ?? "";
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(5.6);
+          doc.setTextColor(72, 80, 92);
+          doc.text(coupe(`${p.heure} — ${p.auteur}`), x, yTop + boxH + 3);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...GREY);
+          doc.text(coupe(`${p.canal} · ${p.nom}`), x, yTop + boxH + 6);
+        });
+        y = yTop + boxH + capH + 1.6;
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(40, 46, 56);
+      }
+
+      const imagesMasquees = pieces.filter((p) => p.dataUrl && p.format).length - vignettes.length;
+      if (imagesMasquees > 0)
+        line(`${imagesMasquees} autre(s) image(s) non affichée(s), faute de place.`, 6.2, 0, GREY);
+
+      if (sansApercu.length > 0) {
+        const maxLignes = niveau >= 2 ? 5 : niveau >= 1 ? 10 : 20;
+        line("Autres fichiers échangés :", 6.4, 0, NAVY_SOFT, true);
+        for (const p of sansApercu.slice(0, maxLignes))
+          line(`${txt(p.heure)} — ${txt(p.auteur)} — ${txt(p.canal)} · ${txt(p.nom)}`, 6.4, 5, [72, 80, 92]);
+        const reste = sansApercu.length - Math.min(sansApercu.length, maxLignes);
+        if (reste > 0) line(`... et ${reste} autre(s) fichier(s).`, 6.2, 5, GREY);
+      }
+      y += 1.5;
+    }
 
     // ---------- 7. Présence ----------
     sectionTitle("Temps de connexion");
