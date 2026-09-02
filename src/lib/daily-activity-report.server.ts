@@ -441,11 +441,25 @@ export interface DigestMessagerieCanal {
   total: number;
 }
 
+/** Une pièce jointe échangée dans la journée, affichée dans le PDF. */
+export interface DigestPieceJointe {
+  heure: string;
+  canal: string;
+  auteur: string;
+  nom: string;
+  /** Image encodée en base64 (data URL) pour l'aperçu direct dans le PDF. */
+  dataUrl: string | null;
+  format: "JPEG" | "PNG" | null;
+}
+
 export interface DigestJournee {
   poles: { pole: string; poleId: string | null; personnes: { nom: string; evenements: { heure: string; texte: string }[] }[] }[];
   echanges: { titre: string; pole: string; poleId: string | null; lignes: string[] }[];
   /** Messagerie du jour, fil par fil, avec l'expéditeur et le destinataire. */
   messagerie: DigestMessagerieCanal[];
+  /** Pièces jointes du jour (aperçu direct pour les images). */
+  piecesJointes: DigestPieceJointe[];
+
   retards: { total: number; plusAnciennes: string[] };
   presence: { nom: string; duree: string; plage: string | null }[];
   absents: string[];
@@ -617,6 +631,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         poles: [],
         echanges: [],
         messagerie: [],
+        piecesJointes: [],
+
         retards: { total: 0, plusAnciennes: [] },
         presence: [],
         absents: [],
@@ -1310,23 +1326,36 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
 
   /* ---- Messagerie du jour : qui a écrit, à qui, à quelle heure ---- */
   const messagerie: DigestMessagerieCanal[] = [];
+  const piecesJointes: DigestPieceJointe[] = [];
+  /** Pièces jointes repérées dans la journée, avant récupération du fichier. */
+  const piecesBrutes: {
+    at: number;
+    heure: string;
+    canal: string;
+    auteur: string;
+    nom: string;
+    bucket: string;
+    path: string | null;
+    mime: string | null;
+  }[] = [];
   try {
     const [{ data: msgCli }, { data: msgInt }, { data: msgGrp }] = await Promise.all([
       admin
         .from("messages")
-        .select("id, client_id, sender_id, from_agence, created_at, content, attachment_name, is_system, deleted_at")
+        .select("id, client_id, sender_id, from_agence, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
         .gte("created_at", fromIso).lte("created_at", toIso)
         .order("created_at", { ascending: true }).limit(2000),
       admin
         .from("internal_messages")
-        .select("id, conversation_id, sender_id, created_at, content, attachment_name, is_system, deleted_at")
+        .select("id, conversation_id, sender_id, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
         .gte("created_at", fromIso).lte("created_at", toIso)
         .order("created_at", { ascending: true }).limit(2000),
       admin
         .from("group_messages")
-        .select("id, conversation_id, sender_id, created_at, content, attachment_name, is_system, deleted_at")
+        .select("id, conversation_id, sender_id, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
         .gte("created_at", fromIso).lte("created_at", toIso)
         .order("created_at", { ascending: true }).limit(2000),
+
     ]);
     const cliRows = ((msgCli ?? []) as any[]).filter((m) => !m.is_system);
     const intRows = ((msgInt ?? []) as any[]).filter((m) => !m.is_system);
@@ -1368,6 +1397,21 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     const membresDe = (rows: any[], convId: string, exclude?: string) =>
       [...new Set(rows.filter((r) => r.conversation_id === convId && r.user_id !== exclude).map((r) => nomDe(r.user_id)))];
     const piece = (m: any) => (m.attachment_name ? ` — pièce jointe : ${m.attachment_name}` : "");
+    /** Mémorise une pièce jointe pour l'aperçu dans le PDF. */
+    const collectPiece = (m: any, bucket: string, canal: string) => {
+      if (!m.attachment_name || m.deleted_at) return;
+      piecesBrutes.push({
+        at: new Date(m.created_at).getTime(),
+        heure: heureParis(m.created_at) ?? "",
+        canal,
+        auteur: nomDe(m.sender_id),
+        nom: String(m.attachment_name),
+        bucket,
+        path: m.attachment_path ?? null,
+        mime: m.attachment_mime ?? null,
+      });
+    };
+
     /** Contenu du message, sur une ligne, tronqué pour rester lisible dans le PDF. */
     const texteDe = (m: any, max = 180): string => {
       const brut = String(m.content ?? "").replace(/\s+/g, " ").trim();
