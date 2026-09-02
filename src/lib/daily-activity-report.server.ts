@@ -1326,23 +1326,36 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
 
   /* ---- Messagerie du jour : qui a écrit, à qui, à quelle heure ---- */
   const messagerie: DigestMessagerieCanal[] = [];
+  const piecesJointes: DigestPieceJointe[] = [];
+  /** Pièces jointes repérées dans la journée, avant récupération du fichier. */
+  const piecesBrutes: {
+    at: number;
+    heure: string;
+    canal: string;
+    auteur: string;
+    nom: string;
+    bucket: string;
+    path: string | null;
+    mime: string | null;
+  }[] = [];
   try {
     const [{ data: msgCli }, { data: msgInt }, { data: msgGrp }] = await Promise.all([
       admin
         .from("messages")
-        .select("id, client_id, sender_id, from_agence, created_at, content, attachment_name, is_system, deleted_at")
+        .select("id, client_id, sender_id, from_agence, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
         .gte("created_at", fromIso).lte("created_at", toIso)
         .order("created_at", { ascending: true }).limit(2000),
       admin
         .from("internal_messages")
-        .select("id, conversation_id, sender_id, created_at, content, attachment_name, is_system, deleted_at")
+        .select("id, conversation_id, sender_id, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
         .gte("created_at", fromIso).lte("created_at", toIso)
         .order("created_at", { ascending: true }).limit(2000),
       admin
         .from("group_messages")
-        .select("id, conversation_id, sender_id, created_at, content, attachment_name, is_system, deleted_at")
+        .select("id, conversation_id, sender_id, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
         .gte("created_at", fromIso).lte("created_at", toIso)
         .order("created_at", { ascending: true }).limit(2000),
+
     ]);
     const cliRows = ((msgCli ?? []) as any[]).filter((m) => !m.is_system);
     const intRows = ((msgInt ?? []) as any[]).filter((m) => !m.is_system);
