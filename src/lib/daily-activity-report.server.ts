@@ -1397,6 +1397,21 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     const membresDe = (rows: any[], convId: string, exclude?: string) =>
       [...new Set(rows.filter((r) => r.conversation_id === convId && r.user_id !== exclude).map((r) => nomDe(r.user_id)))];
     const piece = (m: any) => (m.attachment_name ? ` — pièce jointe : ${m.attachment_name}` : "");
+    /** Mémorise une pièce jointe pour l'aperçu dans le PDF. */
+    const collectPiece = (m: any, bucket: string, canal: string) => {
+      if (!m.attachment_name || m.deleted_at) return;
+      piecesBrutes.push({
+        at: new Date(m.created_at).getTime(),
+        heure: heureParis(m.created_at),
+        canal,
+        auteur: nomDe(m.sender_id),
+        nom: String(m.attachment_name),
+        bucket,
+        path: m.attachment_path ?? null,
+        mime: m.attachment_mime ?? null,
+      });
+    };
+
     /** Contenu du message, sur une ligne, tronqué pour rester lisible dans le PDF. */
     const texteDe = (m: any, max = 180): string => {
       const brut = String(m.content ?? "").replace(/\s+/g, " ").trim();
