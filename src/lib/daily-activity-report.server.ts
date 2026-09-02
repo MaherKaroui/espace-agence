@@ -1402,7 +1402,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       if (!m.attachment_name || m.deleted_at) return;
       piecesBrutes.push({
         at: new Date(m.created_at).getTime(),
-        heure: heureParis(m.created_at),
+        heure: heureParis(m.created_at) ?? "",
         canal,
         auteur: nomDe(m.sender_id),
         nom: String(m.attachment_name),
