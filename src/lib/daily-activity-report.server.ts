@@ -441,11 +441,25 @@ export interface DigestMessagerieCanal {
   total: number;
 }
 
+/** Une pièce jointe échangée dans la journée, affichée dans le PDF. */
+export interface DigestPieceJointe {
+  heure: string;
+  canal: string;
+  auteur: string;
+  nom: string;
+  /** Image encodée en base64 (data URL) pour l'aperçu direct dans le PDF. */
+  dataUrl: string | null;
+  format: "JPEG" | "PNG" | null;
+}
+
 export interface DigestJournee {
   poles: { pole: string; poleId: string | null; personnes: { nom: string; evenements: { heure: string; texte: string }[] }[] }[];
   echanges: { titre: string; pole: string; poleId: string | null; lignes: string[] }[];
   /** Messagerie du jour, fil par fil, avec l'expéditeur et le destinataire. */
   messagerie: DigestMessagerieCanal[];
+  /** Pièces jointes du jour (aperçu direct pour les images). */
+  piecesJointes: DigestPieceJointe[];
+
   retards: { total: number; plusAnciennes: string[] };
   presence: { nom: string; duree: string; plage: string | null }[];
   absents: string[];
