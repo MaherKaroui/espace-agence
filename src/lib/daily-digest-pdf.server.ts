@@ -290,8 +290,10 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       line("Aucune pièce jointe échangée aujourd'hui.", 6.8, 0, GREY);
       y += 1.5;
     } else {
-      // Le nombre de vignettes suit le niveau de réduction : elles coûtent cher en hauteur.
-      const maxVignettes = niveau >= 2 ? 4 : niveau >= 1 ? 8 : 12;
+      // Les vignettes ne sont dessinées qu'au premier rendu : dès que le garde-fou
+      // réduit, il relance le rendu en boucle et chaque image réencodée coûte cher
+      // (jsPDF reparse le base64 à chaque passe). Les pièces restent listées.
+      const maxVignettes = niveau >= 1 ? 0 : 12;
       const vignettes = pieces.filter((p) => p.dataUrl && p.format).slice(0, maxVignettes);
       const sansApercu = pieces.filter((p) => !(p.dataUrl && p.format));
 
@@ -299,8 +301,18 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       const GAP = 3;
       const cellW = (contentW - GAP * (COLS - 1)) / COLS;
       const boxH = 26;
-      const capH = 7.4;
+      const capH = 10;
+      /** Tronque à la largeur voulue avec une ellipse, police courante. */
+      const court = (t: string, largeur: number): string => {
+        let v = txt(t);
+        if (doc.getTextWidth(v) <= largeur) return v;
+        while (v.length > 1 && doc.getTextWidth(`${v}…`) > largeur) v = v.slice(0, -1);
+        return `${v}…`;
+      };
 
+      // Deux messages peuvent porter le même fichier : un alias par image distincte
+      // évite de le stocker plusieurs fois dans le PDF.
+      const alias = new Map<string, string>();
       for (let i = 0; i < vignettes.length; i += COLS) {
         const rangee = vignettes.slice(i, i + COLS);
         ensure(boxH + capH + 2);
@@ -321,14 +333,16 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
               h = boxH - 2;
               w = h * ratio;
             }
+            const cle = p.dataUrl as string;
+            if (!alias.has(cle)) alias.set(cle, `pj${alias.size}`);
             doc.addImage(
-              p.dataUrl as string,
+              cle,
               p.format as string,
               x + (cellW - w) / 2,
               yTop + (boxH - h) / 2,
               w,
               h,
-              undefined,
+              alias.get(cle),
               "FAST",
             );
           } catch {
@@ -338,14 +352,16 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
             doc.setTextColor(...GREY);
             doc.text("aperçu indisponible", x + cellW / 2, yTop + boxH / 2, { align: "center" });
           }
-          const coupe = (t: string) => (doc.splitTextToSize(txt(t), cellW) as string[])[0] ?? "";
+          // Trois lignes distinctes : sur une seule, le nom du fichier disparaissait.
           doc.setFont("helvetica", "bold");
           doc.setFontSize(5.6);
           doc.setTextColor(72, 80, 92);
-          doc.text(coupe(`${p.heure} — ${p.auteur}`), x, yTop + boxH + 3);
+          doc.text(court(`${p.heure} — ${p.auteur}`, cellW), x, yTop + boxH + 3);
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...GREY);
-          doc.text(coupe(`${p.canal} · ${p.nom}`), x, yTop + boxH + 6);
+          doc.text(court(p.canal, cellW), x, yTop + boxH + 5.6);
+          doc.setTextColor(96, 104, 116);
+          doc.text(court(p.nom, cellW), x, yTop + boxH + 8.2);
         });
         y = yTop + boxH + capH + 1.6;
         doc.setFont("helvetica", "normal");
