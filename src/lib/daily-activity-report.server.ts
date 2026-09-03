@@ -330,18 +330,14 @@ export async function sendDailyActivityReport(
     let ok = false;
     let errorText: string | null = null;
     try {
-      const res = await fetch(`${APP_URL}/lovable/email/transactional/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        body: JSON.stringify({
-          templateName: "rapport-activite",
-          recipientEmail: recipient,
-          idempotencyKey: `rapport-activite-${dayKey}-${recipient}`,
-          templateData: { ...report, appUrl: APP_URL },
-        }),
+      const res = await sendAppEmail({
+        templateName: "rapport-activite",
+        recipientEmail: recipient,
+        idempotencyKey: `rapport-activite-${dayKey}-${recipient}`,
+        templateData: { ...report, appUrl: APP_URL },
       });
-      ok = res.ok;
-      if (!ok) errorText = `${res.status} ${await res.text().catch(() => "")}`.slice(0, 500);
+      ok = res.success;
+      if (!ok) errorText = `${(res as any).reason}${(res as any).error ? ` ${(res as any).error}` : ""}`.slice(0, 500);
     } catch (e) {
       errorText = String(e).slice(0, 500);
     }
@@ -367,6 +363,7 @@ export async function sendDailyActivityReport(
 
 import { ROLE_LABELS_FR } from "@/lib/role-labels";
 import { sendSupervisionEmail } from "@/lib/supervision.server";
+import { sendAppEmail } from "@/lib/email/send.server";
 
 export interface DigestPerson {
   nom: string;
@@ -1715,21 +1712,14 @@ export async function sendDailyDigest(
     let ok = false;
     let errorText: string | null = null;
     try {
-      const res = await fetch(`${base}/lovable/email/transactional/send`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-        },
-        body: JSON.stringify({
-          templateName: "compte-rendu-quotidien",
-          recipientEmail: to,
-          idempotencyKey: `rapport-activite-test-${dayKey}-${to}-${Date.now()}`,
-          templateData: { ...digest, pdfUrl, appUrl: APP_URL },
-        }),
+      const res = await sendAppEmail({
+        templateName: "compte-rendu-quotidien",
+        recipientEmail: to,
+        idempotencyKey: `rapport-activite-test-${dayKey}-${to}-${Date.now()}`,
+        templateData: { ...digest, pdfUrl, appUrl: APP_URL },
       });
-      ok = res.ok;
-      if (!ok) errorText = `${res.status} ${await res.text().catch(() => "")}`.slice(0, 500);
+      ok = res.success;
+      if (!ok) errorText = `${(res as any).reason}${(res as any).error ? ` ${(res as any).error}` : ""}`.slice(0, 500);
     } catch (e) {
       errorText = String(e).slice(0, 500);
     }

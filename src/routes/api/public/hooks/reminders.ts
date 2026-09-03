@@ -59,25 +59,16 @@ export const Route = createFileRoute('/api/public/hooks/reminders')({
           // Helper: send via internal endpoint using service-role bearer
           async function sendEmail(templateName: string, recipientEmail: string, templateData: Record<string, any>, idempotencyKey: string) {
             if (!(await isEnabled(templateName))) { results.skipped++; return false }
-            const origin = process.env.SUPABASE_URL ? APP_URL : APP_URL
-            const url = `${origin}/lovable/email/transactional/send`
-            const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
             try {
-              const res = await fetch(url, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${key}`,
-                },
-                body: JSON.stringify({
-                  templateName,
-                  recipientEmail,
-                  idempotencyKey,
-                  templateData: { ...templateData, appUrl: APP_URL },
-                }),
+              const { sendAppEmail } = await import('@/lib/email/send.server')
+              const res = await sendAppEmail({
+                templateName,
+                recipientEmail,
+                idempotencyKey,
+                templateData: { ...templateData, appUrl: APP_URL },
               })
-              if (!res.ok) {
-                console.error('[reminders] send failed', templateName, res.status, await res.text())
+              if (!res.success) {
+                console.error('[reminders] send failed', templateName, (res as any).reason)
                 results.errors++
                 return false
               }

@@ -169,19 +169,14 @@ export async function sendSupervisionEmail(
     let ok = false;
     let errorText: string | null = null;
     try {
-      const base = opts.baseUrl || APP_URL;
-      const res = await fetch(`${base}/lovable/email/transactional/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` },
-        body: JSON.stringify({
-          templateName: opts.templateName,
-          recipientEmail: recipient,
-          idempotencyKey: `${opts.idempotencyKey}-${recipient}`,
-          templateData: { ...opts.templateData, appUrl: APP_URL },
-        }),
+      const res = await sendAppEmail({
+        templateName: opts.templateName,
+        recipientEmail: recipient,
+        idempotencyKey: `${opts.idempotencyKey}-${recipient}`,
+        templateData: { ...opts.templateData, appUrl: APP_URL },
       });
-      ok = res.ok;
-      if (!ok) errorText = `${res.status} ${await res.text().catch(() => "")}`.slice(0, 500);
+      ok = res.success;
+      if (!ok) errorText = `${(res as any).reason}${(res as any).error ? ` ${(res as any).error}` : ""}`.slice(0, 500);
     } catch (e) {
       errorText = String(e).slice(0, 500);
     }
@@ -241,3 +236,5 @@ export function isParisHour(hour: number, minute?: number): boolean {
   if (minute === undefined) return true;
   return Math.abs(m - minute) <= 10;
 }
+
+import { sendAppEmail } from "@/lib/email/send.server";
