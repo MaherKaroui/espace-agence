@@ -1,5 +1,5 @@
-import { supabase } from '@/integrations/supabase/client'
 import { APP_URL } from '@/lib/app-url'
+import { sendAppEmailFn } from './send.functions'
 
 export interface SendEmailArgs {
   templateName: string
@@ -9,30 +9,20 @@ export interface SendEmailArgs {
 }
 
 /**
- * Fire-and-forget transactional email send. Errors are logged but never thrown
+ * Fire-and-forget app email send. Errors are logged but never thrown
  * so they don't disrupt the user flow.
  */
 export async function sendTransactionalEmail(args: SendEmailArgs): Promise<boolean> {
   try {
-    const { data: sess } = await supabase.auth.getSession()
-    const token = sess.session?.access_token
-    if (!token) return false
-    const res = await fetch('/lovable/email/transactional/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        ...args,
+    const result = await sendAppEmailFn({
+      data: {
+        templateName: args.templateName,
+        recipientEmail: args.recipientEmail,
+        idempotencyKey: args.idempotencyKey,
         templateData: { ...(args.templateData || {}), appUrl: APP_URL },
-      }),
+      },
     })
-    if (!res.ok) {
-      console.warn('sendTransactionalEmail failed', res.status, await res.text().catch(() => ''))
-      return false
-    }
-    return true
+    return Boolean((result as any)?.success)
   } catch (e) {
     console.warn('sendTransactionalEmail error', e)
     return false
