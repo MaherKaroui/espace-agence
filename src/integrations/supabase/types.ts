@@ -2948,10 +2948,6 @@ export type Database = {
           schedule: string
         }[]
       }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
       disable_team_member: {
         Args: { _reason?: string; _user_id: string }
         Returns: undefined
@@ -2973,16 +2969,11 @@ export type Database = {
             }
             Returns: string
           }
-      email_queue_dispatch: { Args: never; Returns: undefined }
       email_template_enabled: {
         Args: { _template_name: string }
         Returns: boolean
       }
       enable_team_member: { Args: { _user_id: string }; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
       generer_rapport_direction: { Args: { _date?: string }; Returns: string }
       generer_rapport_quotidien: { Args: { _date?: string }; Returns: string }
       get_admin_email: { Args: never; Returns: string }
@@ -3054,15 +3045,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
       notify_team_document_reminder: {
         Args: { _document_id: string; _reminder_type?: string }
         Returns: number
@@ -3094,14 +3076,6 @@ export type Database = {
           _type: Database["public"]["Enums"]["notification_type"]
         }
         Returns: undefined
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
       }
       rgpd_purge_old_logs: { Args: never; Returns: undefined }
       sanitize_message_content: {
