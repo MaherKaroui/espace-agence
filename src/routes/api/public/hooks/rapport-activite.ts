@@ -17,13 +17,10 @@ export const Route = createFileRoute("/api/public/hooks/rapport-activite")({
             return Response.json({ ok: false, error: "adresse invalide" }, { status: 400 });
           }
           const { isParisHour } = await import("@/lib/supervision.server");
-          const { sendDailyDigest, isParisWeekend, parisDateKey } = await import(
+          const { sendDailyDigest, parisDateKey } = await import(
             "@/lib/daily-activity-report.server"
           );
 
-          if (!force && isParisWeekend()) {
-            return Response.json({ ok: true, skipped: "week-end" });
-          }
           if (!force && !isParisHour(19, 0)) {
             return Response.json({ ok: true, skipped: "hors créneau 19h Europe/Paris" });
           }
