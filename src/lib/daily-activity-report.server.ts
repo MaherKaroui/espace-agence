@@ -1626,9 +1626,36 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   };
   try {
     piecesBrutes.sort((a, b) => a.at - b.at);
+
+    // Lien signé (30 jours) pour chaque fichier : le PDF devient cliquable, y compris
+    // pour les PDF, Word, Excel… qui ne peuvent pas être dessinés en vignette.
+    const urlByKey = new Map<string, string>();
+    const parBucket = new Map<string, string[]>();
+    for (const pj of piecesBrutes.slice(0, MAX_PIECES_PDF)) {
+      if (!pj.path) continue;
+      const arr = parBucket.get(pj.bucket) ?? [];
+      if (!arr.includes(pj.path)) arr.push(pj.path);
+      parBucket.set(pj.bucket, arr);
+    }
+    for (const [bucket, paths] of parBucket) {
+      try {
+        const { data } = await admin.storage.from(bucket).createSignedUrls(paths, 60 * 60 * 24 * 30);
+        for (const s of (data ?? []) as any[])
+          if (s?.signedUrl && s?.path) urlByKey.set(`${bucket}::${s.path}`, s.signedUrl);
+      } catch (err) {
+        console.error(`[rapport-activite] liens signes indisponibles (${bucket})`, err);
+      }
+    }
+
     let imagesRetenues = 0;
     for (const pj of piecesBrutes.slice(0, MAX_PIECES_PDF)) {
-      const base = { heure: pj.heure, canal: pj.canal, auteur: pj.auteur, nom: pj.nom };
+      const base = {
+        heure: pj.heure,
+        canal: pj.canal,
+        auteur: pj.auteur,
+        nom: pj.nom,
+        url: pj.path ? urlByKey.get(`${pj.bucket}::${pj.path}`) ?? null : null,
+      };
       const format = formatImage(pj.mime, pj.nom);
       if (!format || !pj.path || imagesRetenues >= MAX_IMAGES_PDF) {
         piecesJointes.push({ ...base, dataUrl: null, format: null });
@@ -1658,6 +1685,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   } catch (e) {
     console.error("[rapport-activite] pieces jointes indisponibles", e);
   }
+
 
   const journeePoles = [...evByPolePerson.entries()]
     .map(([pole, perPerson]) => ({
