@@ -1650,8 +1650,44 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       }
     }
 
-    let imagesRetenues = 0;
-    for (const pj of piecesBrutes.slice(0, MAX_PIECES_PDF)) {
+    // Téléchargements en parallèle (par lots) : en série, la génération dépassait
+    // la minute et l'appel échouait en erreur serveur.
+    const retenues = piecesBrutes.slice(0, MAX_PIECES_PDF);
+    const candidates = retenues.filter((pj) => pj.path && formatImage(pj.mime, pj.nom));
+    const imagesParCle = new Map<string, { dataUrl: string; format: "JPEG" | "PNG" }>();
+    let budget = MAX_OCTETS_TOTAL;
+    for (let i = 0; i < candidates.length && imagesParCle.size < MAX_IMAGES_PDF && budget > 0; i += 5) {
+      const lot = candidates.slice(i, i + 5);
+      const resultats = await Promise.all(
+        lot.map(async (pj) => {
+          try {
+            const { data, error } = await admin.storage.from(pj.bucket).download(pj.path as string);
+            if (error || !data) throw error ?? new Error("fichier introuvable");
+            const octets = Buffer.from(await data.arrayBuffer());
+            return { pj, octets };
+          } catch (err) {
+            console.error(`[rapport-activite] piece jointe illisible (${pj.bucket}/${pj.path})`, err);
+            return null;
+          }
+        }),
+      );
+      for (const r of resultats) {
+        if (!r) continue;
+        const format = formatImage(r.pj.mime, r.pj.nom) as "JPEG" | "PNG";
+        const cle = `${r.pj.bucket}::${r.pj.path}`;
+        if (imagesParCle.has(cle)) continue;
+        if (r.octets.byteLength > MAX_OCTETS_IMAGE) continue;
+        if (imagesParCle.size >= MAX_IMAGES_PDF || r.octets.byteLength > budget) continue;
+        budget -= r.octets.byteLength;
+        const mime = format === "PNG" ? "image/png" : "image/jpeg";
+        imagesParCle.set(cle, {
+          dataUrl: `data:${mime};base64,${r.octets.toString("base64")}`,
+          format,
+        });
+      }
+    }
+
+    for (const pj of retenues) {
       const base = {
         heure: pj.heure,
         canal: pj.canal,
@@ -1659,32 +1695,14 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
         nom: pj.nom,
         url: pj.path ? urlByKey.get(`${pj.bucket}::${pj.path}`) ?? null : null,
       };
-      const format = formatImage(pj.mime, pj.nom);
-      if (!format || !pj.path || imagesRetenues >= MAX_IMAGES_PDF) {
-        piecesJointes.push({ ...base, dataUrl: null, format: null });
-        continue;
-      }
-      try {
-        const { data, error } = await admin.storage.from(pj.bucket).download(pj.path);
-        if (error || !data) throw error ?? new Error("fichier introuvable");
-        const octets = Buffer.from(await data.arrayBuffer());
-        if (octets.byteLength > MAX_OCTETS_IMAGE) {
-          piecesJointes.push({ ...base, dataUrl: null, format: null });
-          continue;
-        }
-        const mime = format === "PNG" ? "image/png" : "image/jpeg";
-        piecesJointes.push({
-          ...base,
-          dataUrl: `data:${mime};base64,${octets.toString("base64")}`,
-          format,
-        });
-        imagesRetenues++;
-      } catch (err) {
-        // Fichier illisible ou supprimé : on garde la trace, sans aperçu.
-        console.error(`[rapport-activite] piece jointe illisible (${pj.bucket}/${pj.path})`, err);
-        piecesJointes.push({ ...base, dataUrl: null, format: null });
-      }
+      const img = pj.path ? imagesParCle.get(`${pj.bucket}::${pj.path}`) : undefined;
+      piecesJointes.push({
+        ...base,
+        dataUrl: img?.dataUrl ?? null,
+        format: img?.format ?? null,
+      });
     }
+
   } catch (e) {
     console.error("[rapport-activite] pieces jointes indisponibles", e);
   }
