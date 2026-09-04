@@ -360,8 +360,13 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...GREY);
           doc.text(court(p.canal, cellW), x, yTop + boxH + 5.6);
-          doc.setTextColor(96, 104, 116);
+          const lien = (p as any).url as string | undefined;
+          doc.setTextColor(...(lien ? ([26, 86, 160] as [number, number, number]) : ([96, 104, 116] as [number, number, number])));
           doc.text(court(p.nom, cellW), x, yTop + boxH + 8.2);
+          if (lien) {
+            // La vignette et le nom ouvrent le fichier d'origine.
+            doc.link(x, yTop, cellW, boxH + capH, { url: lien });
+          }
         });
         y = yTop + boxH + capH + 1.6;
         doc.setFont("helvetica", "normal");
@@ -370,16 +375,26 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
 
       const imagesMasquees = pieces.filter((p) => p.dataUrl && p.format).length - vignettes.length;
       if (imagesMasquees > 0)
-        line(`${imagesMasquees} autre(s) image(s) non affichée(s), faute de place.`, 6.2, 0, GREY);
+        line(`${imagesMasquees} autre(s) image(s) non affichée(s), faute de place — voir la liste ci-dessous.`, 6.2, 0, GREY);
 
       if (sansApercu.length > 0) {
-        const maxLignes = niveau >= 2 ? 5 : niveau >= 1 ? 10 : 20;
-        line("Autres fichiers échangés :", 6.4, 0, NAVY_SOFT, true);
-        for (const p of sansApercu.slice(0, maxLignes))
-          line(`${txt(p.heure)} — ${txt(p.auteur)} — ${txt(p.canal)} · ${txt(p.nom)}`, 6.4, 5, [72, 80, 92]);
+        const maxLignes = niveau >= 2 ? 20 : niveau >= 1 ? 45 : 120;
+        line("Autres fichiers (PDF, Word, images…) — cliquez pour ouvrir :", 6.4, 0, NAVY_SOFT, true);
+        for (const p of sansApercu.slice(0, maxLignes)) {
+          const lien = (p as any).url as string | undefined;
+          const yLigne = y;
+          line(
+            `${txt(p.heure)} — ${txt(p.auteur)} — ${txt(p.canal)} · ${txt(p.nom)}${lien ? "  (ouvrir)" : ""}`,
+            6.4,
+            5,
+            lien ? [26, 86, 160] : [72, 80, 92],
+          );
+          if (lien) doc.link(M + 5, yLigne - 2.4, contentW - 5, 3.4, { url: lien });
+        }
         const reste = sansApercu.length - Math.min(sansApercu.length, maxLignes);
         if (reste > 0) line(`... et ${reste} autre(s) fichier(s).`, 6.2, 5, GREY);
       }
+
       y += 1.5;
     }
 

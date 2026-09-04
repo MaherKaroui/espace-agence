@@ -447,7 +447,10 @@ export interface DigestPieceJointe {
   /** Image encodée en base64 (data URL) pour l'aperçu direct dans le PDF. */
   dataUrl: string | null;
   format: "JPEG" | "PNG" | null;
+  /** Lien signé (30 jours) pour ouvrir le fichier depuis le PDF (PDF, Word, image…). */
+  url?: string | null;
 }
+
 
 export interface DigestJournee {
   poles: { pole: string; poleId: string | null; personnes: { nom: string; evenements: { heure: string; texte: string }[] }[] }[];
@@ -1532,13 +1535,88 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     console.error("[rapport-activite] messagerie detaillee indisponible", e);
   }
 
+  /* ---- Pièces jointes hors messagerie : tâches et documents déposés ---- */
+  try {
+    const [{ data: taskFiles }, { data: docFiles }] = await Promise.all([
+      admin
+        .from("agency_task_attachments")
+        .select("id, task_id, uploaded_by, storage_path, filename, mime_type, created_at")
+        .gte("created_at", fromIso).lte("created_at", toIso)
+        .order("created_at", { ascending: true }).limit(500),
+      admin
+        .from("documents")
+        .select("id, dossier_id, uploader_id, nom, storage_path, mime_type, created_at")
+        .gte("created_at", fromIso).lte("created_at", toIso)
+        .order("created_at", { ascending: true }).limit(500),
+    ]);
+    const taskRows = (taskFiles ?? []) as any[];
+    const docRows = (docFiles ?? []) as any[];
+
+    const taskIds = [...new Set(taskRows.map((r) => r.task_id).filter(Boolean))];
+    const dossierIds = [...new Set(docRows.map((r) => r.dossier_id).filter(Boolean))];
+    const [{ data: tasksInfo }, { data: dossiersInfo }] = await Promise.all([
+      taskIds.length
+        ? admin.from("agency_tasks").select("id, titre").in("id", taskIds)
+        : Promise.resolve({ data: [] } as any),
+      dossierIds.length
+        ? admin.from("dossiers").select("id, titre").in("id", dossierIds)
+        : Promise.resolve({ data: [] } as any),
+    ]);
+    const titreTache = new Map(((tasksInfo ?? []) as any[]).map((t) => [t.id, t.titre]));
+    const titreDossier = new Map(((dossiersInfo ?? []) as any[]).map((d) => [d.id, d.titre]));
+
+    // Compléter les noms d'auteurs manquants.
+    const besoin = new Set<string>();
+    for (const r of [...taskRows, ...docRows]) {
+      const uid = r.uploaded_by ?? r.uploader_id;
+      if (uid && !nameById.has(uid)) besoin.add(uid);
+    }
+    if (besoin.size) {
+      const { data: extra } = await admin
+        .from("profiles").select("id, prenom, nom, email, entreprise").in("id", [...besoin]);
+      for (const p of ((extra ?? []) as any[]))
+        nameById.set(p.id, `${p.prenom ?? ""} ${p.nom ?? ""}`.trim() || p.entreprise || p.email || "—");
+    }
+    const nom2 = (id: any) => (id ? nameById.get(id) ?? "Utilisateur inconnu" : "—");
+
+    for (const r of taskRows) {
+      if (!r.storage_path && !r.filename) continue;
+      piecesBrutes.push({
+        at: new Date(r.created_at).getTime(),
+        heure: heureParis(r.created_at) ?? "",
+        canal: `Tâche — ${titreTache.get(r.task_id) ?? "tâche"}`,
+        auteur: nom2(r.uploaded_by),
+        nom: String(r.filename ?? "fichier"),
+        bucket: "task-files",
+        path: r.storage_path ?? null,
+        mime: r.mime_type ?? null,
+      });
+    }
+    for (const r of docRows) {
+      if (!r.storage_path && !r.nom) continue;
+      piecesBrutes.push({
+        at: new Date(r.created_at).getTime(),
+        heure: heureParis(r.created_at) ?? "",
+        canal: `Document — ${titreDossier.get(r.dossier_id) ?? "dossier"}`,
+        auteur: nom2(r.uploader_id),
+        nom: String(r.nom ?? "document"),
+        bucket: "documents",
+        path: r.storage_path ?? null,
+        mime: r.mime_type ?? null,
+      });
+    }
+  } catch (e) {
+    console.error("[rapport-activite] pieces jointes taches/documents indisponibles", e);
+  }
+
   /* ---- Pièces jointes du jour : aperçu direct des images dans le PDF ----
    * Les images (JPEG/PNG) sont téléchargées puis encodées en data URL pour être
-   * dessinées telles quelles dans le PDF. Les autres formats restent listés par
-   * leur nom : ni téléchargement, ni encodage, donc aucun poids ajouté. */
-  const MAX_IMAGES_PDF = 12;      // au-delà, la vignette est remplacée par une ligne
-  const MAX_PIECES_PDF = 40;      // plafond global de la liste
-  const MAX_OCTETS_IMAGE = 2_000_000;
+   * dessinées telles quelles dans le PDF. Les autres fichiers (PDF, Word…) sont
+   * listés avec un lien signé pour être ouverts d'un clic depuis le compte rendu. */
+  const MAX_IMAGES_PDF = 24;      // au-delà, la vignette est remplacée par une ligne
+  const MAX_PIECES_PDF = 200;     // plafond global de la liste
+  const MAX_OCTETS_IMAGE = 4_000_000;
+
   /** Format jsPDF de l'image, d'après le type MIME puis l'extension. */
   const formatImage = (mime: string | null, nom: string): "JPEG" | "PNG" | null => {
     const m = (mime ?? "").toLowerCase();
@@ -1551,9 +1629,36 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   };
   try {
     piecesBrutes.sort((a, b) => a.at - b.at);
+
+    // Lien signé (30 jours) pour chaque fichier : le PDF devient cliquable, y compris
+    // pour les PDF, Word, Excel… qui ne peuvent pas être dessinés en vignette.
+    const urlByKey = new Map<string, string>();
+    const parBucket = new Map<string, string[]>();
+    for (const pj of piecesBrutes.slice(0, MAX_PIECES_PDF)) {
+      if (!pj.path) continue;
+      const arr = parBucket.get(pj.bucket) ?? [];
+      if (!arr.includes(pj.path)) arr.push(pj.path);
+      parBucket.set(pj.bucket, arr);
+    }
+    for (const [bucket, paths] of parBucket) {
+      try {
+        const { data } = await admin.storage.from(bucket).createSignedUrls(paths, 60 * 60 * 24 * 30);
+        for (const s of (data ?? []) as any[])
+          if (s?.signedUrl && s?.path) urlByKey.set(`${bucket}::${s.path}`, s.signedUrl);
+      } catch (err) {
+        console.error(`[rapport-activite] liens signes indisponibles (${bucket})`, err);
+      }
+    }
+
     let imagesRetenues = 0;
     for (const pj of piecesBrutes.slice(0, MAX_PIECES_PDF)) {
-      const base = { heure: pj.heure, canal: pj.canal, auteur: pj.auteur, nom: pj.nom };
+      const base = {
+        heure: pj.heure,
+        canal: pj.canal,
+        auteur: pj.auteur,
+        nom: pj.nom,
+        url: pj.path ? urlByKey.get(`${pj.bucket}::${pj.path}`) ?? null : null,
+      };
       const format = formatImage(pj.mime, pj.nom);
       if (!format || !pj.path || imagesRetenues >= MAX_IMAGES_PDF) {
         piecesJointes.push({ ...base, dataUrl: null, format: null });
@@ -1583,6 +1688,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   } catch (e) {
     console.error("[rapport-activite] pieces jointes indisponibles", e);
   }
+
 
   const journeePoles = [...evByPolePerson.entries()]
     .map(([pole, perPerson]) => ({
