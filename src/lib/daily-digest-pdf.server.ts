@@ -119,6 +119,27 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
       doc.setTextColor(40, 46, 56);
     };
 
+    /**
+     * Affiche un message et, s'il contient une adresse web (Drive, site…),
+     * ajoute la ligne du lien en bleu, cliquable dans le PDF.
+     */
+    const lineAvecLiens = (
+      text: string,
+      size = 6.4,
+      indent = 0,
+      color: [number, number, number] = [96, 104, 116],
+    ) => {
+      const liens = [...new Set((text.match(/https?:\/\/[^\s<>"»)]+/gi) ?? []).map((u) => u.replace(/[.,;]+$/, "")))];
+      line(text, size, indent, color);
+      for (const u of liens) {
+        const yLigne = y;
+        line(u, size, indent + 4, [26, 86, 160]);
+        doc.link(M + indent + 4, yLigne - size * 0.36, contentW - indent - 4, size * 0.5 + 1, { url: u });
+      }
+    };
+
+
+
     // ---------- 1. Bandeau ----------
     doc.setFillColor(...NAVY);
     doc.rect(0, 0, W, 22, "F");
