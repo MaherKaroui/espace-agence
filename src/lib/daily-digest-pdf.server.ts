@@ -430,25 +430,36 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     return { doc, pages: total };
   };
 
-  // ---------- Garde-fou 3 pages (la messagerie détaillée occupe une page) ----------
+  // ---------- Garde-fou 3 pages (hors pièces jointes, ajoutées ensuite) ----------
+  // Le calibrage se fait sans les images : les réencoder à chaque passe coûtait
+  // près d'une minute et faisait échouer la génération.
   const reductions: string[] = [];
+  let niveau = 0;
   let result = render(0, 99, j.echanges.length);
   if (result.pages > 3) {
+    niveau = 1;
     result = render(1, 99, j.echanges.length);
     reductions.push("présence résumée");
   }
   let maxEch = j.echanges.length;
-  while (result.pages > 3 && maxEch > 0) {
-    maxEch -= 1;
-    result = render(1, 99, maxEch);
+  for (const essai of [20, 10, 5, 2, 0]) {
+    if (result.pages <= 3 || essai >= maxEch) continue;
+    maxEch = essai;
+    result = render(niveau, 99, maxEch);
   }
   if (maxEch < j.echanges.length) reductions.push(`échanges limités à ${maxEch} tâches`);
   let maxEv = 12;
-  while (result.pages > 3 && maxEv > 1) {
-    maxEv -= 2;
+  for (const essai of [8, 5, 3, 2]) {
+    if (result.pages <= 3) break;
+    niveau = 2;
+    maxEv = essai;
     result = render(2, maxEv, maxEch);
   }
   if (result.pages <= 3 && maxEv < 12) reductions.push(`actions limitées à ${maxEv} par personne`);
+
+  // Rendu final : mêmes réglages, avec la page des pièces jointes.
+  result = render(niveau, maxEv, maxEch, true);
+
 
   const out = new Uint8Array(result.doc.output("arraybuffer") as ArrayBuffer);
   console.log(
