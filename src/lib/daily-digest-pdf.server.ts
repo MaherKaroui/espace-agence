@@ -284,119 +284,109 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
     }
 
     // ---------- 6 ter. Pièces jointes du jour ----------
-    sectionTitle("Pièces jointes du jour");
-    const pieces = j.piecesJointes ?? [];
-    if (pieces.length === 0) {
-      line("Aucune pièce jointe échangée aujourd'hui.", 6.8, 0, GREY);
-      y += 1.5;
-    } else {
-      // Les vignettes ne sont dessinées qu'au premier rendu : dès que le garde-fou
-      // réduit, il relance le rendu en boucle et chaque image réencodée coûte cher
-      // (jsPDF reparse le base64 à chaque passe). Les pièces restent listées.
-      const maxVignettes = niveau >= 1 ? 0 : 12;
-      const vignettes = pieces.filter((p) => p.dataUrl && p.format).slice(0, maxVignettes);
-      const sansApercu = pieces.filter((p) => !(p.dataUrl && p.format));
+    // Cette section n'est dessinée qu'au rendu final : les images coûtent cher
+    // à réencoder, et le garde-fou relance le rendu plusieurs fois.
+    if (avecPieces) {
+      doc.addPage();
+      y = M;
+      sectionTitle("Pièces jointes du jour");
+      const pieces = j.piecesJointes ?? [];
+      if (pieces.length === 0) {
+        line("Aucune pièce jointe échangée aujourd'hui.", 6.8, 0, GREY);
+        y += 1.5;
+      } else {
+        const vignettes = pieces.filter((p) => p.dataUrl && p.format);
+        const sansApercu = pieces.filter((p) => !(p.dataUrl && p.format));
 
-      const COLS = 4;
-      const GAP = 3;
-      const cellW = (contentW - GAP * (COLS - 1)) / COLS;
-      const boxH = 26;
-      const capH = 10;
-      /** Tronque à la largeur voulue avec une ellipse, police courante. */
-      const court = (t: string, largeur: number): string => {
-        let v = txt(t);
-        if (doc.getTextWidth(v) <= largeur) return v;
-        while (v.length > 1 && doc.getTextWidth(`${v}…`) > largeur) v = v.slice(0, -1);
-        return `${v}…`;
-      };
+        // Deux colonnes : l'image est lisible directement dans le compte rendu.
+        const COLS = 2;
+        const GAP = 5;
+        const cellW = (contentW - GAP * (COLS - 1)) / COLS;
+        const boxH = 62;
+        const capH = 10;
+        /** Tronque à la largeur voulue avec une ellipse, police courante. */
+        const court = (t: string, largeur: number): string => {
+          let v = txt(t);
+          if (doc.getTextWidth(v) <= largeur) return v;
+          while (v.length > 1 && doc.getTextWidth(`${v}…`) > largeur) v = v.slice(0, -1);
+          return `${v}…`;
+        };
 
-      // Deux messages peuvent porter le même fichier : un alias par image distincte
-      // évite de le stocker plusieurs fois dans le PDF.
-      const alias = new Map<string, string>();
-      for (let i = 0; i < vignettes.length; i += COLS) {
-        const rangee = vignettes.slice(i, i + COLS);
-        ensure(boxH + capH + 2);
-        const yTop = y;
-        rangee.forEach((p, k) => {
-          const x = M + k * (cellW + GAP);
-          doc.setDrawColor(226, 230, 236);
-          doc.setLineWidth(0.3);
-          doc.setFillColor(...LIGHT);
-          doc.roundedRect(x, yTop, cellW, boxH, 1.2, 1.2, "FD");
-          try {
-            // On respecte le rapport hauteur/largeur pour ne pas déformer l'image.
-            const props = doc.getImageProperties(p.dataUrl as string);
-            const ratio = props.width / props.height;
-            let w = cellW - 2;
-            let h = w / ratio;
-            if (h > boxH - 2) {
-              h = boxH - 2;
-              w = h * ratio;
+        // Deux messages peuvent porter le même fichier : un alias par image distincte
+        // évite de le stocker plusieurs fois dans le PDF.
+        const alias = new Map<string, string>();
+        for (let i = 0; i < vignettes.length; i += COLS) {
+          const rangee = vignettes.slice(i, i + COLS);
+          ensure(boxH + capH + 2);
+          const yTop = y;
+          rangee.forEach((p, k) => {
+            const x = M + k * (cellW + GAP);
+            doc.setDrawColor(226, 230, 236);
+            doc.setLineWidth(0.3);
+            doc.setFillColor(...LIGHT);
+            doc.roundedRect(x, yTop, cellW, boxH, 1.2, 1.2, "FD");
+            try {
+              // On respecte le rapport hauteur/largeur pour ne pas déformer l'image.
+              const props = doc.getImageProperties(p.dataUrl as string);
+              const ratio = props.width / props.height;
+              let w = cellW - 3;
+              let h = w / ratio;
+              if (h > boxH - 3) {
+                h = boxH - 3;
+                w = h * ratio;
+              }
+              const cle = p.dataUrl as string;
+              if (!alias.has(cle)) alias.set(cle, `pj${alias.size}`);
+              doc.addImage(
+                cle,
+                p.format as string,
+                x + (cellW - w) / 2,
+                yTop + (boxH - h) / 2,
+                w,
+                h,
+                alias.get(cle),
+                "FAST",
+              );
+            } catch {
+              // Image refusée par jsPDF : le cadre reste vide, la légende suffit.
+              doc.setFont("helvetica", "italic");
+              doc.setFontSize(6);
+              doc.setTextColor(...GREY);
+              doc.text("aperçu indisponible", x + cellW / 2, yTop + boxH / 2, { align: "center" });
             }
-            const cle = p.dataUrl as string;
-            if (!alias.has(cle)) alias.set(cle, `pj${alias.size}`);
-            doc.addImage(
-              cle,
-              p.format as string,
-              x + (cellW - w) / 2,
-              yTop + (boxH - h) / 2,
-              w,
-              h,
-              alias.get(cle),
-              "FAST",
-            );
-          } catch {
-            // Image refusée par jsPDF : le cadre reste vide, la légende suffit.
-            doc.setFont("helvetica", "italic");
-            doc.setFontSize(5.6);
+            // Trois lignes distinctes : sur une seule, le nom du fichier disparaissait.
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(6);
+            doc.setTextColor(72, 80, 92);
+            doc.text(court(`${p.heure} — ${p.auteur}`, cellW), x, yTop + boxH + 3.2);
+            doc.setFont("helvetica", "normal");
             doc.setTextColor(...GREY);
-            doc.text("aperçu indisponible", x + cellW / 2, yTop + boxH / 2, { align: "center" });
-          }
-          // Trois lignes distinctes : sur une seule, le nom du fichier disparaissait.
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(5.6);
-          doc.setTextColor(72, 80, 92);
-          doc.text(court(`${p.heure} — ${p.auteur}`, cellW), x, yTop + boxH + 3);
+            doc.text(court(p.canal, cellW), x, yTop + boxH + 5.9);
+            doc.setTextColor(96, 104, 116);
+            doc.text(court(p.nom, cellW), x, yTop + boxH + 8.6);
+          });
+          y = yTop + boxH + capH + 2;
           doc.setFont("helvetica", "normal");
-          doc.setTextColor(...GREY);
-          doc.text(court(p.canal, cellW), x, yTop + boxH + 5.6);
-          const lien = (p as any).url as string | undefined;
-          doc.setTextColor(...(lien ? ([26, 86, 160] as [number, number, number]) : ([96, 104, 116] as [number, number, number])));
-          doc.text(court(p.nom, cellW), x, yTop + boxH + 8.2);
-          if (lien) {
-            // La vignette et le nom ouvrent le fichier d'origine.
-            doc.link(x, yTop, cellW, boxH + capH, { url: lien });
-          }
-        });
-        y = yTop + boxH + capH + 1.6;
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(40, 46, 56);
-      }
-
-      const imagesMasquees = pieces.filter((p) => p.dataUrl && p.format).length - vignettes.length;
-      if (imagesMasquees > 0)
-        line(`${imagesMasquees} autre(s) image(s) non affichée(s), faute de place — voir la liste ci-dessous.`, 6.2, 0, GREY);
-
-      if (sansApercu.length > 0) {
-        const maxLignes = niveau >= 2 ? 20 : niveau >= 1 ? 45 : 120;
-        line("Autres fichiers (PDF, Word, images…) — cliquez pour ouvrir :", 6.4, 0, NAVY_SOFT, true);
-        for (const p of sansApercu.slice(0, maxLignes)) {
-          const lien = (p as any).url as string | undefined;
-          const yLigne = y;
-          line(
-            `${txt(p.heure)} — ${txt(p.auteur)} — ${txt(p.canal)} · ${txt(p.nom)}${lien ? "  (ouvrir)" : ""}`,
-            6.4,
-            5,
-            lien ? [26, 86, 160] : [72, 80, 92],
-          );
-          if (lien) doc.link(M + 5, yLigne - 2.4, contentW - 5, 3.4, { url: lien });
+          doc.setTextColor(40, 46, 56);
         }
-        const reste = sansApercu.length - Math.min(sansApercu.length, maxLignes);
-        if (reste > 0) line(`... et ${reste} autre(s) fichier(s).`, 6.2, 5, GREY);
-      }
 
-      y += 1.5;
+        if (sansApercu.length > 0) {
+          y += 2;
+          line("Autres fichiers déposés aujourd'hui (PDF, Word, tableurs…) :", 6.6, 0, NAVY_SOFT, true);
+          for (const p of sansApercu) {
+            line(
+              `${txt(p.heure)} — ${txt(p.auteur)} — ${txt(p.canal)} · ${txt(p.nom)}`,
+              6.4,
+              5,
+              [72, 80, 92],
+            );
+          }
+        }
+
+        y += 1.5;
+      }
     }
+
 
     // ---------- 7. Présence ----------
     sectionTitle("Temps de connexion");
