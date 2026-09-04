@@ -447,7 +447,10 @@ export interface DigestPieceJointe {
   /** Image encodée en base64 (data URL) pour l'aperçu direct dans le PDF. */
   dataUrl: string | null;
   format: "JPEG" | "PNG" | null;
+  /** Lien signé (30 jours) pour ouvrir le fichier depuis le PDF (PDF, Word, image…). */
+  url?: string | null;
 }
+
 
 export interface DigestJournee {
   poles: { pole: string; poleId: string | null; personnes: { nom: string; evenements: { heure: string; texte: string }[] }[] }[];
