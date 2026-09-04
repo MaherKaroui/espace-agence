@@ -68,7 +68,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
   /**
    * niveau 0 : tout · 1 : présence en une ligne · 2 : événements limités par personne.
    */
-  const render = (niveau: number, maxEvents: number, maxEchanges: number) => {
+  const render = (niveau: number, maxEvents: number, maxEchanges: number, avecPieces = false) => {
     const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
     const W = doc.internal.pageSize.getWidth();
     const H = doc.internal.pageSize.getHeight();
