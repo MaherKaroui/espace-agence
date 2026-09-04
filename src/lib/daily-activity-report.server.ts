@@ -1616,6 +1616,7 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   const MAX_IMAGES_PDF = 20;      // au-delà, la vignette est remplacée par une ligne
   const MAX_PIECES_PDF = 200;     // plafond global de la liste
   const MAX_OCTETS_IMAGE = 2_500_000;
+  const MAX_OCTETS_TOTAL = 5_000_000; // le PDF archivé doit rester sous 10 Mo
 
   /** Format jsPDF de l'image, d'après le type MIME puis l'extension. */
   const formatImage = (mime: string | null, nom: string): "JPEG" | "PNG" | null => {
