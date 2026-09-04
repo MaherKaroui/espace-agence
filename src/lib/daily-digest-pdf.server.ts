@@ -292,7 +292,7 @@ export async function buildDailyDigestPdf(digest: DailyDigest): Promise<Uint8Arr
           const entete = sep > 0 ? brut.slice(0, sep) : brut;
           const corps = sep > 0 ? brut.slice(sep + 3).trim().replace(/^«\s*/, "").replace(/\s*»$/, "") : "";
           line(entete, 6.4, 9, [72, 80, 92], true);
-          if (corps) line(`« ${corps} »`, 6.4, 13, [96, 104, 116]);
+          if (corps) lineAvecLiens(`« ${corps} »`, 6.4, 13);
         }
         const reste = c.total - Math.min(c.lignes.length, maxLignes);
         if (reste > 0) line(`... et ${reste} autre(s) message(s) dans ce fil`, 6.2, 9, GREY);
