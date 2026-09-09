@@ -476,7 +476,7 @@ function SwipeableList({
 
   return (
     <div
-      className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-2 sm:space-y-3 bg-muted/20"
+      className="flex-1 overflow-y-auto overflow-x-hidden px-2.5 py-3 sm:p-4 space-y-2 sm:space-y-3 bg-muted/20"
       {...containerProps}
     >
       {filtered.length === 0 && (
@@ -598,7 +598,7 @@ function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean
           </AlertDialogContent>
         </AlertDialog>
       )}
-      <div className={`max-w-[82%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 shadow-sm break-words ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
+      <div className={`max-w-[85%] sm:max-w-[75%] min-w-0 rounded-2xl px-3 sm:px-4 py-2 shadow-sm break-words overflow-hidden ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
         {!isMine && (
           <div className="text-[11px] font-semibold text-primary mb-0.5 truncate">
             {sender?.name || (m.from_agence ? "Agence" : "Utilisateur")}
