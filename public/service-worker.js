@@ -38,19 +38,32 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || "/notifications";
+  const raw = (event.notification.data && event.notification.data.url) || "/notifications";
+  // URL absolue : client.navigate() et openWindow() refusent les chemins relatifs sur iOS/Android.
+  const target = new URL(raw, self.location.origin).href;
 
   event.waitUntil(
     (async () => {
       const clientsList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      for (const client of clientsList) {
-        if ("focus" in client) {
-          await client.focus();
-          if ("navigate" in client) await client.navigate(url);
+      const sameOrigin = clientsList.filter((c) => {
+        try { return new URL(c.url).origin === self.location.origin; } catch { return false; }
+      });
+
+      // 1) Un onglet/app déjà ouvert : on le focus puis on navigue vers la cible exacte.
+      for (const client of sameOrigin) {
+        try {
+          if ("focus" in client) await client.focus();
+          // Navigation interne au routeur si l'app écoute, sinon navigation dure.
+          client.postMessage({ type: "notification-click", url: target });
+          if ("navigate" in client && client.url !== target) {
+            try { await client.navigate(target); } catch { /* iOS peut refuser : le postMessage prend le relais */ }
+          }
           return;
-        }
+        } catch { /* on tente le client suivant */ }
       }
-      if (self.clients.openWindow) await self.clients.openWindow(url);
+
+      // 2) Aucune fenêtre ouverte : on en ouvre une directement sur la cible.
+      if (self.clients.openWindow) await self.clients.openWindow(target);
     })(),
   );
 });
