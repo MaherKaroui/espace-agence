@@ -162,9 +162,12 @@ function GroupesIndex() {
             Vous n'êtes membre d'aucun groupe pour le moment.
           </div>
         ) : (
-          <ul className="space-y-1">
-            {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} unreadByConv={unreadByConv} activityByConv={activityByConv} />)}
-          </ul>
+          <>
+            <ul className="space-y-1">
+              {pager.pageItems.map((node) => <TreeNode key={node.id} node={node} depth={0} unreadByConv={unreadByConv} activityByConv={activityByConv} />)}
+            </ul>
+            <ListPagination state={pager} label="groupes" />
+          </>
         )}
       </Card>
     </div>
