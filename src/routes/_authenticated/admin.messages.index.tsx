@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { isNotifSoundMuted, setNotifSoundMuted, playNotifSound } from "@/lib/notif-sound";
 import { useClientsActivity, ActivityBadges } from "@/components/conversation-activity";
+import { usePagination, ListPagination } from "@/components/list-pagination";
 
 export const Route = createFileRoute("/_authenticated/admin/messages/")({
   head: () => ({ meta: [{ title: "Messagerie clients" }] }),
@@ -131,6 +132,8 @@ function AdminMessages() {
     });
   }, [threads, q, statusFilter]);
 
+  const pager = usePagination(filtered, 20);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -200,7 +203,7 @@ function AdminMessages() {
                 : "Aucune discussion."}
           </div>
         )}
-        {filtered.map((t: any) => {
+        {pager.pageItems.map((t: any) => {
           const p = presence?.get(t.id);
           const name = `${t.prenom ?? ""} ${t.nom ?? ""}`.trim() || t.email || "Client sans nom";
           const unseen = t.unread > 0;
@@ -273,6 +276,8 @@ function AdminMessages() {
         })}
 
       </Card>
+
+      <ListPagination state={pager} label="discussions" />
     </div>
   );
 }
