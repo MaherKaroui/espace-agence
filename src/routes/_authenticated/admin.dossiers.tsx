@@ -420,6 +420,7 @@ function AdminDossiers() {
               </section>
             );
           })}
+          <ListPagination state={pager} label="dossiers" />
         </div>
       )}
     </div>
