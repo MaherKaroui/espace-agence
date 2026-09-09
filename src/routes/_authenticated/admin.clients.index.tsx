@@ -148,8 +148,9 @@ function AdminClients() {
           </p>
         </Card>
       ) : (
+        <>
         <Card className="divide-y">
-          {filtered.map((c: any) => {
+          {pager.pageItems.map((c: any) => {
             const s = stats.get(c.id);
             const st = clientStatus(c);
             return (
@@ -193,6 +194,8 @@ function AdminClients() {
             );
           })}
         </Card>
+        <ListPagination state={pager} label="clients" />
+        </>
       )}
     </div>
   );
