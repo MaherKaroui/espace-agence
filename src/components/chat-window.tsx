@@ -35,6 +35,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   const fileInput = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [typing, setTyping] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -290,28 +291,51 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
   return (
     <div className="flex flex-col h-chat min-w-0">
       <Card className="flex flex-col flex-1 overflow-hidden rounded-none sm:rounded-xl border-x-0 sm:border-x">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-3 sm:p-4 border-b sm:flex sm:justify-between">
-          <div className="min-w-0">
-            <div className="font-display text-base sm:text-lg truncate">{title || "Discussion avec l'agence"}</div>
+        <div className="flex items-center gap-2 p-2.5 sm:p-4 border-b">
+          <div className="min-w-0 flex-1">
+            <div className="font-display text-sm sm:text-lg truncate leading-tight">{title || "Discussion avec l'agence"}</div>
             <div className="text-[11px] sm:text-xs text-muted-foreground truncate">
               {otherTyping ? <span className="text-primary animate-pulse">L'agence est en train d'écrire…</span> : "Messagerie sécurisée"}
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {isStaff && <EphemeralSettingsButton scope={{ kind: "client", clientId }} />}
             <ConversationFilesButton scope={{ kind: "client", clientId }} />
-            <div className="relative">
+            {/* Recherche : icône seule sur mobile, champ visible dès sm */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 sm:hidden"
+              aria-label="Rechercher dans la discussion"
+              onClick={() => setSearchOpen((v) => !v)}
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+            <div className="relative hidden sm:block">
               <Search className="h-4 w-4 absolute left-2 top-2.5 text-muted-foreground pointer-events-none" />
               <Input
-                className="pl-8 h-9 w-36 sm:w-48"
+                className="pl-8 h-9 w-48"
                 placeholder="Rechercher…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </div>
-
         </div>
+        {searchOpen && (
+          <div className="relative p-2 border-b sm:hidden">
+            <Search className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
+              autoFocus
+              className="pl-9 h-10"
+              placeholder="Rechercher dans la discussion…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        )}
+
         <EphemeralBanner scope={{ kind: "client", clientId }} />
 
         <SwipeableList
@@ -452,7 +476,7 @@ function SwipeableList({
 
   return (
     <div
-      className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-2 sm:space-y-3 bg-muted/20"
+      className="flex-1 overflow-y-auto overflow-x-hidden px-2.5 py-3 sm:p-4 space-y-2 sm:space-y-3 bg-muted/20"
       {...containerProps}
     >
       {filtered.length === 0 && (
@@ -574,7 +598,7 @@ function MessageBubble({ m, isMine, isAdmin, sender }: { m: any; isMine: boolean
           </AlertDialogContent>
         </AlertDialog>
       )}
-      <div className={`max-w-[82%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2 shadow-sm break-words ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
+      <div className={`max-w-[85%] sm:max-w-[75%] min-w-0 rounded-2xl px-3 sm:px-4 py-2 shadow-sm break-words overflow-hidden ${isMine ? "bg-primary text-primary-foreground" : "bg-card border"}`}>
         {!isMine && (
           <div className="text-[11px] font-semibold text-primary mb-0.5 truncate">
             {sender?.name || (m.from_agence ? "Agence" : "Utilisateur")}

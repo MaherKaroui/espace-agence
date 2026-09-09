@@ -43,21 +43,26 @@ export function MessageAttachment({
   return (
     <div className="mb-2 space-y-1">
       {kind === "image" && url ? (
-        <a href={url} target="_blank" rel="noreferrer">
-          <img src={url} alt={name ?? ""} loading="lazy" className="rounded-lg max-h-64" />
+        <a href={url} target="_blank" rel="noreferrer" className="block">
+          <img
+            src={url}
+            alt={name ?? ""}
+            loading="lazy"
+            className="rounded-lg w-full max-w-[240px] sm:max-w-xs max-h-52 sm:max-h-64 object-cover bg-muted"
+          />
         </a>
       ) : kind === "video" && url ? (
-        <video src={url} controls className="rounded-lg max-h-72 w-full" preload="metadata" />
+        <video src={url} controls className="rounded-lg w-full max-w-[240px] sm:max-w-xs max-h-56 sm:max-h-72" preload="metadata" />
       ) : kind === "audio" && url ? (
-        <audio src={url} controls className="w-64 max-w-full" preload="metadata" />
+        <audio src={url} controls className="w-full max-w-[240px] sm:w-64" preload="metadata" />
       ) : (
         <a
           href={url || "#"}
           target="_blank"
           rel="noreferrer"
-          className={`flex items-center gap-2 rounded-lg p-2 ${inverse ? "bg-white/10" : "bg-muted"}`}
+          className={`flex items-center gap-2 rounded-lg p-2 max-w-full ${inverse ? "bg-white/10" : "bg-muted"}`}
         >
-          {isPdf ? <FileText className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />}
+          {isPdf ? <FileText className="h-4 w-4 shrink-0" /> : <ImageIcon className="h-4 w-4 shrink-0" />}
           <span className="text-xs truncate">{name || "Pièce jointe"}</span>
         </a>
       )}
@@ -78,4 +83,5 @@ export function MessageAttachment({
       )}
     </div>
   );
+
 }
