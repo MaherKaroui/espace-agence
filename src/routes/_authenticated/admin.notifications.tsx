@@ -23,6 +23,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { APP_URL } from "@/lib/app-url";
 import { WebPushToggle } from "@/components/web-push-toggle";
 import { TeamPushCoverage } from "@/components/team-push-coverage";
+import { BroadcastClients } from "@/components/broadcast-clients";
 
 export const Route = createFileRoute("/_authenticated/admin/notifications")({
   head: () => ({
@@ -240,8 +241,13 @@ function AdminNotifications() {
           <TabsTrigger value="settings">Réglages</TabsTrigger>
           <TabsTrigger value="history">Historique ({stats.total})</TabsTrigger>
           <TabsTrigger value="internal">Cloche ({notificationHistory.length})</TabsTrigger>
+          <TabsTrigger value="broadcast">Diffusion clients</TabsTrigger>
           <TabsTrigger value="test">Test</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="broadcast" className="space-y-4 mt-4">
+          <BroadcastClients />
+        </TabsContent>
 
         <TabsContent value="settings" className="space-y-4 mt-4">
           <Card className="p-6 space-y-4">
