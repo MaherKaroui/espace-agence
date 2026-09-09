@@ -75,8 +75,9 @@ export async function resolveReportRecipients(admin: any): Promise<RecipientReso
 
   return {
     recipients: unique.filter((e) => !blocked.has(e)),
-    adminEmail: settings?.admin_email ?? null,
+    adminEmail: settings?.admin_email ?? ADMIN_EMAIL,
   };
+
 }
 
 export interface DailyActivityReport {
