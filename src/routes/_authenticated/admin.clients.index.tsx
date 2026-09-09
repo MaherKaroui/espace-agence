@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Search, User, Building2, UserPlus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { usePagination, ListPagination } from "@/components/list-pagination";
 
 
 export const Route = createFileRoute("/_authenticated/admin/clients/")({
@@ -106,6 +107,8 @@ function AdminClients() {
     for (const cl of clients) c[clientStatus(cl)]++;
     return c;
   }, [clients, stats]);
+
+  const pager = usePagination(filtered, 20);
 
   return (
     <div className="space-y-6">
