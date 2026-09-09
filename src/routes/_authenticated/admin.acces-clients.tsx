@@ -18,6 +18,7 @@ import {
 import {
   listClientAcces, saveClientAcces, deleteClientAcces, revealClientAcces,
 } from "@/lib/client-acces.functions";
+import { usePagination, ListPagination } from "@/components/list-pagination";
 
 export const Route = createFileRoute("/_authenticated/admin/acces-clients")({
   head: () => ({
@@ -154,6 +155,8 @@ function AccesClients() {
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [filtered]);
 
+  const pager = usePagination(groups, 10);
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -185,7 +188,7 @@ function AccesClients() {
         <Card className="p-8 text-center text-muted-foreground">Aucun accès enregistré.</Card>
       )}
 
-      {groups.map(([organisme, items]) => (
+      {pager.pageItems.map(([organisme, items]) => (
         <Card key={organisme} className="overflow-hidden">
           <div className="flex items-center justify-between border-b bg-muted/30 p-3">
             <div className="font-medium">{organisme}</div>
@@ -252,6 +255,9 @@ function AccesClients() {
           </div>
         </Card>
       ))}
+
+      <ListPagination state={pager} label="organismes" />
+
 
       <Dialog open={!!form} onOpenChange={(o) => !o && setForm(null)}>
         <DialogContent className="max-w-md">

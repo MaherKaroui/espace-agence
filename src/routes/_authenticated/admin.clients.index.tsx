@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Search, User, Building2, UserPlus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { usePagination, ListPagination } from "@/components/list-pagination";
 
 
 export const Route = createFileRoute("/_authenticated/admin/clients/")({
@@ -107,6 +108,8 @@ function AdminClients() {
     return c;
   }, [clients, stats]);
 
+  const pager = usePagination(filtered, 20);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -145,8 +148,9 @@ function AdminClients() {
           </p>
         </Card>
       ) : (
+        <>
         <Card className="divide-y">
-          {filtered.map((c: any) => {
+          {pager.pageItems.map((c: any) => {
             const s = stats.get(c.id);
             const st = clientStatus(c);
             return (
@@ -190,6 +194,8 @@ function AdminClients() {
             );
           })}
         </Card>
+        <ListPagination state={pager} label="clients" />
+        </>
       )}
     </div>
   );

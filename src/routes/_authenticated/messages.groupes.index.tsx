@@ -19,6 +19,7 @@ import { fr } from "date-fns/locale";
 import {
   useClientsActivity, mergeActivity, ActivityBadges, type ClientActivity,
 } from "@/components/conversation-activity";
+import { usePagination, ListPagination } from "@/components/list-pagination";
 
 
 export const Route = createFileRoute("/_authenticated/messages/groupes/")({
@@ -124,6 +125,7 @@ function GroupesIndex() {
   }, [membersByConv, activityByUser]);
 
   const tree = useMemo(() => buildTree(conversations), [conversations]);
+  const pager = usePagination(tree, 20);
 
   return (
     <div className="space-y-6">
@@ -160,9 +162,12 @@ function GroupesIndex() {
             Vous n'êtes membre d'aucun groupe pour le moment.
           </div>
         ) : (
-          <ul className="space-y-1">
-            {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} unreadByConv={unreadByConv} activityByConv={activityByConv} />)}
-          </ul>
+          <>
+            <ul className="space-y-1">
+              {pager.pageItems.map((node) => <TreeNode key={node.id} node={node} depth={0} unreadByConv={unreadByConv} activityByConv={activityByConv} />)}
+            </ul>
+            <ListPagination state={pager} label="groupes" />
+          </>
         )}
       </Card>
     </div>

@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { getExternalUnreadCounts } from "@/lib/qualiopi-notifications.functions";
 import { DossiersKanbanBoard } from "@/components/dossiers-kanban";
 import { CreateDossierDialog } from "@/components/create-dossier-dialog";
+import { usePagination, ListPagination } from "@/components/list-pagination";
 
 
 type DocRow = {
@@ -244,11 +245,15 @@ function AdminDossiers() {
 
   const archivedCount = (rows as any[]).filter((r: any) => !!r.archived_at).length;
 
+  // Pagination de la liste (le Kanban reste complet)
+  const pager = usePagination(filtered, 20);
+  const paged = pager.pageItems as any[];
+
   const groups: { pole: any; items: any[] }[] = poles.map((p) => ({
-    pole: p, items: filtered.filter((d: any) => d.pole_id === p.id),
+    pole: p, items: paged.filter((d: any) => d.pole_id === p.id),
   }));
   if (isDirectionOrAdmin) {
-    const orphelins = filtered.filter((d: any) => !poles.some((p) => p.id === d.pole_id));
+    const orphelins = paged.filter((d: any) => !poles.some((p) => p.id === d.pole_id));
     if (orphelins.length > 0) {
       groups.push({ pole: { id: "_orphelins", nom: "Sans pôle actif", couleur: "#94a3b8" }, items: orphelins });
     }
@@ -415,6 +420,7 @@ function AdminDossiers() {
               </section>
             );
           })}
+          <ListPagination state={pager} label="dossiers" />
         </div>
       )}
     </div>
