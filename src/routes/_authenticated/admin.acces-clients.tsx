@@ -18,6 +18,7 @@ import {
 import {
   listClientAcces, saveClientAcces, deleteClientAcces, revealClientAcces,
 } from "@/lib/client-acces.functions";
+import { usePagination, ListPagination } from "@/components/list-pagination";
 
 export const Route = createFileRoute("/_authenticated/admin/acces-clients")({
   head: () => ({
@@ -153,6 +154,8 @@ function AccesClients() {
     }
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }, [filtered]);
+
+  const pager = usePagination(groups, 10);
 
   return (
     <div className="space-y-5">
