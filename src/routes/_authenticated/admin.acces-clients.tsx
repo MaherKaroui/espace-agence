@@ -188,7 +188,7 @@ function AccesClients() {
         <Card className="p-8 text-center text-muted-foreground">Aucun accès enregistré.</Card>
       )}
 
-      {groups.map(([organisme, items]) => (
+      {pager.pageItems.map(([organisme, items]) => (
         <Card key={organisme} className="overflow-hidden">
           <div className="flex items-center justify-between border-b bg-muted/30 p-3">
             <div className="font-medium">{organisme}</div>
@@ -255,6 +255,9 @@ function AccesClients() {
           </div>
         </Card>
       ))}
+
+      <ListPagination state={pager} label="organismes" />
+
 
       <Dialog open={!!form} onOpenChange={(o) => !o && setForm(null)}>
         <DialogContent className="max-w-md">
