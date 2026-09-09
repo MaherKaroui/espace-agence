@@ -5,8 +5,9 @@
  */
 export function requireCronAuth(request: Request): Response | null {
   const cronSecret = process.env.CRON_SECRET;
+  const hookSecret = process.env.PUSH_HOOK_SECRET;
   const legacy = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!cronSecret && !legacy) {
+  if (!cronSecret && !legacy && !hookSecret) {
     return Response.json({ error: "Server configuration error" }, { status: 500 });
   }
   const header = request.headers.get("Authorization") ?? "";
