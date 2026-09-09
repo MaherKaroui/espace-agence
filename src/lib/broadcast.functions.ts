@@ -129,7 +129,7 @@ export const broadcastToClients = createServerFn({ method: "POST" })
     await supabase.rpc("log_event", {
       _action: "diffusion.clients",
       _entity_type: "message",
-      _entity_id: null,
+      _entity_id: callerId,
       _severity: "info",
       _metadata: {
         destinataires: targets.length,
