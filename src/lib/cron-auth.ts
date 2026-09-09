@@ -15,7 +15,7 @@ export function requireCronAuth(request: Request): Response | null {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const token = header.slice("Bearer ".length).trim();
-  if (token !== cronSecret && token !== legacy) {
+  if (token !== cronSecret && token !== legacy && token !== hookSecret) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
   return null;
