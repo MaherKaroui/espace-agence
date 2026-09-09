@@ -3023,6 +3023,7 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      izi_admin_user_id: { Args: never; Returns: string }
       list_expired_ephemeral: {
         Args: { _limit?: number }
         Returns: {
@@ -3053,6 +3054,7 @@ export type Database = {
         Args: { _dossier_id: string; _reminder_type?: string }
         Returns: number
       }
+      person_label: { Args: { _user: string }; Returns: string }
       qualiopi_dossier_participant: {
         Args: { _dossier: string; _user: string }
         Returns: boolean
