@@ -15,6 +15,7 @@ import "../lib/fonts";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/use-auth";
 import { NativeBootstrap } from "@/components/native-bootstrap";
+import { NotificationClickBridge } from "@/components/notification-click-bridge";
 import { AppErrorBoundary, ErrorLoggerBootstrap } from "@/components/app-error-boundary";
 
 function NotFoundComponent() {
@@ -116,6 +117,7 @@ function RootComponent() {
         <AppErrorBoundary>
           <ErrorLoggerBootstrap />
           <NativeBootstrap />
+          <NotificationClickBridge />
           <Outlet />
           <Toaster position="top-right" richColors />
         </AppErrorBoundary>
