@@ -19,6 +19,7 @@ import { fr } from "date-fns/locale";
 import {
   useClientsActivity, mergeActivity, ActivityBadges, type ClientActivity,
 } from "@/components/conversation-activity";
+import { usePagination, ListPagination } from "@/components/list-pagination";
 
 
 export const Route = createFileRoute("/_authenticated/messages/groupes/")({
@@ -124,6 +125,7 @@ function GroupesIndex() {
   }, [membersByConv, activityByUser]);
 
   const tree = useMemo(() => buildTree(conversations), [conversations]);
+  const pager = usePagination(tree, 20);
 
   return (
     <div className="space-y-6">
