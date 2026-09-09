@@ -5,8 +5,9 @@
  */
 export function requireCronAuth(request: Request): Response | null {
   const cronSecret = process.env.CRON_SECRET;
+  const hookSecret = process.env.PUSH_HOOK_SECRET;
   const legacy = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!cronSecret && !legacy) {
+  if (!cronSecret && !legacy && !hookSecret) {
     return Response.json({ error: "Server configuration error" }, { status: 500 });
   }
   const header = request.headers.get("Authorization") ?? "";
@@ -14,7 +15,7 @@ export function requireCronAuth(request: Request): Response | null {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const token = header.slice("Bearer ".length).trim();
-  if (token !== cronSecret && token !== legacy) {
+  if (token !== cronSecret && token !== legacy && token !== hookSecret) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
   return null;

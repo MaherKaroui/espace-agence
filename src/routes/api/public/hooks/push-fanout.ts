@@ -190,7 +190,8 @@ export const Route = createFileRoute("/api/public/hooks/push-fanout")({
             titre: notification.titre,
             message: notification.message,
             link: notification.link || "/notifications",
-            tag: `${notification.type}:${notification.link || notification.id}`,
+            // Un tag unique par notification : les alertes s'empilent au lieu de se remplacer.
+            tag: `notif-${notification.id}`,
           };
 
           await Promise.all(subs.map(async (sub: any) => {
