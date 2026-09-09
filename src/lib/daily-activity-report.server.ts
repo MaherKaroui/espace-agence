@@ -42,7 +42,11 @@ export interface RecipientResolution {
   adminEmail: string | null;
 }
 
-/** admin_email + report_recipients, dédoublonnés, hors adresses supprimées. */
+/** Adresse principale et adresse de secours du compte rendu. */
+export const ADMIN_EMAIL = "admin@izi-business.com";
+export const BACKUP_EMAIL = "izibusiness.consult@gmail.com";
+
+/** admin_email + report_recipients + secours, dédoublonnés, hors adresses supprimées. */
 export async function resolveReportRecipients(admin: any): Promise<RecipientResolution> {
   const { data: settings } = await admin
     .from("email_settings")
@@ -52,13 +56,16 @@ export async function resolveReportRecipients(admin: any): Promise<RecipientReso
 
   const list = [
     settings?.admin_email,
+    ADMIN_EMAIL,
+    BACKUP_EMAIL,
     ...((settings?.report_recipients ?? []) as string[]),
   ]
     .filter((e): e is string => typeof e === "string" && e.includes("@"))
     .map((e) => e.trim().toLowerCase());
 
   const unique = [...new Set(list)];
-  if (unique.length === 0) return { recipients: [], adminEmail: settings?.admin_email ?? null };
+  if (unique.length === 0) return { recipients: [], adminEmail: settings?.admin_email ?? ADMIN_EMAIL };
+
 
   const { data: suppressed } = await admin
     .from("suppressed_emails")
@@ -68,8 +75,9 @@ export async function resolveReportRecipients(admin: any): Promise<RecipientReso
 
   return {
     recipients: unique.filter((e) => !blocked.has(e)),
-    adminEmail: settings?.admin_email ?? null,
+    adminEmail: settings?.admin_email ?? ADMIN_EMAIL,
   };
+
 }
 
 export interface DailyActivityReport {
