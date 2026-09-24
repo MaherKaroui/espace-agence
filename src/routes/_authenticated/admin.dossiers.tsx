@@ -1,16 +1,19 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Search, FolderOpen, CheckCircle2, AlertTriangle, Circle, ClipboardCheck,
-  LayoutGrid, List as ListIcon, Clock, FileText, MessageSquare, Scale,
+  LayoutGrid, List as ListIcon, Clock, FileText, MessageSquare, Scale, Sparkles,
 } from "lucide-react";
 import { StatusBadge } from "@/components/status-badge";
 import { categorieLabel, CATEGORIES, requiredDocsFor, docMatches } from "@/lib/labels";
@@ -53,6 +56,43 @@ function detectInconsistency(dossier: any, stats: ReviewStats | undefined): Inco
   if (!stats) return null;
   if (["termine", "valide"].includes(dossier.statut) && stats.needsAction) return "done_incomplete";
   return null;
+}
+
+/**
+ * Repère « déjà vu » des dossiers, par utilisateur et par navigateur.
+ * La valeur est figée au montage : les pastilles « Nouveau » restent visibles
+ * pendant toute la consultation, et la visite n'est enregistrée qu'en sortant.
+ */
+const SEEN_KEY = (uid: string) => `izi.dossiers.seen.${uid}`;
+const FIRST_VISIT_WINDOW_MS = 7 * 86400000;
+
+function useLastSeenDossiers(userId: string | undefined) {
+  const [since, setSince] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    let stored: number | null = null;
+    try {
+      const raw = localStorage.getItem(SEEN_KEY(userId));
+      if (raw && Number.isFinite(Number(raw))) stored = Number(raw);
+    } catch { /* stockage indisponible */ }
+    // Première visite : on se limite à 7 jours, sinon tout serait « nouveau ».
+    setSince(stored ?? Date.now() - FIRST_VISIT_WINDOW_MS);
+  }, [userId]);
+
+  const markSeen = useCallback(() => {
+    if (!userId) return;
+    try { localStorage.setItem(SEEN_KEY(userId), String(Date.now())); } catch { /* stockage indisponible */ }
+  }, [userId]);
+
+  useEffect(() => () => { markSeen(); }, [markSeen]);
+
+  const acknowledge = useCallback(() => {
+    setSince(Date.now());
+    markSeen();
+  }, [markSeen]);
+
+  return { since, acknowledge };
 }
 
 function daysSince(iso: string | null | undefined): number | null {
@@ -111,9 +151,11 @@ function AdminDossiers() {
   const [view, setView] = useState<ViewMode>("list");
   const [poleFilter, setPoleFilter] = useState<string>("all");
   const [showArchived, setShowArchived] = useState(false);
+  const [newOnly, setNewOnly] = useState(false);
   const { user } = useAuth();
   const { isDirectionOrAdmin, isStaff } = useRole();
   const qc = useQueryClient();
+  const { since: seenSince, acknowledge } = useLastSeenDossiers(user?.id);
 
   const { data: myPoleIds, isLoading: polesLoading } = useQuery({
     queryKey: ["my-pole-ids", user?.id],
@@ -149,8 +191,12 @@ function AdminDossiers() {
   const { data: rows = [], isLoading: dossiersLoading, error: dossiersError } = useQuery({
     queryKey: ["admin-dossiers"],
     queryFn: async () => {
+      // Colonnes explicites : la liste n'affiche qu'une dizaine de champs,
+      // inutile de rapatrier les JSON `stagiaires` et les commentaires.
       const { data: dossiers, error } = await supabase
-        .from("dossiers").select("*").order("updated_at", { ascending: false });
+        .from("dossiers")
+        .select("id, titre, categorie, statut, avancement, pole_id, client_id, created_at, updated_at, archived_at")
+        .order("updated_at", { ascending: false });
       if (error) throw error;
       const dossierRows = dossiers ?? [];
       const clientIds = [...new Set(dossierRows.map((d: any) => d.client_id).filter(Boolean))];
@@ -227,9 +273,21 @@ function AdminDossiers() {
     return m;
   }, [rows, statsById]);
 
+  // Dossiers arrivés depuis la dernière visite (repère local, par utilisateur).
+  const isNewDossier = useCallback(
+    (d: any) => seenSince !== null && !d.archived_at && new Date(d.created_at).getTime() > seenSince,
+    [seenSince],
+  );
+  const newDossiers = useMemo(
+    () => (rows as any[]).filter(isNewDossier)
+      .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? "")),
+    [rows, isNewDossier],
+  );
+
   const filtered = (rows as any[]).filter((r: any) => {
     const isArchived = !!r.archived_at;
     if (showArchived ? !isArchived : isArchived) return false;
+    if (newOnly && !isNewDossier(r)) return false;
     if (cat !== "all" && r.categorie !== cat) return false;
     if (poleFilter !== "all" && r.pole_id !== poleFilter) return false;
     if (reviewOnly && !statsById[r.id]?.needsAction) return false;
@@ -306,6 +364,37 @@ function AdminDossiers() {
         </div>
       </div>
 
+
+      {newDossiers.length > 0 && (
+        <Card className="border-gold/40 bg-gold/10 p-3 sm:p-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold/25 text-primary">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="font-medium">
+                {newDossiers.length} nouveau{newDossiers.length > 1 ? "x" : ""} dossier{newDossiers.length > 1 ? "s" : ""} depuis votre dernière visite
+              </div>
+              <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                {newDossiers.slice(0, 3).map((d: any) => d.titre).join(" · ")}
+                {newDossiers.length > 3 ? ` · +${newDossiers.length - 3}` : ""}
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                size="sm"
+                variant={newOnly ? "default" : "outline"}
+                onClick={() => { setNewOnly((v) => !v); setShowArchived(false); setView("list"); }}
+              >
+                {newOnly ? "Afficher tout" : "Voir les nouveaux"}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { acknowledge(); setNewOnly(false); }}>
+                Marquer comme vus
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-64">
@@ -414,6 +503,7 @@ function AdminDossiers() {
                       poleColor={color}
                       unread={(externalUnread as Record<string, number>)[d.id] ?? 0}
                       juridiqueAssignees={(juridiqueByDossier as any)[d.id] ?? []}
+                      isNew={isNewDossier(d)}
                     />
                   ))}
                 </Card>
@@ -427,9 +517,10 @@ function AdminDossiers() {
   );
 }
 
-function DossierRow({ d, stats, inc, poleColor, unread = 0, juridiqueAssignees = [] }: {
+function DossierRow({ d, stats, inc, poleColor, unread = 0, juridiqueAssignees = [], isNew = false }: {
   d: any; stats: ReviewStats | undefined; inc: Inconsistency; poleColor: string; unread?: number;
   juridiqueAssignees?: { user_id: string; name: string }[];
+  isNew?: boolean;
 }) {
   const days = daysSince(d.updated_at);
   const inactive = days !== null && days >= 7 && !["termine", "valide", "refuse"].includes(d.statut);
@@ -438,13 +529,21 @@ function DossierRow({ d, stats, inc, poleColor, unread = 0, juridiqueAssignees =
       to="/dossiers/$id"
       params={{ id: d.id }}
       hash={unread > 0 ? "audit-chat" : undefined}
-      className="block p-4 hover:bg-muted/40 relative transition-colors"
-      style={{ backgroundColor: `color-mix(in oklab, ${poleColor} 5%, transparent)` }}
+      className={cn(
+        "block p-4 hover:bg-muted/40 relative transition-colors",
+        isNew && "bg-gold/5 ring-1 ring-inset ring-gold/40",
+      )}
+      style={isNew ? undefined : { backgroundColor: `color-mix(in oklab, ${poleColor} 5%, transparent)` }}
     >
       <span className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: poleColor }} aria-hidden />
       <div className="flex items-center justify-between gap-3 pl-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
+            {isNew && (
+              <Badge className="gap-1 bg-gold text-[10px] font-semibold uppercase tracking-wider text-primary">
+                <Sparkles className="h-3 w-3" /> Nouveau
+              </Badge>
+            )}
             <span
               className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider border"
               style={{
@@ -477,6 +576,11 @@ function DossierRow({ d, stats, inc, poleColor, unread = 0, juridiqueAssignees =
           <div className="text-xs text-muted-foreground mt-0.5">
             {d.profiles?.prenom} {d.profiles?.nom} · {d.profiles?.email}
           </div>
+          {isNew && d.created_at && (
+            <div className="mt-0.5 text-xs font-medium text-primary">
+              Reçu {formatDistanceToNow(new Date(d.created_at), { addSuffix: true, locale: fr })}
+            </div>
+          )}
           {d.categorie === "juridique" && (
             <div className="text-xs mt-1 flex items-center gap-1.5 flex-wrap">
               <Scale className="h-3 w-3 text-muted-foreground" />

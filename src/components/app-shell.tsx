@@ -254,6 +254,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     ? `${profile?.prenom ?? ""} ${profile?.nom ?? ""}`.trim()
     : user?.email ?? "";
 
+  /**
+   * Pages de discussion : la fenêtre de chat occupe déjà toute la hauteur
+   * disponible. On y supprime tout ce qui ferait défiler la page elle-même,
+   * sinon la conversation se retrouve coupée en bas sur mobile.
+   */
+  const isChatPage = /^\/(messages|admin\/messages|admin\/internal-messages)(\/|$)/.test(location.pathname);
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <NotificationsRealtime />
@@ -349,12 +356,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <NotificationsBell />
           </div>
         </header>
-        <main className="min-w-0 max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 pb-[calc(90px+var(--safe-bottom))] lg:pb-8">{children}</main>
-        <LegalFooter />
-        <div className="lg:hidden h-[calc(80px+var(--safe-bottom))]" aria-hidden />
+        <main
+          className={
+            isChatPage
+              ? "chat-page min-w-0 max-w-7xl mx-auto p-3 pb-0 sm:p-5 sm:pb-0 lg:p-8"
+              : "min-w-0 max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 pb-[calc(90px+var(--safe-bottom))] lg:pb-8"
+          }
+        >
+          {children}
+        </main>
+        {/* Sur une discussion en mobile, le pied de page décalerait l'écran vers le
+            bas et rognerait la conversation : il reste affiché en desktop. */}
+        <LegalFooter className={isChatPage ? "hidden lg:block" : ""} />
+        {!isChatPage && <div className="lg:hidden h-[calc(80px+var(--safe-bottom))]" aria-hidden />}
       </div>
       <MobileBottomNav countFor={countFor} />
-      <AiAssistantWidget />
+      <AiAssistantWidget hideOnMobile={isChatPage} />
     </div>
   );
 }

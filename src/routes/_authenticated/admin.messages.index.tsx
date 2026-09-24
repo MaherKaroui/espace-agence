@@ -61,11 +61,19 @@ function AdminMessages() {
 
   const { data: threads = [] } = useQuery({
     queryKey: ["admin-threads"],
+    staleTime: 20_000,
     queryFn: async () => {
-      const { data: profiles } = await supabase.from("profiles").select("*").is("archived_at", null);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, email, entreprise")
+        .is("archived_at", null);
+      // Premier passage SANS le contenu des messages : seuls les horodatages et
+      // les accusés de lecture servent à calculer le dernier message et les
+      // non-lus. Le texte — de loin le plus lourd — n'est récupéré qu'ensuite,
+      // et uniquement pour l'aperçu de chaque discussion.
       const { data: msgs } = await supabase
         .from("messages")
-        .select("client_id, content, created_at, from_agence, read_at, read_by, deleted_at")
+        .select("id, client_id, created_at, from_agence, read_at, read_by")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       const last = new Map<string, any>();
@@ -79,6 +87,22 @@ function AdminMessages() {
         }
         if (!m.from_agence && m.read_at && !lastSeen.has(m.client_id)) lastSeen.set(m.client_id, m);
       }
+
+      // Contenu des seuls derniers messages (un par discussion).
+      const lastIds = [...last.values()].map((m) => m.id);
+      if (lastIds.length > 0) {
+        // Par paquets de 100 : un `in.()` trop long dépasse la taille d'URL admise.
+        const byId = new Map<string, string | null>();
+        for (let i = 0; i < lastIds.length; i += 100) {
+          const { data: previews } = await supabase
+            .from("messages")
+            .select("id, content")
+            .in("id", lastIds.slice(i, i + 100));
+          for (const p of (previews ?? []) as any[]) byId.set(p.id, p.content);
+        }
+        for (const m of last.values()) m.content = byId.get(m.id) ?? null;
+      }
+
       const readerIds = [...new Set([...lastSeen.values()].map((m) => m.read_by).filter(Boolean))];
       const readers = new Map<string, any>();
       if (readerIds.length > 0) {

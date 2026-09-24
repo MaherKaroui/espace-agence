@@ -24,7 +24,7 @@ const WELCOME_CLIENT =
 const WELCOME_STAFF =
   "Salut, assistant IZISuivis. Je peux te donner l'état d'un dossier, les pièces manquantes, la vue portefeuille, ou préparer une demande, une pièce complémentaire ou une tâche. Dis-moi.";
 
-export function AiAssistantWidget() {
+export function AiAssistantWidget({ hideOnMobile = false }: { hideOnMobile?: boolean } = {}) {
   const { isStaff, loading } = useRole();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -119,7 +119,11 @@ export function AiAssistantWidget() {
           type="button"
           aria-label="Ouvrir l'assistant IA"
           onClick={() => setOpen(true)}
-          className="fixed right-4 bottom-[calc(96px+var(--safe-bottom))] lg:bottom-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-sidebar text-sidebar-foreground shadow-lg ring-1 ring-primary/30 transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className={cn(
+            "fixed right-4 bottom-[calc(96px+var(--safe-bottom))] lg:bottom-6 z-[60] h-14 w-14 items-center justify-center rounded-full bg-sidebar text-sidebar-foreground shadow-lg ring-1 ring-primary/30 transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            // Sur une page de discussion, la pastille recouvrirait la zone de saisie.
+            hideOnMobile ? "hidden lg:flex" : "flex",
+          )}
         >
           <Bot className="h-6 w-6" />
         </button>

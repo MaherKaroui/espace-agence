@@ -29,20 +29,22 @@ function AdminChat() {
   const p = presence?.get(clientId);
   const name = profile ? `${profile.prenom ?? ""} ${profile.nom ?? ""}`.trim() || profile.email : "Discussion";
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 flex-wrap">
+    // `--chat-offset` = hauteur de la barre ci-dessous, pour que la fenêtre de
+    // discussion tienne dans l'écran sans faire défiler la page.
+    <div className="space-y-2 [--chat-offset:2.75rem]">
+      <div className="flex min-h-9 items-center gap-2 overflow-hidden">
         <PresenceDot online={p?.online} />
         <Link
           to="/admin/clients/$id"
           params={{ id: clientId }}
-          className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+          className="inline-flex min-w-0 items-center gap-1 font-medium text-primary hover:underline"
           title="Voir la fiche client"
         >
-          {name}
-          <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+          <span className="truncate">{name}</span>
+          <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-70" />
         </Link>
-        <PresenceLabel row={p} />
-        <div className="ml-auto">
+        <span className="hidden sm:inline"><PresenceLabel row={p} /></span>
+        <div className="ml-auto shrink-0">
           <ConversationDossierDrawer clientId={clientId} clientName={name} />
         </div>
       </div>

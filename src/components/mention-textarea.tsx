@@ -44,6 +44,8 @@ export function MentionTextarea({
   disabled,
   enableEntities = false,
   enableUsers = true,
+  className,
+  autoGrow = false,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -55,6 +57,9 @@ export function MentionTextarea({
   disabled?: boolean;
   enableEntities?: boolean;
   enableUsers?: boolean;
+  className?: string;
+  /** Le champ grandit avec le texte, jusqu'à la `max-height` de `className`. */
+  autoGrow?: boolean;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const search = useServerFn(searchMentionCandidates);
@@ -285,12 +290,22 @@ export function MentionTextarea({
     requestAnimationFrame(() => ref.current?.focus());
   };
 
+  // Hauteur adaptative : le champ suit le texte au lieu d'afficher une barre de défilement.
+  useEffect(() => {
+    if (!autoGrow) return;
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [autoGrow, display]);
+
   return (
     <div className="relative">
       {popover}
       <Textarea
         ref={ref}
         rows={rows}
+        className={className}
         placeholder={placeholder ?? defaultPh}
         value={display}
         onChange={(e) => handleChange(e.target.value)}

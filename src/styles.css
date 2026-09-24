@@ -225,17 +225,34 @@ html.keyboard-open .mobile-bottom-nav { display: none; }
   color: var(--sidebar-foreground);
 }
 
-/* ---------- Hauteur des fenêtres de discussion ---------- */
+/* ---------- Hauteur des fenêtres de discussion ----------
+ * `--chat-offset` permet à une page d'annoncer la hauteur de ce qu'elle place
+ * au-dessus de la conversation (barre de titre, fil d'Ariane…) pour que la
+ * fenêtre de chat tienne exactement dans l'écran, sans second défilement.
+ */
 .h-chat {
-  height: calc(100dvh - 8rem);
+  height: calc(100dvh - 8rem - var(--chat-offset, 0px));
   min-height: 320px;
 }
 @media (max-width: 1023px) {
+  /*
+   * Mobile : en-tête (3.5rem + encoche haute) + marge haute du contenu
+   * (0.75rem) + barre de navigation basse (4rem + encoche basse). Le pied de
+   * page et la réserve de 90 px sont retirés sur ces pages (cf. `isChatPage`),
+   * donc la discussion tient exactement dans l'écran : plus de double
+   * défilement, et la zone de saisie reste toujours visible.
+   */
   .h-chat {
-    height: calc(100dvh - 3.5rem - 1.5rem - 90px - var(--safe-bottom));
+    height: calc(
+      100dvh - 3.5rem - var(--safe-top) - 0.75rem - 4rem - var(--safe-bottom) - var(--chat-offset, 0px)
+    );
+    min-height: 260px;
   }
   html.keyboard-open .h-chat {
-    height: calc(100dvh - 3.5rem - 1rem);
+    height: calc(100dvh - 3.5rem - var(--safe-top) - 0.75rem - var(--chat-offset, 0px));
+  }
+  main.chat-page {
+    padding-bottom: 0;
   }
 }
 
