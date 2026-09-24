@@ -248,8 +248,14 @@ html.keyboard-open .mobile-bottom-nav { display: none; }
     );
     min-height: 260px;
   }
+  /*
+   * Clavier ouvert : `100dvh` ne rétrécit pas sous le clavier d'un navigateur
+   * mobile. `--vvh` (hauteur du visualViewport, posée par NativeBootstrap sur
+   * le Web) donne la hauteur réellement visible ; dans l'application native,
+   * la WebView est déjà redimensionnée et `100dvh` suffit.
+   */
   html.keyboard-open .h-chat {
-    height: calc(100dvh - 3.5rem - var(--safe-top) - 0.75rem - var(--chat-offset, 0px));
+    height: calc(var(--vvh, 100dvh) - 3.5rem - var(--safe-top) - 0.75rem - var(--chat-offset, 0px));
   }
   main.chat-page {
     padding-bottom: 0;

@@ -22,6 +22,48 @@ import { isNotifSoundMuted, setNotifSoundMuted, playNotifSound } from "@/lib/not
 import { useClientsActivity, ActivityBadges } from "@/components/conversation-activity";
 import { usePagination, ListPagination } from "@/components/list-pagination";
 
+/** En-têtes de messages : tout sauf le contenu, qui est récupéré séparément. */
+const HEADER_COLS = "id, client_id, created_at, from_agence, read_at, read_by";
+/** Taille d'une tranche : c'est aussi le plafond de lignes de l'API REST. */
+const CHUNK = 1000;
+/** Garde-fou : au-delà, on arrête de remonter l'historique. */
+const MAX_SCAN = 50_000;
+
+/**
+ * Parcourt tout l'historique des messages non supprimés, tranche par tranche,
+ * pour que le calcul du dernier message et des non-lus porte sur l'intégralité
+ * des discussions et non sur les 1 000 derniers messages seulement.
+ */
+async function fetchAllMessageHeaders(): Promise<any[]> {
+  const page = (from: number) =>
+    supabase
+      .from("messages")
+      .select(HEADER_COLS, from === 0 ? { count: "exact" } : undefined)
+      .is("deleted_at", null)
+      // Le tri secondaire rend le découpage stable quand deux messages
+      // partagent le même horodatage.
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, from + CHUNK - 1);
+
+  const first = await page(0);
+  if (first.error) throw first.error;
+  const rows = (first.data ?? []) as any[];
+  const total = Math.min(first.count ?? rows.length, MAX_SCAN);
+  if (rows.length === 0 || total <= rows.length) return rows;
+
+  const rest = await Promise.all(
+    Array.from({ length: Math.ceil((total - rows.length) / CHUNK) }, (_, i) =>
+      page(rows.length + i * CHUNK),
+    ),
+  );
+  for (const r of rest) {
+    if (r.error) throw r.error;
+    rows.push(...((r.data ?? []) as any[]));
+  }
+  return rows;
+}
+
 export const Route = createFileRoute("/_authenticated/admin/messages/")({
   head: () => ({ meta: [{ title: "Messagerie clients" }] }),
   beforeLoad: async () => {
@@ -71,15 +113,17 @@ function AdminMessages() {
       // les accusés de lecture servent à calculer le dernier message et les
       // non-lus. Le texte — de loin le plus lourd — n'est récupéré qu'ensuite,
       // et uniquement pour l'aperçu de chaque discussion.
-      const { data: msgs } = await supabase
-        .from("messages")
-        .select("id, client_id, created_at, from_agence, read_at, read_by")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
+      //
+      // L'API REST plafonne chaque réponse à 1 000 lignes. Sans pagination, les
+      // clients dont le dernier message sortait de cette fenêtre disparaissaient
+      // purement et simplement de la liste (42 conversations réelles, 24
+      // affichées). On parcourt donc tout l'historique par tranches, les
+      // tranches suivantes étant demandées en parallèle.
+      const msgs = await fetchAllMessageHeaders();
       const last = new Map<string, any>();
       const unread = new Map<string, number>();
       const lastSeen = new Map<string, any>();
-      for (const m of (msgs ?? []) as any[]) {
+      for (const m of msgs) {
         if (!last.has(m.client_id)) last.set(m.client_id, m);
         // Message client vers agence, non lu = à traiter
         if (!m.from_agence && !m.read_at) {
@@ -216,6 +260,10 @@ function AdminMessages() {
           onChange={(e) => setQ(e.target.value)}
         />
       </div>
+
+      {/* Rappel de pagination en haut : avec 40+ discussions, la commande du bas
+          n'est visible qu'après avoir fait défiler toute la liste. */}
+      <ListPagination state={pager} label="discussions" className="pt-0" />
 
       <Card className="divide-y">
         {filtered.length === 0 && (

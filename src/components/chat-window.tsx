@@ -244,6 +244,18 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
     else handleScroll();
   }, [visible, otherTyping, isSearching, handleScroll]);
 
+  // Ouverture du clavier : la zone visible rétrécit, on recolle au dernier
+  // message pour ne pas rester bloqué au milieu du fil.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      if (atBottomRef.current) requestAnimationFrame(() => scrollToBottom());
+    };
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, [scrollToBottom]);
+
   const loadOlder = (all = false) => {
     const el = scrollRef.current;
     restoreFromBottomRef.current = el ? el.scrollHeight - el.scrollTop : null;
@@ -646,7 +658,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
                   rows={1}
                   autoGrow
                   className="min-h-11 max-h-36 resize-none py-2.5 text-base sm:text-sm"
-                  placeholder={isAdmin ? "Écrire… # pour lier un dossier / tâche" : "Écrivez votre message…"}
+                  placeholder="Écrivez votre message…"
                 />
               </div>
 
