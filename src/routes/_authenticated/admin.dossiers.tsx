@@ -531,7 +531,7 @@ function DossierRow({ d, stats, inc, poleColor, unread = 0, juridiqueAssignees =
       hash={unread > 0 ? "audit-chat" : undefined}
       className={cn(
         "block p-4 hover:bg-muted/40 relative transition-colors",
-        isNew && "bg-gold/5 ring-1 ring-inset ring-gold/40",
+        isNew && "bg-gold/10 ring-1 ring-inset ring-gold",
       )}
       style={isNew ? undefined : { backgroundColor: `color-mix(in oklab, ${poleColor} 5%, transparent)` }}
     >
