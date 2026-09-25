@@ -40,7 +40,7 @@ function matchesSection(row: NavUnreadRow, to: string): boolean {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const { isStaff, isAdmin, isDirection, isManager, isConsultant, isAuditeur, isCertificateur, isExternal } = useRole();
+  const { isStaff, isAdmin, isDirection, isManager, isConsultant, isAuditeur, isCertificateur, isExternal, isDirectionOrAdmin } = useRole();
   const roleLabel = isAdmin
     ? roleLabelFr("admin")
     : isDirection
