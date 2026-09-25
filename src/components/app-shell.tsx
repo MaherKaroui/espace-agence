@@ -40,7 +40,7 @@ function matchesSection(row: NavUnreadRow, to: string): boolean {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const { isStaff, isAdmin, isDirection, isManager, isConsultant, isAuditeur, isCertificateur, isExternal } = useRole();
+  const { isStaff, isAdmin, isDirection, isManager, isConsultant, isAuditeur, isCertificateur, isExternal, isDirectionOrAdmin } = useRole();
   const roleLabel = isAdmin
     ? roleLabelFr("admin")
     : isDirection
@@ -232,7 +232,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </>
       )}
-      {isAdmin && (
+      {/* Réservé Direction / Admin */}
+      {isDirectionOrAdmin && (
         <>
           <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Administration</div>
           {[...directionPilotage, ...directionOrganisation].map((n) => (
