@@ -12,7 +12,7 @@ type Item = { to: string; label: string; icon: typeof LayoutDashboard; badge?: n
  * Cachée à partir de `lg` : le desktop garde la sidebar existante.
  */
 export function MobileBottomNav({ countFor }: { countFor: (to: string) => number }) {
-  const { isStaff, isExternal } = useRole();
+  const { isStaff, isExternal, isDirectionOrAdmin } = useRole();
 
   const items: Item[] = isExternal && !isStaff
     ? [
@@ -23,6 +23,8 @@ export function MobileBottomNav({ countFor }: { countFor: (to: string) => number
     : isStaff
       ? [
           { to: "/admin", label: "Agence", icon: LayoutDashboard },
+          // Direction / Admin : point d'entrée mobile vers les pages de pilotage
+          ...(isDirectionOrAdmin ? [{ to: "/admin/rapport-et-ia", label: "Pilotage", icon: TrendingUp }] : []),
           { to: "/admin/dossiers", label: "Dossiers", icon: FolderOpen },
           { to: "/admin/taches-agence", label: "Tâches", icon: ListChecks },
           { to: "/admin/messages", label: "Messages", icon: MessageSquare },
