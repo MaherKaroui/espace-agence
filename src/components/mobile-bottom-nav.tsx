@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
-  LayoutDashboard, FolderOpen, MessageSquare, Bell, ShieldCheck, ListChecks, UserCog,
+  LayoutDashboard, FolderOpen, MessageSquare, Bell, ShieldCheck, ListChecks, UserCog, TrendingUp,
 } from "lucide-react";
 import { useRole } from "@/hooks/use-role";
 import { hapticTap } from "@/lib/native";
