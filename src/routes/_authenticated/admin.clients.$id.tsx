@@ -178,7 +178,7 @@ function ClientDetail() {
       const events: Array<{ type: "message" | "document" | "tache" | "rdv"; at: string; label: string; sub?: string; dossierId?: string }> = [];
       const { data: msgs } = await supabase
         .from("messages")
-        .select("id, contenu, created_at, from_agence, dossier_id")
+        .select("id, content, created_at, from_agence, dossier_id")
         .eq("client_id", id)
         .order("created_at", { ascending: false })
         .limit(15);
@@ -187,7 +187,7 @@ function ClientDetail() {
           type: "message",
           at: m.created_at,
           label: m.from_agence ? "Message agence" : "Message client",
-          sub: (m.contenu ?? "").slice(0, 140),
+          sub: (m.content ?? "").slice(0, 140),
           dossierId: m.dossier_id ?? undefined,
         });
       }

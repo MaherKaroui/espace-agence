@@ -232,9 +232,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </>
       )}
-      {isAdmin && (
-        <>
-          <div className="mt-6 px-3 py-2 text-xs font-medium uppercase tracking-wider text-gold">Administration</div>
+      {/* Réservé Direction / Admin */}
+      {isDirectionOrAdmin && (
           {[...directionPilotage, ...directionOrganisation].map((n) => (
             <Link
               key={n.to} to={n.to}
