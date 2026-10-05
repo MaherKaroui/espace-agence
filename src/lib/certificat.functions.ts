@@ -8,7 +8,7 @@ import { historyLine, parseCertHistory } from "./certificat-mails";
  * depuis une ligne du calendrier Qualiopi.
  * - Un e-mail par destinataire, réponse adressée au collaborateur qui envoie.
  * - Trace l'envoi dans « Notes de suivi » (visible dans le calendrier et l'export Excel).
- * - Une demande passe la ligne en « Certificat à récupérer ».
+ * - Réservé aux lignes au statut « Certificat à récupérer ».
  * Réservé à l'équipe.
  */
 export const sendCertificatMail = createServerFn({ method: "POST" })
@@ -39,6 +39,9 @@ export const sendCertificatMail = createServerFn({ method: "POST" })
     if (evErr) throw new Error(evErr.message);
     if (!ev) throw new Error("Ligne du calendrier introuvable");
     const event = ev as any;
+    if (event.status !== "certificat_a_recuperer") {
+      throw new Error("Envoi réservé aux OF au statut « Certificat à récupérer »");
+    }
 
     const { data: me } = await supabase.from("profiles").select("email").eq("id", userId).maybeSingle();
     const replyTo = (me as any)?.email ?? null;
@@ -66,11 +69,10 @@ export const sendCertificatMail = createServerFn({ method: "POST" })
     if (sent.length > 0) {
       const line = historyLine(data.kind, rank, sent);
       const notes = [event.notes_suivi?.trim(), line].filter(Boolean).join("\n");
-      const patch: Record<string, unknown> = { notes_suivi: notes, updated_by: userId };
-      if (data.kind === "demande" && ["planifie", "realise", "en_attente"].includes(event.status)) {
-        patch.status = "certificat_a_recuperer";
-      }
-      const { error: upErr } = await supabase.from("qualiopi_calendar_events" as any).update(patch as any).eq("id", data.eventId);
+      const { error: upErr } = await supabase
+        .from("qualiopi_calendar_events" as any)
+        .update({ notes_suivi: notes, updated_by: userId } as any)
+        .eq("id", data.eventId);
       if (upErr) throw new Error(`E-mail envoyé mais suivi non enregistré : ${upErr.message}`);
 
       await supabase.rpc("log_event" as any, {

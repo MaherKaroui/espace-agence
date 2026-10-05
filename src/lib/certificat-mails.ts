@@ -133,7 +133,8 @@ export function nextCertAction(ev: { audit_date: string | null; notes_suivi: str
   const rank = history.filter((h) => h.kind === "relance").length + (kind === "relance" ? 1 : 0);
   const sinceLast = last ? daysSince(last.date) : null;
   const sinceAudit = daysSince(ev.audit_date);
-  const due = last ? (sinceLast ?? 0) >= RELANCE_DELAY_DAYS : (sinceAudit ?? -1) >= 0;
+  // Ligne en « Certificat à récupérer » : à demander tout de suite, puis relancer tous les 7 jours
+  const due = last ? (sinceLast ?? 0) >= RELANCE_DELAY_DAYS : true;
   return { history, last, kind, rank, sinceLast, sinceAudit, due };
 }
 
