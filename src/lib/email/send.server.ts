@@ -14,6 +14,8 @@ export interface SendAppEmailArgs {
   recipientEmail?: string | null
   idempotencyKey?: string
   templateData?: Record<string, any>
+  /** Adresse de réponse (ex. le collaborateur qui écrit à un certificateur). */
+  replyTo?: string | null
 }
 
 export type SendAppEmailResult =
@@ -121,6 +123,7 @@ export async function sendAppEmail(args: SendAppEmailArgs): Promise<SendAppEmail
     const result = await sendTemplateEmail(templateName, recipient, {
       templateData,
       idempotencyKey,
+      replyTo: args.replyTo || undefined,
     })
     if (!result.sent) {
       await logSend(supabase, {

@@ -23,6 +23,7 @@ import { template as rapportActivite } from './rapport-activite'
 import { template as compteRenduQuotidien } from './compte-rendu-quotidien'
 import { template as supervisionRapport } from './supervision-rapport'
 import { template as supervisionAlerte } from './supervision-alerte'
+import { template as certificateurCourrier } from './certificateur-courrier'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -58,4 +59,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'compte-rendu-quotidien': compteRenduQuotidien,
   'supervision-rapport': supervisionRapport,
   'supervision-alerte': supervisionAlerte,
+  'certificateur-courrier': certificateurCourrier,
 }

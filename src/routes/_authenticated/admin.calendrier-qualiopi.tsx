@@ -18,7 +18,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Upload, Download, Trash2, Pencil, ListChecks } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Upload, Download, Trash2, Pencil, ListChecks, Mail, Award } from "lucide-react";
+import { CertificatMailDialog, type CertMailTarget } from "@/components/certificat-mail-dialog";
+import { dateFr, nextCertAction } from "@/lib/certificat-mails";
 
 export const Route = createFileRoute("/_authenticated/admin/calendrier-qualiopi")({
   head: () => ({
@@ -151,6 +153,7 @@ function CalendrierQualiopi() {
   const [editEvent, setEditEvent] = useState<Partial<CalEvent> | null>(null);
   const [editPending, setEditPending] = useState<Partial<Pending> | null>(null);
   const [importPlan, setImportPlan] = useState<ImportPlan | null>(null);
+  const [certTarget, setCertTarget] = useState<CertMailTarget | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const monthStart = useMemo(() => new Date(cursor.getFullYear(), cursor.getMonth(), 1), [cursor]);
@@ -203,6 +206,32 @@ function CalendrierQualiopi() {
     },
   });
 
+  // Certificats à récupérer : audits passés depuis moins d'un an, certificat non reçu
+  const certsQ = useQuery({
+    queryKey: ["qcal-certificats"],
+    enabled: !!user,
+    queryFn: async () => {
+      const today = new Date();
+      const from = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+      const { data, error } = await supabase
+        .from("qualiopi_calendar_events" as any)
+        .select(EVENT_COLUMNS)
+        .gte("audit_date", fmtLocal(from))
+        .lte("audit_date", fmtLocal(today))
+        .not("status", "in", "(annule,certificat_recu)")
+        .order("audit_date", { ascending: false });
+      if (error) throw error;
+      const received = (s: string | null) => /^\s*(oui|re[çc]u|ok)\b/i.test(s ?? "");
+      return ((data ?? []) as unknown as CalEvent[]).filter((e) => !received(e.certificate_status));
+    },
+  });
+
+  const refreshCerts = () => {
+    qc.invalidateQueries({ queryKey: ["qcal-certificats"] });
+    qc.invalidateQueries({ queryKey: ["qcal-events"] });
+    qc.invalidateQueries({ queryKey: ["qcal-demandes"] });
+  };
+
   const events = eventsQ.data ?? [];
   const demandes = demandesQ.data ?? [];
   const pendings = pendingQ.data ?? [];
@@ -246,8 +275,7 @@ function CalendrierQualiopi() {
     onSuccess: () => {
       toast.success("Enregistré");
       setEditEvent(null);
-      qc.invalidateQueries({ queryKey: ["qcal-events"] });
-      qc.invalidateQueries({ queryKey: ["qcal-demandes"] });
+      refreshCerts();
     },
     onError: (e: any) => toast.error(e.message ?? "Erreur"),
   });
@@ -403,6 +431,11 @@ function CalendrierQualiopi() {
     return <Card className="p-6 text-sm">Accès réservé à l'équipe.</Card>;
   }
 
+  const certs = (certsQ.data ?? [])
+    .map((e) => ({ e, a: nextCertAction(e) }))
+    .sort((x, y) => Number(y.a.due) - Number(x.a.due));
+  const certsDue = certs.filter((c) => c.a.due).length;
+
   const byDay = new Map<string, CalEvent[]>();
   filtered.forEach((e) => {
     if (!e.audit_date) return;
@@ -515,6 +548,7 @@ function CalendrierQualiopi() {
                     <td className="p-2">{e.certificate_status ?? "—"}</td>
                     <td className="p-2 whitespace-pre-wrap max-w-xs">{e.notes_suivi ?? "—"}</td>
                     <td className="p-2 text-right whitespace-nowrap">
+                      <Button variant="ghost" size="icon" title="Demander / relancer le certificat" onClick={() => setCertTarget(e)}><Mail className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => setEditEvent(e)}><Pencil className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => { if (confirm("Supprimer cet évènement ?")) deleteEvent.mutate(e.id); }}><Trash2 className="h-4 w-4" /></Button>
                     </td>
@@ -558,6 +592,58 @@ function CalendrierQualiopi() {
         </Card>
       )}
 
+      {/* ===== Certificats à récupérer ===== */}
+      <Card className="overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-3 border-b bg-muted/30">
+          <div className="font-medium flex items-center gap-2">
+            <Award className="h-4 w-4" /> Certificats à récupérer ({certs.length})
+            {certsDue > 0 && <Badge variant="outline" className="bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30">{certsDue} à envoyer</Badge>}
+          </div>
+          <p className="text-xs text-muted-foreground">Audits passés depuis moins d'un an sans certificat reçu · relance conseillée tous les 7 jours</p>
+        </div>
+        <div className="overflow-x-auto max-h-[420px]">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40 sticky top-0">
+              <tr>
+                <th className="text-left p-2">Audit</th>
+                <th className="text-left p-2">Organisme</th>
+                <th className="text-left p-2">Formation</th>
+                <th className="text-left p-2">Certificateur</th>
+                <th className="text-left p-2">Dernier envoi</th>
+                <th className="p-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {certs.length === 0 && (
+                <tr><td colSpan={6} className="p-4 text-center text-muted-foreground">{certsQ.isLoading ? "Chargement…" : "Aucun certificat en attente."}</td></tr>
+              )}
+              {certs.map(({ e, a }) => (
+                <tr key={e.id} className="border-t align-top">
+                  <td className="p-2 whitespace-nowrap">{dateFr(e.audit_date)}<div className="text-xs text-muted-foreground">il y a {a.sinceAudit} j</div></td>
+                  <td className="p-2 font-medium">{e.organism_name}</td>
+                  <td className="p-2">{e.formation ?? "—"}</td>
+                  <td className="p-2">{e.certifier_name || e.certifier_organization || "—"}</td>
+                  <td className="p-2 text-xs">
+                    {a.last
+                      ? <>{a.last.kind === "demande" ? "Demande" : `Relance n°${a.last.rank}`} le {dateFr(a.last.date)}<div className="text-muted-foreground">il y a {a.sinceLast} j</div></>
+                      : <span className="text-muted-foreground">Jamais demandé</span>}
+                  </td>
+                  <td className="p-2 text-right whitespace-nowrap">
+                    <Button size="sm" variant={a.due ? "default" : "outline"} onClick={() => setCertTarget(e)}>
+                      <Mail className="h-4 w-4 mr-1" /> {a.kind === "demande" ? "Demander" : `Relance n°${a.rank}`}
+                    </Button>
+                    <Button variant="ghost" size="icon" title="Marquer le certificat comme reçu"
+                      onClick={() => saveEvent.mutate({ ...e, status: "certificat_recu", certificate_status: "OUI" })}>
+                      <Award className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
       {/* ===== Demandes en cours (sans date d'audit) ===== */}
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between gap-2 p-3 border-b bg-muted/30">
@@ -590,6 +676,7 @@ function CalendrierQualiopi() {
                   <td className="p-2">{d.certifier_name || d.certifier_organization || "—"}</td>
                   <td className="p-2 whitespace-pre-wrap max-w-md">{d.observation ?? "—"}</td>
                   <td className="p-2 text-right whitespace-nowrap">
+                    <Button variant="ghost" size="icon" title="Demander / relancer le certificat" onClick={() => setCertTarget(d)}><Mail className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => setEditEvent(d)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => { if (confirm("Supprimer cette demande ?")) deleteEvent.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </td>
@@ -698,7 +785,12 @@ function CalendrierQualiopi() {
               <div className="sm:col-span-2"><Label>Observation</Label><Textarea value={editEvent.observation ?? ""} onChange={(e) => setEditEvent({ ...editEvent, observation: e.target.value })} rows={2} /></div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2">
+            {editEvent?.id && (
+              <Button variant="outline" className="sm:mr-auto" onClick={() => { const ev = editEvent as CalEvent; setEditEvent(null); setCertTarget(ev); }}>
+                <Mail className="h-4 w-4 mr-2" /> Demander / relancer le certificat
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setEditEvent(null)}>Annuler</Button>
             <Button
               onClick={() => {
@@ -747,6 +839,8 @@ function CalendrierQualiopi() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CertificatMailDialog event={certTarget} onClose={() => setCertTarget(null)} onSent={refreshCerts} />
 
       {/* Aperçu d'import */}
       <Dialog open={!!importPlan} onOpenChange={(o) => !o && setImportPlan(null)}>
