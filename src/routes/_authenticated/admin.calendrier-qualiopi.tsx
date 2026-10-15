@@ -790,7 +790,13 @@ function CalendrierQualiopi() {
           )}
           <DialogFooter className="gap-2">
             {editEvent?.id && editEvent.status === "certificat_a_recuperer" && (
-              <Button variant="outline" className="sm:mr-auto" onClick={() => { const ev = editEvent as CalEvent; setEditEvent(null); setCertTarget(ev); }}>
+              <Button variant="outline" className="sm:mr-auto" disabled={saveEvent.isPending} onClick={async () => {
+                // Enregistrer d'abord : le serveur lit la ligne stockée (statut, notes de suivi).
+                try {
+                  await saveEvent.mutateAsync(editEvent as CalEvent);
+                  setCertTarget(editEvent as CalEvent);
+                } catch { /* erreur déjà signalée par onError */ }
+              }}>
                 <Mail className="h-4 w-4 mr-2" /> Demander / relancer le certificat
               </Button>
             )}
