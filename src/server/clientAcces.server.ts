@@ -91,7 +91,12 @@ export async function saveAcces(supabase: any, userId: string, input: AccesInput
       .update({ ...base, manual_locked: true })
       .eq("id", input.id);
     if (error) throw error;
-    await logAcces(supabase, "acces_client_modifie", input.id, { libelle: input.libelle });
+    await logAcces(supabase, "acces_client_modifie", input.id, {
+      organisme: input.organisme ?? null,
+      libelle: input.libelle,
+      identifiant: input.identifiant ?? null,
+      mot_de_passe_change: !!input.secret || !!input.clear_secret,
+    });
     return { id: input.id };
   }
 
@@ -101,14 +106,29 @@ export async function saveAcces(supabase: any, userId: string, input: AccesInput
     .select("id")
     .single();
   if (error) throw error;
-  await logAcces(supabase, "acces_client_cree", data.id, { libelle: input.libelle });
+  await logAcces(supabase, "acces_client_cree", data.id, {
+    organisme: input.organisme ?? null,
+    libelle: input.libelle,
+    identifiant: input.identifiant ?? null,
+    avec_mot_de_passe: !!input.secret,
+  });
   return { id: data.id as string };
 }
 
 export async function deleteAcces(supabase: any, id: string) {
+  // Lire la ligne avant suppression : le journal doit dire ce qui a disparu.
+  const { data: avant } = await supabase
+    .from("client_acces")
+    .select("organisme, libelle, identifiant")
+    .eq("id", id)
+    .maybeSingle();
   const { error } = await supabase.from("client_acces").delete().eq("id", id);
   if (error) throw error;
-  await logAcces(supabase, "acces_client_supprime", id, {});
+  await logAcces(supabase, "acces_client_supprime", id, {
+    organisme: avant?.organisme ?? null,
+    libelle: avant?.libelle ?? null,
+    identifiant: avant?.identifiant ?? null,
+  }, "warning");
 }
 
 /** Déchiffre un secret et journalise systématiquement la consultation. */
@@ -120,17 +140,22 @@ export async function revealAcces(
 ) {
   const { data, error } = await supabase
     .from("client_acces")
-    .select("id, libelle, plateforme, identifiant, secret_ciphertext, client_id")
+    .select("id, organisme, libelle, plateforme, identifiant, secret_ciphertext, client_id, client:profiles!client_acces_client_id_fkey(prenom, nom, entreprise, email)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
   if (!data) throw new Error("Accès introuvable");
 
+  // On trace QUOI a été vu ou copié, et pour quel organisme ; jamais le mot
+  // de passe lui-même.
   await logAcces(supabase, "acces_client_consulte", id, {
     champ: field,
     mode,
+    quoi: `${field === "secret" ? "Mot de passe" : "E-mail"} ${mode === "copie" ? "copié" : "affiché"}`,
+    organisme: data.organisme ?? clientLabel(data.client),
     libelle: data.libelle,
     plateforme: data.plateforme,
+    identifiant: data.identifiant,
   }, "warning");
 
   if (field === "identifiant") return { value: data.identifiant ?? "" };

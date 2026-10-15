@@ -685,6 +685,8 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
       .from("audit_logs")
       .select("id, user_id, action, entity_type, entity_id, metadata, created_at")
       .in("user_id", memberIds)
+      // Les clics fins (journal d'audit) ne doivent pas évincer les vraies actions de la limite.
+      .not("action", "like", "clic.%")
       .gte("created_at", fromIso)
       .lte("created_at", toIso)
       .order("created_at", { ascending: true })

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Slack, Search } from "lucide-react";
+import { logClic, useLogCopie, useLogSaisie } from "@/lib/audit-click";
 
 /** Historique Slack repris, rattaché à ce client. Réservé à l'équipe de l'agence. */
 export function SlackClientHistory({ clientId }: { clientId: string }) {
@@ -44,17 +45,30 @@ export function SlackClientHistory({ clientId }: { clientId: string }) {
     },
   });
 
+  // Journal d'audit : consultation, recherche et textes copiés de l'historique client.
+  useLogSaisie("slack.historique_client_recherche", q, { client_id: clientId });
+  const canauxNoms = (canaux.data ?? []).map((c: any) => c.nom);
+  const nomsRef = useRef(canauxNoms);
+  nomsRef.current = canauxNoms;
+  const blocRef = useLogCopie<HTMLDivElement>("slack.historique_client_texte_copie", () => ({
+    client_id: clientId,
+    canaux: nomsRef.current,
+  }));
+
   if (!canaux.data?.length) return null;
 
   return (
-    <Card className="p-4 space-y-3">
+    <Card ref={blocRef} className="p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Slack className="h-4 w-4" />
         <span className="font-medium">Historique Slack repris</span>
         {(canaux.data ?? []).map((c: any) => (
           <Badge key={c.id} variant="outline">#{c.nom}</Badge>
         ))}
-        <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setOpen((o) => !o)}>
+        <Button size="sm" variant="ghost" className="ml-auto" onClick={() => {
+          logClic(open ? "slack.historique_client_masque" : "slack.historique_client_consulte", { client_id: clientId, canaux: canauxNoms }, { entityType: "profile", entityId: clientId });
+          setOpen((o) => !o);
+        }}>
           {open ? "Masquer" : "Consulter"}
         </Button>
       </div>
@@ -72,7 +86,14 @@ export function SlackClientHistory({ clientId }: { clientId: string }) {
           <div className="space-y-2 max-h-[420px] overflow-auto">
             {messages.isFetching && <p className="text-sm text-muted-foreground">Chargement…</p>}
             {(messages.data ?? []).map((m: any) => (
-              <div key={m.id} className="border-b pb-2 last:border-0">
+              <div
+                key={m.id}
+                className="border-b pb-2 last:border-0"
+                data-audit-id={m.id}
+                data-audit-canal={m.slack_canaux?.nom ?? ""}
+                data-audit-auteur={m.auteur ?? ""}
+                data-audit-date={m.posted_at ?? ""}
+              >
                 <p className="text-xs text-muted-foreground">
                   #{m.slack_canaux?.nom} · {m.auteur} ·{" "}
                   {m.posted_at ? new Date(m.posted_at).toLocaleString("fr-FR") : ""}

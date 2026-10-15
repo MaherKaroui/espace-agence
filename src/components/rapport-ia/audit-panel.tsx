@@ -10,18 +10,82 @@ import { Download, AlertTriangle, Info, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
+// Rubriques filtrables côté base (la limite de 500 lignes s'applique après le filtre).
+const RUBRIQUES: Record<string, { label: string; filtre: string | null }> = {
+  all: { label: "Toutes rubriques", filtre: null },
+  acces: { label: "Accès clients", filtre: "action.ilike.acces_client%,action.ilike.clic.acces_client%" },
+  slack: { label: "Reprise Slack", filtre: "action.ilike.clic.slack%" },
+  copies: { label: "Copies (tout ce qui a été copié)", filtre: "action.ilike.%copi%,metadata->>mode.eq.copie" },
+  clics: { label: "Tous les clics", filtre: "action.ilike.clic.%" },
+};
+
+const LIBELLES: Record<string, string> = {
+  acces_client_consulte: "Accès client consulté",
+  acces_client_cree: "Accès client créé",
+  acces_client_modifie: "Accès client modifié",
+  acces_client_supprime: "Accès client supprimé",
+  "clic.acces_client.page_ouverte": "Page « Accès clients » ouverte",
+  "clic.acces_client.recherche": "Recherche dans les accès clients",
+  "clic.acces_client.page_liste": "Changement de page (accès clients)",
+  "clic.acces_client.texte_copie": "Texte copié à la main (Accès clients)",
+  "clic.acces_client.mot_de_passe_masque": "Mot de passe remasqué",
+  "clic.acces_client.affichage_refuse": "Affichage du mot de passe refusé",
+  "clic.acces_client.copie_refusee": "Copie refusée",
+  "clic.acces_client.nouvel_acces_ouvert": "Bouton « Nouvel accès »",
+  "clic.acces_client.ajout_pour_organisme_ouvert": "Bouton « Ajouter un accès »",
+  "clic.acces_client.modification_ouverte": "Bouton « Modifier »",
+  "clic.acces_client.suppression_confirmee": "Suppression confirmée",
+  "clic.acces_client.suppression_annulee": "Suppression annulée",
+  "clic.acces_client.formulaire_ferme": "Formulaire fermé",
+  "clic.acces_client.formulaire_annule": "Bouton « Annuler »",
+  "clic.acces_client.saisie_mot_de_passe_affichee": "Mot de passe affiché dans le formulaire",
+  "clic.acces_client.saisie_mot_de_passe_masquee": "Mot de passe masqué dans le formulaire",
+  "clic.acces_client.enregistrement_creation": "Bouton « Enregistrer » (nouvel accès)",
+  "clic.acces_client.enregistrement_modification": "Bouton « Enregistrer » (modification)",
+  "clic.slack.page_ouverte": "Page « Reprise Slack » ouverte",
+  "clic.slack.filtre_canaux": "Filtre des canaux Slack",
+  "clic.slack.actualiser": "Bouton « Actualiser » (Slack)",
+  "clic.slack.canal_ouvert": "Canal Slack ouvert",
+  "clic.slack.page_messages": "Page de messages Slack",
+  "clic.slack.texte_copie": "Texte copié depuis Slack",
+  "clic.slack.historique_client_consulte": "Historique Slack du client consulté",
+  "clic.slack.historique_client_masque": "Historique Slack du client masqué",
+  "clic.slack.historique_client_recherche": "Recherche dans l'historique Slack du client",
+  "clic.slack.historique_client_texte_copie": "Texte copié depuis l'historique Slack du client",
+};
+
+/** Résumé lisible : sur quoi porte l'action (organisme, accès, canal…). */
+function resume(md: any): string {
+  if (!md) return "";
+  const parts: string[] = [];
+  if (md.quoi) parts.push(md.quoi);
+  if (md.organisme) parts.push(md.organisme);
+  if (md.libelle) parts.push(md.libelle);
+  if (md.identifiant) parts.push(md.identifiant);
+  if (md.canal) parts.push(`#${md.canal}`);
+  if (Array.isArray(md.canaux) && md.canaux.length) parts.push(md.canaux.map((c: string) => `#${c}`).join(" "));
+  if (md.auteur) parts.push(`message de ${md.auteur}`);
+  if (typeof md.page === "number") parts.push(`page ${md.page}${md.sur ? `/${md.sur}` : ""}`);
+  if (md.terme) parts.push(`« ${md.terme} »`);
+  if (md.erreur) parts.push(`erreur : ${md.erreur}`);
+  return parts.join(" · ");
+}
+
 
 export function AuditPage() {
   const [severity, setSeverity] = useState<string>("all");
+  const [rubrique, setRubrique] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
 
   const { data: logs = [] } = useQuery({
-    queryKey: ["audit-logs", severity, dateFrom, dateTo],
+    queryKey: ["audit-logs", severity, rubrique, dateFrom, dateTo],
     queryFn: async () => {
       let q = supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(500);
       if (severity !== "all") q = q.eq("severity", severity);
+      const filtre = RUBRIQUES[rubrique]?.filtre;
+      if (filtre) q = q.or(filtre);
       if (dateFrom) q = q.gte("created_at", new Date(dateFrom).toISOString());
       if (dateTo) {
         const end = new Date(dateTo);
@@ -49,6 +113,7 @@ export function AuditPage() {
     const s = search.toLowerCase();
     return logs.filter((l: any) =>
       l.action.toLowerCase().includes(s) ||
+      (LIBELLES[l.action] ?? "").toLowerCase().includes(s) ||
       (l.entity_type ?? "").toLowerCase().includes(s) ||
       JSON.stringify(l.metadata).toLowerCase().includes(s) ||
       nameFor(l.user_id).toLowerCase().includes(s)
@@ -57,11 +122,14 @@ export function AuditPage() {
 
   const exportCSV = () => {
     const rows = [
-      ["date", "utilisateur", "action", "sévérité", "entité", "entity_id", "metadata"],
+      ["date", "utilisateur", "action", "libellé", "sur quoi", "texte copié", "sévérité", "entité", "entity_id", "metadata"],
       ...filtered.map((l: any) => [
         l.created_at,
         nameFor(l.user_id),
         l.action,
+        LIBELLES[l.action] ?? "",
+        resume(l.metadata),
+        l.metadata?.texte_copie ?? "",
         l.severity,
         l.entity_type ?? "",
         l.entity_id ?? "",
@@ -81,7 +149,7 @@ export function AuditPage() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display text-3xl">Journal d'audit</h1>
-          <p className="text-muted-foreground mt-1">Traçabilité des messages, documents et alertes de sécurité.</p>
+          <p className="text-muted-foreground mt-1">Traçabilité des messages, documents, accès clients, reprise Slack et de chaque clic.</p>
         </div>
         <Button onClick={exportCSV}><Download className="h-4 w-4 mr-2" /> Exporter CSV</Button>
       </div>
@@ -90,6 +158,17 @@ export function AuditPage() {
         <div className="flex-1 min-w-[220px]">
           <label className="text-xs text-muted-foreground">Rechercher</label>
           <Input placeholder="Action, utilisateur, contenu…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground block">Rubrique</label>
+          <Select value={rubrique} onValueChange={setRubrique}>
+            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {Object.entries(RUBRIQUES).map(([k, r]) => (
+                <SelectItem key={k} value={k}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className="text-xs text-muted-foreground block">Sévérité</label>
@@ -111,11 +190,11 @@ export function AuditPage() {
           <label htmlFor="date-to" className="text-xs text-muted-foreground block">Au</label>
           <Input id="date-to" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" />
         </div>
-        {(dateFrom || dateTo || search || severity !== "all") && (
+        {(dateFrom || dateTo || search || severity !== "all" || rubrique !== "all") && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => { setDateFrom(""); setDateTo(""); setSearch(""); setSeverity("all"); }}
+            onClick={() => { setDateFrom(""); setDateTo(""); setSearch(""); setSeverity("all"); setRubrique("all"); }}
           >
             Réinitialiser
           </Button>
@@ -147,13 +226,24 @@ function Row({ log, who }: { log: any; who: string }) {
       <Icon className={`h-4 w-4 mt-1 ${tone}`} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-sm">{log.action}</span>
+          <span className="font-medium text-sm">{LIBELLES[log.action] ?? log.action}</span>
           {log.entity_type && <Badge variant="outline" className="text-xs">{log.entity_type}</Badge>}
           <Badge variant={log.severity === "warning" || log.severity === "critical" ? "destructive" : "secondary"} className="text-xs capitalize">{log.severity}</Badge>
         </div>
         <div className="text-xs text-muted-foreground mt-1">
-          {who} · {format(new Date(log.created_at), "dd MMM yyyy HH:mm", { locale: fr })}
+          {who} · {format(new Date(log.created_at), "dd MMM yyyy HH:mm:ss", { locale: fr })}
         </div>
+        {resume(md) && <div className="text-sm mt-1 break-words">{resume(md)}</div>}
+        {typeof md.texte_copie === "string" && (
+          <div className="mt-2">
+            <div className="text-xs font-medium text-muted-foreground mb-1">
+              Texte copié ({md.longueur ?? md.texte_copie.length} caractères)
+            </div>
+            <div className="text-sm bg-muted/40 border rounded p-2 whitespace-pre-wrap break-words max-h-48 overflow-auto">
+              {md.texte_copie}
+            </div>
+          </div>
+        )}
 
         {(isEdit || isDel) && (prev || next) && (
           <div className="mt-2 space-y-2">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Hash, Loader2, Lock, MessageSquare, RefreshCw, Paperclip } from "lucide-react";
+import { logClic, useLogCopie, useLogOuverture, useLogSaisie } from "@/lib/audit-click";
 
 const PAGE = 100;
 
@@ -64,6 +65,23 @@ export function SlackCanauxExplorer() {
   }, [canaux.data, q]);
 
   const canal = (canaux.data ?? []).find((c: any) => c.id === canalId);
+
+  // Journal d'audit : ouverture, filtre, canal consulté, pages lues, textes copiés.
+  useLogOuverture("slack.page_ouverte");
+  useLogSaisie("slack.filtre_canaux", q);
+  const canalRef = useRef(canal);
+  canalRef.current = canal;
+  const pageRef2 = useRef(page);
+  pageRef2.current = page;
+  const blocRef = useLogCopie<HTMLDivElement>("slack.texte_copie", () => ({
+    canal: canalRef.current?.nom ?? null,
+    canal_id: canalRef.current?.id ?? null,
+    page_messages: pageRef2.current + 1,
+  }));
+  const changerPage = (p: number) => {
+    logClic("slack.page_messages", { canal: canal?.nom, page: p + 1, sur: Math.max(1, Math.ceil((messages.data?.total ?? 0) / PAGE)) }, { entityType: "slack_canal", entityId: canalId });
+    setPage(p);
+  };
   const nomDe = (id?: string | null, fallback?: string | null) =>
     (id && membres.data?.[id]) || fallback || id || "—";
 
@@ -76,13 +94,13 @@ export function SlackCanauxExplorer() {
   );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+    <div ref={blocRef} className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
       <Card className="p-3 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <div className="text-sm font-medium">
             {liste.length} canal(aux) · {totalMessages.toLocaleString("fr-FR")} messages
           </div>
-          <Button size="icon" variant="ghost" onClick={() => canaux.refetch()}>
+          <Button size="icon" variant="ghost" title="Actualiser" onClick={() => { logClic("slack.actualiser"); canaux.refetch(); }}>
             {canaux.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           </Button>
         </div>
@@ -92,7 +110,16 @@ export function SlackCanauxExplorer() {
             <button
               key={c.id}
               type="button"
-              onClick={() => { setCanalId(c.id); setPage(0); }}
+              onClick={() => {
+                logClic("slack.canal_ouvert", {
+                  canal: c.nom,
+                  type: c.type,
+                  archive: !!c.is_archived,
+                  messages: c.collecte_messages ?? 0,
+                }, { entityType: "slack_canal", entityId: c.id });
+                setCanalId(c.id);
+                setPage(0);
+              }}
               className={`flex w-full items-center gap-2 p-2 text-left text-sm hover:bg-muted ${
                 canalId === c.id ? "bg-muted" : ""
               }`}
@@ -144,7 +171,13 @@ export function SlackCanauxExplorer() {
                 <p className="text-sm text-muted-foreground">Chargement des messages…</p>
               ) : null}
               {(messages.data?.rows ?? []).map((m: any) => (
-                <div key={m.id} className="border-b pb-2 last:border-0">
+                <div
+                  key={m.id}
+                  className="border-b pb-2 last:border-0"
+                  data-audit-id={m.id}
+                  data-audit-auteur={nomDe(m.slack_user_id, m.auteur)}
+                  data-audit-date={m.posted_at ?? ""}
+                >
                   <p className="text-xs text-muted-foreground">
                     <strong className="text-foreground">{nomDe(m.slack_user_id, m.auteur)}</strong>
                     {" · "}
@@ -167,7 +200,7 @@ export function SlackCanauxExplorer() {
             </div>
 
             <div className="flex items-center justify-between gap-2 text-sm">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => changerPage(page - 1)}>
                 Précédent
               </Button>
               <span className="text-muted-foreground">
@@ -177,7 +210,7 @@ export function SlackCanauxExplorer() {
                 variant="outline"
                 size="sm"
                 disabled={(page + 1) * PAGE >= (messages.data?.total ?? 0)}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => changerPage(page + 1)}
               >
                 Suivant
               </Button>

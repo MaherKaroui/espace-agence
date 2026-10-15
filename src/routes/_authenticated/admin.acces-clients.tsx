@@ -19,6 +19,7 @@ import {
   listClientAcces, saveClientAcces, deleteClientAcces, revealClientAcces,
 } from "@/lib/client-acces.functions";
 import { usePagination, ListPagination } from "@/components/list-pagination";
+import { logClic, useLogCopie, useLogOuverture, useLogSaisie } from "@/lib/audit-click";
 
 export const Route = createFileRoute("/_authenticated/admin/acces-clients")({
   head: () => ({
@@ -64,6 +65,27 @@ function AccesClients() {
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
+  // Journal d'audit : chaque clic, recherche et copie manuelle de la page.
+  useLogOuverture("acces_client.page_ouverte");
+  useLogSaisie("acces_client.recherche", q);
+  const revealedRef = useRef(revealed);
+  revealedRef.current = revealed;
+  const pageRef = useLogCopie<HTMLDivElement>(
+    "acces_client.texte_copie",
+    () => ({}),
+    // Un mot de passe affiché puis copié à la main n'est jamais écrit en clair.
+    (texte) => {
+      const secrets = Object.values(revealedRef.current).filter(Boolean);
+      if (!secrets.some((v) => texte.includes(v))) return null;
+      return secrets.reduce((t, v) => t.split(v).join("[mot de passe masqué]"), texte);
+    },
+  );
+  const ctx = (r: { id: string; organisme?: string | null; client_nom?: string | null; libelle: string; identifiant?: string | null }) => ({
+    organisme: r.organisme || r.client_nom || "Non rattaché",
+    libelle: r.libelle,
+    identifiant: r.identifiant ?? null,
+  });
+
   // Remasquage automatique au démontage (changement de page).
   useEffect(() => () => {
     Object.values(timers.current).forEach(clearTimeout);
@@ -105,13 +127,18 @@ function AccesClients() {
 
   const doReveal = async (id: string) => {
     if (revealed[id]) {
+      const r = (rows as Acces[]).find((x) => x.id === id);
+      if (r) logClic("acces_client.mot_de_passe_masque", ctx(r), { entityType: "client_acces", entityId: id });
       clearTimeout(timers.current[id]!);
       setRevealed((r) => { const n = { ...r }; delete n[id]; return n; });
       return;
     }
     try {
       const res: any = await reveal({ data: { id, field: "secret", mode: "affichage" } });
-      if (res?.error) return toast.error(res.error);
+      if (res?.error) {
+        logClic("acces_client.affichage_refuse", { erreur: res.error }, { entityType: "client_acces", entityId: id, severity: "warning" });
+        return toast.error(res.error);
+      }
       const value = res?.value;
       if (!value) return toast.info("Aucun mot de passe enregistré pour cet accès");
       setRevealed((r) => ({ ...r, [id]: value }));
@@ -126,7 +153,10 @@ function AccesClients() {
   const doCopy = async (id: string, field: "identifiant" | "secret") => {
     try {
       const res: any = await reveal({ data: { id, field, mode: "copie" } });
-      if (res?.error) return toast.error(res.error);
+      if (res?.error) {
+        logClic("acces_client.copie_refusee", { champ: field, erreur: res.error }, { entityType: "client_acces", entityId: id, severity: "warning" });
+        return toast.error(res.error);
+      }
       const value = res?.value;
       if (!value) return toast.info("Rien à copier");
       await navigator.clipboard.writeText(value);
@@ -156,9 +186,18 @@ function AccesClients() {
   }, [filtered]);
 
   const pager = usePagination(groups, 10);
+  const pageVue = useRef(pager.page);
+  useEffect(() => {
+    if (pageVue.current === pager.page) return;
+    pageVue.current = pager.page;
+    logClic("acces_client.page_liste", {
+      page: pager.page,
+      organismes_affiches: pager.pageItems.map(([o]) => o),
+    });
+  }, [pager.page, pager.pageItems]);
 
   return (
-    <div className="space-y-5">
+    <div ref={pageRef} className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl flex items-center gap-2">
@@ -168,7 +207,7 @@ function AccesClients() {
             Coffre-fort réservé à l'équipe. Mots de passe chiffrés, consultations journalisées.
           </p>
         </div>
-        <Button onClick={() => { setShowSecret(false); setForm({ ...EMPTY }); }}>
+        <Button onClick={() => { logClic("acces_client.nouvel_acces_ouvert"); setShowSecret(false); setForm({ ...EMPTY }); }}>
           <Plus className="h-4 w-4 mr-1" /> Nouvel accès
         </Button>
       </div>
@@ -197,7 +236,7 @@ function AccesClients() {
                 variant="outline"
                 size="sm"
                 title={`Ajouter un accès pour ${organisme}`}
-                onClick={() => { setShowSecret(false); setForm({ ...EMPTY, organisme }); }}
+                onClick={() => { logClic("acces_client.ajout_pour_organisme_ouvert", { organisme }); setShowSecret(false); setForm({ ...EMPTY, organisme }); }}
               >
                 <Plus className="h-4 w-4 mr-1" /> Ajouter un accès
               </Button>
@@ -206,7 +245,13 @@ function AccesClients() {
           </div>
           <div className="divide-y">
             {items.map((r) => (
-              <div key={r.id} className="flex flex-wrap items-start gap-3 p-3">
+              <div
+                key={r.id}
+                className="flex flex-wrap items-start gap-3 p-3"
+                data-audit-id={r.id}
+                data-audit-organisme={organisme}
+                data-audit-libelle={r.libelle}
+              >
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">{r.libelle}</div>
                   <div className="mt-1 text-sm text-muted-foreground break-all">
@@ -233,7 +278,7 @@ function AccesClients() {
                   </Button>
                   <Button
                     variant="ghost" size="icon" title="Modifier"
-                    onClick={() => { setShowSecret(false); setForm({
+                    onClick={() => { logClic("acces_client.modification_ouverte", ctx(r), { entityType: "client_acces", entityId: r.id }); setShowSecret(false); setForm({
                       id: r.id,
                       organisme: r.organisme ?? r.client_nom ?? "",
                       libelle: r.libelle,
@@ -245,7 +290,14 @@ function AccesClients() {
                   </Button>
                   <Button
                     variant="ghost" size="icon" title="Supprimer"
-                    onClick={() => { if (confirm("Supprimer cet accès ?")) deleteM.mutate(r.id); }}
+                    onClick={() => {
+                      if (confirm("Supprimer cet accès ?")) {
+                        logClic("acces_client.suppression_confirmee", ctx(r), { entityType: "client_acces", entityId: r.id, severity: "warning" });
+                        deleteM.mutate(r.id);
+                      } else {
+                        logClic("acces_client.suppression_annulee", ctx(r), { entityType: "client_acces", entityId: r.id });
+                      }
+                    }}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -259,7 +311,15 @@ function AccesClients() {
       <ListPagination state={pager} label="organismes" />
 
 
-      <Dialog open={!!form} onOpenChange={(o) => !o && setForm(null)}>
+      <Dialog
+        open={!!form}
+        onOpenChange={(o) => {
+          if (!o) {
+            if (form && !saveM.isPending) logClic("acces_client.formulaire_ferme", { organisme: form.organisme, libelle: form.libelle }, { entityType: "client_acces", entityId: form.id });
+            setForm(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{form?.id ? "Modifier l'accès" : "Nouvel accès"}</DialogTitle>
@@ -314,7 +374,10 @@ function AccesClients() {
                     size="icon"
                     className="absolute right-0 top-0 h-full w-10"
                     title={showSecret ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                    onClick={() => setShowSecret((v) => !v)}
+                    onClick={() => {
+                      logClic(showSecret ? "acces_client.saisie_mot_de_passe_masquee" : "acces_client.saisie_mot_de_passe_affichee", { organisme: form.organisme, libelle: form.libelle }, { entityType: "client_acces", entityId: form.id });
+                      setShowSecret((v) => !v);
+                    }}
                   >
                     {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
@@ -323,10 +386,27 @@ function AccesClients() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setForm(null)}>Annuler</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (form) logClic("acces_client.formulaire_annule", { organisme: form.organisme, libelle: form.libelle }, { entityType: "client_acces", entityId: form.id });
+                setForm(null);
+              }}
+            >
+              Annuler
+            </Button>
             <Button
               disabled={!form?.libelle || !form?.organisme || saveM.isPending}
-              onClick={() => form && saveM.mutate(form)}
+              onClick={() => {
+                if (!form) return;
+                logClic(form.id ? "acces_client.enregistrement_modification" : "acces_client.enregistrement_creation", {
+                  organisme: form.organisme,
+                  libelle: form.libelle,
+                  identifiant: form.identifiant || null,
+                  mot_de_passe_saisi: !!form.secret,
+                }, { entityType: "client_acces", entityId: form.id });
+                saveM.mutate(form);
+              }}
             >
               Enregistrer
             </Button>
