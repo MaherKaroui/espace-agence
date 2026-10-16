@@ -9,75 +9,99 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PolitiqueConfidentialiteRouteImport } from './routes/politique-confidentialite'
-import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as CguRouteImport } from './routes/cgu'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRendezVousRouteImport } from './routes/_authenticated/rendez-vous'
-import { Route as AuthenticatedPreferencesRouteImport } from './routes/_authenticated/preferences'
-import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
-import { Route as AuthenticatedMesDonneesRouteImport } from './routes/_authenticated/mes-donnees'
-import { Route as AuthenticatedGuideAssistantRouteImport } from './routes/_authenticated/guide-assistant'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CguRouteImport } from './routes/cgu'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MentionsLegalesRouteImport } from './routes/mentions-legales'
+import { Route as PolitiqueConfidentialiteRouteImport } from './routes/politique-confidentialite'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
-import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
-import { Route as AuthenticatedAuditsIndexRouteImport } from './routes/_authenticated/audits.index'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as OauthGoogleDriveReturnRouteImport } from './routes/oauth/google-drive/return'
-import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
-import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
-import { Route as AuthenticatedAuditsIdRouteImport } from './routes/_authenticated/audits.$id'
-import { Route as AuthenticatedAdminTachesAgenceRouteImport } from './routes/_authenticated/admin.taches-agence'
-import { Route as AuthenticatedAdminSlackImportRouteImport } from './routes/_authenticated/admin.slack-import'
-import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
-import { Route as AuthenticatedAdminRgpdRouteImport } from './routes/_authenticated/admin.rgpd'
-import { Route as AuthenticatedAdminRendezVousRouteImport } from './routes/_authenticated/admin.rendez-vous'
-import { Route as AuthenticatedAdminRapportsActiviteRouteImport } from './routes/_authenticated/admin.rapports-activite'
-import { Route as AuthenticatedAdminRapportEtIaRouteImport } from './routes/_authenticated/admin.rapport-et-ia'
-import { Route as AuthenticatedAdminPolesRouteImport } from './routes/_authenticated/admin.poles'
-import { Route as AuthenticatedAdminPiecesModelesRouteImport } from './routes/_authenticated/admin.pieces-modeles'
-import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin.notifications'
-import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin.equipe'
-import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
-import { Route as AuthenticatedAdminDirectionRouteImport } from './routes/_authenticated/admin.direction'
-import { Route as AuthenticatedAdminCalendrierQualiopiRouteImport } from './routes/_authenticated/admin.calendrier-qualiopi'
-import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
-import { Route as AuthenticatedAdminAgentIaRouteImport } from './routes/_authenticated/admin.agent-ia'
-import { Route as AuthenticatedAdminAccesClientsRouteImport } from './routes/_authenticated/admin.acces-clients'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedGuideAssistantRouteImport } from './routes/_authenticated/guide-assistant'
+import { Route as AuthenticatedMesDonneesRouteImport } from './routes/_authenticated/mes-donnees'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedPreferencesRouteImport } from './routes/_authenticated/preferences'
+import { Route as AuthenticatedRendezVousRouteImport } from './routes/_authenticated/rendez-vous'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
-import { Route as AuthenticatedMessagesGroupesIndexRouteImport } from './routes/_authenticated/messages.groupes.index'
-import { Route as AuthenticatedAdminMessagesIndexRouteImport } from './routes/_authenticated/admin.messages.index'
-import { Route as AuthenticatedAdminInternalMessagesIndexRouteImport } from './routes/_authenticated/admin.internal-messages.index'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminAccesClientsRouteImport } from './routes/_authenticated/admin.acces-clients'
+import { Route as AuthenticatedAdminAgentIaRouteImport } from './routes/_authenticated/admin.agent-ia'
+import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
+import { Route as AuthenticatedAdminCalendrierQualiopiRouteImport } from './routes/_authenticated/admin.calendrier-qualiopi'
+import { Route as AuthenticatedAdminDirectionRouteImport } from './routes/_authenticated/admin.direction'
+import { Route as AuthenticatedAdminDossiersRouteImport } from './routes/_authenticated/admin.dossiers'
+import { Route as AuthenticatedAdminEquipeRouteImport } from './routes/_authenticated/admin.equipe'
+import { Route as AuthenticatedAdminNotificationsRouteImport } from './routes/_authenticated/admin.notifications'
+import { Route as AuthenticatedAdminPiecesModelesRouteImport } from './routes/_authenticated/admin.pieces-modeles'
+import { Route as AuthenticatedAdminPolesRouteImport } from './routes/_authenticated/admin.poles'
+import { Route as AuthenticatedAdminRapportEtIaRouteImport } from './routes/_authenticated/admin.rapport-et-ia'
+import { Route as AuthenticatedAdminRapportsActiviteRouteImport } from './routes/_authenticated/admin.rapports-activite'
+import { Route as AuthenticatedAdminRendezVousRouteImport } from './routes/_authenticated/admin.rendez-vous'
+import { Route as AuthenticatedAdminRgpdRouteImport } from './routes/_authenticated/admin.rgpd'
+import { Route as AuthenticatedAdminSecurityRouteImport } from './routes/_authenticated/admin.security'
+import { Route as AuthenticatedAdminSlackImportRouteImport } from './routes/_authenticated/admin.slack-import'
+import { Route as AuthenticatedAdminTachesAgenceRouteImport } from './routes/_authenticated/admin.taches-agence'
+import { Route as AuthenticatedAuditsIndexRouteImport } from './routes/_authenticated/audits.index'
+import { Route as AuthenticatedAuditsIdRouteImport } from './routes/_authenticated/audits.$id'
+import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
+import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
+import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
+import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
+import { Route as OauthGoogleDriveReturnRouteImport } from './routes/oauth/google-drive/return'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin.clients.index'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as ApiPublicHooksSupervisionReportRouteImport } from './routes/api/public/hooks/supervision-report'
-import { Route as ApiPublicHooksSlackRobotRouteImport } from './routes/api/public/hooks/slack-robot'
-import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
-import { Route as ApiPublicHooksRapportActiviteRouteImport } from './routes/api/public/hooks/rapport-activite'
-import { Route as ApiPublicHooksPushFanoutRouteImport } from './routes/api/public/hooks/push-fanout'
-import { Route as ApiPublicHooksPurgeEphemeralRouteImport } from './routes/api/public/hooks/purge-ephemeral'
-import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
-import { Route as ApiPublicHooksAiSupervisorRouteImport } from './routes/api/public/hooks/ai-supervisor'
-import { Route as AuthenticatedMessagesGroupesIdRouteImport } from './routes/_authenticated/messages.groupes.$id'
-import { Route as AuthenticatedDossiersIdQualiopiRapportRouteImport } from './routes/_authenticated/dossiers.$id_.qualiopi-rapport'
-import { Route as AuthenticatedAuditsIdQualiopiRapportRouteImport } from './routes/_authenticated/audits.$id_.qualiopi-rapport'
-import { Route as AuthenticatedAdminMessagesClientIdRouteImport } from './routes/_authenticated/admin.messages.$clientId'
-import { Route as AuthenticatedAdminInternalMessagesIdRouteImport } from './routes/_authenticated/admin.internal-messages.$id'
-import { Route as AuthenticatedAdminDossiersIdRouteImport } from './routes/_authenticated/admin.dossiers.$id'
 import { Route as AuthenticatedAdminClientsIdRouteImport } from './routes/_authenticated/admin.clients.$id'
+import { Route as AuthenticatedAdminDossiersIdRouteImport } from './routes/_authenticated/admin.dossiers.$id'
+import { Route as AuthenticatedAdminInternalMessagesIndexRouteImport } from './routes/_authenticated/admin.internal-messages.index'
+import { Route as AuthenticatedAdminInternalMessagesIdRouteImport } from './routes/_authenticated/admin.internal-messages.$id'
+import { Route as AuthenticatedAdminMessagesIndexRouteImport } from './routes/_authenticated/admin.messages.index'
+import { Route as AuthenticatedAdminMessagesClientIdRouteImport } from './routes/_authenticated/admin.messages.$clientId'
+import { Route as AuthenticatedAuditsIdQualiopiRapportRouteImport } from './routes/_authenticated/audits.$id_.qualiopi-rapport'
+import { Route as AuthenticatedDossiersIdQualiopiRapportRouteImport } from './routes/_authenticated/dossiers.$id_.qualiopi-rapport'
+import { Route as AuthenticatedMessagesGroupesIndexRouteImport } from './routes/_authenticated/messages.groupes.index'
+import { Route as AuthenticatedMessagesGroupesIdRouteImport } from './routes/_authenticated/messages.groupes.$id'
+import { Route as ApiPublicHooksAiSupervisorRouteImport } from './routes/api/public/hooks/ai-supervisor'
+import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
+import { Route as ApiPublicHooksPurgeEphemeralRouteImport } from './routes/api/public/hooks/purge-ephemeral'
+import { Route as ApiPublicHooksPushFanoutRouteImport } from './routes/api/public/hooks/push-fanout'
+import { Route as ApiPublicHooksRapportActiviteRouteImport } from './routes/api/public/hooks/rapport-activite'
+import { Route as ApiPublicHooksRemindersRouteImport } from './routes/api/public/hooks/reminders'
+import { Route as ApiPublicHooksSlackRobotRouteImport } from './routes/api/public/hooks/slack-robot'
+import { Route as ApiPublicHooksSupervisionReportRouteImport } from './routes/api/public/hooks/supervision-report'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CguRoute = CguRouteImport.update({
+  id: '/cgu',
+  path: '/cgu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
+  id: '/mentions-legales',
+  path: '/mentions-legales',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PolitiqueConfidentialiteRoute =
@@ -86,55 +110,26 @@ const PolitiqueConfidentialiteRoute =
     path: '/politique-confidentialite',
     getParentRoute: () => rootRouteImport,
   } as any)
-const MentionsLegalesRoute = MentionsLegalesRouteImport.update({
-  id: '/mentions-legales',
-  path: '/mentions-legales',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CguRoute = CguRouteImport.update({
-  id: '/cgu',
-  path: '/cgu',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRendezVousRoute = AuthenticatedRendezVousRouteImport.update({
-  id: '/rendez-vous',
-  path: '/rendez-vous',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPreferencesRoute =
-  AuthenticatedPreferencesRouteImport.update({
-    id: '/preferences',
-    path: '/preferences',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedNotificationsRoute =
-  AuthenticatedNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedMesDonneesRoute = AuthenticatedMesDonneesRouteImport.update({
-  id: '/mes-donnees',
-  path: '/mes-donnees',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedGuideAssistantRoute =
@@ -143,134 +138,65 @@ const AuthenticatedGuideAssistantRoute =
     path: '/guide-assistant',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedMesDonneesRoute = AuthenticatedMesDonneesRouteImport.update({
+  id: '/mes-donnees',
+  path: '/mes-donnees',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPreferencesRoute =
+  AuthenticatedPreferencesRouteImport.update({
+    id: '/preferences',
+    path: '/preferences',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRendezVousRoute = AuthenticatedRendezVousRouteImport.update({
+  id: '/rendez-vous',
+  path: '/rendez-vous',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedMessagesIndexRoute =
-  AuthenticatedMessagesIndexRouteImport.update({
-    id: '/messages/',
-    path: '/messages/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDossiersIndexRoute =
-  AuthenticatedDossiersIndexRouteImport.update({
-    id: '/dossiers/',
-    path: '/dossiers/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAuditsIndexRoute =
-  AuthenticatedAuditsIndexRouteImport.update({
-    id: '/audits/',
-    path: '/audits/',
-    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const OauthGoogleDriveReturnRoute = OauthGoogleDriveReturnRouteImport.update({
-  id: '/oauth/google-drive/return',
-  path: '/oauth/google-drive/return',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
-  id: '/lovable/email/events',
-  path: '/lovable/email/events',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedDossiersIdRoute = AuthenticatedDossiersIdRouteImport.update({
-  id: '/dossiers/$id',
-  path: '/dossiers/$id',
+const AuthenticatedAdminAccesClientsRoute =
+  AuthenticatedAdminAccesClientsRouteImport.update({
+    id: '/admin/acces-clients',
+    path: '/admin/acces-clients',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminAgentIaRoute =
+  AuthenticatedAdminAgentIaRouteImport.update({
+    id: '/admin/agent-ia',
+    path: '/admin/agent-ia',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
+  id: '/admin/audit',
+  path: '/admin/audit',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAuditsIdRoute = AuthenticatedAuditsIdRouteImport.update({
-  id: '/audits/$id',
-  path: '/audits/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminTachesAgenceRoute =
-  AuthenticatedAdminTachesAgenceRouteImport.update({
-    id: '/admin/taches-agence',
-    path: '/admin/taches-agence',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminSlackImportRoute =
-  AuthenticatedAdminSlackImportRouteImport.update({
-    id: '/admin/slack-import',
-    path: '/admin/slack-import',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminSecurityRoute =
-  AuthenticatedAdminSecurityRouteImport.update({
-    id: '/admin/security',
-    path: '/admin/security',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminRgpdRoute = AuthenticatedAdminRgpdRouteImport.update({
-  id: '/admin/rgpd',
-  path: '/admin/rgpd',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminRendezVousRoute =
-  AuthenticatedAdminRendezVousRouteImport.update({
-    id: '/admin/rendez-vous',
-    path: '/admin/rendez-vous',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminRapportsActiviteRoute =
-  AuthenticatedAdminRapportsActiviteRouteImport.update({
-    id: '/admin/rapports-activite',
-    path: '/admin/rapports-activite',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminRapportEtIaRoute =
-  AuthenticatedAdminRapportEtIaRouteImport.update({
-    id: '/admin/rapport-et-ia',
-    path: '/admin/rapport-et-ia',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminPolesRoute = AuthenticatedAdminPolesRouteImport.update({
-  id: '/admin/poles',
-  path: '/admin/poles',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminPiecesModelesRoute =
-  AuthenticatedAdminPiecesModelesRouteImport.update({
-    id: '/admin/pieces-modeles',
-    path: '/admin/pieces-modeles',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminNotificationsRoute =
-  AuthenticatedAdminNotificationsRouteImport.update({
-    id: '/admin/notifications',
-    path: '/admin/notifications',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminEquipeRoute =
-  AuthenticatedAdminEquipeRouteImport.update({
-    id: '/admin/equipe',
-    path: '/admin/equipe',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminDossiersRoute =
-  AuthenticatedAdminDossiersRouteImport.update({
-    id: '/admin/dossiers',
-    path: '/admin/dossiers',
+const AuthenticatedAdminCalendrierQualiopiRoute =
+  AuthenticatedAdminCalendrierQualiopiRouteImport.update({
+    id: '/admin/calendrier-qualiopi',
+    path: '/admin/calendrier-qualiopi',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminDirectionRoute =
@@ -279,155 +205,124 @@ const AuthenticatedAdminDirectionRoute =
     path: '/admin/direction',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminCalendrierQualiopiRoute =
-  AuthenticatedAdminCalendrierQualiopiRouteImport.update({
-    id: '/admin/calendrier-qualiopi',
-    path: '/admin/calendrier-qualiopi',
+const AuthenticatedAdminDossiersRoute =
+  AuthenticatedAdminDossiersRouteImport.update({
+    id: '/admin/dossiers',
+    path: '/admin/dossiers',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
-  id: '/admin/audit',
-  path: '/admin/audit',
+const AuthenticatedAdminEquipeRoute =
+  AuthenticatedAdminEquipeRouteImport.update({
+    id: '/admin/equipe',
+    path: '/admin/equipe',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminNotificationsRoute =
+  AuthenticatedAdminNotificationsRouteImport.update({
+    id: '/admin/notifications',
+    path: '/admin/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminPiecesModelesRoute =
+  AuthenticatedAdminPiecesModelesRouteImport.update({
+    id: '/admin/pieces-modeles',
+    path: '/admin/pieces-modeles',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminPolesRoute = AuthenticatedAdminPolesRouteImport.update({
+  id: '/admin/poles',
+  path: '/admin/poles',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminAgentIaRoute =
-  AuthenticatedAdminAgentIaRouteImport.update({
-    id: '/admin/agent-ia',
-    path: '/admin/agent-ia',
+const AuthenticatedAdminRapportEtIaRoute =
+  AuthenticatedAdminRapportEtIaRouteImport.update({
+    id: '/admin/rapport-et-ia',
+    path: '/admin/rapport-et-ia',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminAccesClientsRoute =
-  AuthenticatedAdminAccesClientsRouteImport.update({
-    id: '/admin/acces-clients',
-    path: '/admin/acces-clients',
+const AuthenticatedAdminRapportsActiviteRoute =
+  AuthenticatedAdminRapportsActiviteRouteImport.update({
+    id: '/admin/rapports-activite',
+    path: '/admin/rapports-activite',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminRendezVousRoute =
+  AuthenticatedAdminRendezVousRouteImport.update({
+    id: '/admin/rendez-vous',
+    path: '/admin/rendez-vous',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
+const AuthenticatedAdminRgpdRoute = AuthenticatedAdminRgpdRouteImport.update({
+  id: '/admin/rgpd',
+  path: '/admin/rgpd',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminSecurityRoute =
+  AuthenticatedAdminSecurityRouteImport.update({
+    id: '/admin/security',
+    path: '/admin/security',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminSlackImportRoute =
+  AuthenticatedAdminSlackImportRouteImport.update({
+    id: '/admin/slack-import',
+    path: '/admin/slack-import',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminTachesAgenceRoute =
+  AuthenticatedAdminTachesAgenceRouteImport.update({
+    id: '/admin/taches-agence',
+    path: '/admin/taches-agence',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAuditsIndexRoute =
+  AuthenticatedAuditsIndexRouteImport.update({
+    id: '/audits/',
+    path: '/audits/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAuditsIdRoute = AuthenticatedAuditsIdRouteImport.update({
+  id: '/audits/$id',
+  path: '/audits/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDossiersIndexRoute =
+  AuthenticatedDossiersIndexRouteImport.update({
+    id: '/dossiers/',
+    path: '/dossiers/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDossiersIdRoute = AuthenticatedDossiersIdRouteImport.update({
+  id: '/dossiers/$id',
+  path: '/dossiers/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMessagesIndexRoute =
+  AuthenticatedMessagesIndexRouteImport.update({
+    id: '/messages/',
+    path: '/messages/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
+  id: '/lovable/email/events',
+  path: '/lovable/email/events',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedMessagesGroupesIndexRoute =
-  AuthenticatedMessagesGroupesIndexRouteImport.update({
-    id: '/messages/groupes/',
-    path: '/messages/groupes/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminMessagesIndexRoute =
-  AuthenticatedAdminMessagesIndexRouteImport.update({
-    id: '/admin/messages/',
-    path: '/admin/messages/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminInternalMessagesIndexRoute =
-  AuthenticatedAdminInternalMessagesIndexRouteImport.update({
-    id: '/admin/internal-messages/',
-    path: '/admin/internal-messages/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
+const OauthGoogleDriveReturnRoute = OauthGoogleDriveReturnRouteImport.update({
+  id: '/oauth/google-drive/return',
+  path: '/oauth/google-drive/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminClientsIndexRoute =
   AuthenticatedAdminClientsIndexRouteImport.update({
     id: '/admin/clients/',
     path: '/admin/clients/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksSupervisionReportRoute =
-  ApiPublicHooksSupervisionReportRouteImport.update({
-    id: '/api/public/hooks/supervision-report',
-    path: '/api/public/hooks/supervision-report',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksSlackRobotRoute =
-  ApiPublicHooksSlackRobotRouteImport.update({
-    id: '/api/public/hooks/slack-robot',
-    path: '/api/public/hooks/slack-robot',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
-  id: '/api/public/hooks/reminders',
-  path: '/api/public/hooks/reminders',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksRapportActiviteRoute =
-  ApiPublicHooksRapportActiviteRouteImport.update({
-    id: '/api/public/hooks/rapport-activite',
-    path: '/api/public/hooks/rapport-activite',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksPushFanoutRoute =
-  ApiPublicHooksPushFanoutRouteImport.update({
-    id: '/api/public/hooks/push-fanout',
-    path: '/api/public/hooks/push-fanout',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksPurgeEphemeralRoute =
-  ApiPublicHooksPurgeEphemeralRouteImport.update({
-    id: '/api/public/hooks/purge-ephemeral',
-    path: '/api/public/hooks/purge-ephemeral',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksHealthCheckRoute =
-  ApiPublicHooksHealthCheckRouteImport.update({
-    id: '/api/public/hooks/health-check',
-    path: '/api/public/hooks/health-check',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksAiSupervisorRoute =
-  ApiPublicHooksAiSupervisorRouteImport.update({
-    id: '/api/public/hooks/ai-supervisor',
-    path: '/api/public/hooks/ai-supervisor',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedMessagesGroupesIdRoute =
-  AuthenticatedMessagesGroupesIdRouteImport.update({
-    id: '/messages/groupes/$id',
-    path: '/messages/groupes/$id',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDossiersIdQualiopiRapportRoute =
-  AuthenticatedDossiersIdQualiopiRapportRouteImport.update({
-    id: '/dossiers/$id_/qualiopi-rapport',
-    path: '/dossiers/$id/qualiopi-rapport',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAuditsIdQualiopiRapportRoute =
-  AuthenticatedAuditsIdQualiopiRapportRouteImport.update({
-    id: '/audits/$id_/qualiopi-rapport',
-    path: '/audits/$id/qualiopi-rapport',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminMessagesClientIdRoute =
-  AuthenticatedAdminMessagesClientIdRouteImport.update({
-    id: '/admin/messages/$clientId',
-    path: '/admin/messages/$clientId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminInternalMessagesIdRoute =
-  AuthenticatedAdminInternalMessagesIdRouteImport.update({
-    id: '/admin/internal-messages/$id',
-    path: '/admin/internal-messages/$id',
+const AuthenticatedAdminClientsIdRoute =
+  AuthenticatedAdminClientsIdRouteImport.update({
+    id: '/admin/clients/$id',
+    path: '/admin/clients/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminDossiersIdRoute =
@@ -436,11 +331,116 @@ const AuthenticatedAdminDossiersIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedAdminDossiersRoute,
   } as any)
-const AuthenticatedAdminClientsIdRoute =
-  AuthenticatedAdminClientsIdRouteImport.update({
-    id: '/admin/clients/$id',
-    path: '/admin/clients/$id',
+const AuthenticatedAdminInternalMessagesIndexRoute =
+  AuthenticatedAdminInternalMessagesIndexRouteImport.update({
+    id: '/admin/internal-messages/',
+    path: '/admin/internal-messages/',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminInternalMessagesIdRoute =
+  AuthenticatedAdminInternalMessagesIdRouteImport.update({
+    id: '/admin/internal-messages/$id',
+    path: '/admin/internal-messages/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminMessagesIndexRoute =
+  AuthenticatedAdminMessagesIndexRouteImport.update({
+    id: '/admin/messages/',
+    path: '/admin/messages/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminMessagesClientIdRoute =
+  AuthenticatedAdminMessagesClientIdRouteImport.update({
+    id: '/admin/messages/$clientId',
+    path: '/admin/messages/$clientId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAuditsIdQualiopiRapportRoute =
+  AuthenticatedAuditsIdQualiopiRapportRouteImport.update({
+    id: '/audits/$id_/qualiopi-rapport',
+    path: '/audits/$id/qualiopi-rapport',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDossiersIdQualiopiRapportRoute =
+  AuthenticatedDossiersIdQualiopiRapportRouteImport.update({
+    id: '/dossiers/$id_/qualiopi-rapport',
+    path: '/dossiers/$id/qualiopi-rapport',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMessagesGroupesIndexRoute =
+  AuthenticatedMessagesGroupesIndexRouteImport.update({
+    id: '/messages/groupes/',
+    path: '/messages/groupes/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMessagesGroupesIdRoute =
+  AuthenticatedMessagesGroupesIdRouteImport.update({
+    id: '/messages/groupes/$id',
+    path: '/messages/groupes/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiPublicHooksAiSupervisorRoute =
+  ApiPublicHooksAiSupervisorRouteImport.update({
+    id: '/api/public/hooks/ai-supervisor',
+    path: '/api/public/hooks/ai-supervisor',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksHealthCheckRoute =
+  ApiPublicHooksHealthCheckRouteImport.update({
+    id: '/api/public/hooks/health-check',
+    path: '/api/public/hooks/health-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksPurgeEphemeralRoute =
+  ApiPublicHooksPurgeEphemeralRouteImport.update({
+    id: '/api/public/hooks/purge-ephemeral',
+    path: '/api/public/hooks/purge-ephemeral',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksPushFanoutRoute =
+  ApiPublicHooksPushFanoutRouteImport.update({
+    id: '/api/public/hooks/push-fanout',
+    path: '/api/public/hooks/push-fanout',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksRapportActiviteRoute =
+  ApiPublicHooksRapportActiviteRouteImport.update({
+    id: '/api/public/hooks/rapport-activite',
+    path: '/api/public/hooks/rapport-activite',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksRemindersRoute = ApiPublicHooksRemindersRouteImport.update({
+  id: '/api/public/hooks/reminders',
+  path: '/api/public/hooks/reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksSlackRobotRoute =
+  ApiPublicHooksSlackRobotRouteImport.update({
+    id: '/api/public/hooks/slack-robot',
+    path: '/api/public/hooks/slack-robot',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSupervisionReportRoute =
+  ApiPublicHooksSupervisionReportRouteImport.update({
+    id: '/api/public/hooks/supervision-report',
+    path: '/api/public/hooks/supervision-report',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -875,46 +875,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/politique-confidentialite': {
-      id: '/politique-confidentialite'
-      path: '/politique-confidentialite'
-      fullPath: '/politique-confidentialite'
-      preLoaderRoute: typeof PolitiqueConfidentialiteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mentions-legales': {
-      id: '/mentions-legales'
-      path: '/mentions-legales'
-      fullPath: '/mentions-legales'
-      preLoaderRoute: typeof MentionsLegalesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cgu': {
-      id: '/cgu'
-      path: '/cgu'
-      fullPath: '/cgu'
-      preLoaderRoute: typeof CguRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -924,60 +889,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/rendez-vous': {
-      id: '/_authenticated/rendez-vous'
-      path: '/rendez-vous'
-      fullPath: '/rendez-vous'
-      preLoaderRoute: typeof AuthenticatedRendezVousRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/cgu': {
+      id: '/cgu'
+      path: '/cgu'
+      fullPath: '/cgu'
+      preLoaderRoute: typeof CguRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/preferences': {
-      id: '/_authenticated/preferences'
-      path: '/preferences'
-      fullPath: '/preferences'
-      preLoaderRoute: typeof AuthenticatedPreferencesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/notifications': {
-      id: '/_authenticated/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/mentions-legales': {
+      id: '/mentions-legales'
+      path: '/mentions-legales'
+      fullPath: '/mentions-legales'
+      preLoaderRoute: typeof MentionsLegalesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/mes-donnees': {
-      id: '/_authenticated/mes-donnees'
-      path: '/mes-donnees'
-      fullPath: '/mes-donnees'
-      preLoaderRoute: typeof AuthenticatedMesDonneesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/politique-confidentialite': {
+      id: '/politique-confidentialite'
+      path: '/politique-confidentialite'
+      fullPath: '/politique-confidentialite'
+      preLoaderRoute: typeof PolitiqueConfidentialiteRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/guide-assistant': {
-      id: '/_authenticated/guide-assistant'
-      path: '/guide-assistant'
-      fullPath: '/guide-assistant'
-      preLoaderRoute: typeof AuthenticatedGuideAssistantRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -987,172 +938,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/messages/': {
-      id: '/_authenticated/messages/'
-      path: '/messages'
-      fullPath: '/messages/'
-      preLoaderRoute: typeof AuthenticatedMessagesIndexRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/dossiers/': {
-      id: '/_authenticated/dossiers/'
-      path: '/dossiers'
-      fullPath: '/dossiers/'
-      preLoaderRoute: typeof AuthenticatedDossiersIndexRouteImport
+    '/_authenticated/guide-assistant': {
+      id: '/_authenticated/guide-assistant'
+      path: '/guide-assistant'
+      fullPath: '/guide-assistant'
+      preLoaderRoute: typeof AuthenticatedGuideAssistantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/audits/': {
-      id: '/_authenticated/audits/'
-      path: '/audits'
-      fullPath: '/audits/'
-      preLoaderRoute: typeof AuthenticatedAuditsIndexRouteImport
+    '/_authenticated/mes-donnees': {
+      id: '/_authenticated/mes-donnees'
+      path: '/mes-donnees'
+      fullPath: '/mes-donnees'
+      preLoaderRoute: typeof AuthenticatedMesDonneesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/preferences': {
+      id: '/_authenticated/preferences'
+      path: '/preferences'
+      fullPath: '/preferences'
+      preLoaderRoute: typeof AuthenticatedPreferencesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rendez-vous': {
+      id: '/_authenticated/rendez-vous'
+      path: '/rendez-vous'
+      fullPath: '/rendez-vous'
+      preLoaderRoute: typeof AuthenticatedRendezVousRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/admin'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/oauth/google-drive/return': {
-      id: '/oauth/google-drive/return'
-      path: '/oauth/google-drive/return'
-      fullPath: '/oauth/google-drive/return'
-      preLoaderRoute: typeof OauthGoogleDriveReturnRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/events': {
-      id: '/lovable/email/events'
-      path: '/lovable/email/events'
-      fullPath: '/lovable/email/events'
-      preLoaderRoute: typeof LovableEmailEventsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/dossiers/$id': {
-      id: '/_authenticated/dossiers/$id'
-      path: '/dossiers/$id'
-      fullPath: '/dossiers/$id'
-      preLoaderRoute: typeof AuthenticatedDossiersIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/audits/$id': {
-      id: '/_authenticated/audits/$id'
-      path: '/audits/$id'
-      fullPath: '/audits/$id'
-      preLoaderRoute: typeof AuthenticatedAuditsIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/taches-agence': {
-      id: '/_authenticated/admin/taches-agence'
-      path: '/admin/taches-agence'
-      fullPath: '/admin/taches-agence'
-      preLoaderRoute: typeof AuthenticatedAdminTachesAgenceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/slack-import': {
-      id: '/_authenticated/admin/slack-import'
-      path: '/admin/slack-import'
-      fullPath: '/admin/slack-import'
-      preLoaderRoute: typeof AuthenticatedAdminSlackImportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/security': {
-      id: '/_authenticated/admin/security'
-      path: '/admin/security'
-      fullPath: '/admin/security'
-      preLoaderRoute: typeof AuthenticatedAdminSecurityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/rgpd': {
-      id: '/_authenticated/admin/rgpd'
-      path: '/admin/rgpd'
-      fullPath: '/admin/rgpd'
-      preLoaderRoute: typeof AuthenticatedAdminRgpdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/rendez-vous': {
-      id: '/_authenticated/admin/rendez-vous'
-      path: '/admin/rendez-vous'
-      fullPath: '/admin/rendez-vous'
-      preLoaderRoute: typeof AuthenticatedAdminRendezVousRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/rapports-activite': {
-      id: '/_authenticated/admin/rapports-activite'
-      path: '/admin/rapports-activite'
-      fullPath: '/admin/rapports-activite'
-      preLoaderRoute: typeof AuthenticatedAdminRapportsActiviteRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/rapport-et-ia': {
-      id: '/_authenticated/admin/rapport-et-ia'
-      path: '/admin/rapport-et-ia'
-      fullPath: '/admin/rapport-et-ia'
-      preLoaderRoute: typeof AuthenticatedAdminRapportEtIaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/poles': {
-      id: '/_authenticated/admin/poles'
-      path: '/admin/poles'
-      fullPath: '/admin/poles'
-      preLoaderRoute: typeof AuthenticatedAdminPolesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/pieces-modeles': {
-      id: '/_authenticated/admin/pieces-modeles'
-      path: '/admin/pieces-modeles'
-      fullPath: '/admin/pieces-modeles'
-      preLoaderRoute: typeof AuthenticatedAdminPiecesModelesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/notifications': {
-      id: '/_authenticated/admin/notifications'
-      path: '/admin/notifications'
-      fullPath: '/admin/notifications'
-      preLoaderRoute: typeof AuthenticatedAdminNotificationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/equipe': {
-      id: '/_authenticated/admin/equipe'
-      path: '/admin/equipe'
-      fullPath: '/admin/equipe'
-      preLoaderRoute: typeof AuthenticatedAdminEquipeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/dossiers': {
-      id: '/_authenticated/admin/dossiers'
-      path: '/admin/dossiers'
-      fullPath: '/admin/dossiers'
-      preLoaderRoute: typeof AuthenticatedAdminDossiersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/direction': {
-      id: '/_authenticated/admin/direction'
-      path: '/admin/direction'
-      fullPath: '/admin/direction'
-      preLoaderRoute: typeof AuthenticatedAdminDirectionRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/calendrier-qualiopi': {
-      id: '/_authenticated/admin/calendrier-qualiopi'
-      path: '/admin/calendrier-qualiopi'
-      fullPath: '/admin/calendrier-qualiopi'
-      preLoaderRoute: typeof AuthenticatedAdminCalendrierQualiopiRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/audit': {
-      id: '/_authenticated/admin/audit'
-      path: '/admin/audit'
-      fullPath: '/admin/audit'
-      preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/agent-ia': {
-      id: '/_authenticated/admin/agent-ia'
-      path: '/admin/agent-ia'
-      fullPath: '/admin/agent-ia'
-      preLoaderRoute: typeof AuthenticatedAdminAgentIaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/acces-clients': {
@@ -1162,40 +1015,166 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAccesClientsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/_authenticated/admin/agent-ia': {
+      id: '/_authenticated/admin/agent-ia'
+      path: '/admin/agent-ia'
+      fullPath: '/admin/agent-ia'
+      preLoaderRoute: typeof AuthenticatedAdminAgentIaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/audit': {
+      id: '/_authenticated/admin/audit'
+      path: '/admin/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/calendrier-qualiopi': {
+      id: '/_authenticated/admin/calendrier-qualiopi'
+      path: '/admin/calendrier-qualiopi'
+      fullPath: '/admin/calendrier-qualiopi'
+      preLoaderRoute: typeof AuthenticatedAdminCalendrierQualiopiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/direction': {
+      id: '/_authenticated/admin/direction'
+      path: '/admin/direction'
+      fullPath: '/admin/direction'
+      preLoaderRoute: typeof AuthenticatedAdminDirectionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/dossiers': {
+      id: '/_authenticated/admin/dossiers'
+      path: '/admin/dossiers'
+      fullPath: '/admin/dossiers'
+      preLoaderRoute: typeof AuthenticatedAdminDossiersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/equipe': {
+      id: '/_authenticated/admin/equipe'
+      path: '/admin/equipe'
+      fullPath: '/admin/equipe'
+      preLoaderRoute: typeof AuthenticatedAdminEquipeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/notifications': {
+      id: '/_authenticated/admin/notifications'
+      path: '/admin/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AuthenticatedAdminNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/pieces-modeles': {
+      id: '/_authenticated/admin/pieces-modeles'
+      path: '/admin/pieces-modeles'
+      fullPath: '/admin/pieces-modeles'
+      preLoaderRoute: typeof AuthenticatedAdminPiecesModelesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/poles': {
+      id: '/_authenticated/admin/poles'
+      path: '/admin/poles'
+      fullPath: '/admin/poles'
+      preLoaderRoute: typeof AuthenticatedAdminPolesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/rapport-et-ia': {
+      id: '/_authenticated/admin/rapport-et-ia'
+      path: '/admin/rapport-et-ia'
+      fullPath: '/admin/rapport-et-ia'
+      preLoaderRoute: typeof AuthenticatedAdminRapportEtIaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/rapports-activite': {
+      id: '/_authenticated/admin/rapports-activite'
+      path: '/admin/rapports-activite'
+      fullPath: '/admin/rapports-activite'
+      preLoaderRoute: typeof AuthenticatedAdminRapportsActiviteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/rendez-vous': {
+      id: '/_authenticated/admin/rendez-vous'
+      path: '/admin/rendez-vous'
+      fullPath: '/admin/rendez-vous'
+      preLoaderRoute: typeof AuthenticatedAdminRendezVousRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/rgpd': {
+      id: '/_authenticated/admin/rgpd'
+      path: '/admin/rgpd'
+      fullPath: '/admin/rgpd'
+      preLoaderRoute: typeof AuthenticatedAdminRgpdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/security': {
+      id: '/_authenticated/admin/security'
+      path: '/admin/security'
+      fullPath: '/admin/security'
+      preLoaderRoute: typeof AuthenticatedAdminSecurityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/slack-import': {
+      id: '/_authenticated/admin/slack-import'
+      path: '/admin/slack-import'
+      fullPath: '/admin/slack-import'
+      preLoaderRoute: typeof AuthenticatedAdminSlackImportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/taches-agence': {
+      id: '/_authenticated/admin/taches-agence'
+      path: '/admin/taches-agence'
+      fullPath: '/admin/taches-agence'
+      preLoaderRoute: typeof AuthenticatedAdminTachesAgenceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audits/': {
+      id: '/_authenticated/audits/'
+      path: '/audits'
+      fullPath: '/audits/'
+      preLoaderRoute: typeof AuthenticatedAuditsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audits/$id': {
+      id: '/_authenticated/audits/$id'
+      path: '/audits/$id'
+      fullPath: '/audits/$id'
+      preLoaderRoute: typeof AuthenticatedAuditsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dossiers/': {
+      id: '/_authenticated/dossiers/'
+      path: '/dossiers'
+      fullPath: '/dossiers/'
+      preLoaderRoute: typeof AuthenticatedDossiersIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dossiers/$id': {
+      id: '/_authenticated/dossiers/$id'
+      path: '/dossiers/$id'
+      fullPath: '/dossiers/$id'
+      preLoaderRoute: typeof AuthenticatedDossiersIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/messages/': {
+      id: '/_authenticated/messages/'
+      path: '/messages'
+      fullPath: '/messages/'
+      preLoaderRoute: typeof AuthenticatedMessagesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/lovable/email/events': {
+      id: '/lovable/email/events'
+      path: '/lovable/email/events'
+      fullPath: '/lovable/email/events'
+      preLoaderRoute: typeof LovableEmailEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+    '/oauth/google-drive/return': {
+      id: '/oauth/google-drive/return'
+      path: '/oauth/google-drive/return'
+      fullPath: '/oauth/google-drive/return'
+      preLoaderRoute: typeof OauthGoogleDriveReturnRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/messages/groupes/': {
-      id: '/_authenticated/messages/groupes/'
-      path: '/messages/groupes'
-      fullPath: '/messages/groupes/'
-      preLoaderRoute: typeof AuthenticatedMessagesGroupesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/messages/': {
-      id: '/_authenticated/admin/messages/'
-      path: '/admin/messages'
-      fullPath: '/admin/messages/'
-      preLoaderRoute: typeof AuthenticatedAdminMessagesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/internal-messages/': {
-      id: '/_authenticated/admin/internal-messages/'
-      path: '/admin/internal-messages'
-      fullPath: '/admin/internal-messages/'
-      preLoaderRoute: typeof AuthenticatedAdminInternalMessagesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/clients/': {
       id: '/_authenticated/admin/clients/'
@@ -1204,116 +1183,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminClientsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/supervision-report': {
-      id: '/api/public/hooks/supervision-report'
-      path: '/api/public/hooks/supervision-report'
-      fullPath: '/api/public/hooks/supervision-report'
-      preLoaderRoute: typeof ApiPublicHooksSupervisionReportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/slack-robot': {
-      id: '/api/public/hooks/slack-robot'
-      path: '/api/public/hooks/slack-robot'
-      fullPath: '/api/public/hooks/slack-robot'
-      preLoaderRoute: typeof ApiPublicHooksSlackRobotRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/reminders': {
-      id: '/api/public/hooks/reminders'
-      path: '/api/public/hooks/reminders'
-      fullPath: '/api/public/hooks/reminders'
-      preLoaderRoute: typeof ApiPublicHooksRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/rapport-activite': {
-      id: '/api/public/hooks/rapport-activite'
-      path: '/api/public/hooks/rapport-activite'
-      fullPath: '/api/public/hooks/rapport-activite'
-      preLoaderRoute: typeof ApiPublicHooksRapportActiviteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/push-fanout': {
-      id: '/api/public/hooks/push-fanout'
-      path: '/api/public/hooks/push-fanout'
-      fullPath: '/api/public/hooks/push-fanout'
-      preLoaderRoute: typeof ApiPublicHooksPushFanoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/purge-ephemeral': {
-      id: '/api/public/hooks/purge-ephemeral'
-      path: '/api/public/hooks/purge-ephemeral'
-      fullPath: '/api/public/hooks/purge-ephemeral'
-      preLoaderRoute: typeof ApiPublicHooksPurgeEphemeralRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/health-check': {
-      id: '/api/public/hooks/health-check'
-      path: '/api/public/hooks/health-check'
-      fullPath: '/api/public/hooks/health-check'
-      preLoaderRoute: typeof ApiPublicHooksHealthCheckRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/ai-supervisor': {
-      id: '/api/public/hooks/ai-supervisor'
-      path: '/api/public/hooks/ai-supervisor'
-      fullPath: '/api/public/hooks/ai-supervisor'
-      preLoaderRoute: typeof ApiPublicHooksAiSupervisorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/messages/groupes/$id': {
-      id: '/_authenticated/messages/groupes/$id'
-      path: '/messages/groupes/$id'
-      fullPath: '/messages/groupes/$id'
-      preLoaderRoute: typeof AuthenticatedMessagesGroupesIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dossiers/$id_/qualiopi-rapport': {
-      id: '/_authenticated/dossiers/$id_/qualiopi-rapport'
-      path: '/dossiers/$id/qualiopi-rapport'
-      fullPath: '/dossiers/$id/qualiopi-rapport'
-      preLoaderRoute: typeof AuthenticatedDossiersIdQualiopiRapportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/audits/$id_/qualiopi-rapport': {
-      id: '/_authenticated/audits/$id_/qualiopi-rapport'
-      path: '/audits/$id/qualiopi-rapport'
-      fullPath: '/audits/$id/qualiopi-rapport'
-      preLoaderRoute: typeof AuthenticatedAuditsIdQualiopiRapportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/messages/$clientId': {
-      id: '/_authenticated/admin/messages/$clientId'
-      path: '/admin/messages/$clientId'
-      fullPath: '/admin/messages/$clientId'
-      preLoaderRoute: typeof AuthenticatedAdminMessagesClientIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/internal-messages/$id': {
-      id: '/_authenticated/admin/internal-messages/$id'
-      path: '/admin/internal-messages/$id'
-      fullPath: '/admin/internal-messages/$id'
-      preLoaderRoute: typeof AuthenticatedAdminInternalMessagesIdRouteImport
+    '/_authenticated/admin/clients/$id': {
+      id: '/_authenticated/admin/clients/$id'
+      path: '/admin/clients/$id'
+      fullPath: '/admin/clients/$id'
+      preLoaderRoute: typeof AuthenticatedAdminClientsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/dossiers/$id': {
@@ -1323,12 +1197,138 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDossiersIdRouteImport
       parentRoute: typeof AuthenticatedAdminDossiersRoute
     }
-    '/_authenticated/admin/clients/$id': {
-      id: '/_authenticated/admin/clients/$id'
-      path: '/admin/clients/$id'
-      fullPath: '/admin/clients/$id'
-      preLoaderRoute: typeof AuthenticatedAdminClientsIdRouteImport
+    '/_authenticated/admin/internal-messages/': {
+      id: '/_authenticated/admin/internal-messages/'
+      path: '/admin/internal-messages'
+      fullPath: '/admin/internal-messages/'
+      preLoaderRoute: typeof AuthenticatedAdminInternalMessagesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/internal-messages/$id': {
+      id: '/_authenticated/admin/internal-messages/$id'
+      path: '/admin/internal-messages/$id'
+      fullPath: '/admin/internal-messages/$id'
+      preLoaderRoute: typeof AuthenticatedAdminInternalMessagesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/messages/': {
+      id: '/_authenticated/admin/messages/'
+      path: '/admin/messages'
+      fullPath: '/admin/messages/'
+      preLoaderRoute: typeof AuthenticatedAdminMessagesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/messages/$clientId': {
+      id: '/_authenticated/admin/messages/$clientId'
+      path: '/admin/messages/$clientId'
+      fullPath: '/admin/messages/$clientId'
+      preLoaderRoute: typeof AuthenticatedAdminMessagesClientIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audits/$id_/qualiopi-rapport': {
+      id: '/_authenticated/audits/$id_/qualiopi-rapport'
+      path: '/audits/$id/qualiopi-rapport'
+      fullPath: '/audits/$id/qualiopi-rapport'
+      preLoaderRoute: typeof AuthenticatedAuditsIdQualiopiRapportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dossiers/$id_/qualiopi-rapport': {
+      id: '/_authenticated/dossiers/$id_/qualiopi-rapport'
+      path: '/dossiers/$id/qualiopi-rapport'
+      fullPath: '/dossiers/$id/qualiopi-rapport'
+      preLoaderRoute: typeof AuthenticatedDossiersIdQualiopiRapportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/messages/groupes/': {
+      id: '/_authenticated/messages/groupes/'
+      path: '/messages/groupes'
+      fullPath: '/messages/groupes/'
+      preLoaderRoute: typeof AuthenticatedMessagesGroupesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/messages/groupes/$id': {
+      id: '/_authenticated/messages/groupes/$id'
+      path: '/messages/groupes/$id'
+      fullPath: '/messages/groupes/$id'
+      preLoaderRoute: typeof AuthenticatedMessagesGroupesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/hooks/ai-supervisor': {
+      id: '/api/public/hooks/ai-supervisor'
+      path: '/api/public/hooks/ai-supervisor'
+      fullPath: '/api/public/hooks/ai-supervisor'
+      preLoaderRoute: typeof ApiPublicHooksAiSupervisorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/health-check': {
+      id: '/api/public/hooks/health-check'
+      path: '/api/public/hooks/health-check'
+      fullPath: '/api/public/hooks/health-check'
+      preLoaderRoute: typeof ApiPublicHooksHealthCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/purge-ephemeral': {
+      id: '/api/public/hooks/purge-ephemeral'
+      path: '/api/public/hooks/purge-ephemeral'
+      fullPath: '/api/public/hooks/purge-ephemeral'
+      preLoaderRoute: typeof ApiPublicHooksPurgeEphemeralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/push-fanout': {
+      id: '/api/public/hooks/push-fanout'
+      path: '/api/public/hooks/push-fanout'
+      fullPath: '/api/public/hooks/push-fanout'
+      preLoaderRoute: typeof ApiPublicHooksPushFanoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/rapport-activite': {
+      id: '/api/public/hooks/rapport-activite'
+      path: '/api/public/hooks/rapport-activite'
+      fullPath: '/api/public/hooks/rapport-activite'
+      preLoaderRoute: typeof ApiPublicHooksRapportActiviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/reminders': {
+      id: '/api/public/hooks/reminders'
+      path: '/api/public/hooks/reminders'
+      fullPath: '/api/public/hooks/reminders'
+      preLoaderRoute: typeof ApiPublicHooksRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/slack-robot': {
+      id: '/api/public/hooks/slack-robot'
+      path: '/api/public/hooks/slack-robot'
+      fullPath: '/api/public/hooks/slack-robot'
+      preLoaderRoute: typeof ApiPublicHooksSlackRobotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/supervision-report': {
+      id: '/api/public/hooks/supervision-report'
+      path: '/api/public/hooks/supervision-report'
+      fullPath: '/api/public/hooks/supervision-report'
+      preLoaderRoute: typeof ApiPublicHooksSupervisionReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
