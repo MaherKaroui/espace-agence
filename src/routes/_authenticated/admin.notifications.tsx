@@ -66,7 +66,7 @@ const STATUS_META: Record<string, { label: string; cls: string; Icon: any }> = {
 
 function displayRecipient(email: string | null) {
   if (!email) return "—";
-  return email.replace(/@izisuivis\.com$/i, "@izi-business.com").replace(/@izibusiness\.com$/i, "@izi-business.com");
+  return email;
 }
 
 function displayError(message: string | null) {
@@ -110,7 +110,7 @@ function AdminNotifications() {
     queryFn: async () => {
       const { data, error } = await supabase.from("email_settings").select("*").eq("id", 1).maybeSingle();
       if (error) throw error;
-      return data ?? { id: 1, admin_email: "admin@izi-business.com", disabled_templates: [] as string[] };
+      return data ?? { id: 1, admin_email: "izibusinessnadine@gmail.com", disabled_templates: [] as string[] };
     },
   });
 
@@ -273,12 +273,12 @@ function AdminNotifications() {
             <div className="flex gap-2 max-w-md">
               <Input
                 type="email"
-                defaultValue={settings?.admin_email ?? "admin@izi-business.com"}
+                defaultValue={settings?.admin_email ?? "izibusinessnadine@gmail.com"}
                 onBlur={(e) => {
                   const v = e.target.value.trim();
                   if (v && v !== settings?.admin_email) saveSettings.mutate({ admin_email: v });
                 }}
-                placeholder="admin@izi-business.com"
+                placeholder="izibusinessnadine@gmail.com"
                 disabled={loadingSettings}
               />
             </div>

@@ -43,7 +43,7 @@ export interface RecipientResolution {
 }
 
 /** Adresse principale et adresse de secours du compte rendu. */
-export const ADMIN_EMAIL = "admin@izi-business.com";
+export const ADMIN_EMAIL = "izibusinessnadine@gmail.com";
 export const BACKUP_EMAIL = "izibusiness.consult@gmail.com";
 
 /** admin_email + report_recipients + secours, dédoublonnés, hors adresses supprimées. */
