@@ -8,6 +8,13 @@
       "when": 1792144922517,
       "tag": "0000_update_admin_email",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792399357034,
+      "tag": "0001_migration",
+      "breakpoints": true
     }
   ]
 }

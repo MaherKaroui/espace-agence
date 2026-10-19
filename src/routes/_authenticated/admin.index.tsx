@@ -26,7 +26,7 @@ function AdminDashboard() {
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("dossiers").select("statut"),
         supabase.from("documents").select("id", { count: "exact", head: true }),
-        supabase.from("messages").select("id", { count: "exact", head: true }),
+        supabase.from("messages").select("id", { count: "estimated", head: true }),
       ]);
       const dList = dossiers.data ?? [];
       return {
