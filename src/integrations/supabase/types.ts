@@ -406,6 +406,7 @@ export type Database = {
           slack_channel: string | null
           slack_message_ts: string | null
           source: string
+          telephone: string | null
           updated_at: string
           updated_by: string | null
           url: string | null
@@ -426,6 +427,7 @@ export type Database = {
           slack_channel?: string | null
           slack_message_ts?: string | null
           source?: string
+          telephone?: string | null
           updated_at?: string
           updated_by?: string | null
           url?: string | null
@@ -446,6 +448,7 @@ export type Database = {
           slack_channel?: string | null
           slack_message_ts?: string | null
           source?: string
+          telephone?: string | null
           updated_at?: string
           updated_by?: string | null
           url?: string | null
@@ -1849,6 +1852,7 @@ export type Database = {
       qualiopi_calendar_events: {
         Row: {
           audit_date: string | null
+          audit_date_end: string | null
           auditor_name: string | null
           auditor_user_id: string | null
           certificate_status: string | null
@@ -1872,6 +1876,7 @@ export type Database = {
         }
         Insert: {
           audit_date?: string | null
+          audit_date_end?: string | null
           auditor_name?: string | null
           auditor_user_id?: string | null
           certificate_status?: string | null
@@ -1895,6 +1900,7 @@ export type Database = {
         }
         Update: {
           audit_date?: string | null
+          audit_date_end?: string | null
           auditor_name?: string | null
           auditor_user_id?: string | null
           certificate_status?: string | null
