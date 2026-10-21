@@ -49,6 +49,7 @@ const EMPTY = {
   organisme: "",
   libelle: "",
   identifiant: "",
+  telephone: "",
   secret: "",
 };
 
@@ -105,6 +106,7 @@ function AccesClients() {
           organisme: input.organisme || null,
           libelle: input.libelle,
           identifiant: input.identifiant || null,
+          telephone: input.telephone || null,
           secret: input.secret || null,
         },
       }),
@@ -257,6 +259,11 @@ function AccesClients() {
                   <div className="mt-1 text-sm text-muted-foreground break-all">
                     E-mail : <span className="font-mono">{r.identifiant || "—"}</span>
                   </div>
+                  {r.telephone && (
+                    <div className="text-sm text-muted-foreground">
+                      Téléphone : <a href={`tel:${r.telephone}`} className="font-mono text-foreground hover:underline">{r.telephone}</a>
+                    </div>
+                  )}
                   <div className="text-sm text-muted-foreground">
                     Mot de passe :{" "}
                     {r.has_secret
@@ -283,6 +290,7 @@ function AccesClients() {
                       organisme: r.organisme ?? r.client_nom ?? "",
                       libelle: r.libelle,
                       identifiant: r.identifiant ?? "",
+                      telephone: r.telephone ?? "",
                       secret: "",
                     }); }}
                   >
@@ -355,6 +363,17 @@ function AccesClients() {
                   onChange={(e) => setForm({ ...form, identifiant: e.target.value })}
                   autoComplete="off"
                   placeholder="contact@alpha-formation.fr"
+                />
+              </div>
+              <div>
+                <Label htmlFor="a-tel">Numéro de téléphone</Label>
+                <Input
+                  id="a-tel"
+                  type="tel"
+                  value={form.telephone}
+                  onChange={(e) => setForm({ ...form, telephone: e.target.value })}
+                  autoComplete="off"
+                  placeholder="06 00 00 00 00"
                 />
               </div>
               <div>

@@ -11,6 +11,7 @@ const accesSchema = z.object({
   plateforme: z.string().nullish(),
   url: z.string().nullish(),
   identifiant: z.string().nullish(),
+  telephone: z.string().max(40).nullish(),
   secret: z.string().nullish(),
   clear_secret: z.boolean().optional(),
   notes: z.string().nullish(),

@@ -103,6 +103,7 @@ type CalEvent = {
   id: string;
   tuteur: string | null;
   audit_date: string | null;
+  audit_date_end?: string | null;
   organism_name: string;
   formation: string | null;
   auditor_name: string | null;
@@ -128,7 +129,7 @@ type Pending = {
 };
 
 const EVENT_COLUMNS =
-  "id, tuteur, audit_date, organism_name, formation, auditor_name, certifier_name, certifier_organization, certificate_status, notes_suivi, status, observation, dossier_id, color_tag, color_manual";
+  "id, tuteur, audit_date, audit_date_end, organism_name, formation, auditor_name, certifier_name, certifier_organization, certificate_status, notes_suivi, status, observation, dossier_id, color_tag, color_manual";
 
 function ym(d: Date) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; }
 
@@ -245,6 +246,7 @@ function CalendrierQualiopi() {
       const body: any = {
         tuteur: payload.tuteur || null,
         audit_date: payload.audit_date || null,
+        audit_date_end: payload.audit_date && payload.audit_date_end ? payload.audit_date_end.slice(0, 10) : null,
         organism_name: payload.organism_name,
         formation: payload.formation || null,
         auditor_name: payload.auditor_name || null,
@@ -435,9 +437,16 @@ function CalendrierQualiopi() {
   const byDay = new Map<string, CalEvent[]>();
   filtered.forEach((e) => {
     if (!e.audit_date) return;
-    const arr = byDay.get(e.audit_date) ?? [];
-    arr.push(e);
-    byDay.set(e.audit_date, arr);
+    const end = e.audit_date_end?.slice(0, 10);
+    const d = new Date(e.audit_date + "T12:00:00");
+    for (let i = 0; i < 31; i++) {
+      const key = fmtLocal(d);
+      const arr = byDay.get(key) ?? [];
+      arr.push(e);
+      byDay.set(key, arr);
+      if (!end || key >= end) break;
+      d.setDate(d.getDate() + 1);
+    }
   });
 
   return (
@@ -533,7 +542,7 @@ function CalendrierQualiopi() {
                     <td className="p-2 whitespace-nowrap align-middle">
                       <div className="flex items-center gap-2">
                         <span className={`inline-block h-3 w-3 rounded-full ${col ? COLOR_DOT[col] : "bg-transparent border border-border"}`} title={col ? COLOR_LABELS[col] : "Sans couleur"} />
-                        <span>{e.audit_date ?? "—"}</span>
+                        <span>{e.audit_date ?? "—"}{e.audit_date_end && e.audit_date_end.slice(0, 10) !== e.audit_date ? ` → ${e.audit_date_end.slice(0, 10)}` : ""}</span>
                       </div>
                     </td>
                     <td className="p-2 whitespace-nowrap text-muted-foreground">{jourFr(e.audit_date) || "—"}</td>
@@ -619,6 +628,7 @@ function CalendrierQualiopi() {
                 <tr key={e.id} className="border-t align-top">
                   <td className="p-2 whitespace-nowrap">
                     {e.audit_date ? dateFr(e.audit_date) : "—"}
+                    {e.audit_date_end && e.audit_date_end.slice(0, 10) !== e.audit_date && <> → {dateFr(e.audit_date_end.slice(0, 10))}</>}
                     {a.sinceAudit !== null && a.sinceAudit >= 0 && <div className="text-xs text-muted-foreground">il y a {a.sinceAudit} j</div>}
                   </td>
                   <td className="p-2 font-medium">{e.organism_name}</td>
@@ -734,9 +744,14 @@ function CalendrierQualiopi() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div><Label>Tuteur</Label><Input value={editEvent.tuteur ?? ""} onChange={(e) => setEditEvent({ ...editEvent, tuteur: e.target.value })} placeholder="Chanez (demande)…" /></div>
               <div>
-                <Label>Date d'audit</Label>
+                <Label>Date d'audit (du)</Label>
                 <Input type="date" value={editEvent.audit_date ?? ""} onChange={(e) => setEditEvent({ ...editEvent, audit_date: e.target.value || null })} />
                 <p className="text-xs text-muted-foreground mt-1">Vide = demande en cours, non planifiée.</p>
+              </div>
+              <div>
+                <Label>Au (date de fin, facultatif)</Label>
+                <Input type="date" min={editEvent.audit_date ?? undefined} value={editEvent.audit_date_end?.slice(0, 10) ?? ""} onChange={(e) => setEditEvent({ ...editEvent, audit_date_end: e.target.value || null })} />
+                <p className="text-xs text-muted-foreground mt-1">Pour un audit sur plusieurs jours.</p>
               </div>
               <div>
                 <Label>Statut</Label>

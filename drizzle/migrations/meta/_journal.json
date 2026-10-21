@@ -15,6 +15,13 @@
       "when": 1792399357034,
       "tag": "0001_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792569626894,
+      "tag": "0002_phone_and_audit_end",
+      "breakpoints": true
     }
   ]
 }
