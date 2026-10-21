@@ -12,6 +12,7 @@ export type AccesRow = {
   plateforme: string | null;
   url: string | null;
   identifiant: string | null;
+  telephone: string | null;
   notes: string | null;
   source: string;
   manual_locked: boolean;
@@ -24,7 +25,7 @@ export type AccesRow = {
 };
 
 const SELECT_COLS =
-  "id, client_id, dossier_id, organisme, libelle, plateforme, url, identifiant, notes, source, manual_locked, slack_channel, slack_message_ts, created_at, updated_at, secret_ciphertext, client:profiles!client_acces_client_id_fkey(prenom, nom, entreprise, email)";
+  "id, client_id, dossier_id, organisme, libelle, plateforme, url, identifiant, telephone, notes, source, manual_locked, slack_channel, slack_message_ts, created_at, updated_at, secret_ciphertext, client:profiles!client_acces_client_id_fkey(prenom, nom, entreprise, email)";
 
 function clientLabel(c: any): string | null {
   if (!c) return null;
@@ -63,6 +64,7 @@ export type AccesInput = {
   plateforme?: string | null;
   url?: string | null;
   identifiant?: string | null;
+  telephone?: string | null;
   secret?: string | null; // en clair, chiffré ici
   clear_secret?: boolean;
   notes?: string | null;
@@ -77,6 +79,7 @@ export async function saveAcces(supabase: any, userId: string, input: AccesInput
     plateforme: input.plateforme ?? null,
     url: input.url ?? null,
     identifiant: input.identifiant ?? null,
+    telephone: input.telephone ?? null,
     notes: input.notes ?? null,
     updated_by: userId,
   };
