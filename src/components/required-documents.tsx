@@ -118,12 +118,7 @@ function RequiredRow({
   const upload = useMutation({
     mutationFn: async (file: File) => {
       setBusy(true);
-      if (doc) {
-        if (doc.storage_path) {
-          await supabase.storage.from("documents").remove([doc.storage_path]);
-        }
-        await supabase.from("documents").delete().eq("id", doc.id);
-      }
+      const previous = doc;
       const ext = file.name.includes(".") ? file.name.split(".").pop()!.toLowerCase() : "bin";
       const renamed = `${req.key}.${ext}`;
       const path = `${dossierId}/${crypto.randomUUID()}-${renamed}`;
@@ -141,7 +136,19 @@ function RequiredRow({
         from_agence: isAdmin,
         detected_type: req.key,
       }).select("id").single();
-      if (error) throw error;
+      if (error) {
+        await supabase.storage.from("documents").remove([path]);
+        throw error;
+      }
+      // Remplacement : l'ancien document n'est supprimé qu'une fois le nouveau enregistré
+      if (previous) {
+        if (previous.storage_path) {
+          const { error: rmErr } = await supabase.storage.from("documents").remove([previous.storage_path]);
+          if (rmErr) console.warn("[required-documents] ancien document non supprimé", rmErr);
+        }
+        const { error: delErr } = await supabase.from("documents").delete().eq("id", previous.id);
+        if (delErr) console.warn("[required-documents] ancien document non supprimé", delErr);
+      }
       // Classement automatique dans le Drive de l'agence (non bloquant)
       if (inserted?.id) {
         autoFileDrive({ data: { documentId: inserted.id } }).catch((e: unknown) =>
