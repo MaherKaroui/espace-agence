@@ -11,6 +11,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { useDroppable } from "@dnd-kit/core";
 import { toast } from "sonner";
+import { ofContactError } from "@/lib/organisme-contact";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Clock, FileText, MessageSquare, GripVertical } from "lucide-react";
@@ -283,6 +284,13 @@ export function DossiersKanbanBoard({
     const dossier = byId.get(activeCardId);
     const previousStatut = dossier?.statut;
     const newStatut = statusForLane(targetLane);
+
+    // Un dossier sans coordonnées OF n'avance pas (exigence d'audit Qualiopi).
+    const contactError = dossier ? ofContactError(dossier.organisme_email, dossier.organisme_telephone) : null;
+    if (contactError) {
+      toast.error("Déplacement bloqué", { description: `${contactError} — complétez les coordonnées de l'OF dans le dossier.` });
+      return;
+    }
 
     const targetIds = columns[targetLane].map((d) => d.id);
     const insertAt = overId.startsWith("lane:") ? targetIds.length : Math.max(0, targetIds.indexOf(overId));

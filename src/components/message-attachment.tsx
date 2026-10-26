@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { FileText, Image as ImageIcon, Download } from "lucide-react";
-import { attachmentKind, isPdfAttachment, downloadConversationFile } from "@/lib/conversation-files";
+import { attachmentKind, isPdfAttachment, downloadConversationFile, signPathBatched } from "@/lib/conversation-files";
 
 /**
  * Rendu unique d'une pièce jointe dans une bulle de message,
  * partagé par les trois messageries (client, groupe, interne).
  * L'URL signée est mise en cache par react-query (50 min) pour éviter
- * une requête de signature à chaque re-rendu.
+ * une requête de signature à chaque re-rendu, et les signatures des bulles
+ * affichées ensemble partent en un seul appel (signPathBatched).
  */
 export function MessageAttachment({
   bucket,
@@ -33,11 +33,7 @@ export function MessageAttachment({
     staleTime: 50 * 60 * 1000,
     gcTime: 55 * 60 * 1000,
     retry: 1,
-    queryFn: async () => {
-      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
-      if (error || !data?.signedUrl) throw error ?? new Error("Fichier introuvable");
-      return data.signedUrl;
-    },
+    queryFn: () => signPathBatched(bucket, path, 3600),
   });
 
   return (
