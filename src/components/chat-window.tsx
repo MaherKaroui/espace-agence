@@ -75,7 +75,7 @@ function sanitizeSearch(term: string): string {
 
 export function ChatWindow({ clientId, title }: { clientId: string; title?: string }) {
   const { user } = useAuth();
-  const { isAdmin, isStaff } = useRole();
+  const { isAdmin, isStaff, loading: roleLoading } = useRole();
   const qc = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -275,9 +275,13 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
 
   // Accusés de lecture — une seule fois par message, sans relancer de boucle.
   useEffect(() => {
-    if (!user || isSearching) return;
+    if (!user || isSearching || roleLoading) return;
     const unread = messages.filter(
-      (m) => !m.read_at && m.sender_id !== user.id && !markedReadRef.current.has(m.id),
+      (m) =>
+        !m.read_at &&
+        m.sender_id !== user.id &&
+        m.from_agence !== isStaff &&
+        !markedReadRef.current.has(m.id),
     );
     if (unread.length === 0) return;
     for (const m of unread) markedReadRef.current.add(m.id);
@@ -286,7 +290,7 @@ export function ChatWindow({ clientId, title }: { clientId: string; title?: stri
       .update({ read_at: new Date().toISOString(), read_by: user.id } as any)
       .in("id", unread.map((m) => m.id))
       .then();
-  }, [messages, user, isSearching]);
+  }, [messages, user, isSearching, isStaff, roleLoading]);
 
   const send = useMutation({
     mutationFn: async ({ content, file }: { content: string; file?: File }) => {
