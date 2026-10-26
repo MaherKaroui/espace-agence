@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { categorieLabel, statutsFor } from "@/lib/labels";
 import { buildDossierTitre } from "@/lib/dossier-title";
+import { ofContactError, ofEmailError, ofTelephoneError } from "@/lib/organisme-contact";
 import { ArrowLeft, Upload, Download, Trash2, FileText, Image as ImageIcon, Film, Loader2, LifeBuoy, MessageSquare, Eye, Link2, Send } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -394,7 +395,18 @@ function DossierDetail() {
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Statut</label>
-              <Select defaultValue={dossier.statut} onValueChange={(v) => updateDossier.mutate({ statut: v })}>
+              <Select
+                value={dossier.statut}
+                onValueChange={(v) => {
+                  // Un dossier sans coordonnées OF n'avance pas (exigence d'audit Qualiopi).
+                  const contactError = ofContactError((dossier as any).organisme_email, (dossier as any).organisme_telephone);
+                  if (contactError) {
+                    toast.error("Changement de statut bloqué", { description: `${contactError} — complétez les coordonnées de l'OF.` });
+                    return;
+                  }
+                  updateDossier.mutate({ statut: v });
+                }}
+              >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {statutsFor(dossier.categorie).map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
@@ -505,9 +517,15 @@ function DossierDetail() {
               defaultValue={(dossier as any).organisme_email ?? ""}
               onBlur={(e) => {
                 const v = e.target.value.trim() || null;
-                if (v !== ((dossier as any).organisme_email ?? null)) updateDossier.mutate({ organisme_email: v } as any);
+                if (v === ((dossier as any).organisme_email ?? null)) return;
+                const err = ofEmailError(v);
+                if (err) { toast.error(err); e.target.value = (dossier as any).organisme_email ?? ""; return; }
+                updateDossier.mutate({ organisme_email: v } as any);
               }}
             />
+            {ofEmailError((dossier as any).organisme_email) && (
+              <p className="text-xs text-warning mt-1">⚠️ {ofEmailError((dossier as any).organisme_email)} — obligatoire pour l'audit.</p>
+            )}
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Téléphone de l'OF</label>
@@ -517,9 +535,15 @@ function DossierDetail() {
               defaultValue={(dossier as any).organisme_telephone ?? ""}
               onBlur={(e) => {
                 const v = e.target.value.trim() || null;
-                if (v !== ((dossier as any).organisme_telephone ?? null)) updateDossier.mutate({ organisme_telephone: v } as any);
+                if (v === ((dossier as any).organisme_telephone ?? null)) return;
+                const err = ofTelephoneError(v);
+                if (err) { toast.error(err); e.target.value = (dossier as any).organisme_telephone ?? ""; return; }
+                updateDossier.mutate({ organisme_telephone: v } as any);
               }}
             />
+            {ofTelephoneError((dossier as any).organisme_telephone) && (
+              <p className="text-xs text-warning mt-1">⚠️ {ofTelephoneError((dossier as any).organisme_telephone)} — obligatoire pour l'audit.</p>
+            )}
           </div>
         </div>
 

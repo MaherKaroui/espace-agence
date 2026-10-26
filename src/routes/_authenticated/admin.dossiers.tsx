@@ -195,7 +195,7 @@ function AdminDossiers() {
       // inutile de rapatrier les JSON `stagiaires` et les commentaires.
       const { data: dossiers, error } = await supabase
         .from("dossiers")
-        .select("id, titre, categorie, statut, avancement, pole_id, client_id, created_at, updated_at, archived_at")
+        .select("id, titre, categorie, statut, avancement, pole_id, client_id, created_at, updated_at, archived_at, organisme_email, organisme_telephone")
         .order("updated_at", { ascending: false });
       if (error) throw error;
       const dossierRows = dossiers ?? [];

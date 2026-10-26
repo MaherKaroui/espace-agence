@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/status-badge";
 import { CATEGORIES, JURIDIQUE_TYPES, categorieLabel, requiredDocsFor } from "@/lib/labels";
 import { buildDossierTitre, baseTitreFor } from "@/lib/dossier-title";
+import { ofContactError } from "@/lib/organisme-contact";
 import { computeNextAction } from "@/lib/next-action";
 import { computeAvancement, etapesLabel, toTaches } from "@/lib/dossier-progress";
 import { cn } from "@/lib/utils";
@@ -181,6 +182,8 @@ function DossiersPage() {
     if (categorie === "juridique" && !juridique_type) {
       toast.error("Choisissez le type juridique"); return;
     }
+    const contactError = ofContactError(organisme_email, organisme_telephone);
+    if (contactError) { toast.error(contactError); return; }
     const titre = buildDossierTitre(categorie, organisme_nom, juridique_type);
     create.mutate({ titre, categorie, pole_id, description, organisme_nom, organisme_email, organisme_telephone, site_web, juridique_type });
   };
@@ -361,12 +364,12 @@ function DossiersPage() {
                   <div className="font-medium text-sm">Coordonnées de l'organisme de formation</div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <Label htmlFor="of-email-admin">E-mail de l'OF</Label>
-                      <Input id="of-email-admin" name="organisme_email" type="email" />
+                      <Label htmlFor="of-email-admin">E-mail de l'OF <span className="text-destructive">*</span></Label>
+                      <Input id="of-email-admin" name="organisme_email" type="email" required aria-required="true" />
                     </div>
                     <div>
-                      <Label htmlFor="of-tel-admin">Téléphone de l'OF</Label>
-                      <Input id="of-tel-admin" name="organisme_telephone" type="tel" />
+                      <Label htmlFor="of-tel-admin">Téléphone de l'OF <span className="text-destructive">*</span></Label>
+                      <Input id="of-tel-admin" name="organisme_telephone" type="tel" required aria-required="true" />
                     </div>
                     <div className="sm:col-span-2">
                       <Label htmlFor="of-site-admin">Site web</Label>
@@ -630,7 +633,8 @@ function ClientRequestWizard({
   const removeStagiaire = (i: number) =>
     setStagiaires((l) => l.filter((_, idx) => idx !== i));
 
-  const canSubmitQualiopi = isQualiopi && organismeNom.trim().length > 0 && auditType && scopes.length > 0;
+  const contactError = ofContactError(organismeEmail, organismeTelephone);
+  const canSubmitQualiopi = isQualiopi && organismeNom.trim().length > 0 && !contactError && auditType && scopes.length > 0;
 
   const ofContact = {
     organisme_nom: organismeNom.trim(),
@@ -658,13 +662,13 @@ function ClientRequestWizard({
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <Label htmlFor="of-email">E-mail de l'OF</Label>
-          <Input id="of-email" type="email" value={organismeEmail}
+          <Label htmlFor="of-email">E-mail de l'OF <span className="text-destructive">*</span></Label>
+          <Input id="of-email" type="email" required aria-required="true" value={organismeEmail}
             onChange={(e) => setOrganismeEmail(e.target.value)} placeholder="contact@monorganisme.fr" />
         </div>
         <div>
-          <Label htmlFor="of-tel">Téléphone de l'OF</Label>
-          <Input id="of-tel" type="tel" value={organismeTelephone}
+          <Label htmlFor="of-tel">Téléphone de l'OF <span className="text-destructive">*</span></Label>
+          <Input id="of-tel" type="tel" required aria-required="true" value={organismeTelephone}
             onChange={(e) => setOrganismeTelephone(e.target.value)} placeholder="06 12 34 56 78" />
         </div>
         <div className="sm:col-span-2">
@@ -673,6 +677,9 @@ function ClientRequestWizard({
             onChange={(e) => setSiteWeb(e.target.value)} placeholder="https://monorganisme.fr" />
         </div>
       </div>
+      {contactError && (organismeEmail.trim() || organismeTelephone.trim()) && (
+        <p className="text-xs text-destructive" role="alert">{contactError}</p>
+      )}
       {categorie && organismeNom.trim() && (
         <p className="text-xs text-muted-foreground">
           Titre généré : <span className="font-medium text-foreground">{buildDossierTitre(categorie, organismeNom, juridiqueType)}</span>
@@ -939,6 +946,7 @@ function ClientRequestWizard({
               disabled={
                 pending
                 || organismeNom.trim().length === 0
+                || !!contactError
                 || (categorie === "juridique" && !juridiqueType)
               }
               onClick={() => onSubmit(categorie, description.trim(), {

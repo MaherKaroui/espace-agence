@@ -60,15 +60,19 @@ export function GroupChatWindow({
   });
 
   const messageIds = useMemo(() => messages.map((m) => m.id), [messages]);
+  const messageIdSetRef = useRef<Set<string>>(new Set());
+  messageIdSetRef.current = useMemo(() => new Set(messageIds), [messageIds]);
 
   const { data: reads = [] } = useQuery({
     queryKey: ["group-message-reads", conversationId, messageIds.length],
     enabled: messageIds.length > 0,
     queryFn: async () => {
+      // Filtre par conversation (jointure) plutôt qu'un IN sur tous les ids :
+      // l'URL restait énorme et la requête lente sur les longues discussions.
       const { data, error } = await supabase
         .from("group_message_reads")
-        .select("*")
-        .in("message_id", messageIds);
+        .select("*, group_messages!inner(conversation_id)")
+        .eq("group_messages.conversation_id", conversationId);
       if (error) throw error;
       return data ?? [];
     },
@@ -97,7 +101,14 @@ export function GroupChatWindow({
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "group_message_reads" },
-        () => qc.invalidateQueries({ queryKey: ["group-message-reads", conversationId] }),
+        // La table n'a pas de conversation_id filtrable : on ignore les lectures
+        // des autres discussions, sinon chaque lecture rechargeait toutes les fenêtres.
+        (payload) => {
+          const messageId = (payload.new as { message_id?: string } | null)?.message_id;
+          if (messageId && messageIdSetRef.current.has(messageId)) {
+            qc.invalidateQueries({ queryKey: ["group-message-reads", conversationId] });
+          }
+        },
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };

@@ -30,19 +30,14 @@ function AdminRgpdPage() {
   const { data: requests } = useQuery({
     queryKey: ["admin-deletion-requests"],
     queryFn: async () => {
+      // Pas de clé étrangère vers profiles : une jointure PostgREST répond 400.
+      // Les profils sont récupérés séparément ci-dessous.
       const { data, error } = await supabase
         .from("deletion_requests")
-        .select("*, profile:profiles!deletion_requests_user_id_fkey(id, nom, prenom, email)")
+        .select("*")
         .order("requested_at", { ascending: false });
-      // Le foreign key n'existe pas, on récupère les profils séparément
-      if (error) {
-        const { data: fallback } = await supabase
-          .from("deletion_requests")
-          .select("*")
-          .order("requested_at", { ascending: false });
-        return fallback ?? [];
-      }
-      return data;
+      if (error) throw error;
+      return data ?? [];
     },
     enabled: isAdmin,
   });

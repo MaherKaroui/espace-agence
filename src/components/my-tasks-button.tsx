@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ListChecks } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -129,19 +129,32 @@ export function MyTasksButton() {
     },
   });
 
-  // Temps réel
+  // Temps réel — ce bouton est monté sur toutes les pages : on ne recharge
+  // que pour les tâches qui me concernent, pas à chaque modification de l'agence.
+  const taskIdsRef = useRef<Set<string>>(new Set());
+  taskIdsRef.current = useMemo(() => new Set(tasks.map((t) => t.id)), [tasks]);
   useEffect(() => {
     if (!user || !isStaff) return;
-    const channel = supabase.channel(`my-tasks-${user.id}-${Math.random().toString(36).slice(2)}`);
+    const uid = user.id;
+    const refresh = () => qc.invalidateQueries({ queryKey: ["my-agency-tasks", uid] });
+    const channel = supabase.channel(`my-tasks-${uid}-${Math.random().toString(36).slice(2)}`);
     channel.on(
       "postgres_changes",
       { event: "*", schema: "public", table: "agency_tasks" },
-      () => qc.invalidateQueries({ queryKey: ["my-agency-tasks", user.id] }),
+      (payload) => {
+        const row = payload.new as { id?: string; assigned_to?: string | null } | null;
+        const id = row?.id ?? (payload.old as { id?: string } | null)?.id;
+        if (row?.assigned_to === uid || (id && taskIdsRef.current.has(id))) refresh();
+      },
     );
     channel.on(
       "postgres_changes",
       { event: "*", schema: "public", table: "agency_task_assignees" },
-      () => qc.invalidateQueries({ queryKey: ["my-agency-tasks", user.id] }),
+      (payload) => {
+        // Clé primaire (task_id, user_id) : user_id est présent même sur DELETE.
+        const rows = [payload.new, payload.old] as Array<{ user_id?: string } | null>;
+        if (rows.some((r) => r?.user_id === uid)) refresh();
+      },
     );
     channel.subscribe();
     return () => { supabase.removeChannel(channel); };

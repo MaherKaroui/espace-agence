@@ -68,6 +68,54 @@ export async function signPathsInBatch(
   return map;
 }
 
+// Regroupement des signatures demandées au même moment (ouverture d'une
+// discussion = des dizaines de pièces jointes montées ensemble) : un seul
+// appel createSignedUrls par bucket au lieu d'un appel par fichier, qui
+// saturait le Storage (504/544) et retardait toutes les autres requêtes.
+const SIGN_BATCH_WINDOW_MS = 15;
+const SIGN_BATCH_MAX = 100;
+type PendingSign = { resolve: (url: string) => void; reject: (e: unknown) => void };
+const pendingSigns = new Map<string, Map<string, PendingSign[]>>();
+
+async function flushSignBatch(bucket: string, expiresIn: number) {
+  const key = `${bucket}|${expiresIn}`;
+  const batch = pendingSigns.get(key);
+  pendingSigns.delete(key);
+  if (!batch) return;
+  const paths = Array.from(batch.keys());
+  for (let i = 0; i < paths.length; i += SIGN_BATCH_MAX) {
+    const chunk = paths.slice(i, i + SIGN_BATCH_MAX);
+    try {
+      const urls = await signPathsInBatch(bucket, chunk, expiresIn);
+      for (const p of chunk) {
+        const url = urls.get(p);
+        for (const w of batch.get(p) ?? []) {
+          if (url) w.resolve(url);
+          else w.reject(new Error("Fichier introuvable"));
+        }
+      }
+    } catch (e) {
+      for (const p of chunk) for (const w of batch.get(p) ?? []) w.reject(e);
+    }
+  }
+}
+
+/** URL signée d'un fichier, mutualisée avec les autres demandes du même instant. */
+export function signPathBatched(bucket: string, path: string, expiresIn = 3600): Promise<string> {
+  const key = `${bucket}|${expiresIn}`;
+  let batch = pendingSigns.get(key);
+  if (!batch) {
+    batch = new Map();
+    pendingSigns.set(key, batch);
+    setTimeout(() => void flushSignBatch(bucket, expiresIn), SIGN_BATCH_WINDOW_MS);
+  }
+  return new Promise((resolve, reject) => {
+    const waiters = batch!.get(path) ?? [];
+    waiters.push({ resolve, reject });
+    batch!.set(path, waiters);
+  });
+}
+
 export async function fetchConversationFiles(
   scope: ConversationScope,
   opts: { limit: number; offset: number },
