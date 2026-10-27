@@ -78,7 +78,7 @@ function PoleCertificationPage() {
       ) : (
         <Tabs value={vue} onValueChange={(v) => setVue(v as Vue)} className="space-y-4">
           <div className="space-y-3">
-            <TabsList className="max-w-full overflow-x-auto justify-start">
+            <TabsList className="w-fit sm:justify-start">
               <TabsTrigger value="tableau-de-bord">Tableau de bord</TabsTrigger>
               <TabsTrigger value="tableau">Tableau</TabsTrigger>
               <TabsTrigger value="kanban">Colonnes</TabsTrigger>
