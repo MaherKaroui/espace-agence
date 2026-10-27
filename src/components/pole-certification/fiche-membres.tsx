@@ -34,7 +34,7 @@ export function FicheMembres({ ctx }: { ctx: FicheCtx }) {
 
   return (
     <Card className="p-4 space-y-3">
-      <h3 className="text-xs uppercase tracking-wider text-gold">Personnes affectées</h3>
+      <h3 className="font-medium">Personnes affectées</h3>
       <ul className="space-y-1.5 text-sm">
         <li className="flex items-center justify-between gap-2">
           <span>{personName(ctx.profiles.get(ctx.dossier.responsable_id))}</span>

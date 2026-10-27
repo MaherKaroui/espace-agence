@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { AlertTriangle, CalendarClock, FileWarning, FolderOpen, Hourglass, XCircle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   addDaysIso, currentEtapes, docState, dossierState, etapeTone, frDate, frDateTime, personName, todayIso,
@@ -19,7 +19,8 @@ function endOfWeek(today: string) {
 
 interface TodoItem { key: string; dossier: PcDossier; date: string; label: string; detail: string; tone: Parameters<typeof PcStatusBadge>[0]["tone"]; responsable: string }
 
-export function PcDashboard({ dossiers, etapes, documents, profiles }: PcViewProps) {
+/** `onPickStatut` : un clic sur un compteur ouvre le tableau filtré sur ce statut. */
+export function PcDashboard({ dossiers, etapes, documents, profiles, onPickStatut }: PcViewProps & { onPickStatut?: (statut: string) => void }) {
   const today = todayIso();
   const weekEnd = endOfWeek(today);
   const month = today.slice(0, 7);
@@ -66,39 +67,47 @@ export function PcDashboard({ dossiers, etapes, documents, profiles }: PcViewPro
   }, [dossiers, etapes, documents, today, weekEnd, month]);
 
   const counters = [
-    { label: "Dossiers en cours", value: data.enCours, icon: FolderOpen, cls: "text-blue-600 dark:text-blue-400" },
-    { label: "En attente de réponse", value: data.enAttente, icon: Hourglass, cls: "text-yellow-600 dark:text-yellow-300" },
-    { label: "Refusés / en recours", value: data.refuses, icon: XCircle, cls: "text-red-600 dark:text-red-400" },
-    { label: "Étapes validées ce mois-ci", value: data.validesMois, icon: CheckCircle2, cls: "text-green-600 dark:text-green-400" },
+    { label: "Dossiers en cours", value: data.enCours, statut: "all" },
+    { label: "En attente de réponse", value: data.enAttente, statut: "en_attente" },
+    { label: "Refusés ou en recours", value: data.refuses, statut: "refuse" },
+    { label: "Étapes validées ce mois-ci", value: data.validesMois, statut: null },
   ];
+  const row = "flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md px-2 py-2 -mx-2 hover:bg-muted/60 active:bg-muted transition-colors";
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {counters.map((c) => (
-          <Card key={c.label} className="p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">{c.label}</p>
-              <c.icon className={`h-4 w-4 ${c.cls}`} aria-hidden />
-            </div>
-            <p className="text-3xl font-semibold mt-1 tabular-nums">{c.value}</p>
-          </Card>
-        ))}
-      </div>
+      <Card className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 overflow-hidden p-0">
+        {counters.map((c) => {
+          const body = (
+            <>
+              <span className="block text-3xl font-semibold tabular-nums tracking-tight">{c.value}</span>
+              <span className="block text-sm text-muted-foreground mt-0.5">{c.label}</span>
+            </>
+          );
+          return c.statut && onPickStatut ? (
+            <button key={c.label} type="button" onClick={() => onPickStatut(c.statut!)}
+              className="text-left p-4 hover:bg-muted/50 active:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
+              {body}
+            </button>
+          ) : (
+            <div key={c.label} className="p-4">{body}</div>
+          );
+        })}
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4 space-y-3">
-          <h2 className="font-medium flex items-center gap-2"><CalendarClock className="h-4 w-4" /> À faire aujourd'hui / cette semaine <span className="text-muted-foreground text-sm">({data.todoCount})</span></h2>
+          <h2 className="font-medium">À faire cette semaine <span className="text-muted-foreground font-normal tabular-nums">{data.todoCount}</span></h2>
           {data.todoCount === 0 ? (
-            <p className="text-sm text-muted-foreground">Rien de prévu d'ici dimanche.</p>
+            <p className="text-sm text-muted-foreground">Rien de prévu d'ici dimanche : aucune échéance, visio ou expiration de lien.</p>
           ) : (
             [...data.todoByResp.entries()].map(([resp, items]) => (
               <div key={resp} className="space-y-1.5">
-                <p className="text-xs uppercase tracking-wider text-gold">{personName(profiles.get(resp))}</p>
+                <p className="text-sm font-medium text-muted-foreground">{personName(profiles.get(resp))}</p>
                 <ul className="space-y-1.5">
                   {items.map((t) => (
                     <li key={t.key}>
-                      <Link to="/pole-certification/$id" params={{ id: t.dossier.id }} className="flex flex-wrap items-center gap-2 rounded-md border p-2 hover:bg-muted/50">
+                      <Link to="/pole-certification/$id" params={{ id: t.dossier.id }} className={row}>
                         <span className={`text-xs font-medium tabular-nums ${t.date === today ? "text-gold" : "text-muted-foreground"}`}>{t.date === today ? "Aujourd'hui" : frDate(t.date)}</span>
                         <span className="text-sm font-medium truncate">{t.dossier.titre}</span>
                         <span className="text-xs text-muted-foreground w-full sm:w-auto truncate">{t.label} · {t.detail}</span>
@@ -113,7 +122,7 @@ export function PcDashboard({ dossiers, etapes, documents, profiles }: PcViewPro
         </Card>
 
         <Card className="p-4 space-y-3">
-          <h2 className="font-medium flex items-center gap-2"><FileWarning className="h-4 w-4" /> Documents qui expirent bientôt <span className="text-muted-foreground text-sm">({data.docsAlerte.length})</span></h2>
+          <h2 className="font-medium">Documents qui expirent bientôt <span className="text-muted-foreground font-normal tabular-nums">{data.docsAlerte.length}</span></h2>
           {data.docsAlerte.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aucune pièce périmée ou à moins de 15 jours de péremption.</p>
           ) : (
@@ -122,7 +131,7 @@ export function PcDashboard({ dossiers, etapes, documents, profiles }: PcViewPro
                 const d = data.byId.get(doc.dossier_id)!;
                 return (
                   <li key={doc.id}>
-                    <Link to="/pole-certification/$id" params={{ id: d.id }} className="flex flex-wrap items-center gap-2 rounded-md border p-2 hover:bg-muted/50">
+                    <Link to="/pole-certification/$id" params={{ id: d.id }} className={row}>
                       <span className="text-sm font-medium">{doc.nom}</span>
                       <span className="text-xs text-muted-foreground truncate">{d.titre} · péremption {frDate(doc.date_peremption)}</span>
                       <span className="ml-auto flex items-center gap-2">
@@ -138,8 +147,11 @@ export function PcDashboard({ dossiers, etapes, documents, profiles }: PcViewPro
         </Card>
       </div>
 
-      <Card className="p-4 space-y-3 border-red-500/40">
-        <h2 className="font-medium flex items-center gap-2 text-red-700 dark:text-red-300"><AlertTriangle className="h-4 w-4" /> Dossiers en retard <span className="text-sm">({data.retards.length})</span></h2>
+      <Card className={`p-4 space-y-3 ${data.retards.length ? "border-red-500/40" : ""}`}>
+        <h2 className={`font-medium flex items-center gap-2 ${data.retards.length ? "text-red-700 dark:text-red-300" : ""}`}>
+          {data.retards.length > 0 && <AlertTriangle className="h-4 w-4" aria-hidden />}
+          Dossiers en retard <span className="font-normal tabular-nums opacity-70">{data.retards.length}</span>
+        </h2>
         {data.retards.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aucune échéance dépassée.</p>
         ) : (
@@ -148,7 +160,7 @@ export function PcDashboard({ dossiers, etapes, documents, profiles }: PcViewPro
               const s = data.states.get(d.id)!;
               return (
                 <li key={d.id}>
-                  <Link to="/pole-certification/$id" params={{ id: d.id }} className="block rounded-md border border-red-500/40 bg-red-500/10 p-2 hover:bg-red-500/15">
+                  <Link to="/pole-certification/$id" params={{ id: d.id }} className="block rounded-md border border-red-500/30 bg-red-500/5 p-2 hover:bg-red-500/10 active:bg-red-500/15 transition-colors">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium truncate">{d.titre}</span>
                       <PcStatusBadge tone="retard" className="ml-auto" />

@@ -1,5 +1,10 @@
+import { SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
   PC_STATUTS, personName, dossierState,
@@ -41,25 +46,29 @@ export function PcFilters({
   const set = (patch: Partial<PcFilterValues>) => onChange({ ...value, ...patch });
   const responsables = Array.from(new Set(dossiers.map((d) => d.responsable_id)));
   const certificateurs = Array.from(new Set(dossiers.map((d) => d.certificateur).filter(Boolean) as string[])).sort();
+  const extra = (value.certificateur !== "all" ? 1 : 0) + (value.du || value.au ? 1 : 0) + (value.archives ? 1 : 0);
+  const active = JSON.stringify(value) !== JSON.stringify(PC_FILTERS_DEFAULT);
+
   return (
-    <div className="grid gap-2 grid-cols-2 md:grid-cols-4 xl:grid-cols-7 items-end">
-      <Select value={value.type} onValueChange={(v) => set({ type: v })}>
-        <SelectTrigger aria-label="Type"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Tous les types</SelectItem>
-          <SelectItem value="certificateur">Certificateur</SelectItem>
-          <SelectItem value="edof">EDOF</SelectItem>
-        </SelectContent>
-      </Select>
+    <div className="flex flex-wrap items-center gap-2">
+      <Tabs value={value.type} onValueChange={(v) => set({ type: v })}>
+        <TabsList aria-label="Type de dossier">
+          <TabsTrigger value="all">Tous</TabsTrigger>
+          <TabsTrigger value="certificateur">Certificateur</TabsTrigger>
+          <TabsTrigger value="edof">EDOF</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <Select value={value.responsable} onValueChange={(v) => set({ responsable: v })}>
-        <SelectTrigger aria-label="Responsable"><SelectValue /></SelectTrigger>
+        <SelectTrigger aria-label="Responsable" className="h-9 w-auto min-w-[11rem]"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Tous les responsables</SelectItem>
           {responsables.map((id) => <SelectItem key={id} value={id}>{personName(profiles.get(id))}</SelectItem>)}
         </SelectContent>
       </Select>
+
       <Select value={value.statut} onValueChange={(v) => set({ statut: v })}>
-        <SelectTrigger aria-label="Statut"><SelectValue /></SelectTrigger>
+        <SelectTrigger aria-label="Statut" className="h-9 w-auto min-w-[10rem]"><SelectValue /></SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Tous les statuts</SelectItem>
           {PC_STATUTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
@@ -67,21 +76,44 @@ export function PcFilters({
           <SelectItem value="termine">Terminé</SelectItem>
         </SelectContent>
       </Select>
-      <Select value={value.certificateur} onValueChange={(v) => set({ certificateur: v })}>
-        <SelectTrigger aria-label="Certificateur"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Tous les certificateurs</SelectItem>
-          {certificateurs.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-        </SelectContent>
-      </Select>
-      <Input type="date" aria-label="Période du" value={value.du} onChange={(e) => set({ du: e.target.value })} />
-      <Input type="date" aria-label="Période au" value={value.au} onChange={(e) => set({ au: e.target.value })} />
-      <div className="flex gap-2 col-span-2 md:col-span-1">
-        <Button type="button" variant={value.archives ? "secondary" : "outline"} size="sm" className="flex-1" onClick={() => set({ archives: !value.archives })}>
-          {value.archives ? "Avec archives" : "Sans archives"}
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button type="button" variant="outline" size="sm" className="h-9">
+            <SlidersHorizontal className="h-4 w-4 mr-1.5" />
+            Plus de filtres{extra > 0 && <span className="ml-1.5 rounded-full bg-primary text-primary-foreground px-1.5 text-xs tabular-nums">{extra}</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-72 space-y-3">
+          <div className="grid gap-1.5">
+            <Label>Certificateur</Label>
+            <Select value={value.certificateur} onValueChange={(v) => set({ certificateur: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les certificateurs</SelectItem>
+                {certificateurs.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Prochaine échéance entre</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input type="date" aria-label="Du" value={value.du} onChange={(e) => set({ du: e.target.value })} />
+              <Input type="date" aria-label="Au" value={value.au} onChange={(e) => set({ au: e.target.value })} />
+            </div>
+          </div>
+          <label className="flex items-center justify-between gap-3 text-sm">
+            Afficher les dossiers archivés
+            <Switch checked={value.archives} onCheckedChange={(v) => set({ archives: v })} />
+          </label>
+        </PopoverContent>
+      </Popover>
+
+      {active && (
+        <Button type="button" variant="ghost" size="sm" className="h-9 text-muted-foreground" onClick={() => onChange(PC_FILTERS_DEFAULT)}>
+          Réinitialiser
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={() => onChange(PC_FILTERS_DEFAULT)}>Réinitialiser</Button>
-      </div>
+      )}
     </div>
   );
 }

@@ -13,11 +13,26 @@ export function PcStatusBadge({ tone, label, className }: { tone: PcTone; label?
   );
 }
 
+/** Légende discrète : pastille + libellé, affichée seulement là où la couleur porte l'information. */
 export function PcLegend() {
-  const tones: PcTone[] = ["a_faire", "en_cours", "en_attente", "valide", "refuse", "recours", "a_recommencer", "retard", "bientot"];
+  // Code couleurs du cahier des charges (§9).
+  const items: [PcTone, string][] = [
+    ["a_faire", "À faire"],
+    ["en_cours", "En cours"],
+    ["en_attente", "En attente de réponse"],
+    ["valide", "Validé"],
+    ["refuse", "Refusé ou en retard"],
+    ["recours", "Recours"],
+    ["a_recommencer", "À recommencer ou pièce qui expire"],
+  ];
   return (
-    <div className="flex flex-wrap gap-1.5" aria-label="Code couleurs">
-      {tones.map((t) => <PcStatusBadge key={t} tone={t} />)}
-    </div>
+    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground" aria-label="Code couleurs">
+      {items.map(([t, label]) => (
+        <li key={t} className="flex items-center gap-1.5">
+          <span className={cn("h-2 w-2 rounded-full", PC_TONES[t].dot)} aria-hidden />
+          {label}
+        </li>
+      ))}
+    </ul>
   );
 }

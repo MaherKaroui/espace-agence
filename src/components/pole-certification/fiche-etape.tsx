@@ -406,7 +406,7 @@ function CollectePieces({ ctx }: { ctx: FicheCtx }) {
   const envoi = currentEtapes(ctx.etapes).find((x) => x.bloque_si_piece_perimee)?.date_echeance ?? null;
   return (
     <div className="rounded-md border p-3 space-y-1.5">
-      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <p className="text-sm font-medium text-muted-foreground">
         Pièces attendues {envoi ? `— envoi prévu le ${frDate(envoi)}` : "— fixez l'échéance de l'étape « Déposer les documents » pour vérifier la validité à l'envoi"}
       </p>
       <ul className="space-y-1 text-sm">

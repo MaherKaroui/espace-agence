@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext, DragOverlay, PointerSensor, TouchSensor, KeyboardSensor, useSensor, useSensors,
   useDraggable, useDroppable, closestCorners, type DragStartEvent, type DragEndEvent,
@@ -36,6 +36,17 @@ export function PcKanban({ dossiers, etapes, documents, membres, profiles }: PcV
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Étapes types : intitulés des colonnes même quand aucun dossier n'est encore à cette étape.
+  const { data: modeles = [] } = useQuery({
+    queryKey: ["pc-etape-modeles", type],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("pc_etape_modeles").select("ordre, intitule").eq("dossier_type", type).eq("actif", true).order("ordre");
+      if (error) throw error;
+      return (data ?? []) as { ordre: number; intitule: string }[];
+    },
+  });
+
   const { columns, cards } = useMemo(() => {
     const today = todayIso();
     const list = dossiers.filter((d) => d.type === type);
@@ -46,7 +57,7 @@ export function PcKanban({ dossiers, etapes, documents, membres, profiles }: PcV
       return { d, s: dossierState(d, etapes, documents, today), steps, draggable: canWrite };
     });
     // Libellé de colonne = intitulé le plus fréquent à cette position.
-    const max = Math.max(0, ...cards.map((c) => c.steps.length));
+    const max = Math.max(modeles.length, ...cards.map((c) => c.steps.length));
     const columns: string[] = [];
     for (let i = 0; i < max; i++) {
       const counts = new Map<string, number>();
@@ -54,11 +65,12 @@ export function PcKanban({ dossiers, etapes, documents, membres, profiles }: PcV
         const e = c.steps[i];
         if (e) counts.set(`${e.ordre}. ${e.intitule}`, (counts.get(`${e.ordre}. ${e.intitule}`) ?? 0) + 1);
       }
-      columns.push([...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? `Étape ${i + 1}`);
+      const m = modeles[i];
+      columns.push([...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? (m ? `${m.ordre}. ${m.intitule}` : `Étape ${i + 1}`));
     }
     columns.push("Terminé");
     return { columns, cards };
-  }, [dossiers, etapes, documents, membres, type, user, isDirectionOrAdmin]);
+  }, [dossiers, etapes, documents, membres, type, user, isDirectionOrAdmin, modeles]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -110,7 +122,7 @@ export function PcKanban({ dossiers, etapes, documents, membres, profiles }: PcV
           <TabsTrigger value="edof">EDOF ({dossiers.filter((d) => d.type === "edof").length})</TabsTrigger>
         </TabsList>
       </Tabs>
-      <p className="text-xs text-muted-foreground">Faites glisser une carte vers la droite pour valider les étapes correspondantes (confirmation demandée).</p>
+      <p className="text-xs text-muted-foreground">Glissez une carte vers la droite pour valider ses étapes. Une confirmation est demandée.</p>
 
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActiveId(null)}>
         <div className="flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth [-webkit-overflow-scrolling:touch]">
@@ -150,13 +162,14 @@ export function PcKanban({ dossiers, etapes, documents, membres, profiles }: PcV
 function Column({ index, label, cards, profiles, activeId }: { index: number; label: string; cards: CardData[]; profiles: PcViewProps["profiles"]; activeId: string | null }) {
   const { setNodeRef, isOver } = useDroppable({ id: `col:${index}` });
   return (
-    <div ref={setNodeRef} className={cn("snap-start shrink-0 w-[260px] sm:w-[280px] rounded-lg border bg-muted/30 flex flex-col", isOver && "ring-2 ring-gold")}>
-      <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
+    <div ref={setNodeRef} className={cn("snap-start shrink-0 w-[260px] sm:w-[280px] rounded-xl bg-muted/40 flex flex-col transition-colors", isOver && "bg-gold/10 ring-2 ring-gold")}>
+      <div className="px-3 pt-3 pb-1 flex items-start justify-between gap-2">
         <span className="text-xs font-medium line-clamp-2" title={label}>{label}</span>
         <span className="text-xs text-muted-foreground tabular-nums">{cards.length}</span>
       </div>
       <div className="p-2 space-y-2 min-h-[120px]">
         {cards.map((c) => <DraggableCard key={c.d.id} card={c} profiles={profiles} hidden={activeId === c.d.id} />)}
+        {cards.length === 0 && <p className="text-xs text-muted-foreground/70 px-1 py-2">Aucun dossier à cette étape.</p>}
       </div>
     </div>
   );
@@ -175,7 +188,7 @@ function KanbanCard({ card, profiles, handle, overlay }: { card: CardData; profi
   const { d, s } = card;
   const t = PC_TONES[s.tone];
   return (
-    <div className={cn("rounded-md border bg-card p-2.5 text-sm shadow-sm border-l-4", overlay && "shadow-lg rotate-1")} style={{ borderLeftColor: t.hex }}>
+    <div className={cn("rounded-lg border bg-card p-3 text-sm shadow-sm border-l-4 transition-shadow motion-reduce:transition-none", overlay && "shadow-xl scale-[1.02] motion-reduce:scale-100")} style={{ borderLeftColor: t.hex }}>
       <div className="flex items-start gap-1">
         <Link to="/pole-certification/$id" params={{ id: d.id }} className="font-medium leading-snug hover:underline flex-1 min-w-0">{d.titre}</Link>
         {handle && (

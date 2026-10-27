@@ -143,7 +143,7 @@ function Fiche({ ctx, parent, enfants }: { ctx: FicheCtx; parent: Pick<PcDossier
               {state.docsPerimes && <PcStatusBadge tone="refuse" label="Pièce périmée" />}
               {!state.docsPerimes && state.docsBientot && <PcStatusBadge tone="bientot" label="Pièce qui expire bientôt" />}
             </div>
-            <InlineText value={d.titre} disabled={!ctx.canWrite} className="font-display text-2xl" required
+            <InlineText value={d.titre} disabled={!ctx.canWrite} className="font-display text-3xl leading-tight tracking-[-0.01em]" required
               onSave={(v) => update({ titre: v })} ariaLabel="Titre du dossier" />
             <p className="text-xs text-muted-foreground">
               Créé le {frDate(d.created_at)} par {personName(ctx.profiles.get(d.created_by))}
