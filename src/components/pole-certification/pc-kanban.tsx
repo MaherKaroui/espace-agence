@@ -42,7 +42,7 @@ export function PcKanban({ dossiers, etapes, documents, membres, profiles }: PcV
 
   // Étapes types : intitulés des colonnes même quand aucun dossier n'est encore à cette étape.
   const { data: modeles = [] } = useQuery({
-    queryKey: ["pc-etape-modeles", type],
+    queryKey: ["pc-etape-modeles", type, "colonnes"],
     staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data, error } = await (supabase as any).from("pc_etape_modeles").select("ordre, intitule").eq("dossier_type", type).eq("actif", true).order("ordre");
