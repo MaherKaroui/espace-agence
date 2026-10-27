@@ -31,7 +31,11 @@ export function PcKanban({ dossiers, etapes, documents, membres, profiles }: PcV
   const { user } = useAuth();
   const { isDirectionOrAdmin } = useRole();
   const qc = useQueryClient();
-  const [type, setType] = useState<PcType>(() => (dossiers.some((d) => d.type === "certificateur") || !dossiers.length ? "certificateur" : "edof"));
+  const [choix, setType] = useState<PcType>(() => (dossiers.some((d) => d.type === "certificateur") || !dossiers.length ? "certificateur" : "edof"));
+  // Si le filtre « type » ne laisse qu'un seul type, les colonnes le suivent sans second sélecteur.
+  const typesPresents = new Set(dossiers.map((d) => d.type));
+  const typeUnique = typesPresents.size === 1 ? [...typesPresents][0] : null;
+  const type: PcType = typeUnique ?? choix;
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
@@ -116,12 +120,12 @@ export function PcKanban({ dossiers, etapes, documents, membres, profiles }: PcV
 
   return (
     <div className="space-y-3">
-      <Tabs value={type} onValueChange={(v) => setType(v as PcType)}>
-        <TabsList>
+      {!typeUnique && <Tabs value={type} onValueChange={(v) => setType(v as PcType)}>
+        <TabsList className="w-fit sm:justify-start">
           <TabsTrigger value="certificateur">Certificateur ({dossiers.filter((d) => d.type === "certificateur").length})</TabsTrigger>
           <TabsTrigger value="edof">EDOF ({dossiers.filter((d) => d.type === "edof").length})</TabsTrigger>
         </TabsList>
-      </Tabs>
+      </Tabs>}
       <p className="text-xs text-muted-foreground">Glissez une carte vers la droite pour valider ses étapes. Une confirmation est demandée.</p>
 
       <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActiveId(null)}>
