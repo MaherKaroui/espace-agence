@@ -50,6 +50,9 @@ import { Route as AuthenticatedAuditsIdRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDossiersIndexRouteImport } from './routes/_authenticated/dossiers.index'
 import { Route as AuthenticatedDossiersIdRouteImport } from './routes/_authenticated/dossiers.$id'
 import { Route as AuthenticatedMessagesIndexRouteImport } from './routes/_authenticated/messages.index'
+import { Route as AuthenticatedPoleCertificationIndexRouteImport } from './routes/_authenticated/pole-certification.index'
+import { Route as AuthenticatedPoleCertificationIdRouteImport } from './routes/_authenticated/pole-certification.$id'
+import { Route as AuthenticatedPoleCertificationParametresRouteImport } from './routes/_authenticated/pole-certification.parametres'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as OauthGoogleDriveReturnRouteImport } from './routes/oauth/google-drive/return'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin.clients.index'
@@ -65,6 +68,7 @@ import { Route as AuthenticatedMessagesGroupesIndexRouteImport } from './routes/
 import { Route as AuthenticatedMessagesGroupesIdRouteImport } from './routes/_authenticated/messages.groupes.$id'
 import { Route as ApiPublicHooksAiSupervisorRouteImport } from './routes/api/public/hooks/ai-supervisor'
 import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
+import { Route as ApiPublicHooksPoleCertificationRemindersRouteImport } from './routes/api/public/hooks/pole-certification-reminders'
 import { Route as ApiPublicHooksPurgeEphemeralRouteImport } from './routes/api/public/hooks/purge-ephemeral'
 import { Route as ApiPublicHooksPushFanoutRouteImport } from './routes/api/public/hooks/push-fanout'
 import { Route as ApiPublicHooksRapportActiviteRouteImport } from './routes/api/public/hooks/rapport-activite'
@@ -303,6 +307,24 @@ const AuthenticatedMessagesIndexRoute =
     path: '/messages/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPoleCertificationIndexRoute =
+  AuthenticatedPoleCertificationIndexRouteImport.update({
+    id: '/pole-certification/',
+    path: '/pole-certification/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPoleCertificationIdRoute =
+  AuthenticatedPoleCertificationIdRouteImport.update({
+    id: '/pole-certification/$id',
+    path: '/pole-certification/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPoleCertificationParametresRoute =
+  AuthenticatedPoleCertificationParametresRouteImport.update({
+    id: '/pole-certification/parametres',
+    path: '/pole-certification/parametres',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
   id: '/lovable/email/events',
   path: '/lovable/email/events',
@@ -389,6 +411,12 @@ const ApiPublicHooksHealthCheckRoute =
   ApiPublicHooksHealthCheckRouteImport.update({
     id: '/api/public/hooks/health-check',
     path: '/api/public/hooks/health-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksPoleCertificationRemindersRoute =
+  ApiPublicHooksPoleCertificationRemindersRouteImport.update({
+    id: '/api/public/hooks/pole-certification-reminders',
+    path: '/api/public/hooks/pole-certification-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksPurgeEphemeralRoute =
@@ -480,12 +508,15 @@ export interface FileRoutesByFullPath {
   '/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
+  '/pole-certification/$id': typeof AuthenticatedPoleCertificationIdRoute
+  '/pole-certification/parametres': typeof AuthenticatedPoleCertificationParametresRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/audits/': typeof AuthenticatedAuditsIndexRoute
   '/dossiers/': typeof AuthenticatedDossiersIndexRoute
   '/messages/': typeof AuthenticatedMessagesIndexRoute
+  '/pole-certification/': typeof AuthenticatedPoleCertificationIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/dossiers/$id': typeof AuthenticatedAdminDossiersIdRoute
   '/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
@@ -495,6 +526,7 @@ export interface FileRoutesByFullPath {
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/api/public/hooks/ai-supervisor': typeof ApiPublicHooksAiSupervisorRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
+  '/api/public/hooks/pole-certification-reminders': typeof ApiPublicHooksPoleCertificationRemindersRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/rapport-activite': typeof ApiPublicHooksRapportActiviteRoute
@@ -546,12 +578,15 @@ export interface FileRoutesByTo {
   '/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/dossiers/$id': typeof AuthenticatedDossiersIdRoute
+  '/pole-certification/$id': typeof AuthenticatedPoleCertificationIdRoute
+  '/pole-certification/parametres': typeof AuthenticatedPoleCertificationParametresRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/audits': typeof AuthenticatedAuditsIndexRoute
   '/dossiers': typeof AuthenticatedDossiersIndexRoute
   '/messages': typeof AuthenticatedMessagesIndexRoute
+  '/pole-certification': typeof AuthenticatedPoleCertificationIndexRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/dossiers/$id': typeof AuthenticatedAdminDossiersIdRoute
   '/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
@@ -561,6 +596,7 @@ export interface FileRoutesByTo {
   '/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/api/public/hooks/ai-supervisor': typeof ApiPublicHooksAiSupervisorRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
+  '/api/public/hooks/pole-certification-reminders': typeof ApiPublicHooksPoleCertificationRemindersRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/rapport-activite': typeof ApiPublicHooksRapportActiviteRoute
@@ -614,12 +650,15 @@ export interface FileRoutesById {
   '/_authenticated/admin/taches-agence': typeof AuthenticatedAdminTachesAgenceRoute
   '/_authenticated/audits/$id': typeof AuthenticatedAuditsIdRoute
   '/_authenticated/dossiers/$id': typeof AuthenticatedDossiersIdRoute
+  '/_authenticated/pole-certification/$id': typeof AuthenticatedPoleCertificationIdRoute
+  '/_authenticated/pole-certification/parametres': typeof AuthenticatedPoleCertificationParametresRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/oauth/google-drive/return': typeof OauthGoogleDriveReturnRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/audits/': typeof AuthenticatedAuditsIndexRoute
   '/_authenticated/dossiers/': typeof AuthenticatedDossiersIndexRoute
   '/_authenticated/messages/': typeof AuthenticatedMessagesIndexRoute
+  '/_authenticated/pole-certification/': typeof AuthenticatedPoleCertificationIndexRoute
   '/_authenticated/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/_authenticated/admin/dossiers/$id': typeof AuthenticatedAdminDossiersIdRoute
   '/_authenticated/admin/internal-messages/$id': typeof AuthenticatedAdminInternalMessagesIdRoute
@@ -629,6 +668,7 @@ export interface FileRoutesById {
   '/_authenticated/messages/groupes/$id': typeof AuthenticatedMessagesGroupesIdRoute
   '/api/public/hooks/ai-supervisor': typeof ApiPublicHooksAiSupervisorRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
+  '/api/public/hooks/pole-certification-reminders': typeof ApiPublicHooksPoleCertificationRemindersRoute
   '/api/public/hooks/purge-ephemeral': typeof ApiPublicHooksPurgeEphemeralRoute
   '/api/public/hooks/push-fanout': typeof ApiPublicHooksPushFanoutRoute
   '/api/public/hooks/rapport-activite': typeof ApiPublicHooksRapportActiviteRoute
@@ -682,12 +722,15 @@ export interface FileRouteTypes {
     | '/admin/taches-agence'
     | '/audits/$id'
     | '/dossiers/$id'
+    | '/pole-certification/$id'
+    | '/pole-certification/parametres'
     | '/lovable/email/events'
     | '/oauth/google-drive/return'
     | '/admin/'
     | '/audits/'
     | '/dossiers/'
     | '/messages/'
+    | '/pole-certification/'
     | '/admin/clients/$id'
     | '/admin/dossiers/$id'
     | '/admin/internal-messages/$id'
@@ -697,6 +740,7 @@ export interface FileRouteTypes {
     | '/messages/groupes/$id'
     | '/api/public/hooks/ai-supervisor'
     | '/api/public/hooks/health-check'
+    | '/api/public/hooks/pole-certification-reminders'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/rapport-activite'
@@ -748,12 +792,15 @@ export interface FileRouteTypes {
     | '/admin/taches-agence'
     | '/audits/$id'
     | '/dossiers/$id'
+    | '/pole-certification/$id'
+    | '/pole-certification/parametres'
     | '/lovable/email/events'
     | '/oauth/google-drive/return'
     | '/admin'
     | '/audits'
     | '/dossiers'
     | '/messages'
+    | '/pole-certification'
     | '/admin/clients/$id'
     | '/admin/dossiers/$id'
     | '/admin/internal-messages/$id'
@@ -763,6 +810,7 @@ export interface FileRouteTypes {
     | '/messages/groupes/$id'
     | '/api/public/hooks/ai-supervisor'
     | '/api/public/hooks/health-check'
+    | '/api/public/hooks/pole-certification-reminders'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/rapport-activite'
@@ -815,12 +863,15 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/taches-agence'
     | '/_authenticated/audits/$id'
     | '/_authenticated/dossiers/$id'
+    | '/_authenticated/pole-certification/$id'
+    | '/_authenticated/pole-certification/parametres'
     | '/lovable/email/events'
     | '/oauth/google-drive/return'
     | '/_authenticated/admin/'
     | '/_authenticated/audits/'
     | '/_authenticated/dossiers/'
     | '/_authenticated/messages/'
+    | '/_authenticated/pole-certification/'
     | '/_authenticated/admin/clients/$id'
     | '/_authenticated/admin/dossiers/$id'
     | '/_authenticated/admin/internal-messages/$id'
@@ -830,6 +881,7 @@ export interface FileRouteTypes {
     | '/_authenticated/messages/groupes/$id'
     | '/api/public/hooks/ai-supervisor'
     | '/api/public/hooks/health-check'
+    | '/api/public/hooks/pole-certification-reminders'
     | '/api/public/hooks/purge-ephemeral'
     | '/api/public/hooks/push-fanout'
     | '/api/public/hooks/rapport-activite'
@@ -862,6 +914,7 @@ export interface RootRouteChildren {
   OauthGoogleDriveReturnRoute: typeof OauthGoogleDriveReturnRoute
   ApiPublicHooksAiSupervisorRoute: typeof ApiPublicHooksAiSupervisorRoute
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
+  ApiPublicHooksPoleCertificationRemindersRoute: typeof ApiPublicHooksPoleCertificationRemindersRoute
   ApiPublicHooksPurgeEphemeralRoute: typeof ApiPublicHooksPurgeEphemeralRoute
   ApiPublicHooksPushFanoutRoute: typeof ApiPublicHooksPushFanoutRoute
   ApiPublicHooksRapportActiviteRoute: typeof ApiPublicHooksRapportActiviteRoute
@@ -1162,6 +1215,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMessagesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pole-certification/': {
+      id: '/_authenticated/pole-certification/'
+      path: '/pole-certification'
+      fullPath: '/pole-certification/'
+      preLoaderRoute: typeof AuthenticatedPoleCertificationIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pole-certification/$id': {
+      id: '/_authenticated/pole-certification/$id'
+      path: '/pole-certification/$id'
+      fullPath: '/pole-certification/$id'
+      preLoaderRoute: typeof AuthenticatedPoleCertificationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pole-certification/parametres': {
+      id: '/_authenticated/pole-certification/parametres'
+      path: '/pole-certification/parametres'
+      fullPath: '/pole-certification/parametres'
+      preLoaderRoute: typeof AuthenticatedPoleCertificationParametresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/lovable/email/events': {
       id: '/lovable/email/events'
       path: '/lovable/email/events'
@@ -1265,6 +1339,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/health-check'
       fullPath: '/api/public/hooks/health-check'
       preLoaderRoute: typeof ApiPublicHooksHealthCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/pole-certification-reminders': {
+      id: '/api/public/hooks/pole-certification-reminders'
+      path: '/api/public/hooks/pole-certification-reminders'
+      fullPath: '/api/public/hooks/pole-certification-reminders'
+      preLoaderRoute: typeof ApiPublicHooksPoleCertificationRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/purge-ephemeral': {
@@ -1373,10 +1454,13 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminTachesAgenceRoute: typeof AuthenticatedAdminTachesAgenceRoute
   AuthenticatedAuditsIdRoute: typeof AuthenticatedAuditsIdRoute
   AuthenticatedDossiersIdRoute: typeof AuthenticatedDossiersIdRoute
+  AuthenticatedPoleCertificationIdRoute: typeof AuthenticatedPoleCertificationIdRoute
+  AuthenticatedPoleCertificationParametresRoute: typeof AuthenticatedPoleCertificationParametresRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAuditsIndexRoute: typeof AuthenticatedAuditsIndexRoute
   AuthenticatedDossiersIndexRoute: typeof AuthenticatedDossiersIndexRoute
   AuthenticatedMessagesIndexRoute: typeof AuthenticatedMessagesIndexRoute
+  AuthenticatedPoleCertificationIndexRoute: typeof AuthenticatedPoleCertificationIndexRoute
   AuthenticatedAdminClientsIdRoute: typeof AuthenticatedAdminClientsIdRoute
   AuthenticatedAdminInternalMessagesIdRoute: typeof AuthenticatedAdminInternalMessagesIdRoute
   AuthenticatedAdminMessagesClientIdRoute: typeof AuthenticatedAdminMessagesClientIdRoute
@@ -1417,10 +1501,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminTachesAgenceRoute: AuthenticatedAdminTachesAgenceRoute,
   AuthenticatedAuditsIdRoute: AuthenticatedAuditsIdRoute,
   AuthenticatedDossiersIdRoute: AuthenticatedDossiersIdRoute,
+  AuthenticatedPoleCertificationIdRoute: AuthenticatedPoleCertificationIdRoute,
+  AuthenticatedPoleCertificationParametresRoute:
+    AuthenticatedPoleCertificationParametresRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAuditsIndexRoute: AuthenticatedAuditsIndexRoute,
   AuthenticatedDossiersIndexRoute: AuthenticatedDossiersIndexRoute,
   AuthenticatedMessagesIndexRoute: AuthenticatedMessagesIndexRoute,
+  AuthenticatedPoleCertificationIndexRoute:
+    AuthenticatedPoleCertificationIndexRoute,
   AuthenticatedAdminClientsIdRoute: AuthenticatedAdminClientsIdRoute,
   AuthenticatedAdminInternalMessagesIdRoute:
     AuthenticatedAdminInternalMessagesIdRoute,
@@ -1460,6 +1549,8 @@ const rootRouteChildren: RootRouteChildren = {
   OauthGoogleDriveReturnRoute: OauthGoogleDriveReturnRoute,
   ApiPublicHooksAiSupervisorRoute: ApiPublicHooksAiSupervisorRoute,
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
+  ApiPublicHooksPoleCertificationRemindersRoute:
+    ApiPublicHooksPoleCertificationRemindersRoute,
   ApiPublicHooksPurgeEphemeralRoute: ApiPublicHooksPurgeEphemeralRoute,
   ApiPublicHooksPushFanoutRoute: ApiPublicHooksPushFanoutRoute,
   ApiPublicHooksRapportActiviteRoute: ApiPublicHooksRapportActiviteRoute,

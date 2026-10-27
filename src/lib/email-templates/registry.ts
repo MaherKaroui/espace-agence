@@ -24,6 +24,8 @@ import { template as compteRenduQuotidien } from './compte-rendu-quotidien'
 import { template as supervisionRapport } from './supervision-rapport'
 import { template as supervisionAlerte } from './supervision-alerte'
 import { template as certificateurCourrier } from './certificateur-courrier'
+import { template as pcRappel } from './pc-rappel'
+import { template as pcRecapHebdo } from './pc-recap-hebdo'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -60,4 +62,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'supervision-rapport': supervisionRapport,
   'supervision-alerte': supervisionAlerte,
   'certificateur-courrier': certificateurCourrier,
+  'pc-rappel': pcRappel,
+  'pc-recap-hebdo': pcRecapHebdo,
 }

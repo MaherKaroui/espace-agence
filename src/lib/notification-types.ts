@@ -1,7 +1,7 @@
 // Mapping types techniques (colonne notifications.type) -> catégorie d'événement
 // utilisée pour les préférences utilisateur et l'icône du toast.
 
-import { MessageSquare, FileText, ListChecks, Calendar, Shield, Bell, ShieldCheck, type LucideIcon } from "lucide-react";
+import { MessageSquare, FileText, ListChecks, Calendar, Shield, Bell, ShieldCheck, Award, type LucideIcon } from "lucide-react";
 
 export type EventCategory =
   | "chat"
@@ -10,6 +10,7 @@ export type EventCategory =
   | "rdv"
   | "securite"
   | "qualiopi"
+  | "certification"
   | "autre";
 
 export const EVENT_CATEGORIES: { key: EventCategory; label: string; description: string }[] = [
@@ -18,11 +19,13 @@ export const EVENT_CATEGORIES: { key: EventCategory; label: string; description:
   { key: "tache", label: "Tâches", description: "Tâche assignée, échéance, déblocage, attente client" },
   { key: "rdv", label: "Rendez-vous", description: "Nouveau RDV, modification, rappel" },
   { key: "qualiopi", label: "Audit Qualiopi", description: "Demandes de pièces, validations, refus, échéances, messages du canal d'audit" },
+  { key: "certification", label: "Pôle Certification & EDOF", description: "Échéances d'étapes, refus, relances, pièces qui expirent, RDV et webinaires" },
   { key: "securite", label: "Alertes sécurité", description: "Coordonnées masquées, connexions suspectes (admin/direction uniquement)" },
 ];
 
 export function categoryOf(type: string): EventCategory {
   if (type.startsWith("qualiopi")) return "qualiopi";
+  if (type.startsWith("pc_")) return "certification";
   if (type === "message" || type === "internal_message" || type === "internal_mention") return "chat";
   if (type.startsWith("document")) return "document";
   if (type === "agency_task" || type.startsWith("tache")) return "tache";
@@ -40,6 +43,7 @@ export function iconOf(type: string): LucideIcon {
     case "tache": return ListChecks;
     case "rdv": return Calendar;
     case "qualiopi": return ShieldCheck;
+    case "certification": return Award;
     case "securite": return Shield;
     default: return Bell;
   }
