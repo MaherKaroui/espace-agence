@@ -1664,6 +1664,549 @@ export type Database = {
         }
         Relationships: []
       }
+      pc_documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          current_fichier_id: string | null
+          date_emission: string | null
+          date_peremption: string | null
+          dossier_id: string
+          etapes: string[]
+          id: string
+          nom: string
+          piece_type_id: string | null
+          rappel_reporte_jusqua: string | null
+          updated_at: string
+          validite_jours: number | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          current_fichier_id?: string | null
+          date_emission?: string | null
+          date_peremption?: string | null
+          dossier_id: string
+          etapes?: string[]
+          id?: string
+          nom: string
+          piece_type_id?: string | null
+          rappel_reporte_jusqua?: string | null
+          updated_at?: string
+          validite_jours?: number | null
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          current_fichier_id?: string | null
+          date_emission?: string | null
+          date_peremption?: string | null
+          dossier_id?: string
+          etapes?: string[]
+          id?: string
+          nom?: string
+          piece_type_id?: string | null
+          rappel_reporte_jusqua?: string | null
+          updated_at?: string
+          validite_jours?: number | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pc_documents_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "pc_dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pc_documents_piece_type_id_fkey"
+            columns: ["piece_type_id"]
+            isOneToOne: false
+            referencedRelation: "pc_piece_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pc_dossiers: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          certificateur: string | null
+          code_rs: string | null
+          created_at: string
+          created_by: string
+          date_cible: string | null
+          id: string
+          notes: string | null
+          organisme: string | null
+          parent_id: string | null
+          responsable_id: string
+          titre: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          certificateur?: string | null
+          code_rs?: string | null
+          created_at?: string
+          created_by?: string
+          date_cible?: string | null
+          id?: string
+          notes?: string | null
+          organisme?: string | null
+          parent_id?: string | null
+          responsable_id: string
+          titre: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          certificateur?: string | null
+          code_rs?: string | null
+          created_at?: string
+          created_by?: string
+          date_cible?: string | null
+          id?: string
+          notes?: string | null
+          organisme?: string | null
+          parent_id?: string | null
+          responsable_id?: string
+          titre?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pc_dossiers_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pc_dossiers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pc_dossiers_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "pc_dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pc_dossiers_responsable_id_fkey"
+            columns: ["responsable_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pc_etape_modeles: {
+        Row: {
+          a_saisir: string | null
+          actif: boolean
+          bloque_si_piece_perimee: boolean
+          checklist: string[]
+          collecte_pieces: boolean
+          created_at: string
+          dossier_type: string
+          email_actif: boolean
+          en_cours_max_jours: number | null
+          event_kind: string | null
+          id: string
+          intitule: string
+          lien_expiration: boolean
+          ordre: number
+          relance_jours: number | null
+          updated_at: string
+        }
+        Insert: {
+          a_saisir?: string | null
+          actif?: boolean
+          bloque_si_piece_perimee?: boolean
+          checklist?: string[]
+          collecte_pieces?: boolean
+          created_at?: string
+          dossier_type: string
+          email_actif?: boolean
+          en_cours_max_jours?: number | null
+          event_kind?: string | null
+          id?: string
+          intitule: string
+          lien_expiration?: boolean
+          ordre: number
+          relance_jours?: number | null
+          updated_at?: string
+        }
+        Update: {
+          a_saisir?: string | null
+          actif?: boolean
+          bloque_si_piece_perimee?: boolean
+          checklist?: string[]
+          collecte_pieces?: boolean
+          created_at?: string
+          dossier_type?: string
+          email_actif?: boolean
+          en_cours_max_jours?: number | null
+          event_kind?: string | null
+          id?: string
+          intitule?: string
+          lien_expiration?: boolean
+          ordre?: number
+          relance_jours?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pc_etapes: {
+        Row: {
+          a_saisir: string | null
+          bloque_si_piece_perimee: boolean
+          checklist: Json
+          collecte_pieces: boolean
+          created_at: string
+          date_debut: string | null
+          date_echeance: string | null
+          date_limite_recours: string | null
+          date_realisation: string | null
+          dossier_id: string
+          email_actif: boolean
+          en_cours_max_jours: number | null
+          envoye_at: string | null
+          event_at: string | null
+          event_kind: string | null
+          force_motif: string | null
+          force_par: string | null
+          groupe: string
+          id: string
+          intitule: string
+          lien_expiration: boolean
+          lien_expire_at: string | null
+          motif_refus: string | null
+          notes: string | null
+          ordre: number
+          rappel_reporte_jusqua: string | null
+          relance_jours: number | null
+          remplacee: boolean
+          responsable_id: string | null
+          statut: string
+          statut_change_at: string
+          tentative: number
+          updated_at: string
+        }
+        Insert: {
+          a_saisir?: string | null
+          bloque_si_piece_perimee?: boolean
+          checklist?: Json
+          collecte_pieces?: boolean
+          created_at?: string
+          date_debut?: string | null
+          date_echeance?: string | null
+          date_limite_recours?: string | null
+          date_realisation?: string | null
+          dossier_id: string
+          email_actif?: boolean
+          en_cours_max_jours?: number | null
+          envoye_at?: string | null
+          event_at?: string | null
+          event_kind?: string | null
+          force_motif?: string | null
+          force_par?: string | null
+          groupe?: string
+          id?: string
+          intitule: string
+          lien_expiration?: boolean
+          lien_expire_at?: string | null
+          motif_refus?: string | null
+          notes?: string | null
+          ordre: number
+          rappel_reporte_jusqua?: string | null
+          relance_jours?: number | null
+          remplacee?: boolean
+          responsable_id?: string | null
+          statut?: string
+          statut_change_at?: string
+          tentative?: number
+          updated_at?: string
+        }
+        Update: {
+          a_saisir?: string | null
+          bloque_si_piece_perimee?: boolean
+          checklist?: Json
+          collecte_pieces?: boolean
+          created_at?: string
+          date_debut?: string | null
+          date_echeance?: string | null
+          date_limite_recours?: string | null
+          date_realisation?: string | null
+          dossier_id?: string
+          email_actif?: boolean
+          en_cours_max_jours?: number | null
+          envoye_at?: string | null
+          event_at?: string | null
+          event_kind?: string | null
+          force_motif?: string | null
+          force_par?: string | null
+          groupe?: string
+          id?: string
+          intitule?: string
+          lien_expiration?: boolean
+          lien_expire_at?: string | null
+          motif_refus?: string | null
+          notes?: string | null
+          ordre?: number
+          rappel_reporte_jusqua?: string | null
+          relance_jours?: number | null
+          remplacee?: boolean
+          responsable_id?: string | null
+          statut?: string
+          statut_change_at?: string
+          tentative?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pc_etapes_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "pc_dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pc_etapes_force_par_fkey"
+            columns: ["force_par"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pc_etapes_responsable_id_fkey"
+            columns: ["responsable_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pc_evenements: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          dossier_id: string
+          etape_id: string | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          dossier_id: string
+          etape_id?: string | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          dossier_id?: string
+          etape_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pc_evenements_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "pc_dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pc_fichiers: {
+        Row: {
+          created_at: string
+          date_emission: string | null
+          document_id: string | null
+          dossier_id: string
+          etape_id: string | null
+          file_size: number | null
+          filename: string
+          id: string
+          mime_type: string | null
+          storage_path: string
+          uploaded_by: string | null
+          version: number | null
+        }
+        Insert: {
+          created_at?: string
+          date_emission?: string | null
+          document_id?: string | null
+          dossier_id: string
+          etape_id?: string | null
+          file_size?: number | null
+          filename: string
+          id?: string
+          mime_type?: string | null
+          storage_path: string
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Update: {
+          created_at?: string
+          date_emission?: string | null
+          document_id?: string | null
+          dossier_id?: string
+          etape_id?: string | null
+          file_size?: number | null
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          storage_path?: string
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pc_fichiers_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "pc_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pc_fichiers_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "pc_dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pc_fichiers_etape_id_fkey"
+            columns: ["etape_id"]
+            isOneToOne: false
+            referencedRelation: "pc_etapes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pc_membres: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          dossier_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          dossier_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          dossier_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pc_membres_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "pc_dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pc_membres_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pc_piece_types: {
+        Row: {
+          actif: boolean
+          aide: string | null
+          code: string
+          created_at: string
+          dossier_types: string[]
+          id: string
+          libelle: string
+          obligatoire: boolean
+          ordre: number
+          updated_at: string
+          validite_jours: number | null
+        }
+        Insert: {
+          actif?: boolean
+          aide?: string | null
+          code: string
+          created_at?: string
+          dossier_types?: string[]
+          id?: string
+          libelle: string
+          obligatoire?: boolean
+          ordre?: number
+          updated_at?: string
+          validite_jours?: number | null
+        }
+        Update: {
+          actif?: boolean
+          aide?: string | null
+          code?: string
+          created_at?: string
+          dossier_types?: string[]
+          id?: string
+          libelle?: string
+          obligatoire?: boolean
+          ordre?: number
+          updated_at?: string
+          validite_jours?: number | null
+        }
+        Relationships: []
+      }
+      pc_rappels_envoyes: {
+        Row: {
+          cle: string
+          entity_id: string
+          kind: string
+          sent_at: string
+        }
+        Insert: {
+          cle?: string
+          entity_id: string
+          kind: string
+          sent_at?: string
+        }
+        Update: {
+          cle?: string
+          entity_id?: string
+          kind?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       pole_members: {
         Row: {
           created_at: string
@@ -3060,6 +3603,41 @@ export type Database = {
         Args: { _dossier_id: string; _reminder_type?: string }
         Returns: number
       }
+      pc_admin_ids: { Args: never; Returns: string[] }
+      pc_can_read: {
+        Args: { _dossier: string; _user: string }
+        Returns: boolean
+      }
+      pc_can_write: {
+        Args: { _dossier: string; _user: string }
+        Returns: boolean
+      }
+      pc_has_access: { Args: { _user: string }; Returns: boolean }
+      pc_is_admin: { Args: { _user: string }; Returns: boolean }
+      pc_log: {
+        Args: {
+          _action: string
+          _details: Json
+          _dossier: string
+          _etape: string
+        }
+        Returns: undefined
+      }
+      pc_notify: {
+        Args: {
+          _dossier: string
+          _message: string
+          _titre: string
+          _type: string
+          _user: string
+        }
+        Returns: undefined
+      }
+      pc_path_dossier: { Args: { _name: string }; Returns: string }
+      pc_recommencer_etape: {
+        Args: { _echeance: string; _etape: string }
+        Returns: string
+      }
       person_label: { Args: { _user: string }; Returns: string }
       qualiopi_dossier_participant: {
         Args: { _dossier: string; _user: string }
@@ -3224,6 +3802,12 @@ export type Database = {
         | "qualiopi_echeance"
         | "qualiopi_retard"
         | "rapport_quotidien"
+        | "pc_etape"
+        | "pc_refus"
+        | "pc_echeance"
+        | "pc_retard"
+        | "pc_document"
+        | "pc_rappel"
       pole_role: "manager" | "consultant" | "auditeur" | "certificateur"
       qualiopi_event_status:
         | "planifie"
@@ -3442,6 +4026,12 @@ export const Constants = {
         "qualiopi_echeance",
         "qualiopi_retard",
         "rapport_quotidien",
+        "pc_etape",
+        "pc_refus",
+        "pc_echeance",
+        "pc_retard",
+        "pc_document",
+        "pc_rappel",
       ],
       pole_role: ["manager", "consultant", "auditeur", "certificateur"],
       qualiopi_event_status: [
