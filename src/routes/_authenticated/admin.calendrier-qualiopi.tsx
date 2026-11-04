@@ -261,9 +261,9 @@ function CalendrierQualiopi() {
         color_manual: !!payload.color_manual,
         updated_by: user?.id ?? null,
       };
-      // Un audit dont la date (de fin) est passée bascule direct en « Certificat à récupérer »
+      // Un audit dont la date (de fin) est passée bascule direct en « Certificat à récupérer » (à partir du 1er octobre 2026)
       const endDate = body.audit_date_end || body.audit_date;
-      if (endDate && new Date(endDate).getTime() < Date.now() && ["planifie", "en_attente", "realise"].includes(body.status)) {
+      if (endDate && new Date(endDate).getTime() < Date.now() && new Date(endDate) >= new Date("2026-10-01") && ["planifie", "en_attente", "realise"].includes(body.status)) {
         body.status = "certificat_a_recuperer";
       }
       if (payload.id) {
