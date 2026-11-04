@@ -29,6 +29,13 @@
       "when": 1793784212730,
       "tag": "0003_qualiopi_passed_audits_to_certificat",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793784699534,
+      "tag": "0004_qualiopi_flip_from_october",
+      "breakpoints": true
     }
   ]
 }
