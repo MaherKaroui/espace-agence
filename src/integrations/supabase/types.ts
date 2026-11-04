@@ -3649,6 +3649,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      qualiopi_flip_passed_audits: { Args: never; Returns: number }
       qualiopi_link_for: {
         Args: { _dossier: string; _user: string }
         Returns: string
