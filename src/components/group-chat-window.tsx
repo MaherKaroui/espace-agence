@@ -53,9 +53,11 @@ export function GroupChatWindow({
         .from("group_messages")
         .select("*")
         .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false })
+        .limit(500);
       if (error) throw error;
-      return data ?? [];
+      // Les 500 plus récents, remis dans l'ordre chronologique.
+      return (data ?? []).slice().reverse();
     },
   });
 
@@ -64,17 +66,21 @@ export function GroupChatWindow({
   messageIdSetRef.current = useMemo(() => new Set(messageIds), [messageIds]);
 
   const { data: reads = [] } = useQuery({
-    queryKey: ["group-message-reads", conversationId, messageIds.length],
+    queryKey: ["group-message-reads", conversationId, messageIds],
     enabled: messageIds.length > 0,
     queryFn: async () => {
-      // Filtre par conversation (jointure) plutôt qu'un IN sur tous les ids :
-      // l'URL restait énorme et la requête lente sur les longues discussions.
-      const { data, error } = await supabase
-        .from("group_message_reads")
-        .select("*, group_messages!inner(conversation_id)")
-        .eq("group_messages.conversation_id", conversationId);
-      if (error) throw error;
-      return data ?? [];
+      // Seulement les accusés des messages chargés, par paquets de 100 :
+      // un `in.()` trop long dépasse la taille d'URL admise.
+      const rows: any[] = [];
+      for (let i = 0; i < messageIds.length; i += 100) {
+        const { data, error } = await supabase
+          .from("group_message_reads")
+          .select("*")
+          .in("message_id", messageIds.slice(i, i + 100));
+        if (error) throw error;
+        rows.push(...(data ?? []));
+      }
+      return rows;
     },
   });
 
