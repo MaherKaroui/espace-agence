@@ -32,8 +32,8 @@ export const Route = createFileRoute("/_authenticated/admin/rapport-et-ia")({
   // Le moins restrictif des onglets : l'onglet « Pièces attendues » était
   // ouvert à tout utilisateur authentifié. Le droit réel est ensuite vérifié
   // onglet par onglet (voir TABS ci-dessous) — aucun accès n'est élargi.
-  beforeLoad: async () => {
-    const { data: user } = await supabase.auth.getUser();
+  beforeLoad: async ({ context }) => {
+    const user = { user: context.user };
     if (!user.user) throw redirect({ to: "/auth" });
   },
   component: RapportEtIaPage,

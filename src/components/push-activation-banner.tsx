@@ -18,15 +18,18 @@ export function PushActivationBanner() {
   const [dismissed, setDismissed] = useState(true);
 
   const { data: unreadCount = 0 } = useQuery({
-    queryKey: ["push-banner-unread", user?.id],
+    queryKey: ["nav-unread", user?.id], // même clé que app-shell : une seule requête partagée
     enabled: !!user,
+    staleTime: 30_000,
+    select: (rows: unknown[]) => rows.length,
     queryFn: async () => {
-      const { count } = await supabase
+      const { data, error } = await supabase
         .from("notifications")
-        .select("id", { count: "exact", head: true })
+        .select("id, type, link")
         .eq("user_id", user!.id)
         .is("read_at", null);
-      return count ?? 0;
+      if (error) throw error;
+      return (data ?? []) as unknown[];
     },
   });
 

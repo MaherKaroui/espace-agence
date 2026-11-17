@@ -66,8 +66,8 @@ async function fetchAllMessageHeaders(): Promise<any[]> {
 
 export const Route = createFileRoute("/_authenticated/admin/messages/")({
   head: () => ({ meta: [{ title: "Messagerie clients" }] }),
-  beforeLoad: async () => {
-    const { data: user } = await supabase.auth.getUser();
+  beforeLoad: async ({ context }) => {
+    const user = { user: context.user };
     if (!user.user) throw redirect({ to: "/auth" });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.user.id);
     const ok = roles?.some((r) => ["admin","direction","manager","consultant"].includes(r.role));

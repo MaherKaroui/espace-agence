@@ -68,7 +68,7 @@ export function NotificationsBell() {
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
       (payload) => {
-        qc.invalidateQueries({ queryKey: ["notifications", user.id] });
+        // L'invalidation du cache est faite une seule fois par NotificationsRealtime (app-shell).
         const n = payload.new as NotifRow;
         if (n && !n.read_at) {
           showBrowserNotif({

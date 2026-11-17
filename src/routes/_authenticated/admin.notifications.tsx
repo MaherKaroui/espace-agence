@@ -36,8 +36,8 @@ export const Route = createFileRoute("/_authenticated/admin/notifications")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  beforeLoad: async () => {
-    const { data: u } = await supabase.auth.getUser();
+  beforeLoad: async ({ context }) => {
+    const u = { user: context.user };
     if (!u.user) throw redirect({ to: "/auth" });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
     const ok = roles?.some((r) => ["admin", "direction"].includes(r.role));

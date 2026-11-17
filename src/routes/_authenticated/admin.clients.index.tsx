@@ -20,8 +20,8 @@ import { usePagination, ListPagination } from "@/components/list-pagination";
 
 export const Route = createFileRoute("/_authenticated/admin/clients/")({
   head: () => ({ meta: [{ title: "Clients — Admin" }] }),
-  beforeLoad: async () => {
-    const { data: user } = await supabase.auth.getUser();
+  beforeLoad: async ({ context }) => {
+    const user = { user: context.user };
     if (!user.user) throw redirect({ to: "/auth" });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.user.id);
     const staff = roles?.some((r) => ["admin", "direction", "manager", "consultant"].includes(r.role));

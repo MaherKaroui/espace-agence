@@ -39,8 +39,8 @@ import { MessageAttachment } from "@/components/message-attachment";
 
 export const Route = createFileRoute("/_authenticated/admin/internal-messages/$id")({
   head: () => ({ meta: [{ title: "Conversation interne" }] }),
-  beforeLoad: async () => {
-    const { data: user } = await supabase.auth.getUser();
+  beforeLoad: async ({ context }) => {
+    const user = { user: context.user };
     if (!user.user) throw redirect({ to: "/auth" });
   },
   component: InternalConversation,

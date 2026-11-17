@@ -25,8 +25,8 @@ const db = supabase as any;
 
 export const Route = createFileRoute("/_authenticated/pole-certification/parametres")({
   head: () => ({ meta: [{ title: "Paramètres — Pôle Certification & EDOF" }] }),
-  beforeLoad: async () => {
-    const { data: user } = await supabase.auth.getUser();
+  beforeLoad: async ({ context }) => {
+    const user = { user: context.user };
     if (!user.user) throw redirect({ to: "/auth" });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.user.id);
     const ok = roles?.some((r) => r.role === "admin" || r.role === "direction");

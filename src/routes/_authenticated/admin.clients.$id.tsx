@@ -41,8 +41,8 @@ import { fr } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/admin/clients/$id")({
   head: () => ({ meta: [{ title: "Client — Admin" }] }),
-  beforeLoad: async ({ params }) => {
-    const { data: user } = await supabase.auth.getUser();
+  beforeLoad: async ({ params, context }) => {
+    const user = { user: context.user };
     if (!user.user) throw redirect({ to: "/auth" });
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.user.id);
     const staff = roles?.some((r) => ["admin", "direction", "manager", "consultant"].includes(r.role));
