@@ -125,6 +125,17 @@
     -webkit-font-smoothing: antialiased;
   }
   .font-display { font-family: var(--font-display); }
+
+  /*
+   * Mobile : un élément de grille garde par défaut la largeur de son contenu
+   * (min-width: auto), si bien qu'une carte contenant une ligne de boutons
+   * ou un long e-mail élargit la grille au-delà de l'écran, et le surplus est
+   * coupé par `overflow-x: hidden`. Dans la couche `base`, une classe
+   * `min-w-*` posée sur l'élément reste prioritaire.
+   */
+  @media (max-width: 767px) {
+    main .grid > * { min-width: 0; }
+  }
 }
 
 @utility bg-gradient-hero {

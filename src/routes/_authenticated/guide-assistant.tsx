@@ -143,7 +143,7 @@ function GuideAssistantPage() {
       ];
 
   return (
-    <main className="guide-paper -mx-4 px-4 py-6 lg:-mx-6 lg:px-6">
+    <main className="guide-paper -mx-3 px-3 py-6 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8">
       <div className="mx-auto w-full max-w-3xl space-y-12">
         <header className="space-y-3">
           <Button asChild variant="ghost" size="sm" className="-ml-2">

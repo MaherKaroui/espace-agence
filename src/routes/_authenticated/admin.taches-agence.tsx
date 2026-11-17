@@ -225,12 +225,12 @@ function AgencyTasksPage() {
           <StatusBadge value={t.status} />
           <OriginBadge auto={t.auto} />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className={cn("font-medium text-sm flex items-center gap-2", compact ? "line-clamp-2" : "truncate")}>
-            {t.title}
-            {overdue && <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />}
+        <div className="flex-1 min-w-0 basis-60">
+          <div className="font-medium text-sm flex items-start gap-2">
+            <span className={cn("min-w-0 break-words", compact ? "line-clamp-2" : "line-clamp-2 sm:truncate")}>{t.title}</span>
+            {overdue && <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />}
           </div>
-          <div className={cn("text-xs text-muted-foreground", compact ? "" : "truncate")}>
+          <div className={cn("text-xs text-muted-foreground", compact ? "" : "sm:truncate")}>
             {t.assigned_to ? profilesMap[t.assigned_to] ?? "…" : "Non assigné"}
             {t.pole_id && <> · {polesMap[t.pole_id] ?? "…"}</>}
             {" · "}

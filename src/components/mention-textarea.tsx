@@ -202,7 +202,7 @@ export function MentionTextarea({
     if (!trigger || items.length === 0) return null;
     const isEntity = trigger.type === "entity";
     return (
-      <div className="absolute bottom-full mb-1 left-0 z-20 w-80 rounded-lg border bg-popover shadow-lg overflow-hidden">
+      <div className="absolute bottom-full mb-1 left-0 z-20 w-80 max-w-[calc(100vw-2rem)] rounded-lg border bg-popover shadow-lg overflow-hidden">
         <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b flex items-center gap-1">
           {isEntity ? <Hash className="h-3 w-3" /> : <AtSign className="h-3 w-3" />}
           {isEntity ? "Lier un client, dossier, tâche ou pôle" : "Mentionner une personne"}

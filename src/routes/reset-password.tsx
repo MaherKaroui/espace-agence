@@ -54,8 +54,8 @@ function ResetPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-      <Card className="w-full max-w-md p-8">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-background">
+      <Card className="w-full max-w-md p-5 sm:p-8">
         <h1 className="font-display text-2xl">Réinitialiser le mot de passe</h1>
         {mode === "request" ? (
           <form onSubmit={askReset} className="mt-6 space-y-4">

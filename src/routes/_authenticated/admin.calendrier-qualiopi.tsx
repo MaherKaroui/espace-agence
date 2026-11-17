@@ -461,7 +461,7 @@ function CalendrierQualiopi() {
           <h1 className="font-display text-2xl flex items-center gap-2"><CalendarDays className="h-6 w-6 text-primary" /> Calendrier Qualiopi</h1>
           <p className="text-sm text-muted-foreground">Structure du fichier de référence : demandes en cours, puis un onglet par mois.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) importXlsx(f); e.target.value = ""; }} />
           <Button variant="outline" onClick={exportXlsx}><Download className="h-4 w-4 mr-2" /> Exporter Excel</Button>

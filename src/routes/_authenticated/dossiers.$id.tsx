@@ -609,7 +609,7 @@ function DossierDetail() {
               const isImg = d.mime_type?.startsWith("image/");
               const isVid = isVideoMime(d.mime_type);
               return (
-                <div key={d.id} className="py-3 flex items-center gap-3">
+                <div key={d.id} className="py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
                   {isVid ? (
                     <VideoPlayer
                       documentId={d.id}
@@ -622,7 +622,7 @@ function DossierDetail() {
                       {isImg ? <ImageIcon className="h-5 w-5 text-muted-foreground" /> : <FileText className="h-5 w-5 text-muted-foreground" />}
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 basis-48">
                     <div className="text-sm font-medium truncate flex items-center gap-1">
                       {isVid && <Film className="h-3.5 w-3.5 text-muted-foreground" />}
                       {d.nom}

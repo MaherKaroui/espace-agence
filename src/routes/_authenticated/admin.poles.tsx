@@ -395,7 +395,7 @@ function PoleCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           {editing ? (
             <>
               <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setNom(pole.nom); setDescription(pole.description ?? ""); setCouleur(pole.couleur ?? "#c9a96e"); }}>

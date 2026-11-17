@@ -80,7 +80,7 @@ export function AgencyTasksPriorityBoard() {
             <span className="line-clamp-2 break-words">{t.title}</span>
             {od && <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />}
           </div>
-          <div className="text-xs text-muted-foreground truncate mt-0.5">
+          <div className="text-xs text-muted-foreground mt-0.5 sm:truncate">
             {t.assigned_to ? profilesMap[t.assigned_to] ?? "…" : "Non assigné"}
             {" · "}
             <span className={od ? "text-red-600 font-medium" : ""}>

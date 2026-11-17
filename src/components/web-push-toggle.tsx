@@ -61,13 +61,13 @@ export function WebPushToggle() {
           )}
         </div>
       </div>
-      <div className="shrink-0 sm:pt-0.5">
+      <div className="w-full sm:w-auto sm:shrink-0 sm:pt-0.5">
         {subscribed ? (
           <Button variant="outline" onClick={() => void disable()} disabled={loading} className="gap-2">
             <BellOff className="h-4 w-4" /> Désactiver
           </Button>
         ) : (
-          <Button onClick={() => void enable()} disabled={loading || permission === "denied" || !ready} className="gap-2">
+          <Button onClick={() => void enable()} disabled={loading || permission === "denied" || !ready} className="gap-2 h-auto min-h-9 whitespace-normal text-left">
             <Bell className="h-4 w-4" /> Activer les notifications navigateur
           </Button>
         )}

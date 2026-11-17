@@ -61,7 +61,7 @@ export function ListPagination({
         {from}–{to} sur {total} {label}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <label className="text-xs text-muted-foreground hidden sm:block" htmlFor="page-size">
           Par page
         </label>
@@ -76,7 +76,7 @@ export function ListPagination({
           ))}
         </select>
 
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <Button
             variant="outline" size="icon" className="h-8 w-8"
             aria-label="Page précédente"

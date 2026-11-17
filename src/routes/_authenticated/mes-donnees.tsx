@@ -329,7 +329,7 @@ function MesDonneesPage() {
                 Vos données personnelles seront anonymisées ; certaines informations peuvent être conservées pour des obligations légales
                 (dossiers réglementaires, comptabilité).
               </p>
-              <Button variant="destructive" onClick={() => setConfirmOpen(true)}>
+              <Button variant="destructive" className="h-auto min-h-9 whitespace-normal" onClick={() => setConfirmOpen(true)}>
                 Demander la suppression de mon compte
               </Button>
             </>

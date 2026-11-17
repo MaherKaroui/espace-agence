@@ -177,8 +177,8 @@ function AuthPage() {
         <p className="text-xs text-white/40" suppressHydrationWarning>© {new Date().getFullYear()} — IZISuivis</p>
       </div>
 
-      <div className="flex items-center justify-center p-6 sm:p-10">
-        <Card className="w-full max-w-md p-8 border-border shadow-sm">
+      <div className="flex items-center justify-center p-4 sm:p-10">
+        <Card className="w-full max-w-md p-5 sm:p-8 border-border shadow-sm">
           <div className="mb-6 lg:hidden flex items-center gap-2">
             <Logo size={36} className="rounded-lg" />
             <span className="font-display text-lg">IZISuivis</span>
