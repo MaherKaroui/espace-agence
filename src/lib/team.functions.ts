@@ -275,6 +275,12 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertAdminOrDirection(supabase, userId);
+    if (data.role === "admin") {
+      const { data: myRoles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+      if (!myRoles?.some((r: any) => r.role === "admin")) {
+        throw new Error("Seul un administrateur peut nommer un administrateur");
+      }
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.toLowerCase();
@@ -302,6 +308,8 @@ export const inviteTeamMember = createServerFn({ method: "POST" })
         .update({ prenom: data.prenom ?? "", nom: data.nom ?? "", email })
         .eq("id", targetId);
     }
+
+    if (targetId === userId) throw new Error("Vous ne pouvez pas modifier votre propre rôle");
 
     // Retirer role client (le trigger le fait aussi, ceinture + bretelles)
     await supabaseAdmin.from("user_roles").delete().eq("user_id", targetId).eq("role", "client");
