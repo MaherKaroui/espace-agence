@@ -120,7 +120,7 @@ export const syncDossierToDrive = createServerFn({ method: "POST" })
 
     const { data: docs } = await context.supabase
       .from("documents")
-      .select("id, nom, storage_path, mime_type")
+      .select("id, nom, storage_path, mime_type, dossier_id")
       .eq("dossier_id", dossier.id)
       .not("storage_path", "is", null);
 
@@ -152,6 +152,10 @@ export const syncDossierToDrive = createServerFn({ method: "POST" })
     let skipped = 0;
     for (const doc of docs) {
       if (!doc.storage_path) continue;
+      if (!doc.storage_path.startsWith(`${doc.dossier_id}/`)) {
+        skipped++;
+        continue;
+      }
       if (await fileExistsInFolder(key, doc.nom, folderId)) {
         skipped++;
         continue;
