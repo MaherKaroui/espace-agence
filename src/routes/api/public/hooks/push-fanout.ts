@@ -131,7 +131,7 @@ export const Route = createFileRoute("/api/public/hooks/push-fanout")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const denied = requireCronAuth(request);
+        const denied = requireCronAuth(request, { allowPushSecret: true });
         if (denied) return denied;
         try {
           const VAPID_PUB = process.env.VAPID_PUBLIC_KEY;
