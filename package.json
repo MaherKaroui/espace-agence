@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "cap:sync": "cap sync",
     "cap:android": "cap run android",
     "cap:ios": "cap run ios"
@@ -118,7 +120,8 @@
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "5.1.0"
   },
   "pnpm": {
     "overrides": {
