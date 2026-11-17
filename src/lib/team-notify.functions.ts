@@ -91,6 +91,13 @@ export const getTeamRecipientsForClient = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
+    // Autorisation : le client lui-même ou un membre du staff
+    if (userId !== data.clientId) {
+      const { data: myRoles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+      const isStaff = !!myRoles?.some((r: any) => r.role !== "client");
+      if (!isStaff) throw new Error("Accès refusé");
+    }
+
     // Load client profile (RLS)
     const { data: clientProfile } = await supabase
       .from("profiles")

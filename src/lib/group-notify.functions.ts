@@ -43,15 +43,14 @@ export const getGroupRecipients = createServerFn({ method: "POST" })
       .eq("id", data.conversationId)
       .maybeSingle();
 
-    let ids: string[];
+    const { data: mems } = await supabaseAdmin
+      .from(memberTable as any)
+      .select("user_id")
+      .eq("conversation_id", data.conversationId);
+    let ids: string[] = ((mems ?? []) as any[]).map((m) => m.user_id);
     if (data.userIds?.length) {
-      ids = data.userIds;
-    } else {
-      const { data: mems } = await supabaseAdmin
-        .from(memberTable as any)
-        .select("user_id")
-        .eq("conversation_id", data.conversationId);
-      ids = ((mems ?? []) as any[]).map((m) => m.user_id);
+      const wanted = new Set(data.userIds);
+      ids = ids.filter((id) => wanted.has(id));
     }
     ids = Array.from(new Set(ids)).filter((id) => id && id !== userId);
     if (ids.length === 0) return { titre: (conv as any)?.titre ?? null, emails: [], senderName: null };
