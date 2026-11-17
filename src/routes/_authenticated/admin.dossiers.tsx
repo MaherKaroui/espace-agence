@@ -22,6 +22,7 @@ import { getExternalUnreadCounts } from "@/lib/qualiopi-notifications.functions"
 import { DossiersKanbanBoard } from "@/components/dossiers-kanban";
 import { CreateDossierDialog } from "@/components/create-dossier-dialog";
 import { usePagination, ListPagination } from "@/components/list-pagination";
+import { fetchInChunks } from "@/lib/fetch-in-chunks";
 
 
 type DocRow = {
@@ -214,11 +215,11 @@ function AdminDossiers() {
     queryKey: ["admin-dossiers-docs", dossierIds.join(",")],
     enabled: dossierIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("documents").select("id, dossier_id, nom, detected_type").in("dossier_id", dossierIds);
-      if (error) throw error;
+      const data = await fetchInChunks<DocRow>(dossierIds, (c) =>
+        supabase.from("documents").select("id, dossier_id, nom, detected_type").in("dossier_id", c),
+      );
       const m: Record<string, DocRow[]> = {};
-      for (const d of (data ?? []) as DocRow[]) (m[d.dossier_id] ??= []).push(d);
+      for (const d of data) (m[d.dossier_id] ??= []).push(d);
       return m;
     },
   });
@@ -228,13 +229,14 @@ function AdminDossiers() {
     queryKey: ["admin-dossiers-juridique", dossierIds.join(",")],
     enabled: dossierIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("dossier_assignments")
-        .select("dossier_id, user_id")
-        .eq("role", "juridique")
-        .eq("active", true)
-        .in("dossier_id", dossierIds);
-      if (error) throw error;
+      const data = await fetchInChunks<any>(dossierIds, (c) =>
+        supabase
+          .from("dossier_assignments")
+          .select("dossier_id, user_id")
+          .eq("role", "juridique")
+          .eq("active", true)
+          .in("dossier_id", c),
+      );
       const userIds = [...new Set((data ?? []).map((a: any) => a.user_id))];
       let byUser = new Map<string, any>();
       if (userIds.length > 0) {
