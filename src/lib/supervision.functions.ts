@@ -17,14 +17,16 @@ export const getSupervisionOverview = createServerFn({ method: "POST" })
     const since24 = new Date(Date.now() - 86400_000).toISOString();
     const since30d = new Date(Date.now() - 30 * 86400_000).toISOString();
     const today = new Date().toISOString().slice(0, 10);
+    const { fetchAllRows } = await import("@/lib/fetch-all.server");
 
-    const [errors24, lastChecks, checks30, report, anomalies, errorList] = await Promise.all([
+    const [errors24, lastChecks, checks30Rows, report, anomalies, errorList, errs30Rows] = await Promise.all([
       supabaseAdmin.from("app_errors" as any).select("gravite").gte("created_at", since24),
       supabaseAdmin.from("health_checks" as any).select("is_up, response_time_ms, created_at").order("created_at", { ascending: false }).limit(96),
-      supabaseAdmin.from("health_checks" as any).select("is_up, created_at").gte("created_at", since30d).limit(5000),
+      fetchAllRows<any>(() => supabaseAdmin.from("health_checks" as any).select("is_up, created_at").gte("created_at", since30d).order("created_at", { ascending: true })),
       supabaseAdmin.from("ai_reports" as any).select("id, report_date, health_score, diagnostic, problems, stats").order("report_date", { ascending: false }).limit(1).maybeSingle(),
       supabaseAdmin.from("data_anomalies" as any).select("kind, label, gravite, count, details").eq("check_date", today),
       supabaseAdmin.from("app_errors" as any).select("id, type, message, stack, url_page, gravite, statut, navigateur, created_at").order("created_at", { ascending: false }).limit(300),
+      fetchAllRows<any>(() => supabaseAdmin.from("app_errors" as any).select("created_at").gte("created_at", since30d).order("created_at", { ascending: true })),
     ]);
 
     const e24 = (errors24.data ?? []) as any[];
@@ -38,7 +40,7 @@ export const getSupervisionOverview = createServerFn({ method: "POST" })
     }
 
     // Séries 30 jours : erreurs/jour + disponibilité/jour
-    const { data: errs30 } = await supabaseAdmin.from("app_errors" as any).select("created_at").gte("created_at", since30d).limit(5000);
+    const errs30 = errs30Rows;
     const byDay = new Map<string, { day: string; erreurs: number; up: number; total: number }>();
     for (let i = 29; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400_000).toISOString().slice(0, 10);
@@ -48,7 +50,7 @@ export const getSupervisionOverview = createServerFn({ method: "POST" })
       const d = String(e.created_at).slice(0, 10);
       const row = byDay.get(d); if (row) row.erreurs++;
     }
-    for (const c of (((checks30 as any).data ?? []) as any[])) {
+    for (const c of (checks30Rows as any[])) {
       const d = String(c.created_at).slice(0, 10);
       const row = byDay.get(d); if (row) { row.total++; if (c.is_up) row.up++; }
     }

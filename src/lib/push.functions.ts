@@ -91,22 +91,25 @@ export const getTeamPushCoverage = createServerFn({ method: "GET" })
     );
     if (staffIds.length === 0) return { members: [] as any[] };
 
-    const [{ data: profiles }, { data: subs }, { data: logs }] = await Promise.all([
+    const { fetchAllRows } = await import("@/lib/fetch-all.server");
+    const [{ data: profiles }, { data: subs }, logs] = await Promise.all([
       supabase.from("profiles").select("id, prenom, nom, email").in("id", staffIds),
       supabase.from("push_subscriptions").select("user_id").in("user_id", staffIds),
-      supabase
-        .from("push_delivery_logs")
-        .select("user_id, sent_at, status")
-        .in("user_id", staffIds)
-        .eq("status", "sent")
-        .order("sent_at", { ascending: false })
-        .limit(2000),
+      fetchAllRows<any>(() =>
+        supabase
+          .from("push_delivery_logs")
+          .select("user_id, sent_at, status")
+          .in("user_id", staffIds)
+          .eq("status", "sent")
+          .order("sent_at", { ascending: false })
+          .order("id", { ascending: false }),
+      ),
     ]);
 
     const deviceCount = new Map<string, number>();
     for (const s of subs ?? []) deviceCount.set(s.user_id, (deviceCount.get(s.user_id) ?? 0) + 1);
     const lastSent = new Map<string, string>();
-    for (const l of logs ?? []) if (!lastSent.has(l.user_id)) lastSent.set(l.user_id, l.sent_at);
+    for (const l of logs) if (!lastSent.has(l.user_id)) lastSent.set(l.user_id, l.sent_at);
 
     const rolesByUser = new Map<string, string[]>();
     for (const r of roles ?? []) {

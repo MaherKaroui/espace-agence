@@ -18,7 +18,8 @@ export const generateDailyDirectionReport = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await ensureDirection(supabase, userId);
-    const date = data.date ?? new Date().toISOString().slice(0, 10);
+    const { parisDateKey } = await import("@/lib/daily-activity-report.server");
+    const date = data.date ?? parisDateKey();
     const { data: rap, error } = await supabase.rpc("generer_rapport_direction", { _date: date });
     if (error) throw new Error(error.message);
     return { id: rap as string, date };
@@ -65,7 +66,9 @@ export const getUserActivityDetail = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     await ensureDirection(supabase, userId);
 
-    const start = new Date(`${data.date}T00:00:00+01:00`);
+    const { parisOffsetMinutes } = await import("@/lib/daily-activity-report.server");
+    const off = parisOffsetMinutes(new Date(`${data.date}T12:00:00Z`));
+    const start = new Date(Date.parse(`${data.date}T00:00:00Z`) - off * 60000);
     const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -150,8 +153,11 @@ export const getMessagesForDay = createServerFn({ method: "GET" })
     await ensureDirection(supabase, userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const start = new Date(`${data.date}T00:00:00+01:00`).toISOString();
-    const end = new Date(new Date(`${data.date}T00:00:00+01:00`).getTime() + 24 * 3600_000).toISOString();
+    const { parisOffsetMinutes } = await import("@/lib/daily-activity-report.server");
+    const off = parisOffsetMinutes(new Date(`${data.date}T12:00:00Z`));
+    const startUtc = new Date(Date.parse(`${data.date}T00:00:00Z`) - off * 60000);
+    const start = startUtc.toISOString();
+    const end = new Date(startUtc.getTime() + 24 * 3600_000).toISOString();
 
     const wantAll = !data.type || data.type === "all";
 

@@ -51,24 +51,32 @@ export const getActivityReports = createServerFn({ method: "GET" })
       .in("id", memberIds);
 
     // Toutes les tâches non archivées
-    const { data: tasks } = await supabaseAdmin
-      .from("agency_tasks")
-      .select(
-        "id, title, description, priority, status, due_date, completed_at, created_at, updated_at, client_id, dossier_id, pole_id, internal_comment, assigned_to",
-      )
-      .is("archived_at", null)
-      .limit(3000);
+    const { fetchAllRows } = await import("@/lib/fetch-all.server");
+    const tasks = await fetchAllRows<any>(() =>
+      supabaseAdmin
+        .from("agency_tasks")
+        .select(
+          "id, title, description, priority, status, due_date, completed_at, created_at, updated_at, client_id, dossier_id, pole_id, internal_comment, assigned_to",
+        )
+        .is("archived_at", null)
+        .order("id", { ascending: true }),
+    );
 
-    const taskList = tasks ?? [];
-    const { data: extraAssignees } = taskList.length
-      ? await supabaseAdmin
-          .from("agency_task_assignees")
-          .select("task_id, user_id")
-          .in(
-            "task_id",
-            taskList.map((t: any) => t.id),
-          )
-      : ({ data: [] } as any);
+    const taskList = tasks;
+    const extraAssignees: any[] = [];
+    for (let i = 0; i < taskList.length; i += 100) {
+      const ids = taskList.slice(i, i + 100).map((t: any) => t.id);
+      extraAssignees.push(
+        ...(await fetchAllRows<any>(() =>
+          supabaseAdmin
+            .from("agency_task_assignees")
+            .select("task_id, user_id")
+            .in("task_id", ids)
+            .order("task_id", { ascending: true })
+            .order("user_id", { ascending: true }),
+        )),
+      );
+    }
 
     const byUser = new Map<string, any[]>();
     const push = (uid: string | null, t: any) => {
