@@ -113,12 +113,15 @@ function ConversationPane({ id, userId }: { id: string; userId: string | null })
   const { data: messages = [] } = useQuery({
     queryKey: ["internal-messages", id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("internal_messages")
         .select("*")
         .eq("conversation_id", id)
-        .order("created_at", { ascending: true });
-      return data ?? [];
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      // Les 500 plus récents, remis dans l'ordre chronologique.
+      return (data ?? []).slice().reverse();
     },
   });
 

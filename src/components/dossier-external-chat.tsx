@@ -72,12 +72,15 @@ export function DossierExternalChat({ dossierId }: { dossierId: string }) {
     queryKey: ["ext-messages", conversationId],
     enabled: !!conversationId,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("internal_messages")
         .select("*")
         .eq("conversation_id", conversationId!)
-        .order("created_at", { ascending: true });
-      return (data ?? []) as any[];
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      // Les 500 plus récents, remis dans l'ordre chronologique.
+      return ((data ?? []) as any[]).slice().reverse();
     },
   });
 
