@@ -1,4 +1,4 @@
-import logo from "@/assets/logo-izisuivis-icon.png";
+import logo from "@/assets/logo-izisuivis-icon-144.png";
 
 interface LogoProps {
   size?: number;
