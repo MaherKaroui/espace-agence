@@ -3,9 +3,35 @@
  * Server-only : ne jamais importer depuis un composant.
  */
 import { computeAnomalies, APP_URL } from "@/lib/supervision.server";
+import { fetchAllRows } from "@/lib/fetch-all.server";
+
+/** Lit toutes les lignes d'une table filtrées par `.in(col, ids)`, par paquets de 100 identifiants. */
+async function selectInChunks<T>(
+  admin: any,
+  table: string,
+  cols: string,
+  col: string,
+  ids: string[],
+  orderCols: string[] = ["id"],
+  extra?: (q: any) => any,
+): Promise<T[]> {
+  const out: T[] = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    const part = ids.slice(i, i + 100);
+    out.push(
+      ...(await fetchAllRows<T>(() => {
+        let q = admin.from(table).select(cols).in(col, part);
+        if (extra) q = extra(q);
+        for (const c of orderCols) q = q.order(c, { ascending: true });
+        return q;
+      })),
+    );
+  }
+  return out;
+}
 
 /** Décalage Europe/Paris en minutes pour un instant donné. */
-function parisOffsetMinutes(at: Date): number {
+export function parisOffsetMinutes(at: Date): number {
   const s = new Intl.DateTimeFormat("en-US", {
     timeZone: "Europe/Paris",
     timeZoneName: "shortOffset",
@@ -179,21 +205,20 @@ export async function buildDailyActivityReport(admin: any): Promise<DailyActivit
       .map(([id]) => id);
 
     if (memberIds.length > 0) {
-      const [{ data: profiles }, { data: tasks }] = await Promise.all([
+      const [{ data: profiles }, tasks] = await Promise.all([
         admin.from("profiles").select("id, prenom, nom").in("id", memberIds),
-        admin
-          .from("agency_tasks")
-          .select("id, title, status, due_date, completed_at, assigned_to, client_id, dossier_id")
-          .is("archived_at", null)
-          .limit(3000),
+        fetchAllRows<any>(() =>
+          admin
+            .from("agency_tasks")
+            .select("id, title, status, due_date, completed_at, assigned_to, client_id, dossier_id")
+            .is("archived_at", null)
+            .order("id", { ascending: true }),
+        ),
       ]);
-      const taskList = (tasks ?? []) as any[];
-      const { data: extra } = taskList.length
-        ? await admin
-            .from("agency_task_assignees")
-            .select("task_id, user_id")
-            .in("task_id", taskList.map((t) => t.id))
-        : ({ data: [] } as any);
+      const taskList = tasks as any[];
+      const extra = taskList.length
+        ? await selectInChunks<any>(admin, "agency_task_assignees", "task_id, user_id", "task_id", taskList.map((t) => t.id), ["task_id", "user_id"])
+        : [];
 
       const dossierIds = [...new Set(taskList.map((t) => t.dossier_id).filter(Boolean))];
       const clientIds = [...new Set(taskList.map((t) => t.client_id).filter(Boolean))];
@@ -661,36 +686,41 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   const [
     { data: profiles },
     { data: poleMembers },
-    { data: sessions },
-    { data: tasks },
-    { data: logs },
+    sessions,
+    tasks,
+    logs,
   ] = await Promise.all([
     admin.from("profiles").select("id, prenom, nom, email, archived_at").in("id", memberIds),
     admin.from("pole_members").select("user_id, pole_id").in("user_id", memberIds),
-    admin
-      .from("user_sessions")
-      .select("user_id, started_at, ended_at, last_seen_at, duration_seconds, city, user_agent")
-      .lte("started_at", toIso)
-      .gte("last_seen_at", fromIso)
-      .limit(5000),
-    admin
-      .from("agency_tasks")
-      .select(
-        "id, title, priority, status, due_date, completed_at, created_at, client_id, dossier_id, pole_id, internal_comment, assigned_to, updated_by, updated_at",
-      )
-      .is("archived_at", null)
-      .limit(3000),
-
-    admin
-      .from("audit_logs")
-      .select("id, user_id, action, entity_type, entity_id, metadata, created_at")
-      .in("user_id", memberIds)
-      // Les clics fins (journal d'audit) ne doivent pas évincer les vraies actions de la limite.
-      .not("action", "like", "clic.%")
-      .gte("created_at", fromIso)
-      .lte("created_at", toIso)
-      .order("created_at", { ascending: true })
-      .limit(5000),
+    fetchAllRows<any>(() =>
+      admin
+        .from("user_sessions")
+        .select("user_id, started_at, ended_at, last_seen_at, duration_seconds, city, user_agent")
+        .lte("started_at", toIso)
+        .gte("last_seen_at", fromIso)
+        .order("id", { ascending: true }),
+    ),
+    fetchAllRows<any>(() =>
+      admin
+        .from("agency_tasks")
+        .select(
+          "id, title, priority, status, due_date, completed_at, created_at, client_id, dossier_id, pole_id, internal_comment, assigned_to, updated_by, updated_at",
+        )
+        .is("archived_at", null)
+        .order("id", { ascending: true }),
+    ),
+    fetchAllRows<any>(() =>
+      admin
+        .from("audit_logs")
+        .select("id, user_id, action, entity_type, entity_id, metadata, created_at")
+        .in("user_id", memberIds)
+        // Les clics fins (journal d'audit) ne doivent pas évincer les vraies actions de la limite.
+        .not("action", "like", "clic.%")
+        .gte("created_at", fromIso)
+        .lte("created_at", toIso)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true }),
+    ),
   ]);
 
   const { data: poles } = await admin.from("poles").select("id, nom");
@@ -704,13 +734,10 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   }
 
   // --- Tâches par utilisateur (assignation simple + multiple) ---
-  const taskList = (tasks ?? []) as any[];
-  const { data: extraAssignees } = taskList.length
-    ? await admin
-        .from("agency_task_assignees")
-        .select("task_id, user_id")
-        .in("task_id", taskList.map((t) => t.id))
-    : ({ data: [] } as any);
+  const taskList = tasks as any[];
+  const extraAssignees = taskList.length
+    ? await selectInChunks<any>(admin, "agency_task_assignees", "task_id, user_id", "task_id", taskList.map((t) => t.id), ["task_id", "user_id"])
+    : [];
 
   // --- Noms des personnes citées (responsables, auteurs de notes) ---
   const peopleIds = new Set<string>(memberIds);
@@ -760,15 +787,15 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
   try {
     if (taskList.length) {
       const depuis = new Date(now.getTime() - 30 * 86400_000).toISOString();
-      const { data: taskComments } = await admin
-        .from("agency_task_comments")
-        .select("task_id, user_id, content, created_at")
-        .in("task_id", taskList.map((t) => t.id))
-        .gte("created_at", depuis)
-        .lte("created_at", toIso)
-        .order("created_at", { ascending: false })
-        .limit(3000);
-      const rows = (taskComments ?? []) as any[];
+      const rows = await selectInChunks<any>(
+        admin,
+        "agency_task_comments",
+        "task_id, user_id, content, created_at",
+        "task_id",
+        taskList.map((t) => t.id),
+        ["created_at", "id"],
+        (q) => q.gte("created_at", depuis).lte("created_at", toIso),
+      );
       const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))].filter(
         (id) => !nameById.has(id),
       );
@@ -1349,27 +1376,33 @@ export async function buildDailyDigest(admin: any, at?: Date): Promise<DailyDige
     mime: string | null;
   }[] = [];
   try {
-    const [{ data: msgCli }, { data: msgInt }, { data: msgGrp }] = await Promise.all([
-      admin
-        .from("messages")
-        .select("id, client_id, sender_id, from_agence, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
-        .gte("created_at", fromIso).lte("created_at", toIso)
-        .order("created_at", { ascending: true }).limit(2000),
-      admin
-        .from("internal_messages")
-        .select("id, conversation_id, sender_id, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
-        .gte("created_at", fromIso).lte("created_at", toIso)
-        .order("created_at", { ascending: true }).limit(2000),
-      admin
-        .from("group_messages")
-        .select("id, conversation_id, sender_id, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
-        .gte("created_at", fromIso).lte("created_at", toIso)
-        .order("created_at", { ascending: true }).limit(2000),
+    const [msgCli, msgInt, msgGrp] = await Promise.all([
+      fetchAllRows<any>(() =>
+        admin
+          .from("messages")
+          .select("id, client_id, sender_id, from_agence, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
+          .gte("created_at", fromIso).lte("created_at", toIso)
+          .order("created_at", { ascending: true }).order("id", { ascending: true }),
+      ),
+      fetchAllRows<any>(() =>
+        admin
+          .from("internal_messages")
+          .select("id, conversation_id, sender_id, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
+          .gte("created_at", fromIso).lte("created_at", toIso)
+          .order("created_at", { ascending: true }).order("id", { ascending: true }),
+      ),
+      fetchAllRows<any>(() =>
+        admin
+          .from("group_messages")
+          .select("id, conversation_id, sender_id, created_at, content, attachment_name, attachment_path, attachment_mime, is_system, deleted_at")
+          .gte("created_at", fromIso).lte("created_at", toIso)
+          .order("created_at", { ascending: true }).order("id", { ascending: true }),
+      ),
 
     ]);
-    const cliRows = ((msgCli ?? []) as any[]).filter((m) => !m.is_system);
-    const intRows = ((msgInt ?? []) as any[]).filter((m) => !m.is_system);
-    const grpRows = ((msgGrp ?? []) as any[]).filter((m) => !m.is_system);
+    const cliRows = (msgCli as any[]).filter((m) => !m.is_system);
+    const intRows = (msgInt as any[]).filter((m) => !m.is_system);
+    const grpRows = (msgGrp as any[]).filter((m) => !m.is_system);
 
     const intConvIds = [...new Set(intRows.map((m) => m.conversation_id).filter(Boolean))];
     const grpConvIds = [...new Set(grpRows.map((m) => m.conversation_id).filter(Boolean))];

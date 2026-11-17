@@ -296,12 +296,15 @@ export async function robotStatus(supabase: any) {
     .from("slack_fichiers")
     .select("id", { count: "exact", head: true })
     .not("storage_path", "is", null);
-  const { data: tailles } = await supabase
-    .from("slack_fichiers")
-    .select("taille, storage_path")
-    .limit(5000);
-  const volumeTotal = (tailles ?? []).reduce((s: number, f: any) => s + (f.taille ?? 0), 0);
-  const volumeOk = (tailles ?? [])
+  const { fetchAllRows } = await import("@/lib/fetch-all.server");
+  const tailles = await fetchAllRows<any>(() =>
+    supabase
+      .from("slack_fichiers")
+      .select("taille, storage_path")
+      .order("id", { ascending: true }),
+  );
+  const volumeTotal = tailles.reduce((s: number, f: any) => s + (f.taille ?? 0), 0);
+  const volumeOk = tailles
     .filter((f: any) => f.storage_path)
     .reduce((s: number, f: any) => s + (f.taille ?? 0), 0);
 
