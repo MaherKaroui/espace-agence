@@ -22,48 +22,6 @@ import { isNotifSoundMuted, setNotifSoundMuted, playNotifSound } from "@/lib/not
 import { useClientsActivity, ActivityBadges } from "@/components/conversation-activity";
 import { usePagination, ListPagination } from "@/components/list-pagination";
 
-/** En-têtes de messages : tout sauf le contenu, qui est récupéré séparément. */
-const HEADER_COLS = "id, client_id, created_at, from_agence, read_at, read_by";
-/** Taille d'une tranche : c'est aussi le plafond de lignes de l'API REST. */
-const CHUNK = 1000;
-/** Garde-fou : au-delà, on arrête de remonter l'historique. */
-const MAX_SCAN = 50_000;
-
-/**
- * Parcourt tout l'historique des messages non supprimés, tranche par tranche,
- * pour que le calcul du dernier message et des non-lus porte sur l'intégralité
- * des discussions et non sur les 1 000 derniers messages seulement.
- */
-async function fetchAllMessageHeaders(): Promise<any[]> {
-  const page = (from: number) =>
-    supabase
-      .from("messages")
-      .select(HEADER_COLS, from === 0 ? { count: "exact" } : undefined)
-      .is("deleted_at", null)
-      // Le tri secondaire rend le découpage stable quand deux messages
-      // partagent le même horodatage.
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: false })
-      .range(from, from + CHUNK - 1);
-
-  const first = await page(0);
-  if (first.error) throw first.error;
-  const rows = (first.data ?? []) as any[];
-  const total = Math.min(first.count ?? rows.length, MAX_SCAN);
-  if (rows.length === 0 || total <= rows.length) return rows;
-
-  const rest = await Promise.all(
-    Array.from({ length: Math.ceil((total - rows.length) / CHUNK) }, (_, i) =>
-      page(rows.length + i * CHUNK),
-    ),
-  );
-  for (const r of rest) {
-    if (r.error) throw r.error;
-    rows.push(...((r.data ?? []) as any[]));
-  }
-  return rows;
-}
-
 export const Route = createFileRoute("/_authenticated/admin/messages/")({
   head: () => ({ meta: [{ title: "Messagerie clients" }] }),
   beforeLoad: async ({ context }) => {
@@ -88,17 +46,27 @@ function AdminMessages() {
   // Bip global quand un message entrant arrive (côté client -> agence)
   useEffect(() => {
     if (!user) return;
+    let refetchTimer: ReturnType<typeof setTimeout> | null = null;
     const ch = supabase
       .channel(`admin-threads-notif-${user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload: any) => {
         const row = payload.new;
         if (row && row.from_agence === false && row.sender_id !== user.id) {
           playNotifSound();
-          qc.invalidateQueries({ queryKey: ["admin-threads"] });
+          // Au plus un rechargement toutes les 2 s (rafale de messages entrants).
+          if (!refetchTimer) {
+            refetchTimer = setTimeout(() => {
+              refetchTimer = null;
+              qc.invalidateQueries({ queryKey: ["admin-threads"] });
+            }, 2000);
+          }
         }
       })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      if (refetchTimer) clearTimeout(refetchTimer);
+      supabase.removeChannel(ch);
+    };
   }, [user, qc]);
 
   const { data: threads = [] } = useQuery({
@@ -109,27 +77,22 @@ function AdminMessages() {
         .from("profiles")
         .select("id, prenom, nom, email, entreprise")
         .is("archived_at", null);
-      // Premier passage SANS le contenu des messages : seuls les horodatages et
-      // les accusés de lecture servent à calculer le dernier message et les
-      // non-lus. Le texte — de loin le plus lourd — n'est récupéré qu'ensuite,
-      // et uniquement pour l'aperçu de chaque discussion.
-      //
-      // L'API REST plafonne chaque réponse à 1 000 lignes. Sans pagination, les
-      // clients dont le dernier message sortait de cette fenêtre disparaissaient
-      // purement et simplement de la liste (42 conversations réelles, 24
-      // affichées). On parcourt donc tout l'historique par tranches, les
-      // tranches suivantes étant demandées en parallèle.
-      const msgs = await fetchAllMessageHeaders();
+      // Les agrégats (dernier message, non-lus, total) sont calculés côté base par
+      // admin_message_threads() : plus de parcours de tout l'historique.
+      const { data: rows, error: rpcError } = await (supabase as any).rpc("admin_message_threads");
+      if (rpcError) throw rpcError;
       const last = new Map<string, any>();
       const unread = new Map<string, number>();
       const lastSeen = new Map<string, any>();
-      for (const m of msgs) {
-        if (!last.has(m.client_id)) last.set(m.client_id, m);
-        // Message client vers agence, non lu = à traiter
-        if (!m.from_agence && !m.read_at) {
-          unread.set(m.client_id, (unread.get(m.client_id) ?? 0) + 1);
-        }
-        if (!m.from_agence && m.read_at && !lastSeen.has(m.client_id)) lastSeen.set(m.client_id, m);
+      for (const r of (rows ?? []) as any[]) {
+        last.set(r.client_id, {
+          id: r.last_id,
+          client_id: r.client_id,
+          created_at: r.last_created_at,
+          from_agence: r.last_from_agence,
+        });
+        unread.set(r.client_id, Number(r.unread_count ?? 0));
+        if (r.seen_read_at) lastSeen.set(r.client_id, { read_at: r.seen_read_at, read_by: r.seen_read_by });
       }
 
       // Contenu des seuls derniers messages (un par discussion).
