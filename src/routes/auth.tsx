@@ -35,8 +35,9 @@ function safeNext(next: string | undefined): string | null {
   if (!next || typeof next !== "string") return null;
   if (!next.startsWith("/") || next.startsWith("//") || next.includes("\\")) return null;
   try {
-    const u = new URL(next, window.location.origin);
-    if (u.origin !== window.location.origin) return null;
+    const base = "https://izisuivis.invalid";
+    const u = new URL(next, base);
+    if (u.origin !== base) return null;
     return u.pathname + u.search + u.hash;
   } catch {
     return null;
