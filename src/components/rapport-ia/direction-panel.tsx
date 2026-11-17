@@ -22,6 +22,7 @@ import {
 import { format, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { roleLabelFr } from "@/lib/role-labels";
+import { csvCell } from "@/lib/csv-cell";
 import {
   generateDailyDirectionReport,
   getDirectionReport,
@@ -158,7 +159,7 @@ export function DirectionDashboard() {
         u.dossiers_modifies, u.relances, u.notes,
       ]),
     ];
-    const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(";")).join("\n");
+    const csv = rows.map((r) => r.map((c) => csvCell(c)).join(";")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

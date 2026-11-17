@@ -13,6 +13,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LEGAL_LABELS } from "@/lib/legal-versions";
 import { ShieldAlert, FileText, Loader2, CheckCircle2, Search, Download } from "lucide-react";
 import { Navigate } from "@tanstack/react-router";
+import { csvCell } from "@/lib/csv-cell";
 
 export const Route = createFileRoute("/_authenticated/admin/rgpd")({
   head: () => ({ meta: [{ title: "RGPD — Administration" }] }),
@@ -117,7 +118,7 @@ function AdminRgpdPage() {
         ];
       }),
     ];
-    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = rows.map((r) => r.map((c) => csvCell(c)).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

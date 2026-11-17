@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, AlertTriangle, Info, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { csvCell } from "@/lib/csv-cell";
 
 // Rubriques filtrables côté base (la limite de 500 lignes s'applique après le filtre).
 const RUBRIQUES: Record<string, { label: string; filtre: string | null }> = {
@@ -136,7 +137,7 @@ export function AuditPage() {
         JSON.stringify(l.metadata),
       ]),
     ];
-    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = rows.map((r) => r.map((c) => csvCell(c)).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
