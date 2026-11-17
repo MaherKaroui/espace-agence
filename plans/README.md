@@ -19,6 +19,7 @@ Chaque plan est autonome. L'exécutant travaille sur une branche `improve/NNN-�
 | 008 | [Listes de dossiers fiables (rôle, `.in()` par paquets)](008-listes-dossiers-fiables.md) | P1 bug | M | — | FAIT (17/11) |
 | 009 | [Rapports et supervision complets, fuseau Paris](009-rapports-et-supervision-complets.md) | P1 bug | M | — | FAIT (17/11) — reste `supervision.server.ts` (computeAnomalies) |
 | 010 | [Relances, notifications, poids du logo](010-relances-et-allegements.md) | P2 | S | — | FAIT sauf double notification (la cloche affiche aussi la notification navigateur : à arbitrer) |
+| 011 | [Admin plus rapide : moins de doublons, messagerie sans balayage](011-chargement-admin-plus-rapide.md) | P1 perf | M | — | FAIT (17/11) — fonction `admin_message_threads()` appliquée |
 
 004, 005, 006 sont indépendants ; 006 avant tout futur refactor structurel.
 Statuts : `TODO` → `EN COURS` → `FAIT` / `BLOQUÉ` / `PÉRIMÉ`.
