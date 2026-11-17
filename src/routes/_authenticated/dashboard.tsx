@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
+import { fetchInChunks } from "@/lib/fetch-in-chunks";
 import { Card } from "@/components/ui/card";
 import { PushActivationBanner } from "@/components/push-activation-banner";
 import { StatusBadge } from "@/components/status-badge";
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, isStaff } = useRole();
+  const { isAdmin, isStaff, loading: roleLoading } = useRole();
   const navigate = useNavigate();
 
   // Séparation nette admin / client : les membres de l'agence sont
@@ -72,8 +73,8 @@ function Dashboard() {
 
 
   const { data: dossiers = [], isLoading: dossiersLoading, isFetched: dossiersFetched } = useQuery({
-    queryKey: ["dossiers-mine", user?.id],
-    enabled: !!user,
+    queryKey: ["dossiers-mine", user?.id, isAdmin],
+    enabled: !!user && !roleLoading,
     staleTime: 30_000,
     placeholderData: (prev: any) => prev,
     queryFn: async () => {
@@ -93,12 +94,9 @@ function Dashboard() {
     placeholderData: (prev: any) => prev,
 
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("documents")
-        .select("id,nom,detected_type,dossier_id")
-        .in("dossier_id", dossierIds);
-      if (error) throw error;
-      return data ?? [];
+      return fetchInChunks<any>(dossierIds, (c) =>
+        supabase.from("documents").select("id,nom,detected_type,dossier_id").in("dossier_id", c),
+      );
     },
   });
 
@@ -108,12 +106,9 @@ function Dashboard() {
     staleTime: 30_000,
     placeholderData: (prev: any) => prev,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("taches")
-        .select("id,titre,statut,cote_client,verrouillee,dossier_id")
-        .in("dossier_id", dossierIds);
-      if (error) throw error;
-      return data ?? [];
+      return fetchInChunks<any>(dossierIds, (c) =>
+        supabase.from("taches").select("id,titre,statut,cote_client,verrouillee,dossier_id").in("dossier_id", c),
+      );
     },
   });
 

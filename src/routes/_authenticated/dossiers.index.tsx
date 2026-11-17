@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
+import { fetchInChunks } from "@/lib/fetch-in-chunks";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/dossiers/")({
 
 function DossiersPage() {
   const { user } = useAuth();
-  const { isAdmin, isStaff } = useRole();
+  const { isAdmin, isStaff, loading: roleLoading } = useRole();
   // Toute l'équipe agence peut créer des dossiers, comme un admin.
   const asStaff = isAdmin || isStaff;
   const qc = useQueryClient();
@@ -63,8 +64,8 @@ function DossiersPage() {
   });
 
   const { data: dossiers = [], isLoading } = useQuery({
-    queryKey: ["dossiers-mine", user?.id],
-    enabled: !!user,
+    queryKey: ["dossiers-mine", user?.id, asStaff],
+    enabled: !!user && !roleLoading,
     queryFn: async () => {
       const q = supabase.from("dossiers").select("*").order("updated_at", { ascending: false });
       const { data, error } = asStaff ? await q : await q.eq("client_id", user!.id);
@@ -227,24 +228,18 @@ function DossiersPage() {
     enabled: dossierIds.length > 0,
 
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("documents")
-        .select("id,nom,detected_type,dossier_id")
-        .in("dossier_id", dossierIds);
-      if (error) throw error;
-      return data ?? [];
+      return fetchInChunks<any>(dossierIds, (c) =>
+        supabase.from("documents").select("id,nom,detected_type,dossier_id").in("dossier_id", c),
+      );
     },
   });
   const { data: allTaches = [] } = useQuery({
     queryKey: ["dossiers-mine-taches", user?.id, dossierIds.join(",")],
     enabled: dossierIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("taches")
-        .select("id,titre,statut,cote_client,verrouillee,dossier_id")
-        .in("dossier_id", dossierIds);
-      if (error) throw error;
-      return data ?? [];
+      return fetchInChunks<any>(dossierIds, (c) =>
+        supabase.from("taches").select("id,titre,statut,cote_client,verrouillee,dossier_id").in("dossier_id", c),
+      );
     },
   });
 
