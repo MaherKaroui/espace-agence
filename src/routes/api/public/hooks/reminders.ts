@@ -108,6 +108,8 @@ export const Route = createFileRoute('/api/public/hooks/reminders')({
             .is('storage_path', null)
             .lt('created_at', hAgo(24))
             .gt('created_at', hAgo(24 * 30))
+            .not('dossiers.statut', 'in', '(termine,refuse,valide)')
+            .is('dossiers.archived_at', null)
           if (pendingDocsError) { console.error('[reminders] pendingDocs query failed', pendingDocsError.message); results.errors++ }
 
           if (pendingDocs && pendingDocs.length > 0) {
@@ -159,7 +161,8 @@ export const Route = createFileRoute('/api/public/hooks/reminders')({
           const { data: inactive, error: inactiveError } = await supabaseAdmin
             .from('dossiers')
             .select('id, titre, client_id, updated_at, statut')
-            .not('statut', 'in', '(termine,refuse)')
+            .not('statut', 'in', '(termine,refuse,valide)')
+            .is('archived_at', null)
             .lt('updated_at', hAgo(24 * 7))
             .gt('updated_at', hAgo(24 * 60)) // avoid spamming very old dossiers indefinitely
             .limit(500)
